@@ -1,31 +1,46 @@
 import { writeFileSync, unlinkSync } from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
 
-describe("use.mjs", () => {
-  let use;
+// Convert import.meta.url to a directory path
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-  beforeAll(async () => {
+// Helper function for basic assertion
+function assert(condition, message) {
+  if (!condition) {
+    console.error(`Assertion failed: ${message}`);
+    process.exit(1); // Exit with an error code if the test fails
+  }
+}
+
+// Set up variables for testing
+let use;
+const tempFilePath = path.join(__dirname, "temp_use.mjs");
+
+(async () => {
+  try {
+    // Download the file content
     const response = await fetch("https://raw.githubusercontent.com/Konard/use/refs/heads/main/src/use.mjs");
     const scriptContent = await response.text();
 
     // Save the file temporarily
-    const tempFilePath = path.join(__dirname, "temp_use.mjs");
-    // console.log('tempFilePath', tempFilePath);
     writeFileSync(tempFilePath, scriptContent);
 
     // Dynamically import the function from the downloaded script
     const module = await import(`${tempFilePath}`);
     use = module.use;
-  });
 
-  afterAll(() => {
-    // Clean up the temporary file
-    unlinkSync(path.join(__dirname, "temp_use.mjs"));
-  });
-
-  it("dynamically loads lodash and performs chunk operation", async () => {
+    // Perform the test
     const { default: _ } = await use("lodash@4.17.21");
     const result = _.chunk([1, 2, 3, 4, 5], 2);
-    expect(result).toEqual([[1, 2], [3, 4], [5]]);
-  });
-});
+    assert(JSON.stringify(result) === JSON.stringify([[1, 2], [3, 4], [5]]), "Lodash chunk operation did not return expected result");
+
+    console.log("Test passed!");
+  } catch (error) {
+    console.error("Test failed:", error);
+  } finally {
+    // Clean up the temporary file
+    unlinkSync(tempFilePath);
+  }
+})();
