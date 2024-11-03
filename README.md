@@ -45,7 +45,7 @@ console.log(_.chunk([1, 2, 3, 4, 5], 2));
 
 ### Remote Fetch for Independent Scripts
 
-If you need to use `@konard/use` without adding it to a project or prefer a completely independent setup, you can load it directly from GitHub using `fetch`. This is particularly useful in environments like `[zx](https://github.com/google/zx)` or in standalone scripts.
+If you need to use `@konard/use` without adding it to a project or prefer a completely independent setup, you can load it directly from GitHub using `fetch`. This is particularly useful in environments like [zx](https://github.com/google/zx) or in standalone scripts.
 
 #### ES Modules (`.mjs`)
 
