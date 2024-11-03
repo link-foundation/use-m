@@ -1,11 +1,10 @@
-const path = require("path");
-const { exec } = require("child_process");
-const { promisify } = require("util");
-const { createRequire } = require("module");
+async (packageIdentifier) => {
+  const path = require("path");
+  const { exec } = require("child_process");
+  const { promisify } = require("util");
+  const { createRequire } = require("module");
+  const execAsync = promisify(exec);
 
-const execAsync = promisify(exec);
-
-async function use(packageIdentifier) {
   let packageName, version;
 
   // Extract package name and version
@@ -50,8 +49,3 @@ async function use(packageIdentifier) {
     throw new Error(`Failed to require ${packageName}@${version} from the global path.`, { cause: error });
   }
 }
-
-module.exports = {
-  default: use,
-  use,
-};

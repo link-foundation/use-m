@@ -1,16 +1,12 @@
 const path = require("path");
 
-const loadUse = async () => {
-  return fetch('https://raw.githubusercontent.com/Konard/use/refs/heads/main/src/loadUse.cjs')
-    .then((response) => response.text())
-    .then((code) => eval(code)());
-};
-
 (async () => {
   const currentFileName = path.basename(__filename);
 
   try {
-    const use = await loadUse();
+    const use = await fetch('https://raw.githubusercontent.com/Konard/use/refs/heads/main/src/use.cjs')
+    .then((response) => response.text())
+    .then((code) => eval(code));
 
     const _ = await use("lodash@4.17.21");
     const resultChunk = _.chunk([1, 2, 3, 4, 5], 2);
