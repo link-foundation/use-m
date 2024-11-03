@@ -9,16 +9,16 @@ async (packageIdentifier) => {
   let packageName, version;
 
   // Extract package name and version
-  const atIndex = packageIdentifier.lastIndexOf('@');
-  if (atIndex > 0) {
-    packageName = packageIdentifier.slice(0, atIndex);
-    version = packageIdentifier.slice(atIndex + 1);
+  const dividerPosition = packageIdentifier.lastIndexOf('@');
+  if (dividerPosition > 0) {
+    packageName = packageIdentifier.slice(0, dividerPosition);
+    version = packageIdentifier.slice(dividerPosition + 1);
   } else {
-    throw new Error("Please provide a version (e.g., 'lodash@4.17.21' or '@scope/package@1.0.0').");
+    throw new Error(`Failed to install and import package with '${packageIdentifier}' identifier. Please specify a version (e.g., 'lodash@4.17.21' or '@konard/use@1.0.0').`);
   }
 
   // Define the alias for global installation
-  const alias = `${packageName.replace('/', '-')}-v${version}`;
+  const alias = `${packageName.replace('@', '').replace('/', '-')}-v${version}`;
 
   // Install the package globally with the specified version and alias
   try {
@@ -33,12 +33,12 @@ async (packageIdentifier) => {
 
   // Resolve the exact path to the installed package with alias
   const packagePath = path.join(globalPath, alias);
-
   const require = createRequire(__filename);
+  const resolvedPath = require.resolve(packagePath)
 
   // Dynamically import the package
   try {
-    const module = await import(require.resolve(packagePath));
+    const module = await import(resolvedPath);
 
     // Check if the only key in the module is "default"
     const keys = Object.keys(module);
@@ -48,6 +48,6 @@ async (packageIdentifier) => {
 
     return module;
   } catch (error) {
-    throw new Error(`Failed to import ${packageName}@${version} from the global path.`, { cause: error });
+    throw new Error(`Failed to import ${packageName}@${version} from '${packagePath}' resolved as '${resolvedPath}'.`, { cause: error });
   }
 }
