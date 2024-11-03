@@ -14,7 +14,7 @@
     "test": "yarn test:cjs && yarn test:mjs",
     "test:cjs": "node tests/use.cjs.test.cjs",
     "test:mjs": "node tests/use.mjs.test.mjs",
-    "publish:version": "yarn version --patch && git push && git push --tags && yarn publish --access public"
+    "publish:version": "yarn publish --patch --access public && git push && git push --tags"
   },
   "repository": {
     "type": "git",
