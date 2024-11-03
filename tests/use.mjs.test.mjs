@@ -2,44 +2,34 @@ import { writeFileSync, unlinkSync } from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 
-// Convert import.meta.url to a directory path
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Helper function for basic assertion
-function assert(condition, message) {
-  if (!condition) {
-    console.error(`Assertion failed: ${message}`);
-    process.exit(1); // Exit with an error code if the test fails
-  }
-}
-
-// Set up variables for testing
-let use;
-const tempFilePath = path.join(__dirname, "temp_use.mjs");
-
 (async () => {
+  const __filename = fileURLToPath(import.meta.url);
+  const fileName = path.basename(__filename);
+  let use;
+  const __dirname = path.dirname(__filename);
+  const tempFilePath = path.join(__dirname, "temp_use.mjs");
+
   try {
-    // Download the file content
     const response = await fetch("https://raw.githubusercontent.com/Konard/use/refs/heads/main/src/use.mjs");
     const scriptContent = await response.text();
-
-    // Save the file temporarily
     writeFileSync(tempFilePath, scriptContent);
 
-    // Dynamically import the function from the downloaded script
-    const { use } = await import(`${tempFilePath}`);
+    const { use } = await import(tempFilePath);
 
-    // Perform the test
     const _ = await use("lodash@4.17.21");
-    const result = _.chunk([1, 2, 3, 4, 5], 2);
-    assert(JSON.stringify(result) === JSON.stringify([[1, 2], [3, 4], [5]]), "Lodash chunk operation did not return expected result");
+    const resultChunk = _.chunk([1, 2, 3, 4, 5], 2);
+    const expectedChunk = [[1, 2], [3, 4], [5]];
 
-    console.log("Test passed!");
+    if (JSON.stringify(resultChunk) === JSON.stringify(expectedChunk)) {
+      console.log(`[${fileName}] Test passed: Lodash chunk operation produced the expected result.`);
+    } else {
+      console.error(`[${fileName}] Test failed: Lodash chunk operation did not produce the expected result.`);
+      console.error(`[${fileName}] Expected:`, expectedChunk);
+      console.error(`[${fileName}] Received:`, resultChunk);
+    }
   } catch (error) {
-    console.error("Test failed:", error);
+    console.error(`[${fileName}] Test encountered an error:`, error);
   } finally {
-    // Clean up the temporary file
     unlinkSync(tempFilePath);
   }
 })();
