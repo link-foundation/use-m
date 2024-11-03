@@ -43,7 +43,7 @@ export async function use(packageIdentifier) {
     // Check if the only key in the module is "default"
     const keys = Object.keys(module);
     if (keys.length === 1 && keys[0] === 'default') {
-      return module.default;
+      return module.default || module;
     }
 
     return module;
