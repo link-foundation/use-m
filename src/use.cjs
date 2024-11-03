@@ -34,7 +34,7 @@ async (packageIdentifier) => {
   const packagePath = path.join(globalPath, alias);
 
   // Dynamically require the package
-  const require = createRequire(__filename);
+  // const require = createRequire(__filename);
   try {
     const module = require(require.resolve(packagePath));
 
