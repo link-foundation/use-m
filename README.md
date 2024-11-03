@@ -77,6 +77,65 @@ For a CommonJS environment, you can fetch the CommonJS module version:
 })()
 ```
 
+## `use` and `zx`
+
+0. Install zx globally
+
+  ```bash
+  npm install -g zx
+  ```
+
+1. Create a file named `example.mjs`:
+
+  ```js
+  #!/usr/bin/env zx --verbose
+  
+  const use = await fetch('https://raw.githubusercontent.com/konard/use/refs/heads/main/src/use.mjs')
+    .then(response => response.text())
+    .then(code => eval(code));
+  
+  const _ = await use('lodash@latest');
+
+  const { stdout } = await $`ls`.pipe`grep js`;
+  const files = _.filter(_.split(stdout, '\n'), (item) => !_.isEmpty(item));
+  console.log(files);
+  ```
+
+2. Give execution permissions
+
+  ```bash
+  chmod +x example.mjs
+  ```
+
+3. Execute:
+
+  ```bash
+  ./example.mjs
+  ```
+
+## `use` and `execa`
+
+1. Create a file named `example.mjs`:
+
+  ```js  
+  const use = await fetch('https://raw.githubusercontent.com/konard/use/refs/heads/main/src/use.mjs')
+    .then(response => response.text())
+    .then(code => eval(code));
+  
+  const _ = await use('lodash@latest');
+  const { $ } = await use('execa@latest');
+
+  const { stdout } = await $`ls`.pipe`grep js`;
+  const files = _.filter(_.split(stdout, '\n'), (item) => !_.isEmpty(item));
+  console.log(files);
+  ```
+
+2. Execute:
+
+  ```bash
+  node example.mjs
+  ```
+
 ## License
 
 This project is licensed under the Unlicense.
