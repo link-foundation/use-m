@@ -1,4 +1,3 @@
-// use.cjs
 const path = require("path");
 const { exec } = require("child_process");
 const { promisify } = require("util");
