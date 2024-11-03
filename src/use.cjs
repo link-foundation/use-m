@@ -4,6 +4,10 @@ async (packageIdentifier) => {
   const { promisify } = require("util");
   const execAsync = promisify(exec);
 
+  if (!packageIdentifier || packageIdentifier.length <= 0) {
+    throw new Error(`Name for a package to be installed and imported is not provided. Please specify package name and a version (e.g., 'lodash@4.17.21' or '@konard/use@1.0.0').`);
+  }
+
   let packageName, version;
 
   // Extract package name and version

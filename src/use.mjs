@@ -3,8 +3,11 @@ async (packageIdentifier) => {
   const { exec } = await import('child_process');
   const { promisify } = await import('util');
   const { createRequire } = await import('module');
-
   const execAsync = promisify(exec);
+
+  if (!packageIdentifier || packageIdentifier.length <= 0) {
+    throw new Error(`Name for a package to be installed and imported is not provided. Please specify package name and a version (e.g., 'lodash@4.17.21' or '@konard/use@1.0.0').`);
+  }
 
   let packageName, version;
 
