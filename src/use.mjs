@@ -6,7 +6,7 @@ import { createRequire } from "module";
 
 const execAsync = promisify(exec);
 
-export default async function use(packageIdentifier) {
+export async function use(packageIdentifier) {
   let packageName, version;
 
   // Extract package name and version
@@ -51,3 +51,5 @@ export default async function use(packageIdentifier) {
     throw new Error(`Failed to import ${packageName}@${version} from the global path.`, { cause: error });
   }
 }
+
+export default use;
