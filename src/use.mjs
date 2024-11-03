@@ -5,7 +5,7 @@ async (packageIdentifier) => {
   const { createRequire } = await import('module');
   const execAsync = promisify(exec);
 
-  if (!packageIdentifier || packageIdentifier.length <= 0) {
+  if (!packageIdentifier || typeof packageIdentifier !== 'string' || packageIdentifier.length <= 0) {
     throw new Error(`Name for a package to be installed and imported is not provided. Please specify package name and a version (e.g., 'lodash@4.17.21' or '@konard/use@1.0.0').`);
   }
 
