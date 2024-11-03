@@ -38,7 +38,15 @@ async function use(packageIdentifier) {
   // Dynamically require the package
   const require = createRequire(__filename);
   try {
-    return require(require.resolve(packagePath));
+    const module = require(require.resolve(packagePath));
+
+    // Check if the only key in the module is "default"
+    const keys = Object.keys(module);
+    if (keys.length === 1 && keys[0] === 'default') {
+      return module.default;
+    }
+
+    return module;
   } catch (error) {
     throw new Error(`Failed to require ${packageName}@${version} from the global path.`, { cause: error });
   }

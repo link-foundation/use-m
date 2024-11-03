@@ -38,7 +38,15 @@ export async function use(packageIdentifier) {
   // Dynamically import the package
   const require = createRequire(import.meta.url);
   try {
-    return await import(require.resolve(packagePath));
+    const module = await import(require.resolve(packagePath));
+
+    // Check if the only key in the module is "default"
+    const keys = Object.keys(module);
+    if (keys.length === 1 && keys[0] === 'default') {
+      return module.default;
+    }
+
+    return module;
   } catch (error) {
     throw new Error(`Failed to import ${packageName}@${version} from the global path.`, { cause: error });
   }
