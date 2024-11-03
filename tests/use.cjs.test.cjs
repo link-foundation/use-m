@@ -1,23 +1,16 @@
 const path = require("path");
 
-const makeUse = async () => {
-  const { join } = require('path');
-  const { tmpdir } = require('os');
-  const { randomBytes } = require('crypto');
-  const { writeFile, unlink } = require('fs/promises');
-  const response = await fetch('https://raw.githubusercontent.com/Konard/use/refs/heads/main/src/use.cjs');
-  const localUsePath = join(tmpdir(), randomBytes(42).toString('hex') + '.cjs');
-  await writeFile(localUsePath, await response.text());
-  const { use } = require(localUsePath);;
-  await unlink(localUsePath);
-  return use;
+const loadUse = async () => {
+  return fetch('https://raw.githubusercontent.com/Konard/use/refs/heads/main/src/loadUse.cjs')
+    .then((response) => response.text())
+    .then((code) => eval(code)());
 };
 
 (async () => {
   const currentFileName = path.basename(__filename);
 
   try {
-    const use = await makeUse();
+    const use = await loadUse();
 
     const _ = await use("lodash@4.17.21");
     const resultChunk = _.chunk([1, 2, 3, 4, 5], 2);

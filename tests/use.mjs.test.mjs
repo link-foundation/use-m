@@ -1,17 +1,10 @@
 import path from "path";
 import { fileURLToPath } from "url";
 
-const makeUse = async () => {
-  const { join } = await import('path');
-  const { tmpdir } = await import('os');
-  const { randomBytes } = await import('crypto');
-  const { writeFile, unlink } = await import('fs/promises');
-  const response = await fetch('https://raw.githubusercontent.com/Konard/use/refs/heads/main/src/use.mjs');
-  const localUsePath = join(tmpdir(), randomBytes(42).toString('hex') + '.mjs');
-  await writeFile(localUsePath, await response.text());
-  const { use } = await import(localUsePath);
-  await unlink(localUsePath);
-  return use;
+const loadUse = async () => {
+  return fetch('https://raw.githubusercontent.com/Konard/use/refs/heads/main/src/loadUse.mjs')
+    .then((response) => response.text())
+    .then((code) => eval(code)());
 };
 
 (async () => {
@@ -19,7 +12,7 @@ const makeUse = async () => {
   const currentFileName = path.basename(__filename);
 
   try {
-    const use = await makeUse();
+    const use = await loadUse();
 
     const _ = await use("lodash@4.17.21");
     const resultChunk = _.chunk([1, 2, 3, 4, 5], 2);
