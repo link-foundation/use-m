@@ -28,8 +28,7 @@ const tempFilePath = path.join(__dirname, "temp_use.mjs");
     writeFileSync(tempFilePath, scriptContent);
 
     // Dynamically import the function from the downloaded script
-    const module = await import(`${tempFilePath}`);
-    use = module.use;
+    const { use } = await import(`${tempFilePath}`);
 
     // Perform the test
     const _ = await use("lodash@4.17.21");

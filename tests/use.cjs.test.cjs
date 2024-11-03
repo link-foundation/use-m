@@ -19,8 +19,7 @@ async function main() {
     writeFileSync(tempFilePath, scriptContent);
 
     // Require the function from the downloaded script
-    const result = require(tempFilePath);
-    use = result.use;
+    const { use } = require(tempFilePath);
 
     // Test: dynamically load lodash and perform chunk operation
     const _ = await use("lodash@4.17.21");
