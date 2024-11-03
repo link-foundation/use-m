@@ -6,7 +6,7 @@ import { createRequire } from "module";
 
 const execAsync = promisify(exec);
 
-export async function use(packageIdentifier) {
+export default async function use(packageIdentifier) {
   let packageName, version;
 
   // Extract package name and version

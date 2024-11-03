@@ -52,4 +52,4 @@ async function use(packageIdentifier) {
   }
 }
 
-module.exports = { use };
+module.exports = { default: use };
