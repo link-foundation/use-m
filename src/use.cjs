@@ -2,7 +2,7 @@ async (packageIdentifier) => {
   const path = require("path");
   const { exec } = require("child_process");
   const { promisify } = require("util");
-  const { createRequire } = require("module");
+  // const { createRequire } = require("module");
   const execAsync = promisify(exec);
 
   let packageName, version;
