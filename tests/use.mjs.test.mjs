@@ -5,7 +5,6 @@ import { fileURLToPath } from "url";
 (async () => {
   const __filename = fileURLToPath(import.meta.url);
   const fileName = path.basename(__filename);
-  let use;
   const __dirname = path.dirname(__filename);
   const tempFilePath = path.join(__dirname, "temp_use.mjs");
 

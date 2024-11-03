@@ -4,7 +4,6 @@ const path = require("path");
 
 (async () => {
   const fileName = path.basename(__filename);
-  let use;
   const tempFilePath = path.join(__dirname, "temp_use.cjs");
 
   try {
