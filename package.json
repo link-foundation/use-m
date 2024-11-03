@@ -11,6 +11,7 @@
   },
   "type": "module",
   "scripts": {
+    "test": "yarn test:cjs && yarn test:mjs",
     "test:cjs": "node tests/use.cjs.test.cjs",
     "test:mjs": "node tests/use.mjs.test.mjs"
   },
