@@ -23,8 +23,7 @@ async function main() {
     use = result.use;
 
     // Test: dynamically load lodash and perform chunk operation
-    const lodashModule = await use("lodash@4.17.21");
-    const _ = lodashModule.default || lodashModule;
+    const _ = await use("lodash@4.17.21");
     const resultChunk = _.chunk([1, 2, 3, 4, 5], 2);
 
     // Manually assert the result

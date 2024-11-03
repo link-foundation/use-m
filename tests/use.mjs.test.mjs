@@ -32,7 +32,7 @@ const tempFilePath = path.join(__dirname, "temp_use.mjs");
     use = module.use;
 
     // Perform the test
-    const { default: _ } = await use("lodash@4.17.21");
+    const _ = await use("lodash@4.17.21");
     const result = _.chunk([1, 2, 3, 4, 5], 2);
     assert(JSON.stringify(result) === JSON.stringify([[1, 2], [3, 4], [5]]), "Lodash chunk operation did not return expected result");
 
