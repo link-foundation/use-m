@@ -14,7 +14,7 @@ import { promises as fs } from 'fs';
 
     // const { use } = await import('../src/use-module.mjs');
 
-    const use = await fetch('https://raw.githubusercontent.com/Konard/use/refs/heads/main/src/use.mjs')
+    const use = await fetch('https://raw.githubusercontent.com/konard/use/refs/heads/main/src/use.mjs')
       .then((response) => response.text())
       .then((code) => eval(code));
 

@@ -10,7 +10,7 @@ const path = require("path");
 
     // const { use } = require('../src/use-module.cjs');
 
-    const use = await fetch('https://raw.githubusercontent.com/Konard/use/refs/heads/main/src/use.cjs')
+    const use = await fetch('https://raw.githubusercontent.com/konard/use/refs/heads/main/src/use.cjs')
       .then((response) => response.text())
       .then((code) => eval(code));
 

@@ -1,7 +1,7 @@
 {
-  "name": "use",
+  "name": "@konard/use",
   "version": "1.0.0",
-  "description": "A project for dynamically loading modules",
+  "description": "use: dynamically install and import any npm package",
   "main": "src/use-module.mjs",
   "exports": {
     ".": {
