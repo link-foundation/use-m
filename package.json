@@ -1,6 +1,6 @@
 {
   "name": "@konard/use",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "use: dynamically install and import any npm package",
   "main": "src/use-module.cjs",
   "exports": {
@@ -14,7 +14,7 @@
     "test": "yarn test:cjs && yarn test:mjs",
     "test:cjs": "node tests/use.cjs.test.cjs",
     "test:mjs": "node tests/use.mjs.test.mjs",
-    "publish:version": "yarn version --patch && git push && git push --tags && npm publish --access public"
+    "publish:version": "yarn version --patch && git push && git push --tags && yarn publish --access public"
   },
   "repository": {
     "type": "git",
