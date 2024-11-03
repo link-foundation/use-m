@@ -1,18 +1,27 @@
 import path from "path";
 import { fileURLToPath } from "url";
+import { promises as fs } from 'fs';
 
-const loadUse = async () => {
-  return fetch('https://raw.githubusercontent.com/Konard/use/refs/heads/main/src/loadUse.mjs')
-    .then((response) => response.text())
-    .then((code) => eval(code)());
-};
+// import { use } from '../src/use-module.mjs';
+
+// const loadUse = async () => {
+//   return fetch('https://raw.githubusercontent.com/Konard/use/refs/heads/main/src/loadUse.mjs')
+//     .then((response) => response.text())
+//     .then((code) => eval(code)());
+// };
 
 (async () => {
   const __filename = fileURLToPath(import.meta.url);
   const currentFileName = path.basename(__filename);
 
   try {
-    const use = await loadUse();
+
+    // const use = await fs.readFile('/Users/konard/Desktop/konard/use/src/use.mjs', 'utf8')
+    //    .then((code) => eval(code));
+
+    const { use } = await import('../src/use-module.mjs');
+
+    // const use = await loadUse();
 
     const _ = await use("lodash@4.17.21");
     const resultChunk = _.chunk([1, 2, 3, 4, 5], 2);

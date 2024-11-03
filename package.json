@@ -2,11 +2,11 @@
   "name": "use",
   "version": "1.0.0",
   "description": "A project for dynamically loading modules",
-  "main": "src/use.cjs",
+  "main": "src/use-module.mjs",
   "exports": {
     ".": {
-      "import": "./src/use.mjs",
-      "require": "./src/use.cjs"
+      "import": "./src/use-module.mjs",
+      "require": "./src/use-module.cjs"
     }
   },
   "type": "module",

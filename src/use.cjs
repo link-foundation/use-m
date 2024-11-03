@@ -2,7 +2,6 @@ async (packageIdentifier) => {
   const path = require("path");
   const { exec } = require("child_process");
   const { promisify } = require("util");
-  // const { createRequire } = require("module");
   const execAsync = promisify(exec);
 
   let packageName, version;
@@ -34,7 +33,6 @@ async (packageIdentifier) => {
   const packagePath = path.join(globalPath, alias);
 
   // Dynamically require the package
-  // const require = createRequire(__filename);
   try {
     const module = require(require.resolve(packagePath));
 

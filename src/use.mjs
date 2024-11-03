@@ -1,11 +1,11 @@
-import path from "path";
-import { exec } from "child_process";
-import { promisify } from "util";
-import { createRequire } from "module";
+async (packageIdentifier) => {
+  const path = await import('path');
+  const { exec } = await import('child_process');
+  const { promisify } = await import('util');
+  const { createRequire } = await import('module');
 
-const execAsync = promisify(exec);
+  const execAsync = promisify(exec);
 
-export async function use(packageIdentifier) {
   let packageName, version;
 
   // Extract package name and version
@@ -34,8 +34,9 @@ export async function use(packageIdentifier) {
   // Resolve the exact path to the installed package with alias
   const packagePath = path.join(globalPath, alias);
 
+  const require = createRequire(__filename);
+
   // Dynamically import the package
-  const require = createRequire(import.meta.url);
   try {
     const module = await import(require.resolve(packagePath));
 
@@ -50,5 +51,3 @@ export async function use(packageIdentifier) {
     throw new Error(`Failed to import ${packageName}@${version} from the global path.`, { cause: error });
   }
 }
-
-export default use;
