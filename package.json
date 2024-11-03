@@ -2,7 +2,7 @@
   "name": "@konard/use",
   "version": "1.0.1",
   "description": "use: dynamically install and import any npm package",
-  "main": "src/use-module.mjs",
+  "main": "src/use-module.cjs",
   "exports": {
     ".": {
       "import": "./src/use-module.mjs",
@@ -15,6 +15,22 @@
     "test:cjs": "node tests/use.cjs.test.cjs",
     "test:mjs": "node tests/use.mjs.test.mjs"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/konard/use.git"
+  },
+  "bugs": {
+    "url": "https://github.com/konard/use/issues"
+  },
+  "keywords": [
+    "use",
+    "npm",
+    "dynamic require",
+    "dynamic import",
+    "npm package loader",
+    "module loader",
+    "dependency management"
+  ],
   "author": "Konard",
   "license": "Unlicense"
 }
