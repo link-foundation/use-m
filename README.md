@@ -31,14 +31,18 @@ Load `@konard/use` to dynamically import a package from npm:
 
 ```javascript
 const { use } = require('@konard/use');
-const _ = await use('lodash@4.17.21');
-console.log(_.chunk([1, 2, 3, 4, 5], 2));
+
+(async () => {
+  const _ = await use('lodash@4.17.21');
+  console.log(_.chunk([1, 2, 3, 4, 5], 2));
+})()
 ```
 
 #### ES Modules
 
 ```javascript
 import { use } from '@konard/use';
+
 const _ = await use('lodash@4.17.21');
 console.log(_.chunk([1, 2, 3, 4, 5], 2));
 ```
@@ -63,12 +67,14 @@ console.log(_.chunk([1, 2, 3, 4, 5], 2));
 For a CommonJS environment, you can fetch the CommonJS module version:
 
 ```javascript
-const use = await fetch('https://raw.githubusercontent.com/konard/use/refs/heads/main/src/use.cjs')
+(async () => {
+  const use = await fetch('https://raw.githubusercontent.com/konard/use/refs/heads/main/src/use.cjs')
   .then(response => response.text())
   .then(code => eval(code));
 
-const _ = await use('lodash@4.17.21');
-console.log(_.chunk([1, 2, 3, 4, 5], 2));
+  const _ = await use('lodash@4.17.21');
+  console.log(_.chunk([1, 2, 3, 4, 5], 2));
+})()
 ```
 
 ## License
