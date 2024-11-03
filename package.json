@@ -1,0 +1,26 @@
+{
+  "name": "use",
+  "version": "1.0.0",
+  "description": "A project for dynamically loading modules",
+  "main": "src/use.cjs",
+  "exports": {
+    ".": {
+      "import": "./src/use.mjs",
+      "require": "./src/use.cjs"
+    }
+  },
+  "type": "module",
+  "scripts": {
+    "test": "jest"
+  },
+  "author": "Konard",
+  "license": "Unlicense",
+  "devDependencies": {
+    "@babel/preset-env": "^7.26.0",
+    "babel-jest": "^29.7.0",
+    "jest": "^29.7.0"
+  },
+  "dependencies": {
+    "lodash": "^4.17.21"
+  }
+}
