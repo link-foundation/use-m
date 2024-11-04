@@ -10,19 +10,37 @@ describe(`'use' import strategies (CJS)`, () => {
   });
 
   test('File Read with Eval', async () => {
-    const code = await fs.readFile(path.resolve(__dirname, '../src/use.cjs'), 'utf8');
-    const use = eval(code); // Ensure the code evaluates as expected
+    const use = await fs.readFile(path.resolve(__dirname, '../src/use.cjs'), 'utf8')
+      .then((code) => eval(code));
+    const _ = await use("lodash@4.17.21");
+    const result = _.add(2, 3);
+    expect(result).toBe(5);
+  });
+
+  test('File Read with Eval via load-use', async () => {
+    const loadUsePath = path.resolve(__dirname, '../src/load-use.cjs');
+    const use = await fs.readFile(loadUsePath, 'utf8')
+      .then((code) => eval(code)());
     const _ = await use("lodash@4.17.21");
     const result = _.add(2, 3);
     expect(result).toBe(5);
   });
 
   test('Fetch from GitHub with Eval', async () => {
-    const response = await fetch('https://raw.githubusercontent.com/konard/use/refs/heads/main/src/use.cjs');
-    const code = await response.text();
-    const use = eval(code);
+    const use = await fetch('https://raw.githubusercontent.com/konard/use/refs/heads/main/src/use.cjs')
+      .then((response) => response.text())
+      .then((code) => eval(code));
     const _ = await use("lodash@4.17.21");
-    const result = _.chunk([1, 2, 3, 4, 5], 2);
-    expect(result).toEqual([[1, 2], [3, 4], [5]]);
+    const result = _.add(2, 3);
+    expect(result).toBe(5);
+  });
+
+  test('Fetch from GitHub with Eval via load-use', async () => {
+    const use = await fetch('https://raw.githubusercontent.com/konard/use/refs/heads/main/src/load-use.cjs')
+      .then((response) => response.text())
+      .then((code) => eval(code)());
+    const _ = await use("lodash@4.17.21");
+    const result = _.add(2, 3);
+    expect(result).toBe(5);
   });
 });
