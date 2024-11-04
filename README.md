@@ -1,6 +1,6 @@
-# use: dynamically install and import any npm package
+# use-js: dynamically install and import any npm package
 
-`use` is a utility for dynamically installing and importing any npm package at runtime. It’s ideal for scripts that need flexibility in package management, such as automation tasks, serverless functions, or any scripts that benefit from dynamic dependencies.
+`use-js` is a utility for dynamically installing and importing any npm package at runtime. It’s ideal for scripts that need flexibility in package management, such as automation tasks, serverless functions, or any scripts that benefit from dynamic dependencies.
 
 ## Key Features
 
@@ -9,7 +9,7 @@
 
 ## Installation
 
-Add `use` to your project with Yarn:
+Add `use-js` to your project with Yarn:
 
 ```bash
 yarn add use-js
@@ -77,7 +77,7 @@ For a CommonJS environment, you can fetch the CommonJS module version:
 })()
 ```
 
-## `use` and `zx`
+## `use-js` and `zx`
 
 0. Install zx globally
 
@@ -113,7 +113,7 @@ For a CommonJS environment, you can fetch the CommonJS module version:
   ./example.mjs
   ```
 
-## `use` and `execa`
+## `use-js` and `execa`
 
 1. Create a file named `example.mjs`:
 
