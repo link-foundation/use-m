@@ -12,8 +12,6 @@
   "type": "module",
   "scripts": {
     "test": "NODE_OPTIONS=\"--experimental-vm-modules\" jest",
-    "test:cjs": "node tests/use.cjs.test.cjs",
-    "test:mjs": "node tests/use.mjs.test.mjs",
     "publish:patch": "yarn publish --patch --access public && git push && git push --tags"
   },
   "repository": {
