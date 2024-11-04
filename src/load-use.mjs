@@ -2,7 +2,7 @@ async () => {
   const { join } = await import('path');
   const { tmpdir } = await import('os');
   const { randomBytes } = await import('crypto');
-  const { writeFile, unlink, mkdir } = await import('fs/promises');
+  const { writeFile, rm, mkdir } = await import('fs/promises');
   const moduleDirectory = join(tmpdir(), randomBytes(42).toString('hex'));
   await mkdir(moduleDirectory);
   const functionResponse = await fetch('https://raw.githubusercontent.com/Konard/use/refs/heads/main/src/use.mjs');
@@ -12,6 +12,6 @@ async () => {
   const modulePath = join(moduleDirectory, 'use-module.mjs');
   await writeFile(modulePath, await moduleResponse.text());
   const { use } = await import(modulePath);
-  await unlink(modulePath);
+  await rm(moduleDirectory, { recursive: true, force: true });
   return use;
 }
