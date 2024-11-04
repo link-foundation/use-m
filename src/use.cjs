@@ -2,8 +2,6 @@ async (packageIdentifier) => {
   const path = require("path");
   const { exec } = require("child_process");
   const { promisify } = require("util");
-  const { createRequire } = require("module");
-  const require = createRequire(__filename);
   const execAsync = promisify(exec);
 
   const directoryExists = async (directoryPath) => {
