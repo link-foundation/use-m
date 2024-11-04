@@ -16,10 +16,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/konard/use.git"
+    "url": "https://github.com/link-foundation/use-js.git"
   },
   "bugs": {
-    "url": "https://github.com/konard/use/issues"
+    "url": "https://github.com/link-foundation/use-js/issues"
   },
   "keywords": [
     "use",

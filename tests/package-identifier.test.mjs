@@ -1,24 +1,18 @@
 describe('parsePackageIdentifier', () => {
   function parsePackageIdentifier(packageIdentifier) {
-    // const regex = /^(?<packageName>@?[^@]+)(?:@(?<version>[^/]+))?(?<path>\/.*)?$/;
     const regex = /^(?<packageName>@?([^@/]+\/)?[^@/]+)?(?:@(?<version>[^/]+))?(?<path>(?:\/[^@]+)*)?$/;
     const match = packageIdentifier.match(regex);
-
     if (!match || !match.groups.packageName) {
       throw new Error(
         `Failed to parse package identifier '${packageIdentifier}'. Please specify a version (e.g., 'lodash@4.17.21' or '@chakra-ui/react@1.0.0').`
       );
     }
-
     const { packageName, version, path = '' } = match.groups;
     if (!version) {
       throw new Error(
         `Package identifier '${packageIdentifier}' is missing a version. Please specify a version (e.g., 'lodash@4.17.21' or '@chakra-ui/react@1.0.0').`
       );
     }
-
-    console.log({ packageName, version, path });
-
     return { packageName, version, path };
   }
 
@@ -79,7 +73,7 @@ describe('parsePackageIdentifier', () => {
     );
   });
 
-  test.only('throws error for invalid package identifier', () => {
+  test('throws error for invalid package identifier', () => {
     expect(() => parsePackageIdentifier('invalid@identifier/with@extra@symbols')).toThrow(
       "Failed to parse package identifier 'invalid@identifier/with@extra@symbols'. Please specify a version (e.g., 'lodash@4.17.21' or '@chakra-ui/react@1.0.0')."
     );
