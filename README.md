@@ -123,7 +123,8 @@ For a CommonJS environment, you can fetch the CommonJS module version:
     .then((code) => eval(code)());
   
   const _ = await use('lodash@latest');
-  const { $ } = await use('execa@latest');
+  const { $: $$ } = await use('execa@latest');
+  const $ = $$({ verbose: 'full' });
 
   const { stdout } = await $`ls`.pipe`grep js`;
   const files = _.filter(_.split(stdout, '\n'), (item) => !_.isEmpty(item));
