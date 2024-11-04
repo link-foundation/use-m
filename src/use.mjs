@@ -20,7 +20,7 @@ async (packageIdentifier) => {
   };
 
   const tryResolveModule = async (packagePath) => {
-    if (!directoryExists(packagePath)) {
+    if (!await directoryExists(packagePath)) {
       return null;
     }
     try {
