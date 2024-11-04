@@ -12,27 +12,30 @@ describe(`'use' import strategies`, () => {
     expect(result).toBe(5);
   });
 
-  // test('Dynamic ESM Import', async () => {
-  //   const { use } = await import('../src/use-module.mjs');
-  //   const _ = await use("lodash@4.17.18");
-  //   const result = _.add(2, 3);
-  //   expect(result).toBe(5);
-  // });
+  test('Dynamic ESM Import', async () => {
+    const { use } = await import('../src/use-module.mjs');
+    const _ = await use("lodash@4.17.18");
+    const result = _.add(2, 3);
+    expect(result).toBe(5);
+  });
 
-  // test('File Read with Eval', async () => {
-  //   const use = await fs.readFile('/Users/konard/Desktop/konard/use/src/use.mjs', 'utf8')
-  //     .then((code) => eval(code));
-  //   const _ = await use("lodash@4.17.18");
-  //   const result = _.add(2, 3);
-  //   expect(result).toBe(5);
-  // });
+  test('File Read with Eval via load-use', async () => {
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+    const loadUsePath = path.resolve(__dirname, '../src/load-use.mjs');
+    const use = await fs.readFile(loadUsePath, 'utf8')
+      .then((code) => eval(code)());
+    const _ = await use("lodash@4.17.18");
+    const result = _.add(2, 3);
+    expect(result).toBe(5);
+  });
 
-  // test('Fetch from GitHub with Eval', async () => {
-  //   const use = await fetch('https://raw.githubusercontent.com/konard/use/refs/heads/main/src/use.mjs')
-  //     .then((response) => response.text())
-  //     .then((code) => eval(code));
-  //   const _ = await use("lodash@4.17.18");
-  //   const result = _.add(2, 3);
-  //   expect(result).toBe(5);
-  // });
+  test('Fetch from GitHub with Eval via load-use', async () => {
+    const use = await fetch('https://raw.githubusercontent.com/konard/use/refs/heads/main/src/load-use.mjs')
+      .then((response) => response.text())
+      .then((code) => eval(code)());
+    const _ = await use("lodash@4.17.18");
+    const result = _.add(2, 3);
+    expect(result).toBe(5);
+  });
 });
