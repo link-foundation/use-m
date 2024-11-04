@@ -30,7 +30,7 @@
     "module loader",
     "dependency management"
   ],
-  "author": "Konard",
+  "author": "link-foundation",
   "license": "Unlicense",
   "devDependencies": {
     "@babel/preset-env": "^7.26.0",
