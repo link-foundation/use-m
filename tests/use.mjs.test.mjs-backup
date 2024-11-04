@@ -9,16 +9,16 @@ import { promises as fs } from 'fs';
   const currentFileName = path.basename(__filename);
 
   try {
-    // const use = await fs.readFile('/Users/konard/Desktop/konard/use/src/use.mjs', 'utf8')
-    //   .then((code) => eval(code));
+    const use = await fs.readFile('/Users/konard/Desktop/konard/use/src/use.mjs', 'utf8')
+      .then((code) => eval(code));
 
     // const { use } = await import('../src/use-module.mjs');
 
-    const use = await fetch('https://raw.githubusercontent.com/konard/use/refs/heads/main/src/use.mjs')
-      .then((response) => response.text())
-      .then((code) => eval(code));
+    // const use = await fetch('https://raw.githubusercontent.com/konard/use/refs/heads/main/src/use.mjs')
+    //   .then((response) => response.text())
+    //   .then((code) => eval(code));
 
-    const _ = await use("lodash@4.17.21");
+    const _ = await use("lodash@4.17.18");
     const resultChunk = _.chunk([1, 2, 3, 4, 5], 2);
     const expectedChunk = [[1, 2], [3, 4], [5]];
 

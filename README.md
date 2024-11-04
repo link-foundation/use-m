@@ -12,25 +12,25 @@
 Add `use` to your project with Yarn:
 
 ```bash
-yarn add @konard/use
+yarn add use-js
 ```
 
 Or NPM:
 
 ```bash
-npm install @konard/use
+npm install use-js
 ```
 
 ## Usage
 
 ### Standard Import
 
-Load `@konard/use` to dynamically import a package from npm:
+Load `use-js` to dynamically import a package from npm:
 
 #### CommonJS
 
 ```javascript
-const { use } = require('@konard/use');
+const { use } = require('use-js');
 
 (async () => {
   const _ = await use('lodash@4.17.21');
@@ -41,7 +41,7 @@ const { use } = require('@konard/use');
 #### ES Modules
 
 ```javascript
-import { use } from '@konard/use';
+import { use } from 'use-js';
 
 const _ = await use('lodash@4.17.21');
 console.log(_.chunk([1, 2, 3, 4, 5], 2));
@@ -49,7 +49,7 @@ console.log(_.chunk([1, 2, 3, 4, 5], 2));
 
 ### Remote Fetch for Independent Scripts
 
-If you need to use `@konard/use` without adding it to a project or prefer a completely independent setup, you can load it directly from GitHub using `fetch`. This is particularly useful in environments like [zx](https://github.com/google/zx) or in standalone scripts.
+If you need to use `use-js` without adding it to a project or prefer a completely independent setup, you can load it directly from GitHub using `fetch`. This is particularly useful in environments like [zx](https://github.com/google/zx) or in standalone scripts.
 
 #### ES Modules (`.mjs`)
 

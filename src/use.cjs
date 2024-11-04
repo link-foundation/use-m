@@ -5,7 +5,7 @@ async (packageIdentifier) => {
   const execAsync = promisify(exec);
 
   if (!packageIdentifier || typeof packageIdentifier !== 'string' || packageIdentifier.length <= 0) {
-    throw new Error(`Name for a package to be installed and imported is not provided. Please specify package name and a version (e.g., 'lodash@4.17.21' or '@konard/use@1.0.0').`);
+    throw new Error(`Name for a package to be installed and imported is not provided. Please specify package name and a version (e.g., 'lodash@4.17.21' or '@chakra-ui/react@1.0.0').`);
   }
 
   let packageName, version;
@@ -16,7 +16,7 @@ async (packageIdentifier) => {
     packageName = packageIdentifier.slice(0, dividerPosition);
     version = packageIdentifier.slice(dividerPosition + 1);
   } else {
-    throw new Error(`Failed to install and import package with '${packageIdentifier}' identifier. Please specify a version (e.g., 'lodash@4.17.21' or '@konard/use@1.0.0').`);
+    throw new Error(`Failed to install and import package with '${packageIdentifier}' identifier. Please specify a version (e.g., 'lodash@4.17.21' or '@chakra-ui/react@1.0.0').`);
   }
 
   // Define the alias for global installation
