@@ -117,10 +117,10 @@ For a CommonJS environment, you can fetch the CommonJS module version:
 
 1. Create a file named `example.mjs`:
 
-  ```js  
-  const use = await fetch('https://raw.githubusercontent.com/konard/use/refs/heads/main/src/use.mjs')
-    .then(response => response.text())
-    .then(code => eval(code));
+  ```js
+  const use = await fetch('https://raw.githubusercontent.com/Konard/use/refs/heads/main/src/load-use.mjs')
+    .then((response) => response.text())
+    .then((code) => eval(code)());
   
   const _ = await use('lodash@latest');
   const { $ } = await use('execa@latest');
