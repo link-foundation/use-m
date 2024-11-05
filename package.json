@@ -1,6 +1,6 @@
 {
   "name": "the-use-js",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "the use.js: dynamically install and import any npm package",
   "main": "src/use-module.cjs",
   "exports": {
