@@ -1,4 +1,4 @@
-# the-use-js: dynamically install and import any npm package
+# use.js: dynamically install and import any npm package
 
 `the-use-js` is a utility for dynamically installing and importing any npm package at runtime. It’s ideal for scripts that need flexibility in package management, such as automation tasks, serverless functions, or any scripts that benefit from dynamic dependencies.
 
