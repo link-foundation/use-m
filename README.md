@@ -1,6 +1,6 @@
-# use-js: dynamically install and import any npm package
+# the-use-js: dynamically install and import any npm package
 
-`use-js` is a utility for dynamically installing and importing any npm package at runtime. It’s ideal for scripts that need flexibility in package management, such as automation tasks, serverless functions, or any scripts that benefit from dynamic dependencies.
+`the-use-js` is a utility for dynamically installing and importing any npm package at runtime. It’s ideal for scripts that need flexibility in package management, such as automation tasks, serverless functions, or any scripts that benefit from dynamic dependencies.
 
 ## Key Features
 
@@ -9,28 +9,28 @@
 
 ## Installation
 
-Add `use-js` to your project with Yarn:
+Add `the-use-js` to your project with Yarn:
 
 ```bash
-yarn add use-js
+yarn add the-use-js
 ```
 
 Or NPM:
 
 ```bash
-npm install use-js
+npm install the-use-js
 ```
 
 ## Usage
 
 ### Standard Import
 
-Load `use-js` to dynamically import a package from npm:
+Load `the-use-js` to dynamically import a package from npm:
 
 #### CommonJS
 
 ```javascript
-const { use } = require('use-js');
+const { use } = require('the-use-js');
 
 (async () => {
   const _ = await use('lodash@4.17.21');
@@ -41,7 +41,7 @@ const { use } = require('use-js');
 #### ES Modules
 
 ```javascript
-import { use } from 'use-js';
+import { use } from 'the-use-js';
 
 const _ = await use('lodash@4.17.21');
 console.log(_.chunk([1, 2, 3, 4, 5], 2));
@@ -49,7 +49,7 @@ console.log(_.chunk([1, 2, 3, 4, 5], 2));
 
 ### Remote Fetch for Independent Scripts
 
-If you need to use `use-js` without adding it to a project or prefer a completely independent setup, you can load it directly from GitHub using `fetch`. This is particularly useful in environments like [zx](https://github.com/google/zx) or in standalone scripts.
+If you need to use `the-use-js` without adding it to a project or prefer a completely independent setup, you can load it directly from GitHub using `fetch`. This is particularly useful in environments like [zx](https://github.com/google/zx) or in standalone scripts.
 
 #### ES Modules (`.mjs`)
 
@@ -77,7 +77,7 @@ For a CommonJS environment, you can fetch the CommonJS module version:
 })()
 ```
 
-## `use-js` and `zx`
+## `the-use-js` and `zx`
 
 0. Install zx globally
 
@@ -113,7 +113,7 @@ For a CommonJS environment, you can fetch the CommonJS module version:
   ./example.mjs
   ```
 
-## `use-js` and `execa`
+## `the-use-js` and `execa`
 
 1. Create a file named `example.mjs`:
 

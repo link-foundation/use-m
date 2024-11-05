@@ -1,7 +1,7 @@
 {
-  "name": "use-js",
-  "version": "1.0.12",
-  "description": "use: dynamically install and import any npm package",
+  "name": "the-use-js",
+  "version": "1.0.13",
+  "description": "the use.js: dynamically install and import any npm package",
   "main": "src/use-module.cjs",
   "exports": {
     ".": {
@@ -12,6 +12,7 @@
   "type": "module",
   "scripts": {
     "test": "NODE_OPTIONS=\"--experimental-vm-modules\" jest",
+    "publish:minor": "yarn publish --minor --access public && git push && git push --tags",
     "publish:patch": "yarn publish --patch --access public && git push && git push --tags"
   },
   "repository": {
