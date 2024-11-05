@@ -56,16 +56,22 @@ describe('parsePackageIdentifier', () => {
     });
   });
 
-  test('throws error if version is missing', () => {
-    expect(() => parsePackageIdentifier('lodash')).toThrow(
-      "Package identifier 'lodash' is missing a version. Please specify a version (e.g., 'lodash@4.17.21' or '@chakra-ui/react@1.0.0')."
-    );
+  test('parses scoped package with name', () => {
+    const result = parsePackageIdentifier('lodash');
+    expect(result).toEqual({
+      packageName: 'lodash',
+      version: 'latest',
+      path: '',
+    });
   });
 
-  test('throws error if scoped package version is missing', () => {
-    expect(() => parsePackageIdentifier('@chakra-ui/react')).toThrow(
-      "Package identifier '@chakra-ui/react' is missing a version. Please specify a version (e.g., 'lodash@4.17.21' or '@chakra-ui/react@1.0.0')."
-    );
+  test('parses scoped package with name', () => {
+    const result = parsePackageIdentifier('@chakra-ui/react');
+    expect(result).toEqual({
+      packageName: '@chakra-ui/react',
+      version: 'latest',
+      path: '',
+    });
   });
 
   test('throws error for invalid package identifier', () => {
