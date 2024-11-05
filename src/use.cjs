@@ -39,12 +39,7 @@ async (packageIdentifier) => {
         `Failed to parse package identifier '${packageIdentifier}'. Please specify a version (e.g., 'lodash@4.17.21' or '@chakra-ui/react@1.0.0').`
       );
     }
-    const { packageName, version, modulePath = '' } = match.groups;
-    if (!version) {
-      throw new Error(
-        `Package identifier '${packageIdentifier}' is missing a version. Please specify a version (e.g., 'lodash@4.17.21' or '@chakra-ui/react@1.0.0').`
-      );
-    }
+    const { packageName, version = 'latest', modulePath = '' } = match.groups;
     return { packageName, version, modulePath };
   }
 
