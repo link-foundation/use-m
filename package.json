@@ -17,14 +17,17 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/link-foundation/use-js.git"
+    "url": "https://github.com/link-foundation/npm-use-js.git"
   },
   "bugs": {
-    "url": "https://github.com/link-foundation/use-js/issues"
+    "url": "https://github.com/link-foundation/npm-use-js/issues"
   },
   "keywords": [
     "use",
     "npm",
+    "backend",
+    "global require",
+    "global import",
     "dynamic require",
     "dynamic import",
     "npm package loader",

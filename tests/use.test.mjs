@@ -41,7 +41,7 @@ describe(`'use' import strategies`, () => {
 
   test('Fetch from GitHub with Eval', async () => {
     global.__filename = fileURLToPath(import.meta.url); // required for eval to work
-    const use = await fetch('https://raw.githubusercontent.com/link-foundation/use-js/refs/heads/main/src/use.mjs')
+    const use = await fetch('https://raw.githubusercontent.com/link-foundation/npm-use-js/refs/heads/main/src/use.mjs')
       .then((response) => response.text())
       .then((code) => eval(code));
     const _ = await use("lodash@4.17.21");
@@ -50,7 +50,7 @@ describe(`'use' import strategies`, () => {
   });
 
   test('Fetch from GitHub with Eval via load-use', async () => {
-    const use = await fetch('https://raw.githubusercontent.com/link-foundation/use-js/refs/heads/main/src/load-use.mjs')
+    const use = await fetch('https://raw.githubusercontent.com/link-foundation/npm-use-js/refs/heads/main/src/load-use.mjs')
       .then((response) => response.text())
       .then((code) => eval(code)());
     const _ = await use("lodash@4.17.21");

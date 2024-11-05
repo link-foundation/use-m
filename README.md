@@ -1,6 +1,6 @@
 # use.js: dynamically install and import any npm package
 
-`the-use-js` is a utility for dynamically installing and importing any npm package at runtime. It’s ideal for scripts that need flexibility in package management, such as automation tasks, serverless functions, or any scripts that benefit from dynamic dependencies.
+`npm-use-js` is a utility for dynamically installing and importing any npm package at runtime. It’s ideal for scripts that need flexibility in package management, such as automation tasks, serverless functions, or any scripts that benefit from dynamic dependencies.
 
 ## Key Features
 
@@ -9,28 +9,28 @@
 
 ## Installation
 
-Add `the-use-js` to your project with Yarn:
+Add `npm-use-js` to your project with Yarn:
 
 ```bash
-yarn add the-use-js
+yarn add npm-use-js
 ```
 
 Or NPM:
 
 ```bash
-npm install the-use-js
+npm install npm-use-js
 ```
 
 ## Usage
 
 ### Standard Import
 
-Load `the-use-js` to dynamically import a package from npm:
+Load `npm-use-js` to dynamically import a package from npm:
 
 #### CommonJS
 
 ```javascript
-const { use } = require('the-use-js');
+const { use } = require('npm-use-js');
 
 (async () => {
   const _ = await use('lodash@4.17.21');
@@ -41,7 +41,7 @@ const { use } = require('the-use-js');
 #### ES Modules
 
 ```javascript
-import { use } from 'the-use-js';
+import { use } from 'npm-use-js';
 
 const _ = await use('lodash@4.17.21');
 console.log(_.chunk([1, 2, 3, 4, 5], 2));
@@ -49,12 +49,12 @@ console.log(_.chunk([1, 2, 3, 4, 5], 2));
 
 ### Remote Fetch for Independent Scripts
 
-If you need to use `the-use-js` without adding it to a project or prefer a completely independent setup, you can load it directly from GitHub using `fetch`. This is particularly useful in environments like [zx](https://github.com/google/zx) or in standalone scripts.
+If you need to use `npm-use-js` without adding it to a project or prefer a completely independent setup, you can load it directly from GitHub using `fetch`. This is particularly useful in environments like [zx](https://github.com/google/zx) or in standalone scripts.
 
 #### ES Modules (`.mjs`)
 
 ```javascript
-const use = await fetch('https://raw.githubusercontent.com/link-foundation/use-js/refs/heads/main/src/use.mjs')
+const use = await fetch('https://raw.githubusercontent.com/link-foundation/npm-use-js/refs/heads/main/src/use.mjs')
   .then(response => response.text())
   .then(code => eval(code));
 
@@ -68,7 +68,7 @@ For a CommonJS environment, you can fetch the CommonJS module version:
 
 ```javascript
 (async () => {
-  const use = await fetch('https://raw.githubusercontent.com/link-foundation/use-js/refs/heads/main/src/use.cjs')
+  const use = await fetch('https://raw.githubusercontent.com/link-foundation/npm-use-js/refs/heads/main/src/use.cjs')
   .then(response => response.text())
   .then(code => eval(code));
 
@@ -77,7 +77,7 @@ For a CommonJS environment, you can fetch the CommonJS module version:
 })()
 ```
 
-## `the-use-js` and `zx`
+## `npm-use-js` and `zx`
 
 0. Install zx globally
 
@@ -90,7 +90,7 @@ For a CommonJS environment, you can fetch the CommonJS module version:
   ```js
   #!/usr/bin/env zx --verbose
   
-  const use = await fetch('https://raw.githubusercontent.com/link-foundation/use-js/refs/heads/main/src/use.mjs')
+  const use = await fetch('https://raw.githubusercontent.com/link-foundation/npm-use-js/refs/heads/main/src/use.mjs')
     .then(response => response.text())
     .then(code => eval(code));
   
@@ -113,12 +113,12 @@ For a CommonJS environment, you can fetch the CommonJS module version:
   ./example.mjs
   ```
 
-## `the-use-js` and `execa`
+## `npm-use-js` and `execa`
 
 1. Create a file named `example.mjs`:
 
   ```js
-  const use = await fetch('https://raw.githubusercontent.com/link-foundation/use-js/refs/heads/main/src/load-use.mjs')
+  const use = await fetch('https://raw.githubusercontent.com/link-foundation/npm-use-js/refs/heads/main/src/load-use.mjs')
     .then((response) => response.text())
     .then((code) => eval(code)());
   
