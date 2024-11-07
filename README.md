@@ -1,6 +1,6 @@
 # use-m: dynamically import any JavaScript module
 
-`npm-use-js` is a utility for dynamically installing and importing any npm package at runtime. It’s ideal for scripts that need flexibility in package management, such as automation tasks, serverless functions, or any scripts that benefit from dynamic dependencies.
+`use-m` is a utility for dynamically installing and importing any npm package at runtime. It’s ideal for scripts that need flexibility in package management, such as automation tasks, serverless functions, or any scripts that benefit from dynamic dependencies.
 
 ## Key Features
 
@@ -9,28 +9,28 @@
 
 ## Installation
 
-Add `npm-use-js` to your project with Yarn:
+Add `use-m` to your project with Yarn:
 
 ```bash
-yarn add npm-use-js
+yarn add use-m
 ```
 
 Or NPM:
 
 ```bash
-npm install npm-use-js
+npm install use-m
 ```
 
 ## Usage
 
 ### Standard Import
 
-Load `npm-use-js` to dynamically import a package from npm:
+Load `use-m` to dynamically import a package from npm:
 
 #### CommonJS
 
 ```javascript
-const { use } = require('npm-use-js');
+const { use } = require('use-m');
 
 (async () => {
   const _ = await use('lodash@4.17.21');
@@ -41,7 +41,7 @@ const { use } = require('npm-use-js');
 #### ES Modules
 
 ```javascript
-import { use } from 'npm-use-js';
+import { use } from 'use-m';
 
 const _ = await use('lodash@4.17.21');
 console.log(_.chunk([1, 2, 3, 4, 5], 2));
@@ -49,7 +49,7 @@ console.log(_.chunk([1, 2, 3, 4, 5], 2));
 
 ### Remote Fetch for Independent Scripts
 
-If you need to use `npm-use-js` without adding it to a project or prefer a completely independent setup, you can load it directly from GitHub using `fetch`. This is particularly useful in environments like [zx](https://github.com/google/zx) or in standalone scripts.
+If you need to use `use-m` without adding it to a project or prefer a completely independent setup, you can load it directly from GitHub using `fetch`. This is particularly useful in environments like [zx](https://github.com/google/zx) or in standalone scripts.
 
 #### ES Modules (`.mjs`)
 
@@ -77,7 +77,7 @@ For a CommonJS environment, you can fetch the CommonJS module version:
 })()
 ```
 
-## `npm-use-js` and `zx`
+## `use-m` and `zx`
 
 0. Install zx globally
 
@@ -113,7 +113,7 @@ For a CommonJS environment, you can fetch the CommonJS module version:
   ./example.mjs
   ```
 
-## `npm-use-js` and `execa`
+## `use-m` and `execa`
 
 1. Create a file named `example.mjs`:
 
