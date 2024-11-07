@@ -12,7 +12,14 @@ describe(`'use' import strategies`, () => {
     expect(result).toBe(5);
   });
 
-  test('Dynamic ESM Import', async () => {
+  test('Dynamic ESM Import of CSJ', async () => {
+    const { use } = await import('../src/use-module.cjs');
+    const _ = await use("lodash@4.17.21");
+    const result = _.add(2, 3);
+    expect(result).toBe(5);
+  });
+
+  test('Dynamic ESM Import of MJS', async () => {
     const { use } = await import('../src/use-module.mjs');
     const _ = await use("lodash@4.17.21");
     const result = _.add(2, 3);

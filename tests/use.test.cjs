@@ -9,8 +9,24 @@ describe(`'use' import strategies (CJS)`, () => {
     expect(result).toBe(5);
   });
 
+  // New Test Case: Dynamic import with `await import()` directly
+  test('Dynamic Import with await import() of CJS', async () => {
+    const { use } = await import(require.resolve('../src/use-module.cjs'));
+    const _ = await use("lodash@4.17.21");
+    const result = _.add(2, 3);
+    expect(result).toBe(5);
+  });
+
+  // New Test Case: Dynamic import with `await import()` directly
+  test('Dynamic Import with await import() of MJS', async () => {
+    const { use } = await import(require.resolve('../src/use-module.mjs'));
+    const _ = await use("lodash@4.17.21");
+    const result = _.add(2, 3);
+    expect(result).toBe(5);
+  });
+
   test('File Read with Eval', async () => {
-    const use = await fs.readFile(path.resolve(__dirname, '../src/use.cjs'), 'utf8')
+    const use = await fs.readFile(require.resolve('../src/use.cjs'), 'utf8')
       .then((code) => eval(code));
     const _ = await use("lodash@4.17.21");
     const result = _.add(2, 3);
@@ -18,7 +34,7 @@ describe(`'use' import strategies (CJS)`, () => {
   });
 
   test('File Read with Eval via load-use', async () => {
-    const loadUsePath = path.resolve(__dirname, '../src/load-use.cjs');
+    const loadUsePath = require.resolve('../src/load-use.cjs');
     const use = await fs.readFile(loadUsePath, 'utf8')
       .then((code) => eval(code)());
     const _ = await use("lodash@4.17.21");
