@@ -6,7 +6,7 @@ import resolvers from './resolvers.mjs';
 const __filename = fileURLToPath(import.meta.url);
 const require = createRequire(__filename);
 const __dirname = path.dirname(__filename);
-const code = fs.readFileSync(path.join(__dirname, 'use.mjs'), 'utf8');
+const code = fs.readFileSync(path.join(__dirname, 'use-function.mjs'), 'utf8');
 const baseUse = eval(code);
 const use = async (moduleSpecifier) => {
   const { npm } = resolvers;

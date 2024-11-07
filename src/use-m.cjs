@@ -1,4 +1,4 @@
-const resolvers = require('./resolvers.cjs');;
+const resolvers = require('./resolvers.cjs');
 
 const baseUse = async (modulePath) => {
   // Dynamically import the module
