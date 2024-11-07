@@ -52,7 +52,7 @@ describe(`'use' import strategies (CJS)`, () => {
   });
 
   test('Universal', async () => {
-    const use = await fetch('https://unpkg.com/use-m/src/use.cjs')
+    const use = await fetch('https://unpkg.com/use-m/src/use.js')
       .then((response) => response.text())
       .then((code) => eval(code)());
     const _ = await use('lodash@4.17.21');

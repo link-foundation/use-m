@@ -163,10 +163,10 @@ const use = async (moduleSpecifier, resolverName) => {
 async (options) => {
   let resolverName = options?.resolver;
   if (!resolverName) {
-    if (typeof require !== "undefined") {
-      resolverName = 'npm';
-    } else {
+    if (typeof window !== "undefined") {
       resolverName = 'unpkg';
+    } else {
+      resolverName = 'npm';
     }
   }
   return (moduleSpecifier) => {
