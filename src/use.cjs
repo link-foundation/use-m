@@ -77,9 +77,9 @@ async (moduleSpecifier) => {
     throw new Error(`Failed to resolve the path to ${packageName}@${version} from '${packageModulePath}'.`);
   }
 
-  // Dynamically require the package
+  // Dynamically import the package
   try {
-    const module = require(resolvedPath);
+    const module = await import(resolvedPath);
 
     // Check if the only key in the module is "default"
     const keys = Object.keys(module);
@@ -89,6 +89,6 @@ async (moduleSpecifier) => {
 
     return module;
   } catch (error) {
-    throw new Error(`Failed to require ${packageName}@${version} from '${packagePath}' resolved as '${resolvedPath}'.`, { cause: error });
+    throw new Error(`Failed to import '${resolvedPath}'.`, { cause: error });
   }
 }

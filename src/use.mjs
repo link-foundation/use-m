@@ -91,6 +91,6 @@ async (moduleSpecifier) => {
 
     return module;
   } catch (error) {
-    throw new Error(`Failed to import ${packageName}@${version} from '${packagePath}' resolved as '${resolvedPath}'.`, { cause: error });
+    throw new Error(`Failed to import '${resolvedPath}'.`, { cause: error });
   }
 }
