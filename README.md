@@ -77,7 +77,7 @@ For a CommonJS environment, you can fetch the CommonJS module version:
 })()
 ```
 
-## `use-m` and `zx`
+#### `use-m` and `zx`
 
 0. Install zx globally
 
@@ -113,7 +113,7 @@ For a CommonJS environment, you can fetch the CommonJS module version:
   ./example.mjs
   ```
 
-## `use-m` and `execa`
+#### `use-m` and `execa`
 
 1. Create a file named `example.mjs`:
 
@@ -136,6 +136,16 @@ For a CommonJS environment, you can fetch the CommonJS module version:
   ```bash
   node example.mjs
   ```
+
+### Browser support
+
+```js
+const use = await fetch('https://unpkg.com/use-m@2.0.5/src/use-browser.cjs')
+      .then((response) => response.text())
+      .then((code) => eval(code));
+const _ = await use('lodash@4.17.21');
+_.add(1, 2)
+```
 
 ## License
 
