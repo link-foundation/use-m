@@ -1,7 +1,7 @@
 {
   "name": "use-m",
-  "version": "1.5.0",
-  "description": "the use.js: dynamically install and import any npm package",
+  "version": "1.5.1",
+  "description": "use-m: dynamically import any JavaScript module",
   "main": "src/use-module.cjs",
   "exports": {
     ".": {
@@ -17,10 +17,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/link-foundation/npm-use-js.git"
+    "url": "https://github.com/link-foundation/use-m.git"
   },
   "bugs": {
-    "url": "https://github.com/link-foundation/npm-use-js/issues"
+    "url": "https://github.com/link-foundation/use-m/issues"
   },
   "keywords": [
     "use",
