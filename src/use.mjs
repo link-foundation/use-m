@@ -1,4 +1,4 @@
-async (packageIdentifier) => {
+async (moduleSpecifier) => {
   const path = await import('path');
   const { exec } = await import('child_process');
   const { promisify } = await import('util');
@@ -33,23 +33,23 @@ async (packageIdentifier) => {
     }
   };
 
-  function parseModuleSpecifier(packageIdentifier) {
+  function parseModuleSpecifier(moduleSpecifier) {
     const regex = /^(?<packageName>@?([^@/]+\/)?[^@/]+)?(?:@(?<version>[^/]+))?(?<modulePath>(?:\/[^@]+)*)?$/;
-    const match = packageIdentifier.match(regex);
+    const match = moduleSpecifier.match(regex);
     if (!match || !match.groups.packageName) {
       throw new Error(
-        `Failed to parse package identifier '${packageIdentifier}'. Please specify a version (e.g., 'lodash@4.17.21' or '@chakra-ui/react@1.0.0').`
+        `Failed to parse package identifier '${moduleSpecifier}'. Please specify a version (e.g., 'lodash@4.17.21' or '@chakra-ui/react@1.0.0').`
       );
     }
     const { packageName, version = 'latest', modulePath = '' } = match.groups;
     return { packageName, version, modulePath };
   }
 
-  if (!packageIdentifier || typeof packageIdentifier !== 'string' || packageIdentifier.length <= 0) {
+  if (!moduleSpecifier || typeof moduleSpecifier !== 'string' || moduleSpecifier.length <= 0) {
     throw new Error(`Name for a package to be installed and imported is not provided. Please specify package name and a version (e.g., 'lodash@4.17.21' or '@chakra-ui/react@1.0.0').`);
   }
 
-  const { packageName, version, modulePath } = parseModuleSpecifier(packageIdentifier);
+  const { packageName, version, modulePath } = parseModuleSpecifier(moduleSpecifier);
 
   // Define the alias for global installation
   const alias = `${packageName.replace('@', '').replace('/', '-')}-v${version}`;

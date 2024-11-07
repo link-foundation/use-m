@@ -1,10 +1,10 @@
 describe('parseModuleSpecifier', () => {
-  function parseModuleSpecifier(packageIdentifier) {
+  function parseModuleSpecifier(moduleSpecifier) {
     const regex = /^(?<packageName>@?([^@/]+\/)?[^@/]+)?(?:@(?<version>[^/]+))?(?<path>(?:\/[^@]+)*)?$/;
-    const match = packageIdentifier.match(regex);
+    const match = moduleSpecifier.match(regex);
     if (!match || !match.groups.packageName) {
       throw new Error(
-        `Failed to parse package identifier '${packageIdentifier}'. Please specify a version (e.g., 'lodash@4.17.21' or '@chakra-ui/react@1.0.0').`
+        `Failed to parse package identifier '${moduleSpecifier}'. Please specify a version (e.g., 'lodash@4.17.21' or '@chakra-ui/react@1.0.0').`
       );
     }
     const { packageName, version = 'latest', path = '' } = match.groups;
