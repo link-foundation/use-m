@@ -6,12 +6,6 @@ async () => {
   const moduleDirectory = join(tmpdir(), randomBytes(42).toString('hex'));
   await mkdir(moduleDirectory);
   await writeFile(
-    join(moduleDirectory, 'use.mjs'), 
-    await (
-      await fetch('https://unpkg.com/use-m/src/use.mjs')
-    ).text()
-  );
-  await writeFile(
     join(moduleDirectory, 'resolvers.mjs'),
     await (
       await fetch('https://unpkg.com/use-m/src/resolvers.mjs')
