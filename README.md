@@ -139,12 +139,12 @@ For a CommonJS environment, you can fetch the CommonJS module version:
 
 ### Browser support
 
-```js
-const use = await fetch('https://unpkg.com/use-m/src/use-browser.cjs')
-      .then((response) => response.text())
-      .then((code) => eval(code));
+```javascript
+const use = await fetch('https://unpkg.com/use-m/src/use.cjs')
+  .then((response) => response.text())
+  .then((code) => eval(code)());
 const _ = await use('lodash@4.17.21');
-_.add(1, 2)
+const result = _.add(1, 2);
 ```
 
 ## License

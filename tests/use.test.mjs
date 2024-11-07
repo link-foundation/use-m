@@ -54,4 +54,13 @@ describe(`'use' import strategies`, () => {
     const result = _.add(2, 3);
     expect(result).toBe(5);
   });
+
+  test('Universal', async () => {
+    const use = await fetch('https://unpkg.com/use-m/src/use.cjs')
+      .then((response) => response.text())
+      .then((code) => eval(code)());
+    const _ = await use('lodash@4.17.21');
+    const result = _.add(1, 2);
+    expect(result).toBe(3);
+  });
 });
