@@ -46,16 +46,6 @@ describe(`'use' import strategies`, () => {
     expect(result).toBe(5);
   });
 
-  test('Fetch from GitHub with Eval', async () => {
-    global.__filename = fileURLToPath(import.meta.url); // required for eval to work
-    const use = await fetch('https://raw.githubusercontent.com/link-foundation/use-m/refs/heads/main/src/use.mjs')
-      .then((response) => response.text())
-      .then((code) => eval(code));
-    const _ = await use("lodash@4.17.21");
-    const result = _.add(2, 3);
-    expect(result).toBe(5);
-  });
-
   test('Fetch from GitHub with Eval via load-use', async () => {
     const use = await fetch('https://raw.githubusercontent.com/link-foundation/use-m/refs/heads/main/src/load-use.mjs')
       .then((response) => response.text())

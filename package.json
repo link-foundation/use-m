@@ -12,6 +12,7 @@
   "type": "module",
   "scripts": {
     "test": "NODE_OPTIONS=\"--experimental-vm-modules\" jest",
+    "publish:major": "yarn publish --major --access public && git push && git push --tags",
     "publish:minor": "yarn publish --minor --access public && git push && git push --tags",
     "publish:patch": "yarn publish --patch --access public && git push && git push --tags"
   },
