@@ -144,7 +144,7 @@ const use = await fetch('https://unpkg.com/use-m/src/use.js')
   .then((response) => response.text())
   .then((code) => eval(code)());
 const _ = await use('lodash@4.17.21');
-const result = _.add(1, 2);
+_.add(1, 2);
 ```
 
 ## License
