@@ -2,9 +2,17 @@ async (moduleSpecifier) => {
   const path = await import('path');
   const { exec } = await import('child_process');
   const { promisify } = await import('util');
-  const { createRequire } = await import('module');
-  const require = createRequire(__filename);
   const execAsync = promisify(exec);
+
+  let currentResolver = null;
+  if (!currentResolver) {
+    const { createRequire } = await import('module');
+    const require = createRequire(__filename);
+    currentResolver = require.resolve;
+  }
+  if (!currentResolver) {
+    throw new Error('Failed to get the current resolver.');
+  }
 
   const directoryExists = async (directoryPath) => {
     try {
@@ -24,7 +32,7 @@ async (moduleSpecifier) => {
       return null;
     }
     try {
-      return require.resolve(packagePath);
+      return currentResolver(packagePath);
     } catch (error) {
       if (error.code !== 'MODULE_NOT_FOUND') {
         throw error;
