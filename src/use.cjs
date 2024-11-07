@@ -31,7 +31,7 @@ async (packageIdentifier) => {
     }
   };
 
-  function parsePackageIdentifier(packageIdentifier) {
+  function parseModuleSpecifier(packageIdentifier) {
     const regex = /^(?<packageName>@?([^@/]+\/)?[^@/]+)?(?:@(?<version>[^/]+))?(?<modulePath>(?:\/[^@]+)*)?$/;
     const match = packageIdentifier.match(regex);
     if (!match || !match.groups.packageName) {
@@ -47,7 +47,7 @@ async (packageIdentifier) => {
     throw new Error(`Name for a package to be installed and imported is not provided. Please specify package name and a version (e.g., 'lodash@4.17.21' or '@chakra-ui/react@1.0.0').`);
   }
 
-  const { packageName, version, modulePath } = parsePackageIdentifier(packageIdentifier);
+  const { packageName, version, modulePath } = parseModuleSpecifier(packageIdentifier);
 
   // Define the alias for global installation
   const alias = `${packageName.replace('@', '').replace('/', '-')}-v${version}`;

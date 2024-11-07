@@ -1,5 +1,5 @@
-describe('parsePackageIdentifier', () => {
-  function parsePackageIdentifier(packageIdentifier) {
+describe('parseModuleSpecifier', () => {
+  function parseModuleSpecifier(packageIdentifier) {
     const regex = /^(?<packageName>@?([^@/]+\/)?[^@/]+)?(?:@(?<version>[^/]+))?(?<path>(?:\/[^@]+)*)?$/;
     const match = packageIdentifier.match(regex);
     if (!match || !match.groups.packageName) {
@@ -12,7 +12,7 @@ describe('parsePackageIdentifier', () => {
   }
 
   test('parses package with name and version', () => {
-    const result = parsePackageIdentifier('lodash@4.17.21');
+    const result = parseModuleSpecifier('lodash@4.17.21');
     expect(result).toEqual({
       packageName: 'lodash',
       version: '4.17.21',
@@ -21,7 +21,7 @@ describe('parsePackageIdentifier', () => {
   });
 
   test('parses scoped package with name and version', () => {
-    const result = parsePackageIdentifier('@chakra-ui/react@1.0.0');
+    const result = parseModuleSpecifier('@chakra-ui/react@1.0.0');
     expect(result).toEqual({
       packageName: '@chakra-ui/react',
       version: '1.0.0',
@@ -30,7 +30,7 @@ describe('parsePackageIdentifier', () => {
   });
 
   test('parses package with name, version, and inner path', () => {
-    const result = parsePackageIdentifier('lodash@4.17.21/path/to/module');
+    const result = parseModuleSpecifier('lodash@4.17.21/path/to/module');
     expect(result).toEqual({
       packageName: 'lodash',
       version: '4.17.21',
@@ -39,7 +39,7 @@ describe('parsePackageIdentifier', () => {
   });
 
   test('parses package with name, version, and inner path', () => {
-    const result = parsePackageIdentifier('lodash@latest/path/to/module');
+    const result = parseModuleSpecifier('lodash@latest/path/to/module');
     expect(result).toEqual({
       packageName: 'lodash',
       version: 'latest',
@@ -48,7 +48,7 @@ describe('parsePackageIdentifier', () => {
   });
 
   test('parses scoped package with name, version, and inner path', () => {
-    const result = parsePackageIdentifier('@chakra-ui/react@1.0.0/path/to/module');
+    const result = parseModuleSpecifier('@chakra-ui/react@1.0.0/path/to/module');
     expect(result).toEqual({
       packageName: '@chakra-ui/react',
       version: '1.0.0',
@@ -57,7 +57,7 @@ describe('parsePackageIdentifier', () => {
   });
 
   test('parses scoped package with name', () => {
-    const result = parsePackageIdentifier('lodash');
+    const result = parseModuleSpecifier('lodash');
     expect(result).toEqual({
       packageName: 'lodash',
       version: 'latest',
@@ -66,7 +66,7 @@ describe('parsePackageIdentifier', () => {
   });
 
   test('parses scoped package with name', () => {
-    const result = parsePackageIdentifier('@chakra-ui/react');
+    const result = parseModuleSpecifier('@chakra-ui/react');
     expect(result).toEqual({
       packageName: '@chakra-ui/react',
       version: 'latest',
@@ -75,7 +75,7 @@ describe('parsePackageIdentifier', () => {
   });
 
   test('throws error for invalid package identifier', () => {
-    expect(() => parsePackageIdentifier('invalid@identifier/with@extra@symbols')).toThrow(
+    expect(() => parseModuleSpecifier('invalid@identifier/with@extra@symbols')).toThrow(
       "Failed to parse package identifier 'invalid@identifier/with@extra@symbols'. Please specify a version (e.g., 'lodash@4.17.21' or '@chakra-ui/react@1.0.0')."
     );
   });
