@@ -152,6 +152,10 @@ const baseUse = async (modulePath) => {
 }
 
 async (moduleSpecifier) => {
-  const { unpkg } = resolvers;
-  return baseUse(await unpkg(moduleSpecifier));
+  const { npm, unpkg } = resolvers;
+  if (typeof require !== "undefined") {
+    return baseUse(await npm(moduleSpecifier, require.resolve));
+  } else {
+    return baseUse(await unpkg(moduleSpecifier));
+  }
 }
