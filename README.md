@@ -1,6 +1,6 @@
 # use-m: dynamically import any JavaScript module
 
-`use-m` is a utility for dynamically importing any JavaScript module (npm package) at runtime. It’s ideal for scripts that need flexibility in package management, such as automation tasks, serverless functions, or any scripts that benefit from dynamic dependencies.
+`use-m` (`m` stands for `module`) is a utility for dynamically importing any JavaScript module (npm package) at runtime. It’s ideal for scripts that need flexibility in package management, such as automation tasks, serverless functions, or any scripts that benefit from dynamic dependencies.
 
 ## Key Features
 
