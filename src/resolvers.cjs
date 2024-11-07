@@ -1,5 +1,3 @@
-
-
 const resolvers = {
   npm: async (moduleSpecifier, baseResolver) => {
     const path = await import('path');
