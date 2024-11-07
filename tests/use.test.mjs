@@ -2,7 +2,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { promises as fs } from 'fs';
 
-import { use as staticUse } from '../src/use-module.mjs';
+import { use as staticUse } from '../src/use-m.mjs';
 
 describe(`'use' import strategies`, () => {
   test('Direct ESM Import', async () => {
@@ -13,14 +13,14 @@ describe(`'use' import strategies`, () => {
   });
 
   test('Dynamic ESM Import of CSJ', async () => {
-    const { use } = await import('../src/use-module.cjs');
+    const { use } = await import('../src/use-m.cjs');
     const _ = await use("lodash@4.17.21");
     const result = _.add(2, 3);
     expect(result).toBe(5);
   });
 
   test('Dynamic ESM Import of MJS', async () => {
-    const { use } = await import('../src/use-module.mjs');
+    const { use } = await import('../src/use-m.mjs');
     const _ = await use("lodash@4.17.21");
     const result = _.add(2, 3);
     expect(result).toBe(5);

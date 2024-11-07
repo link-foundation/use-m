@@ -2,11 +2,11 @@
   "name": "use-m",
   "version": "1.5.3",
   "description": "use-m: dynamically import any JavaScript module",
-  "main": "src/use-module.cjs",
+  "main": "src/use-m.cjs",
   "exports": {
     ".": {
-      "import": "./src/use-module.mjs",
-      "require": "./src/use-module.cjs"
+      "import": "./src/use-m.mjs",
+      "require": "./src/use-m.cjs"
     }
   },
   "type": "module",
@@ -30,7 +30,7 @@
     "global import",
     "dynamic require",
     "dynamic import",
-    "npm package loader",
+    "package loader",
     "module loader",
     "dependency management"
   ],

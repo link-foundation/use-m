@@ -16,12 +16,12 @@ async () => {
     await (
       await fetch('https://raw.githubusercontent.com/link-foundation/use-m/refs/heads/main/src/resolvers.cjs')
     ).text()
-  );
-  const modulePath = join(moduleDirectory, 'use-module.cjs');
+  );å
+  const modulePath = join(moduleDirectory, 'use-m.cjs');
   await writeFile(
     modulePath,
     await (
-      await fetch('https://raw.githubusercontent.com/link-foundation/use-m/refs/heads/main/src/use-module.cjs')
+      await fetch('https://raw.githubusercontent.com/link-foundation/use-m/refs/heads/main/src/use-m.cjs')
     ).text()
   );
   const { use } = await require(modulePath);

@@ -17,11 +17,11 @@ async () => {
       await fetch('https://raw.githubusercontent.com/link-foundation/use-m/refs/heads/main/src/resolvers.mjs')
     ).text()
   );
-  const modulePath = join(moduleDirectory, 'use-module.mjs');
+  const modulePath = join(moduleDirectory, 'use-m.mjs');
   await writeFile(
     modulePath,
     await (
-      await fetch('https://raw.githubusercontent.com/link-foundation/use-m/refs/heads/main/src/use-module.mjs')
+      await fetch('https://raw.githubusercontent.com/link-foundation/use-m/refs/heads/main/src/use-m.mjs')
     ).text()
   );
   const { use } = await import(modulePath);
