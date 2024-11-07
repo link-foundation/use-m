@@ -163,7 +163,7 @@ async (options) => {
   let baseResolver = options?.baseResolver;
   if (!baseResolver) {
     if (typeof require !== "undefined") {
-      baseResolver = baseResolver;
+      baseResolver = require.resolve;
     } else {
       baseResolver = (path) => path;
     }
