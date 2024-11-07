@@ -8,20 +8,20 @@ async () => {
   await writeFile(
     join(moduleDirectory, 'use.mjs'), 
     await (
-      await fetch('https://raw.githubusercontent.com/link-foundation/use-m/refs/heads/main/src/use.mjs')
+      await fetch('https://unpkg.com/use-m/src/use.mjs')
     ).text()
   );
   await writeFile(
     join(moduleDirectory, 'resolvers.mjs'),
     await (
-      await fetch('https://raw.githubusercontent.com/link-foundation/use-m/refs/heads/main/src/resolvers.mjs')
+      await fetch('https://unpkg.com/use-m/src/resolvers.mjs')
     ).text()
   );
   const modulePath = join(moduleDirectory, 'use-m.mjs');
   await writeFile(
     modulePath,
     await (
-      await fetch('https://raw.githubusercontent.com/link-foundation/use-m/refs/heads/main/src/use-m.mjs')
+      await fetch('https://unpkg.com/use-m/src/use-m.mjs')
     ).text()
   );
   const { use } = await import(modulePath);

@@ -54,7 +54,7 @@ If you need to use `use-m` without adding it to a project or prefer a completely
 #### ES Modules (`.mjs`)
 
 ```javascript
-const use = await fetch('https://raw.githubusercontent.com/link-foundation/use-m/refs/heads/main/src/use.mjs')
+const use = await fetch('https://unpkg.com/use-m/src/use.mjs')
   .then(response => response.text())
   .then(code => eval(code));
 
@@ -68,7 +68,7 @@ For a CommonJS environment, you can fetch the CommonJS module version:
 
 ```javascript
 (async () => {
-  const use = await fetch('https://raw.githubusercontent.com/link-foundation/use-m/refs/heads/main/src/use.cjs')
+  const use = await fetch('https://unpkg.com/use-m/src/use.cjs')
   .then(response => response.text())
   .then(code => eval(code));
 
@@ -90,7 +90,7 @@ For a CommonJS environment, you can fetch the CommonJS module version:
   ```js
   #!/usr/bin/env zx --verbose
   
-  const use = await fetch('https://raw.githubusercontent.com/link-foundation/use-m/refs/heads/main/src/use.mjs')
+  const use = await fetch('https://unpkg.com/use-m/src/use.mjs')
     .then(response => response.text())
     .then(code => eval(code));
   
@@ -118,7 +118,7 @@ For a CommonJS environment, you can fetch the CommonJS module version:
 1. Create a file named `example.mjs`:
 
   ```js
-  const use = await fetch('https://raw.githubusercontent.com/link-foundation/use-m/refs/heads/main/src/load-use.mjs')
+  const use = await fetch('https://unpkg.com/use-m/src/load-use.mjs')
     .then((response) => response.text())
     .then((code) => eval(code)());
   

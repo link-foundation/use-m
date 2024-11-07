@@ -47,7 +47,7 @@ describe(`'use' import strategies`, () => {
   });
 
   test('Fetch from GitHub with Eval via load-use', async () => {
-    const use = await fetch('https://raw.githubusercontent.com/link-foundation/use-m/refs/heads/main/src/load-use.mjs')
+    const use = await fetch('https://unpkg.com/use-m/src/load-use.mjs')
       .then((response) => response.text())
       .then((code) => eval(code)());
     const _ = await use("lodash@4.17.21");
