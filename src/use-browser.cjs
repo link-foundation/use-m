@@ -62,5 +62,5 @@ const baseUse = async (modulePath) => {
 
 async (moduleSpecifier) => {
   const { unpkg } = resolvers;
-  return baseUse(await unpkg(moduleSpecifier, require.resolve));
+  return baseUse(await unpkg(moduleSpecifier));
 }
