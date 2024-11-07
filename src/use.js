@@ -151,15 +151,6 @@ const baseUse = async (modulePath) => {
   }
 }
 
-const use = async (moduleSpecifier, resolverName) => {
-  const resolver = resolvers[resolverName];
-  if (typeof require !== "undefined") {
-    return baseUse(await resolver(moduleSpecifier, require.resolve));
-  } else {
-    return baseUse(await resolver(moduleSpecifier, (path) => path));
-  }
-}
-
 async (options) => {
   let resolverName = options?.resolver;
   if (!resolverName) {
@@ -169,7 +160,16 @@ async (options) => {
       resolverName = 'npm';
     }
   }
-  return (moduleSpecifier) => {
-    return use(moduleSpecifier, resolverName);
+  let baseResolver = options?.baseResolver;
+  if (!baseResolver) {
+    if (typeof require !== "undefined") {
+      baseResolver = baseResolver;
+    } else {
+      baseResolver = (path) => path;
+    }
   }
+  const use = async (moduleSpecifier) => {
+    return baseUse(await resolver(moduleSpecifier, baseResolver));
+  };
+  return use;
 }
