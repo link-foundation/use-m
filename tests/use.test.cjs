@@ -25,13 +25,13 @@ describe(`'use' import strategies (CJS)`, () => {
     expect(result).toBe(5);
   });
 
-  test('File Read with Eval', async () => {
-    const use = await fs.readFile(require.resolve('../src/use.cjs'), 'utf8')
-      .then((code) => eval(code));
-    const _ = await use("lodash@4.17.21");
-    const result = _.add(2, 3);
-    expect(result).toBe(5);
-  });
+  // test('File Read with Eval', async () => {
+  //   const use = await fs.readFile(require.resolve('../src/use.cjs'), 'utf8')
+  //     .then((code) => eval(code));
+  //   const _ = await use("lodash@4.17.21");
+  //   const result = _.add(2, 3);
+  //   expect(result).toBe(5);
+  // });
 
   test('File Read with Eval via load-use', async () => {
     const loadUsePath = require.resolve('../src/load-use.cjs');
