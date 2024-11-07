@@ -7,7 +7,29 @@
 - **Dynamic Package Loading**: Installs and loads npm packages on-demand with **global installation**, making them available across projects and reusable without needing to reinstall each time.
 - **Version-Safe Imports**: Allows multiple versions of the same library to coexist globally without conflicts, so you can specify any version without affecting other scripts.
 
-## Installation
+## Usage
+
+### Universal
+
+Works in CommonJS, ES Modules and Browser environments.
+
+```javascript
+async () => {
+  const use = await fetch('https://unpkg.com/use-m/src/use.js')
+    .then((response) => response.text())
+    .then((code) => eval(code)());
+  const _ = await use('lodash@4.17.21');
+  const result = _.add(1, 2);
+  console.log(result);
+  return result;
+}
+```
+
+In ES Modules and Browser you can omit async function wrapper.
+
+### Standard Import
+
+#### Installation
 
 Add `use-m` to your project with Yarn:
 
@@ -20,10 +42,6 @@ Or NPM:
 ```bash
 npm install use-m
 ```
-
-## Usage
-
-### Standard Import
 
 Load `use-m` to dynamically import a package from npm:
 
@@ -136,16 +154,6 @@ For a CommonJS environment, you can fetch the CommonJS module version:
   ```bash
   node example.mjs
   ```
-
-### Browser support
-
-```javascript
-const use = await fetch('https://unpkg.com/use-m/src/use.js')
-  .then((response) => response.text())
-  .then((code) => eval(code)());
-const _ = await use('lodash@4.17.21');
-_.add(1, 2);
-```
 
 ## License
 
