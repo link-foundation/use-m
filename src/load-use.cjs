@@ -16,7 +16,7 @@ async () => {
     await (
       await fetch('https://unpkg.com/use-m/src/resolvers.cjs')
     ).text()
-  );å
+  );
   const modulePath = join(moduleDirectory, 'use-m.cjs');
   await writeFile(
     modulePath,
