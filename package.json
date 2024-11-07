@@ -1,6 +1,6 @@
 {
-  "name": "npm-use-js",
-  "version": "1.4.1",
+  "name": "use-m",
+  "version": "1.5.0",
   "description": "the use.js: dynamically install and import any npm package",
   "main": "src/use-module.cjs",
   "exports": {
