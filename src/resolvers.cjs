@@ -91,7 +91,51 @@ const resolvers = {
     }
 
     return resolvedPath;
-  }
+  },
+  skypack: async (moduleSpecifier, baseResolver) => {
+    const resolvedPath = `https://cdn.skypack.dev/${moduleSpecifier}`;
+    return resolvedPath;
+  },
+  jsdelivr: async (moduleSpecifier, baseResolver) => {
+    const match = moduleSpecifier.match(/^([^@\/]+)@([^\/]+)(\/.+)?$/);
+    if (!match) {
+      throw new Error(`Invalid module specifier: ${moduleSpecifier}`);
+    }
+    let [, packageName, version, subpath = ''] = match;
+
+    // If no subpath is provided, append /{packageName}.js
+    const path = subpath ? `${subpath}.js` : `/${packageName}.js`;
+    const resolvedPath = `https://cdn.jsdelivr.net/npm/${packageName}-es@${version}${path}`;
+    return resolvedPath;
+  },
+  unpkg: async (moduleSpecifier, baseResolver) => {
+    const match = moduleSpecifier.match(/^([^@\/]+)@([^\/]+)(\/.+)?$/);
+    if (!match) {
+      throw new Error(`Invalid module specifier: ${moduleSpecifier}`);
+    }
+    let [, packageName, version, subpath = ''] = match;
+
+    // If no subpath is provided, append /{packageName}.js
+    const path = subpath ? `${subpath}.js` : `/${packageName}.js`;
+    const resolvedPath = `https://unpkg.com/${packageName}-es@${version}${path}`;
+    return resolvedPath;
+  },
+  esm: async (moduleSpecifier, baseResolver) => {
+    const resolvedPath = `https://esm.sh/${moduleSpecifier}`;
+    return resolvedPath;
+  },
+  jspm: async (moduleSpecifier, baseResolver) => {
+    const match = moduleSpecifier.match(/^([^@\/]+)@([^\/]+)(\/.+)?$/);
+    if (!match) {
+      throw new Error(`Invalid module specifier: ${moduleSpecifier}`);
+    }
+    let [, packageName, version, subpath = ''] = match;
+
+    // For jspm, use the package name as is (no '-es')
+    const path = subpath;
+    const resolvedPath = `https://jspm.dev/${packageName}@${version}${path}`;
+    return resolvedPath;
+  },
 }
 
 module.exports = resolvers;
