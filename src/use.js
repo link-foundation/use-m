@@ -155,7 +155,10 @@ async (options) => {
     }
   }
   const resolver = resolvers[resolverName];
-  const currentFilename = options?.__filename || (typeof __filename !== "undefined" && __filename);
+  let currentFilename = options?.currentFilename;
+  if (!currentFilename && typeof __filename !== "undefined") {
+    currentFilename = __filename;
+  }
   const metaUrl = options?.metaUrl;
   if (!currentFilename && metaUrl) {
     const { fileURLToPath } = await import('url');
