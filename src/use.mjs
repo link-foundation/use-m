@@ -1,4 +1,4 @@
-const resolvers = {
+export const resolvers = {
   npm: async (moduleSpecifier, pathResolver) => {
     const path = await import('path');
     const { exec } = await import('child_process');
@@ -145,7 +145,7 @@ const baseUse = async (modulePath) => {
   }
 }
 
-const makeUse = async (options) => {
+export const makeUse = async (options) => {
   let specifierResolver = options?.specifierResolver;
   if (typeof specifierResolver !== 'function') {
     if (typeof window !== 'undefined') {
@@ -179,8 +179,4 @@ const makeUse = async (options) => {
   };
 }
 
-export default {
-  resolvers,
-  use: await makeUse(),
-  makeUse,
-};
+export const use = await makeUse();
