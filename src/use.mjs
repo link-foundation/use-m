@@ -130,7 +130,7 @@ const resolvers = {
   },
 }
 
-const use = async (modulePath) => {
+const baseUse = async (modulePath) => {
   // Dynamically import the module
   try {
     const module = await import(modulePath);
@@ -175,13 +175,13 @@ const makeUse = async (options) => {
     }
   }
   return async (moduleSpecifier) => {
-    return use(await specifierResolver(moduleSpecifier, pathResolver));
+    return baseUse(await specifierResolver(moduleSpecifier, pathResolver));
   };
 }
 
 export default {
   resolvers,
-  use,
+  use: makeUse(),
   makeUse,
 };
 
