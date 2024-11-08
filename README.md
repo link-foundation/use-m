@@ -138,7 +138,7 @@ console.log(_.add(1, 2));
 
 ## Questions and issues
 
-If you have any questions or issues, please write out it on GitHub: https://github.com/link-foundation/use-m. Together we can ensure this package will have highest quality possible.
+If you have any questions or issues, please write out it on GitHub: [https://github.com/link-foundation/use-m/issues](https://github.com/link-foundation/use-m/issues). Together we can ensure this package will have highest quality possible.
 
 ## License
 
