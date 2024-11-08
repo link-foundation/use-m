@@ -154,6 +154,7 @@ async (options) => {
       resolverName = 'npm';
     }
   }
+  const resolver = resolvers[resolverName];
   const currentFilename = options?.__filename || __filename;
   let baseResolver = options?.baseResolver;
   if (!baseResolver) {
