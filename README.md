@@ -136,6 +136,10 @@ const _ = await use('lodash@4.17.21');
 console.log(_.add(1, 2));
 ```
 
+## Examples
+
+You can check out complete usage examples here: https://github.com/link-foundation/use-m/tree/main/examples
+
 ## Questions and issues
 
 If you have any questions or issues, please write out it on GitHub: [https://github.com/link-foundation/use-m/issues](https://github.com/link-foundation/use-m/issues). Together we can ensure this package will have highest quality possible.
