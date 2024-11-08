@@ -181,9 +181,6 @@ const makeUse = async (options) => {
 
 export default {
   resolvers,
-  use: makeUse(),
+  use: await makeUse(),
   makeUse,
 };
-
-
-
