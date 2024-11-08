@@ -1,17 +1,19 @@
 # use-m: dynamically import any JavaScript module
 
-`use-m` (`m` stands for `module`) is a utility for dynamically importing any JavaScript module (npm package) at runtime. It’s ideal for scripts that need flexibility in package management, such as automation tasks, serverless functions, or any scripts that benefit from dynamic dependencies.
+`use-m` (`m` stands for `module`) is a utility for dynamically importing any JavaScript module (npm package) at runtime. 
 
-## Key Features
+It may useful for standalone scripts that does not need `package.json`. Also it may make your code portable across environments (for example it may require no changes in your code when executed in CommonJS, ES Modules and browser). You also can have predictable behaviour of your code over time if you set specific version to import (that is usually set in `packge.json`, now you can set it right in the script). You even can import multiple versions of the same library at the same time.
 
-- **Dynamic Package Loading**: In `node.js` installs and loads npm packages on-demand with **global installation**, making them available across projects and reusable without needing to reinstall each time. In browser `use-m` loads npm packages directly from CDNs.
-- **Version-Safe Imports**: Allows multiple versions of the same library to coexist without conflicts, so you can specify any version without affecting others.
+## Key features
+
+- **Dynamic package loading**: In `node.js` installs and loads npm packages on-demand with **global installation**, making them available across projects and reusable without needing to reinstall each time. In case of a browser `use-m` loads npm packages directly from CDNs.
+- **Version-safe imports**: Allows multiple versions of the same library to coexist without conflicts, so you can specify any version for each import (usage) without affecting other scripts or other usages (imports) in the same script.
 
 ## Usage
 
 ### Universal
 
-Works in CommonJS, ES Modules and Browser environments.
+Works in CommonJS, ES Modules and browser environments.
 
 ```javascript
 (async () => {
@@ -24,7 +26,7 @@ Works in CommonJS, ES Modules and Browser environments.
 })()
 ```
 
-In ES Modules and Browser you can omit async function wrapper.
+In ES Modules and Browser you can omit async arrow function wrapper.
 
 ### Independent Scripts
 
@@ -96,6 +98,8 @@ Note: in ES Module environments where `__filename` and `require` are not defined
 
 ### Standard Import
 
+You can still install and import `use-m` in `node.js` as usual.
+
 #### Installation
 
 Add `use-m` to your project with Yarn:
@@ -131,6 +135,10 @@ import { use } from 'use-m';
 const _ = await use('lodash@4.17.21');
 console.log(_.add(1, 2));
 ```
+
+## Questions and issues
+
+If you have any questions or issues, please write out it on GitHub: https://github.com/link-foundation/use-m. Together we can ensure this package will have highest quality possible.
 
 ## License
 
