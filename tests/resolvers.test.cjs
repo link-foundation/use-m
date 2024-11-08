@@ -1,9 +1,9 @@
 describe('resolvers tests', () => {
-  const resolvers = require('../src/resolvers.cjs');
+  const { resolvers } = require('../use.cjs');
 
   test('npm resolver resolves package path', async () => {
     const { npm } = resolvers;
-    const packagePath = await npm('lodash@4.17.21');
+    const packagePath = await npm('lodash@4.17.21', require.resolve);
     // console.log('npm:', packagePath);
     expect(packagePath).toMatch(/node_modules\/lodash-v4\.17\.21/);
   });
