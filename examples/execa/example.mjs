@@ -1,6 +1,6 @@
 // import { createRequire } from 'module';
 
-const use = await fetch('https://unpkg.com/use-m/src/use.js')
+const use = await fetch('https://unpkg.com/use-m@4.0.0/src/use.js')
   .then(response => response.text())
   .then(code => eval(code)({
     meta: import.meta,

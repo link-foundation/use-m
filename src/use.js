@@ -1,11 +1,11 @@
 const resolvers = {
-  npm: async (moduleSpecifier, baseResolver) => {
+  npm: async (moduleSpecifier, pathResolver) => {
     const path = await import('path');
     const { exec } = await import('child_process');
     const { promisify } = await import('util');
     const execAsync = promisify(exec);
 
-    if (!baseResolver) {
+    if (!pathResolver) {
       throw new Error('Failed to get the current resolver.');
     }
 
@@ -27,7 +27,7 @@ const resolvers = {
         return null;
       }
       try {
-        return baseResolver(packagePath);
+        return await pathResolver(packagePath);
       } catch (error) {
         if (error.code !== 'MODULE_NOT_FOUND') {
           throw error;
@@ -84,11 +84,11 @@ const resolvers = {
 
     return resolvedPath;
   },
-  skypack: async (moduleSpecifier, baseResolver) => {
+  skypack: async (moduleSpecifier, pathResolver) => {
     const resolvedPath = `https://cdn.skypack.dev/${moduleSpecifier}`;
     return resolvedPath;
   },
-  jsdelivr: async (moduleSpecifier, baseResolver) => {
+  jsdelivr: async (moduleSpecifier, pathResolver) => {
     const match = moduleSpecifier.match(/^([^@\/]+)@([^\/]+)(\/.+)?$/);
     if (!match) {
       throw new Error(`Invalid module specifier: ${moduleSpecifier}`);
@@ -100,7 +100,7 @@ const resolvers = {
     const resolvedPath = `https://cdn.jsdelivr.net/npm/${packageName}-es@${version}${path}`;
     return resolvedPath;
   },
-  unpkg: async (moduleSpecifier, baseResolver) => {
+  unpkg: async (moduleSpecifier, pathResolver) => {
     const match = moduleSpecifier.match(/^([^@\/]+)@([^\/]+)(\/.+)?$/);
     if (!match) {
       throw new Error(`Invalid module specifier: ${moduleSpecifier}`);
@@ -112,11 +112,11 @@ const resolvers = {
     const resolvedPath = `https://unpkg.com/${packageName}-es@${version}${path}`;
     return resolvedPath;
   },
-  esm: async (moduleSpecifier, baseResolver) => {
+  esm: async (moduleSpecifier, pathResolver) => {
     const resolvedPath = `https://esm.sh/${moduleSpecifier}`;
     return resolvedPath;
   },
-  jspm: async (moduleSpecifier, baseResolver) => {
+  jspm: async (moduleSpecifier, pathResolver) => {
     const match = moduleSpecifier.match(/^([^@\/]+)@([^\/]+)(\/.+)?$/);
     if (!match) {
       throw new Error(`Invalid module specifier: ${moduleSpecifier}`);
@@ -175,8 +175,7 @@ async (options) => {
     }
   }
   const use = async (moduleSpecifier) => {
-    const path = await specifierResolver(moduleSpecifier);
-    return baseUse(await pathResolver(path));
+    return baseUse(await specifierResolver(moduleSpecifier, pathResolver));
   };
   return use;
 }
