@@ -1,6 +1,6 @@
 {
   "type": "module",
   "dependencies": {
-    "use-m": "^3.3.2"
+    "use-m": "^6.0.3"
   }
 }

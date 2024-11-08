@@ -17,9 +17,23 @@ Works in CommonJS, ES Modules and browser environments.
 
 ```javascript
 (async () => {
+  const use = await eval(
+    await fetch('https://unpkg.com/use-m@6/use.js')
+      .then(response => response.text())
+  )();
+  const _ = await use('lodash@4.17.21');
+  const result = _.add(1, 2);
+  console.log(result);
+})()
+```
+
+or
+
+```javascript
+(async () => {
   const use = await fetch('https://unpkg.com/use-m@6/use.js')
-    .then(response => response.text())
-    .then(code => eval(code)());
+    .then((response) => response.text())
+    .then((code) => eval(code)());
   const _ = await use('lodash@4.17.21');
   const result = _.add(1, 2);
   console.log(result);
@@ -56,9 +70,10 @@ If you need to use `use-m` without adding it to a project locally, you can load 
   ```js
   #!/usr/bin/env zx --verbose
   
-  const use = await fetch('https://unpkg.com/use-m@6/use.js')
-    .then(response => response.text())
-    .then(code => eval(code)());
+  const use = await eval(
+    await fetch('https://unpkg.com/use-m@6/use.js')
+      .then(response => response.text())
+  )();
   
   const _ = await use('lodash@latest');
 
@@ -84,11 +99,12 @@ If you need to use `use-m` without adding it to a project locally, you can load 
 1. Create a file named `example.mjs`:
 
   ```js
-  const use = await fetch('https://unpkg.com/use-m@6/use.js')
-    .then(response => response.text())
-    .then(code => eval(code)({
-      meta: import.meta,
-    }));
+  const use = await eval(
+    await fetch('https://unpkg.com/use-m@6/use.js')
+      .then(response => response.text())
+  )({
+    meta: import.meta,
+  });
 
   const _ = await use('lodash@latest');
   const { $: $$ } = await use('execa@latest');

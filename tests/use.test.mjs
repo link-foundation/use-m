@@ -1,7 +1,3 @@
-import path from "path";
-import { fileURLToPath } from "url";
-import { promises as fs } from 'fs';
-
 import { use as staticUse } from '../use.mjs';
 
 describe(`'use' import strategies`, () => {
@@ -26,20 +22,20 @@ describe(`'use' import strategies`, () => {
     expect(result).toBe(5);
   });
 
-  // test('File Read with Eval', async () => {
-  //   const __filename = fileURLToPath(import.meta.url); // required for eval to work
-  //   const loadUsePath = path.resolve(path.dirname(__filename), '../use.mjs');
-  //   const use = await fs.readFile(loadUsePath, 'utf8')
-  //     .then((code) => eval(code));
-  //   const _ = await use("lodash@4.17.21");
-  //   const result = _.add(2, 3);
-  //   expect(result).toBe(5);
-  // });
-
-  test('Universal', async () => {
+  test('Universal (then style)', async () => {
     const use = await fetch('https://unpkg.com/use-m@6/use.js')
       .then((response) => response.text())
       .then((code) => eval(code)());
+    const _ = await use('lodash@4.17.21');
+    const result = _.add(1, 2);
+    expect(result).toBe(3);
+  });
+
+  test('Universal (eval style)', async () => {
+    const use = await eval(
+      await fetch('https://unpkg.com/use-m@6/use.js')
+        .then(response => response.text())
+    )();
     const _ = await use('lodash@4.17.21');
     const result = _.add(1, 2);
     expect(result).toBe(3);

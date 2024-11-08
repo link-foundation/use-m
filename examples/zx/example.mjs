@@ -1,8 +1,9 @@
 #!/usr/bin/env zx --verbose
 
-const use = await fetch('https://unpkg.com/use-m@6/use.js')
-  .then(response => response.text())
-  .then(code => eval(code)());
+const use = await eval(
+  await fetch('https://unpkg.com/use-m@6/use.js')
+    .then(response => response.text())
+)();
   
 const _ = await use('lodash@latest');
 
