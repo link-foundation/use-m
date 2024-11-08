@@ -44,7 +44,7 @@ In ES Modules and Browser you can omit async arrow function wrapper.
 
 ### Browser
 
-If you don't want to use eval in the browser, you can import `use-m` like this:
+If you don't want to use `eval` in the browser, you can import `use-m` like this:
 
 ```javascript
 const { use } = await import('https://unpkg.com/use-m@6/use.mjs');
@@ -125,7 +125,7 @@ Note: in ES Module environments where `__filename` and `require` are not defined
 
 ### Standard Import
 
-You can still install and import `use-m` in `node.js` as usual.
+You can still install and import `use-m` in `node.js` as usual. For example if you don't want to use `eval` in `node.js`.
 
 #### Installation
 
