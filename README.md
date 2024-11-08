@@ -28,6 +28,17 @@ Works in CommonJS, ES Modules and browser environments.
 
 In ES Modules and Browser you can omit async arrow function wrapper.
 
+### Browser
+
+If you don't want to use eval in the browser, you can import `use-m` like this:
+
+```javascript
+const { use } = await import('https://unpkg.com/use-m@6/use.mjs');
+const _ = await use('lodash@4.17.21');
+const result = _.add(1, 2);
+console.log(result);
+```
+
 ### Independent Scripts
 
 If you need to use `use-m` without adding it to a project locally, you can load it directly from `unpkg` using `fetch`. This is particularly useful in environments like [zx](https://github.com/google/zx) or in standalone scripts, when you don't want to use any `package.json`, `node_modules`, etc.
