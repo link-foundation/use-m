@@ -88,7 +88,7 @@ If you need to use `use-m` without adding it to a project locally, you can load 
   console.log(files);
   ```
 
-Note: in ES Module environments where `__filename` and `require` are not defined, you may need to add `metaUrl` option into `use` function constructor, as it is not possible to access `import.meta` inside `eval`.
+Note: in ES Module environments where `__filename` and `require` are not defined, you may need to add `meta` option into `use` function constructor, as it is not possible to access `import.meta` inside `eval`.
 
 2. Execute:
 
