@@ -8,14 +8,14 @@ async () => {
   await writeFile(
     join(moduleDirectory, 'resolvers.cjs'),
     await (
-      await fetch('https://unpkg.com/use-m/src/resolvers.cjs')
+      await fetch('https://unpkg.com/use-m@5/src/resolvers.cjs')
     ).text()
   );
   const modulePath = join(moduleDirectory, 'use-m.cjs');
   await writeFile(
     modulePath,
     await (
-      await fetch('https://unpkg.com/use-m/src/use-m.cjs')
+      await fetch('https://unpkg.com/use-m@5/src/use-m.cjs')
     ).text()
   );
   const { use } = await require(modulePath);
