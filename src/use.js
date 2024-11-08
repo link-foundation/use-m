@@ -5,13 +5,7 @@ const resolvers = {
     const { promisify } = await import('util');
     const execAsync = promisify(exec);
 
-    let currentResolver = baseResolver;
-    if (!currentResolver) {
-      const { createRequire } = await import('module');
-      const require = createRequire(__filename);
-      currentResolver = require.resolve;
-    }
-    if (!currentResolver) {
+    if (!baseResolver) {
       throw new Error('Failed to get the current resolver.');
     }
 
@@ -33,7 +27,7 @@ const resolvers = {
         return null;
       }
       try {
-        return currentResolver(packagePath);
+        return baseResolver(packagePath);
       } catch (error) {
         if (error.code !== 'MODULE_NOT_FOUND') {
           throw error;
@@ -160,9 +154,14 @@ async (options) => {
       resolverName = 'npm';
     }
   }
+  const currentFilename = options?.__filename || __filename;
   let baseResolver = options?.baseResolver;
   if (!baseResolver) {
     if (typeof require !== "undefined") {
+      baseResolver = require.resolve;
+    } else if (typeof currentFilename !== "undefined") {
+      const { createRequire } = await import('module');
+      const require = createRequire(currentFilename);
       baseResolver = require.resolve;
     } else {
       baseResolver = (path) => path;
