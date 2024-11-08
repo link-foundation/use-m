@@ -1,12 +1,12 @@
-# use-m: dynamically import any JavaScript module
+# [use-m](https://github.com/link-foundation/use-m): dynamically import any JavaScript module
 
 `use-m` (`m` stands for `module`) is a utility for dynamically importing any JavaScript module (npm package) at runtime. 
 
-It may useful for standalone scripts that does not need `package.json`. Also it may make your code portable across environments (for example it may require no changes in your code when executed in CommonJS, ES Modules and browser). You also can have predictable behaviour of your code over time if you set specific version to import (that is usually set in `packge.json`, now you can set it right in the script). You even can import multiple versions of the same library at the same time.
+It may useful for standalone scripts that do not need `package.json`. Also it may make your code portable across environments (for example it may require no changes in your code when executed in CommonJS, ES Modules and browser). You can ensure predictable behavior of your code over time by specifying the exact version to import directly in your script, similar to how versions are specified in package.json. You even can import multiple versions of the same library at the same time.
 
 ## Key features
 
-- **Dynamic package loading**: In `node.js` installs and loads npm packages on-demand with **global installation**, making them available across projects and reusable without needing to reinstall each time. In case of a browser `use-m` loads npm packages directly from CDNs.
+- **Dynamic package loading**: In `node.js`, `use-m` installs and loads npm packages on-demand with **global installation** (using `npm i -g` with separate alias for each version), making them available across projects and reusable without needing to reinstall each time. In case of a browser `use-m` loads npm packages directly from CDNs (by default `unpkg` is used).
 - **Version-safe imports**: Allows multiple versions of the same library to coexist without conflicts, so you can specify any version for each import (usage) without affecting other scripts or other usages (imports) in the same script.
 
 ## Usage
@@ -18,7 +18,7 @@ Works in CommonJS, ES Modules and browser environments.
 ```javascript
 (async () => {
   const use = await eval(
-    await fetch('https://unpkg.com/use-m@6/use.js')
+    await fetch('https://unpkg.com/use-m/use.js')
       .then(response => response.text())
   )();
   const _ = await use('lodash@4.17.21');
@@ -31,7 +31,7 @@ or
 
 ```javascript
 (async () => {
-  const use = await fetch('https://unpkg.com/use-m@6/use.js')
+  const use = await fetch('https://unpkg.com/use-m/use.js')
     .then((response) => response.text())
     .then((code) => eval(code)());
   const _ = await use('lodash@4.17.21');
@@ -40,14 +40,40 @@ or
 })()
 ```
 
-In ES Modules and Browser you can omit async arrow function wrapper.
+or
+
+```
+(async () => {
+  const response = await fetch('https://unpkg.com/use-m/use.js');
+  const code = await response.text();
+  const use = await eval(code)();
+  const _ = await use('lodash@4.17.21');
+  const result = _.add(1, 2);
+  console.log(result);
+})()
+```
+
+
+In ES Modules and Browser you can omit async arrow function wrapper, like this:
+
+```javascript
+const use = await eval(
+  await fetch('https://unpkg.com/use-m/use.js')
+    .then(response => response.text())
+)();
+const _ = await use('lodash@4.17.21');
+const result = _.add(1, 2);
+console.log(result);
+```
+
+Universal execution comes at cost of `eval` usage, that is considered potential security threat. In case of this library only single file is evaled, it short and unminified, so you can check the contents yourself. Onse you have `use` function instance no more `eval` function will be executed by this library. If you don't want to use `eval` you can use `await import()` in browser. In `node.js` you can just install the package from `npm` as usual.
 
 ### Browser
 
 If you don't want to use `eval` in the browser, you can import `use-m` like this:
 
 ```javascript
-const { use } = await import('https://unpkg.com/use-m@6/use.mjs');
+const { use } = await import('https://unpkg.com/use-m/use.mjs');
 const _ = await use('lodash@4.17.21');
 const result = _.add(1, 2);
 console.log(result);
@@ -59,19 +85,19 @@ If you need to use `use-m` without adding it to a project locally, you can load 
 
 #### `use-m` and `zx`
 
-0. Install zx globally
+1. Install zx globally
 
   ```bash
   npm install -g zx
   ```
 
-1. Create a file named `example.mjs`:
+2. Create a file named `example.mjs`:
 
-  ```js
+  ```javascript
   #!/usr/bin/env zx --verbose
   
   const use = await eval(
-    await fetch('https://unpkg.com/use-m@6/use.js')
+    await fetch('https://unpkg.com/use-m/use.js')
       .then(response => response.text())
   )();
   
@@ -82,13 +108,13 @@ If you need to use `use-m` without adding it to a project locally, you can load 
   console.log(files);
   ```
 
-2. Give execution permissions
+3. Give execution permissions
 
   ```bash
   chmod +x example.mjs
   ```
 
-3. Execute:
+4. Execute:
 
   ```bash
   ./example.mjs
@@ -98,9 +124,9 @@ If you need to use `use-m` without adding it to a project locally, you can load 
 
 1. Create a file named `example.mjs`:
 
-  ```js
+  ```javascript
   const use = await eval(
-    await fetch('https://unpkg.com/use-m@6/use.js')
+    await fetch('https://unpkg.com/use-m/use.js')
       .then(response => response.text())
   )({
     meta: import.meta,
@@ -165,12 +191,12 @@ console.log(_.add(1, 2));
 
 ## Examples
 
-You can check out complete usage examples here: https://github.com/link-foundation/use-m/tree/main/examples
+You can check out [usage examples source code](https://github.com/link-foundation/use-m/tree/main/examples).
 
 ## Questions and issues
 
-If you have any questions or issues, please write out it on GitHub: [https://github.com/link-foundation/use-m/issues](https://github.com/link-foundation/use-m/issues). Together we can ensure this package will have highest quality possible.
+If you have any questions or issues, [please write out it on GitHub](https://github.com/link-foundation/use-m/issues). Together we can ensure this package will have highest quality possible.
 
 ## License
 
-This project is licensed under the Unlicense.
+This project is licensed under the [Unlicense](https://github.com/link-foundation/use-m/blob/main/LICENSE).
