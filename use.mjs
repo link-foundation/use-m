@@ -162,6 +162,9 @@ export const makeUse = async (options) => {
   if (!scriptPath && metaUrl) {
     scriptPath = metaUrl;
   }
+  if (!scriptPath) {
+    scriptPath = import.meta.url;
+  }
   let pathResolver = options?.pathResolver;
   if (!pathResolver) {
     if (typeof require !== 'undefined') {
