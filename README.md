@@ -73,8 +73,10 @@ If you need to use `use-m` without adding it to a project locally, you can load 
   ```js
   const use = await fetch('https://unpkg.com/use-m/src/use.js')
     .then(response => response.text())
-    .then(code => eval(code)());
-  
+    .then(code => eval(code)({
+      metaUrl: import.meta.url,
+    }));
+
   const _ = await use('lodash@latest');
   const { $: $$ } = await use('execa@latest');
   const $ = $$({ verbose: 'full' });
@@ -83,6 +85,8 @@ If you need to use `use-m` without adding it to a project locally, you can load 
   const files = _.filter(_.split(stdout, '\n'), (item) => !_.isEmpty(item));
   console.log(files);
   ```
+
+Note: in ES Module environments where `__filename` and `require` are not defined, you may need to add `metaUrl` option into `use` function constructor, as it is not possible to access `import.meta.url` inside `eval`.
 
 2. Execute:
 
