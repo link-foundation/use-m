@@ -155,7 +155,12 @@ async (options) => {
     }
   }
   const resolver = resolvers[resolverName];
-  const currentFilename = options?.__filename || __filename;
+  const currentFilename = options?.__filename || (typeof __filename !== "undefined" && __filename);
+  const metaUrl = options?.metaUrl;
+  if (!currentFilename && metaUrl) {
+    const { fileURLToPath } = await import('url');
+    currentFilename = fileURLToPath(metaUrl);
+  }
   let baseResolver = options?.baseResolver;
   if (!baseResolver) {
     if (typeof require !== "undefined") {
