@@ -1,0 +1,6 @@
+{
+  "type": "module",
+  "dependencies": {
+    "use-m": "^3.3.2"
+  }
+}
