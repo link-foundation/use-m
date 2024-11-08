@@ -58,7 +58,7 @@ const resolvers = {
     const alias = `${packageName.replace('@', '').replace('/', '-')}-v${version}`;
 
     // Get the global node_modules path
-    const { stdout } = await execAsync("npm root -g");
+    const { stdout } = await execAsync('npm root -g');
     const globalPath = stdout.trim();
 
     // Resolve the exact path to the installed package with alias
@@ -134,7 +134,7 @@ const baseUse = async (modulePath) => {
   // Dynamically import the module
   try {
     const module = await import(modulePath);
-    // Check if the only key in the module is "default"
+    // Check if the only key in the module is 'default'
     const keys = Object.keys(module);
     if (keys.length === 1 && keys[0] === 'default') {
       return module.default || module;
@@ -146,38 +146,37 @@ const baseUse = async (modulePath) => {
 }
 
 async (options) => {
-  let resolverName = options?.resolver;
-  if (!resolverName) {
-    if (typeof window !== "undefined") {
-      resolverName = 'unpkg';
+  let specifierResolver = options?.specifierResolver;
+  if (typeof specifierResolver !== 'function') {
+    if (typeof window !== 'undefined') {
+      specifierResolver = resolvers[specifierResolver || 'unpkg'];
     } else {
-      resolverName = 'npm';
+      specifierResolver = resolvers[specifierResolver || 'npm'];
     }
   }
-  const resolver = resolvers[resolverName];
-  let currentFilename = options?.currentFilename;
-  if (!currentFilename && typeof __filename !== "undefined") {
-    currentFilename = __filename;
+  let scriptPath = options?.scriptPath;
+  if (!scriptPath && typeof __filename !== 'undefined') {
+    scriptPath = __filename;
   }
-  const metaUrl = options?.metaUrl;
-  if (!currentFilename && metaUrl) {
-    const { fileURLToPath } = await import('url');
-    currentFilename = fileURLToPath(metaUrl);
+  const metaUrl = options?.meta?.url;
+  if (!scriptPath && metaUrl) {
+    scriptPath = metaUrl;
   }
-  let baseResolver = options?.baseResolver;
-  if (!baseResolver) {
-    if (typeof require !== "undefined") {
-      baseResolver = require.resolve;
-    } else if (typeof currentFilename !== "undefined") {
-      const { createRequire } = await import('module');
-      const require = createRequire(currentFilename);
-      baseResolver = require.resolve;
+  let pathResolver = options?.pathResolver;
+  if (!pathResolver) {
+    if (typeof require !== 'undefined') {
+      pathResolver = require.resolve;
+    } else if (scriptPath) {
+      pathResolver = await import('module')
+        .then(module => module.createRequire(scriptPath))
+        .then(require => require.resolve);
     } else {
-      baseResolver = (path) => path;
+      pathResolver = (path) => path;
     }
   }
   const use = async (moduleSpecifier) => {
-    return baseUse(await resolver(moduleSpecifier, baseResolver));
+    const path = await specifierResolver(moduleSpecifier);
+    return baseUse(await pathResolver(path));
   };
   return use;
 }

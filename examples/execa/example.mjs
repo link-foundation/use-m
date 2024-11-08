@@ -3,7 +3,7 @@
 const use = await fetch('https://unpkg.com/use-m/src/use.js')
   .then(response => response.text())
   .then(code => eval(code)({
-    metaUrl: import.meta.url,
+    meta: import.meta,
     // baseResolver: createRequire(import.meta.url).resolve,
     // baseResolver: import.meta.resolve,
   }));
