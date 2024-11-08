@@ -4,8 +4,8 @@ const use = await fetch('https://unpkg.com/use-m@5/src/use.js')
   .then(response => response.text())
   .then(code => eval(code)({
     meta: import.meta,
-    // baseResolver: createRequire(import.meta.url).resolve,
-    // baseResolver: import.meta.resolve,
+    // pathResolver: createRequire(import.meta.url).resolve,
+    // pathResolver: import.meta.resolve,
   }));
 
 const _ = await use('lodash@latest');
