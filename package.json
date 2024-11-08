@@ -25,8 +25,11 @@
   },
   "keywords": [
     "use",
+    "import",
+    "require",
     "npm",
     "backend",
+    "frontend",
     "global require",
     "global import",
     "dynamic require",
