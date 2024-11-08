@@ -77,7 +77,7 @@ export default {
       // Install the package globally with the specified version and alias if not installed or it is the latest version
       try {
         await execAsync(`npm install -g ${alias}@npm:${packageName}@${version}`, { stdio: 'ignore' });
-        console.log(`${packageName}@${version} installed successfully.`);
+        // console.log(`${packageName}@${version} installed successfully.`);
       } catch (error) {
         throw new Error(`Failed to install ${packageName}@${version} globally.`, { cause: error });
       }
