@@ -179,11 +179,11 @@ const makeUse = async (options) => {
   };
 }
 
-const module = {
+export default {
   resolvers,
   use,
   makeUse,
-}
+};
 
 
 
