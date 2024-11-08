@@ -42,7 +42,7 @@ or
 
 or
 
-```
+```javascript
 (async () => {
   const response = await fetch('https://unpkg.com/use-m/use.js');
   const code = await response.text();
@@ -66,7 +66,7 @@ const result = _.add(1, 2);
 console.log(result);
 ```
 
-Universal execution comes at cost of `eval` usage, that is considered potential security threat. In case of this library only single file is evaled, it short and unminified, so you can check the contents yourself. Onse you have `use` function instance no more `eval` function will be executed by this library. If you don't want to use `eval` you can use `await import()` in browser. In `node.js` you can just install the package from `npm` as usual.
+Universal execution comes at cost of `eval` usage, that is considered potential security threat. In case of this library only single file is evaled, it short and unminified, so you can check the contents yourself. Once you have `use` function instance no more `eval` function will be executed by this library. If you don't want to use `eval` you can use `await import()` in browser or in `node.js`. In `node.js` you can also just install the package from `npm` as usual.
 
 ### Browser
 
@@ -81,7 +81,7 @@ console.log(result);
 
 ### Independent Scripts
 
-If you need to use `use-m` without adding it to a project locally, you can load it directly from `unpkg` using `fetch`. This is particularly useful in environments like [zx](https://github.com/google/zx) or in standalone scripts, when you don't want to use any `package.json`, `node_modules`, etc.
+If you need to use `use-m` without adding it to a project locally, you can load it directly from `unpkg` using `fetch`. This is particularly useful in environments like [zx](https://github.com/google/zx) or in other standalone scripts like `execa`, when you don't want to use any `package.json`, `node_modules`, etc.
 
 #### `use-m` and `zx`
 
@@ -167,7 +167,7 @@ Or NPM:
 npm i use-m
 ```
 
-Load `use-m` to dynamically import a package from npm:
+Load `use-m` to dynamically import the `lodash` package from npm:
 
 #### CommonJS
 
@@ -195,7 +195,7 @@ You can check out [usage examples source code](https://github.com/link-foundatio
 
 ## Questions and issues
 
-If you have any questions or issues, [please write out it on GitHub](https://github.com/link-foundation/use-m/issues). Together we can ensure this package will have highest quality possible.
+If you have any questions or issues, [please write us on GitHub](https://github.com/link-foundation/use-m/issues). Together we can ensure this package will have highest quality possible. Your feedback is valuable and helps improve the project.
 
 ## License
 
