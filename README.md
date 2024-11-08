@@ -107,7 +107,7 @@ yarn add use-m
 Or NPM:
 
 ```bash
-npm install use-m
+npm i use-m
 ```
 
 Load `use-m` to dynamically import a package from npm:
