@@ -1,7 +1,7 @@
 #!/usr/bin/env zx --verbose
 
 const use = await eval(
-  await fetch('https://unpkg.com/use-m@6/use.js')
+  await fetch('https://unpkg.com/use-m/use.js')
     .then(response => response.text())
 )();
   

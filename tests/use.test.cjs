@@ -23,7 +23,7 @@ describe(`'use' import strategies (CJS)`, () => {
   });
 
   test('Universal (then style)', async () => {
-    const use = await fetch('https://unpkg.com/use-m@6/use.js')
+    const use = await fetch('https://unpkg.com/use-m/use.js')
       .then((response) => response.text())
       .then((code) => eval(code)());
     const _ = await use('lodash@4.17.21');
@@ -33,7 +33,7 @@ describe(`'use' import strategies (CJS)`, () => {
 
   test('Universal (eval style)', async () => {
     const use = await eval(
-      await fetch('https://unpkg.com/use-m@6/use.js')
+      await fetch('https://unpkg.com/use-m/use.js')
         .then(response => response.text())
     )();
     const _ = await use('lodash@4.17.21');
