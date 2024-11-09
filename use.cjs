@@ -205,5 +205,6 @@ module.exports = {
   parseModuleSpecifier,
   resolvers,
   makeUse,
+  baseUse,
   use,
 };

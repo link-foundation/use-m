@@ -143,7 +143,7 @@ export const resolvers = {
   },
 }
 
-const baseUse = async (modulePath) => {
+export const baseUse = async (modulePath) => {
   // Dynamically import the module
   try {
     const module = await import(modulePath);

@@ -220,6 +220,7 @@ const use = async (moduleSpecifier) => {
 makeUse.parseModuleSpecifier = parseModuleSpecifier;
 makeUse.resolvers = resolvers;
 makeUse.makeUse = makeUse;
+makeUse.baseUse = baseUse;
 makeUse.use = use;
 
 makeUse
