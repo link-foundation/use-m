@@ -4,7 +4,7 @@
     "start": "node index.js"
   },
   "dependencies": {
-    "use-m": "6"
+    "use-m": "^8.0.1"
   },
   "license": "UNLICENSED"
 }
