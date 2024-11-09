@@ -177,4 +177,4 @@ If you have any questions or issues, [please write us on GitHub](https://github.
 
 ## License
 
-This project is licensed under the [Unlicense](https://github.com/link-foundation/use-m/blob/main/LICENSE). That means there is no conditions and limitatios on how this library and its code can be used.
+This project is licensed under the [Unlicense](https://github.com/link-foundation/use-m/blob/main/LICENSE). That means there is no conditions or limitations on how this library and its code can be used.
