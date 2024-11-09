@@ -167,7 +167,7 @@ const getScriptUrl = async () => {
     return null;
   }
   console.log({
-    __filename,
+    // __filename,
     require,
     path: match.groups.path,
   });
