@@ -1,10 +1,7 @@
 #!/usr/bin/env zx --verbose
 
-const { use } = eval(
-  await fetch('https://unpkg.com/use-m/use.js')
-    .then(response => response.text())
-);
-  
+const { use } = eval(await fetch('https://unpkg.com/use-m/use.js').then(code => code.text()));
+
 const _ = await use('lodash@latest');
 
 const { stdout } = await $`ls`.pipe`grep js`;

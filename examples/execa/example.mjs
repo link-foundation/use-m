@@ -1,7 +1,4 @@
-const { use } = eval(
-  await fetch('https://unpkg.com/use-m/use.js')
-    .then(response => response.text())
-);
+const { use } = eval(await fetch('https://unpkg.com/use-m/use.js').then(code => code.text()));
 
 const _ = await use('lodash@latest');
 const { $: $$ } = await use('execa@latest');

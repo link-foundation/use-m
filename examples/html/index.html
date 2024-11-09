@@ -7,9 +7,8 @@
 <body>
   <script>
     fetch('https://unpkg.com/use-m/use.js')
-      .then(response => response.text())
-      .then(eval)
-      .then(async ({ makeUse }) => {
+      .then(async code => {
+        const { makeUse } = eval(await code.text());
         const resolvers = [
           'unpkg',
           'skypack',

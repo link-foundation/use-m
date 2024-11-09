@@ -3,6 +3,6 @@
     "start": "node index.js"
   },
   "dependencies": {
-    "use-m": "^8.3.1"
+    "use-m": "^8.4.0"
   }
 }

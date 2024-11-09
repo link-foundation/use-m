@@ -40,9 +40,18 @@ describe(`'use' import strategies (CJS)`, () => {
   test('Universal (eval style)', async () => {
     const { use } = eval(
       await fetch('https://unpkg.com/use-m/use.js')
-        .then(response => response.text())
+        .then(code => code.text())
     );
     const _ = await use('lodash@4.17.21');
     expect(_.add(1, 2)).toBe(3);
+  });
+
+  test('Universal (single then style)', async () => {
+    await fetch('https://unpkg.com/use-m/use.js')
+      .then(async code => {
+        const { use } = eval(await code.text());
+        const _ = await use('lodash@4.17.21');
+        expect(_.add(1, 2)).toBe(3);
+      });
   });
 });
