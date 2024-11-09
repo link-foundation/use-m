@@ -138,6 +138,7 @@ const baseUse = async (modulePath) => {
 const getScriptUrl = () => {
   const error = new Error();
   const stack = error.stack || '';
+  console.log('stack', stack);
   const regex = /at\s+\S+\s+\((\/[^)]+):\d+:\d+\)/;
   const match = stack.match(regex);
   return match ? `file://${match[1]}` : null;
