@@ -37,7 +37,9 @@
     "dynamic import",
     "package loader",
     "module loader",
-    "dependency management"
+    "dependency management",
+    "zx",
+    "execa"
   ],
   "author": "link-foundation",
   "license": "UNLICENSED",
