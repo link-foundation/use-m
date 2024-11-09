@@ -134,6 +134,15 @@ const baseUse = async (modulePath) => {
   }
 }
 
+// Function to retrieve script URL from the stack trace
+const getScriptUrl = () => {
+  const error = new Error();
+  const stack = error.stack || '';
+  const regex = /at\s+\S+\s+\((\/[^)]+):\d+:\d+\)/;
+  const match = stack.match(regex);
+  return match ? `file://${match[1]}` : null;
+}
+
 const makeUse = async (options) => {
   let specifierResolver = options?.specifierResolver;
   if (typeof specifierResolver !== 'function') {
@@ -150,6 +159,9 @@ const makeUse = async (options) => {
   const metaUrl = options?.meta?.url;
   if (!scriptPath && metaUrl) {
     scriptPath = metaUrl;
+  }
+  if (!scriptPath && typeof window === 'undefined') {
+    scriptPath = getScriptUrl();
   }
   let pathResolver = options?.pathResolver;
   if (!pathResolver) {
