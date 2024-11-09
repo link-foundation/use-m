@@ -16,6 +16,19 @@ It may useful for standalone scripts that do not need `package.json`. Also it ma
 Works in CommonJS, ES Modules and browser environments.
 
 ```javascript
+fetch('https://unpkg.com/use-m/use.js')
+  .then(response => response.text())
+  .then(code => eval(code)())
+  .then(async (use) => {
+    const _ = await use('lodash@4.17.21');
+    const result = _.add(1, 2);
+    console.log(result);
+  });
+```
+
+or
+
+```javascript
 (async () => {
   const use = await eval(
     await fetch('https://unpkg.com/use-m/use.js')
