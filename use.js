@@ -88,14 +88,14 @@ const resolvers = {
   jsdelivr: async (moduleSpecifier, pathResolver) => {
     const { packageName, version, modulePath } = parseModuleSpecifier(moduleSpecifier);
     // If no modulePath is provided, append /{packageName}.js
-    const path = modulePath ? `${modulePath}` : `/${packageName}.js`;
+    const path = modulePath ? modulePath : `/${packageName}.js`;
     const resolvedPath = `https://cdn.jsdelivr.net/npm/${packageName}-es@${version}${path}`;
     return resolvedPath;
   },
   unpkg: async (moduleSpecifier, pathResolver) => {
     const { packageName, version, modulePath } = parseModuleSpecifier(moduleSpecifier);
     // If no modulePath is provided, append /{packageName}.js
-    const path = modulePath ? `${modulePath}` : `/${packageName}.js`;
+    const path = modulePath ? modulePath : `/${packageName}.js`;
     const resolvedPath = `https://unpkg.com/${packageName}-es@${version}${path}`;
     return resolvedPath;
   },
