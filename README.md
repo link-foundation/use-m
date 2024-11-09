@@ -54,7 +54,7 @@ If you need to use `use-m` without adding it to a project locally, you can load 
   #!/usr/bin/env zx --verbose
   
   const { use } = eval(
-    await fetch('https://unpkg.com/use-m/use.js').then(code => code.text())
+    await fetch('https://unpkg.com/use-m/use.js').then(u => u.text())
   );
   
   const _ = await use('lodash@latest');
@@ -85,7 +85,7 @@ If you need to use `use-m` without adding it to a project locally, you can load 
 
   ```javascript
   const { use } = eval(
-    await fetch('https://unpkg.com/use-m/use.js').then(code => code.text())
+    await fetch('https://unpkg.com/use-m/use.js').then(u => u.text())
   );
 
   const _ = await use('lodash@latest');
