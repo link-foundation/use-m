@@ -139,9 +139,9 @@ const getScriptUrl = () => {
   const error = new Error();
   const stack = error.stack || '';
   console.log('stack', stack);
-  const regex = /at\s+(\/[^)]+):\d+:\d+/;
+  const regex = /at\s+file:\/\/(\/[^):]+):\d+:\d+/;
   const match = stack.match(regex);
-  return match ? `${match[1]}` : null;
+  return match ? `file://${match[1]}` : null;
 }
 const __filename = getScriptUrl();
 
