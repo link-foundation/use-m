@@ -39,7 +39,11 @@
     "module loader",
     "dependency management",
     "zx",
-    "execa"
+    "execa",
+    "esm.sh",
+    "esm",
+    "unpkg.com",
+    "unpkg"
   ],
   "author": "link-foundation",
   "license": "UNLICENSED",
