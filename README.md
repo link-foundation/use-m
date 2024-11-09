@@ -141,10 +141,10 @@ or
 
 ```javascript
 import('use-m')
- .then(({ use }) => {
-  const _ = await use('lodash@4.17.21');
-  console.log(`_.add(1, 2) = ${_.add(1, 2)}`);
- });
+  .then(async ({ use }) => {
+    const _ = await use('lodash@4.17.21');
+    console.log(`_.add(1, 2) = ${_.add(1, 2)}`);
+  });
 ```
 
 #### ES Modules
