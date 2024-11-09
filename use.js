@@ -134,13 +134,16 @@ const baseUse = async (modulePath) => {
   }
 }
 
-const getScriptUrl = () => {
+const getScriptUrl = async () => {
   const error = new Error();
   const stack = error.stack || '';
-  console.log('stack', stack);
-  const regex = /at[^:\\/]+(file:\/\/)?((\/|\w:)[^):]+):\d+:\d+/;
+  const regex = /at[^:\\/]+(file:\/\/)?(?<path>(\/|\w:)[^):]+):\d+:\d+/;
   const match = stack.match(regex);
-  return match ? `file://${match[2]}` : null;
+  if (!match?.groups?.path) {
+    return null;
+  }
+  const { pathToFileURL } = await import('url');
+  return pathToFileURL(match.groups.path).href;
 }
 
 const makeUse = async (options) => {
@@ -161,7 +164,7 @@ const makeUse = async (options) => {
     scriptPath = metaUrl;
   }
   if (!scriptPath && typeof window === 'undefined') {
-    scriptPath = getScriptUrl();
+    scriptPath = await getScriptUrl();
   }
   let pathResolver = options?.pathResolver;
   if (!pathResolver) {

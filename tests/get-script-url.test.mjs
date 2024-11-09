@@ -1,17 +1,20 @@
 // Function to retrieve script URL from the stack trace
-const getScriptUrl = () => {
+const getScriptUrl = async () => {
   const error = new Error();
   const stack = error.stack || '';
-  console.log('stack', stack);
-  const regex = /at[^:\\/]+(file:\/\/)?((\/|\w:)[^):]+):\d+:\d+/;
+  const regex = /at[^:\\/]+(file:\/\/)?(?<path>(\/|\w:)[^):]+):\d+:\d+/;
   const match = stack.match(regex);
-  return match ? `file://${match[2]}` : null;
+  if (!match?.groups?.path) {
+    return null;
+  }
+  const { pathToFileURL } = await import('url');
+  return pathToFileURL(match.groups.path).href;
 }
 
 // Test
 describe('import.meta.url workaround', () => {
   test('scriptUrl matches import.meta.url', async () => {
-    const scriptUrl = getScriptUrl();
+    const scriptUrl = await getScriptUrl();
 
     // Validate scriptUrl is a string and matches import.meta.url
     expect(typeof scriptUrl).toBe('string');
@@ -19,7 +22,7 @@ describe('import.meta.url workaround', () => {
   });
 
   test('scriptUrl matches import.meta.url in eval', async () => {
-    const scriptUrl = eval('getScriptUrl()');
+    const scriptUrl = await eval('getScriptUrl()');
 
     // Validate scriptUrl is a string and matches import.meta.url
     expect(typeof scriptUrl).toBe('string');
