@@ -26,6 +26,10 @@ Please specify a package name, and an optional version (e.g.: 'lodash', 'lodash@
 const resolvers = {
   npm: async (moduleSpecifier, pathResolver) => {
     const path = await import('path');
+    const { exec } = await import('child_process');
+    const { promisify } = await import('util');
+    const { stat, readFile } = await import('fs/promises');
+    const execAsync = promisify(exec);
 
     if (!pathResolver) {
       throw new Error('Failed to get the current resolver.');
@@ -33,7 +37,6 @@ const resolvers = {
 
     const directoryExists = async (directoryPath) => {
       try {
-        const { stat } = await import('fs/promises');
         const stats = await stat(directoryPath);
         return stats.isDirectory();
       } catch (error) {
@@ -55,19 +58,40 @@ const resolvers = {
       }
     };
 
+    const getLatestVersion = async (packageName) => {
+      const { stdout: version } = await execAsync(`npm show ${packageName} version`);
+      return version.trim();
+    };
+
+    const getInstalledPackageVersion = async (packagePath) => {
+      try {
+        const packageJsonPath = path.join(packagePath, 'package.json');
+        const data = await readFile(packageJsonPath, 'utf8');
+        const { version } = JSON.parse(data);
+        return version;
+      } catch {
+        return null;
+      }
+    };
+
     const ensurePackageInstalled = async ({ packageName, version }) => {
-      const { exec } = await import('child_process');
-      const { promisify } = await import('util');
-      const execAsync = promisify(exec);
       const alias = `${packageName.replace('@', '').replace('/', '-')}-v-${version}`;
       const { stdout: globalModulesPath } = await execAsync('npm root -g');
       const packagePath = path.join(globalModulesPath.trim(), alias);
-      if (version === 'latest' || !(await directoryExists(packagePath))) {
-        try {
-          await execAsync(`npm install -g ${alias}@npm:${packageName}@${version}`, { stdio: 'ignore' });
-        } catch (error) {
-          throw new Error(`Failed to install ${packageName}@${version} globally.`, { cause: error });
+      if (version !== 'latest' && await directoryExists(packagePath)) {
+        return packagePath;
+      }
+      if (version === 'latest') {
+        const latestVersion = await getLatestVersion(packageName);
+        const installedVersion = await getInstalledPackageVersion(packagePath);
+        if (installedVersion === latestVersion) {
+          return packagePath;
         }
+      }
+      try {
+        await execAsync(`npm install -g ${alias}@npm:${packageName}@${version}`, { stdio: 'ignore' });
+      } catch (error) {
+        throw new Error(`Failed to install ${packageName}@${version} globally.`, { cause: error });
       }
       return packagePath;
     };
