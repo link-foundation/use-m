@@ -1,4 +1,4 @@
-# [use-m](https://github.com/link-foundation/use-m): dynamically import any JavaScript module
+# [use-m](https://github.com/link-foundation/use-m): dynamically load and import any JavaScript module
 
 `use-m` (`m` stands for `module`) is a utility for dynamically importing any JavaScript module (npm package) at runtime. 
 
