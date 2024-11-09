@@ -1,0 +1,22 @@
+<html>
+
+<head>
+  <title>use-m typescript example</title>
+</head>
+
+<body>
+  <script>
+    fetch('https://unpkg.com/use-m/use.js')
+      .then(async useJs => {
+        const { use } = eval(await useJs.text());
+        const ts = await use('typescript');
+        console.log('ts.version', ts.version);
+        const tsCode = 'const a: number = 1;';
+        console.log('tsCode', tsCode);
+        const jsCode = ts.transpile(tsCode);
+        console.log('jsCode', jsCode);
+      });
+  </script>
+</body>
+
+</html>
