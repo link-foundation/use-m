@@ -1,8 +1,8 @@
-// Function to retrieve script URL from the stack trace
+// Function to retrieve this script URL from the stack trace
 const getScriptUrl = async () => {
   const error = new Error();
   const stack = error.stack || '';
-  const regex = /at[^:\\/]+(file:\/\/)?(?<path>(\/|\w:)[^):]+):\d+:\d+/;
+  const regex = /at[^:\\/]+(file:\/\/)?(?<path>(\/|(?<=\W)\w:)[^):]+):\d+:\d+/;
   const match = stack.match(regex);
   if (!match?.groups?.path) {
     return null;

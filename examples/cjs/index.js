@@ -2,5 +2,5 @@ const { use } = require('use-m');
 
 (async () => {
   const _ = await use('lodash@4.17.21');
-  console.log(_.add(1, 2));
+  console.log(`_.add(1, 2) = ${_.add(1, 2)}`);
 })()

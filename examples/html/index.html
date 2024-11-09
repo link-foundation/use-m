@@ -6,21 +6,19 @@
 
 <body>
   <script>
-    const resolvers = [
-      'unpkg',
-      'skypack',
-      'jspm',
-      'jsdelivr',
-      'esm',
-    ];
-
-    for (const resolver of resolvers) {
-      fetch('https://unpkg.com/use-m/use.js')
-        .then(response => response.text())
-        .then(code => eval(code)({
-          specifierResolver: resolver
-        }))
-        .then(async (use) => {
+    fetch('https://unpkg.com/use-m/use.js')
+      .then(response => response.text())
+      .then(eval)
+      .then(async ({ makeUse }) => {
+        const resolvers = [
+          'unpkg',
+          'skypack',
+          'jspm',
+          'jsdelivr',
+          'esm',
+        ];
+        for (const resolver of resolvers) {
+          const use = await makeUse({ specifierResolver: resolver });
           {
             const specifier = 'lodash@4.17.21';
             const _ = await use(specifier);
@@ -51,8 +49,9 @@
             const add = await use(specifier);
             console.log(`${resolver}, ${specifier}: add(1, 2) = ${add(1, 2)}`);
           }
-        });
-    }
+        }
+      });
+
   </script>
 </body>
 

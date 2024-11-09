@@ -2,7 +2,7 @@
 # yarn lockfile v1
 
 
-use-m@^8.0.8:
-  version "8.0.8"
-  resolved "https://registry.yarnpkg.com/use-m/-/use-m-8.0.8.tgz#2eea784ded14d49ddc442c2910a5642e3acb5fbb"
-  integrity sha512-mrexqyqI63Sp2BYXtXwlf1ggoI9DAxwqOyXC6sDkx8IiyXJUvdKTXFA/dttjVubn6DtHJXaO8PMiR0U8jeOq7g==
+use-m@^8.3.1:
+  version "8.3.1"
+  resolved "https://registry.yarnpkg.com/use-m/-/use-m-8.3.1.tgz#e3e4d02b792a5c4eeead10b05679dea0840e9b0d"
+  integrity sha512-gmTzbqCRWww2pHUZqta4vHp0tLGbxyVjm/s4N5D2277bjg017ujlqM7vhS6qHc2VgUtGs+wUd7Tz2ifY4bMgTw==
