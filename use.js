@@ -104,7 +104,7 @@ const resolvers = {
     return resolvedPath;
   },
   jspm: async (moduleSpecifier, pathResolver) => {
-    const { packageName, version, modulePath } = parseModuleSpecifier(moduleSpecifier);
+    let { packageName, version, modulePath } = parseModuleSpecifier(moduleSpecifier);
     if (version === 'latest') {
       version = '';
     }
