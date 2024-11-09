@@ -168,7 +168,7 @@ const getScriptUrl = async () => {
   }
   console.log({
     // __filename,
-    require,
+    // require,
     path: match.groups.path,
   });
   const { pathToFileURL } = await import('url');
