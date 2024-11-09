@@ -142,6 +142,7 @@ const getScriptUrl = () => {
   const match = stack.match(regex);
   return match ? `file://${match[1]}` : null;
 }
+const __filename = getScriptUrl();
 
 const makeUse = async (options) => {
   let specifierResolver = options?.specifierResolver;
