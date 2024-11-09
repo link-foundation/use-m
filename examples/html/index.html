@@ -1,0 +1,60 @@
+<html>
+
+<head>
+  <title>use-m example</title>
+</head>
+
+<body>
+  <script>
+    const resolvers = [
+      'unpkg',
+      'skypack',
+      'jspm',
+      'jsdelivr',
+      'esm',
+    ];
+
+    for (const resolver of resolvers) {
+      fetch('https://unpkg.com/use-m@8.0.6/use.js')
+        .then(response => response.text())
+        .then(code => eval(code)({
+          specifierResolver: resolver
+        }))
+        .then(async (use) => {
+          {
+            const specifier = 'lodash@4.17.21';
+            const _ = await use(specifier);
+            console.log(`${resolver}, ${specifier}: _.add(1, 2) = ${_.add(1, 2)}`);
+          }
+          {
+            const specifier = 'lodash@';
+            const _ = await use(specifier);
+            console.log(`${resolver}, ${specifier}: _.add(1, 2) = ${_.add(1, 2)}`);
+          }
+
+          {
+            const specifier = 'lodash';
+            const _ = await use(specifier);
+            console.log(`${resolver}, ${specifier}: _.add(1, 2) = ${_.add(1, 2)}`);
+          }
+          {
+            const specifier = 'lodash@latest';
+            const _ = await use(specifier);
+            console.log(`${resolver}, ${specifier}: _.add(1, 2) = ${_.add(1, 2)}`);
+          }
+          {
+            const specifier = 'lodash@4.17.21/add';
+            const add = await use(specifier);
+            console.log(`${resolver}, ${specifier}: add(1, 2) = ${add(1, 2)}`);
+          }
+          {
+            const specifier = 'lodash@4.17.21/add.js';
+            const add = await use(specifier);
+            console.log(`${resolver}, ${specifier}: add(1, 2) = ${add(1, 2)}`);
+          }
+        });
+    }
+  </script>
+</body>
+
+</html>
