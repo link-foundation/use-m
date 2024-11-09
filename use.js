@@ -187,7 +187,7 @@ const makeUse = async (options) => {
   if (!scriptPath && metaUrl) {
     scriptPath = metaUrl;
   }
-  if (!scriptPath && typeof window === 'undefined') {
+  if (!scriptPath && typeof window === 'undefined' && typeof require === 'undefined') {
     scriptPath = await getScriptUrl();
   }
   let pathResolver = options?.pathResolver;
