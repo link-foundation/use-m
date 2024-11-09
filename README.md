@@ -17,8 +17,8 @@ Works in CommonJS, ES Modules and browser environments.
 
 ```javascript
 fetch('https://unpkg.com/use-m/use.js')
-  .then(async code => {
-    const { use } = eval(await code.text());
+  .then(async useJs => {
+    const { use } = eval(await useJs.text());
     const _ = await use('lodash@4.17.21');
     console.log(`_.add(1, 2) = ${_.add(1, 2)}`);
   });

@@ -40,7 +40,7 @@ describe(`'use' import strategies (CJS)`, () => {
   test('Universal (eval style)', async () => {
     const { use } = eval(
       await fetch('https://unpkg.com/use-m/use.js')
-        .then(code => code.text())
+        .then(useJs => useJs.text())
     );
     const _ = await use('lodash@4.17.21');
     expect(_.add(1, 2)).toBe(3);
@@ -48,8 +48,8 @@ describe(`'use' import strategies (CJS)`, () => {
 
   test('Universal (single then style)', async () => {
     await fetch('https://unpkg.com/use-m/use.js')
-      .then(async code => {
-        const { use } = eval(await code.text());
+      .then(async useJs => {
+        const { use } = eval(await useJs.text());
         const _ = await use('lodash@4.17.21');
         expect(_.add(1, 2)).toBe(3);
       });
