@@ -169,7 +169,7 @@ console.log(`_.add(1, 2) = ${_.add(1, 2)}`);
 
 ## Examples
 
-You can check out [usage examples source code](https://github.com/link-foundation/use-m/tree/main/examples).
+You can check out [usage examples source code](https://github.com/link-foundation/use-m/tree/main/examples). You can also explore our [tests](https://github.com/link-foundation/use-m/tree/main/tests) to get even more examples.
 
 ## Questions and issues
 
