@@ -174,7 +174,7 @@ const makeUse = async (options) => {
   let specifierResolver = options?.specifierResolver;
   if (typeof specifierResolver !== 'function') {
     if (typeof window !== 'undefined') {
-      specifierResolver = resolvers[specifierResolver || 'unpkg'];
+      specifierResolver = resolvers[specifierResolver || 'esm'];
     } else {
       specifierResolver = resolvers[specifierResolver || 'npm'];
     }
