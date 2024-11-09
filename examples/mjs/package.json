@@ -1,6 +1,10 @@
 {
   "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
   "dependencies": {
-    "use-m": "^6.0.3"
-  }
+    "use-m": "6"
+  },
+  "license": "UNLICENSED"
 }

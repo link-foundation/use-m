@@ -1,5 +1,8 @@
 {
+  "scripts": {
+    "start": "node index.js"
+  },
   "dependencies": {
-    "use-m": "^6.0.2"
+    "use-m": "^6.1.3"
   }
 }
