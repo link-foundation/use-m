@@ -161,11 +161,12 @@ const baseUse = async (modulePath) => {
 const getScriptUrl = async () => {
   const error = new Error();
   const stack = error.stack || '';
-  const regex = /at[^:\\/]+(file:\/\/)?(?<path>(\/|\w:)[^):]+):\d+:\d+/;
+  const regex = /at[^:\\/]+(file:\/\/)?(?<path>(\/|(?<=\W)\w:)[^):]+):\d+:\d+/;
   const match = stack.match(regex);
   if (!match?.groups?.path) {
     return null;
   }
+  console.log('path', match.groups.path);
   const { pathToFileURL } = await import('url');
   return pathToFileURL(match.groups.path).href;
 }
