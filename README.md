@@ -85,9 +85,7 @@ If you need to use `use-m` without adding it to a project locally, you can load 
   const use = await eval(
     await fetch('https://unpkg.com/use-m/use.js')
       .then(response => response.text())
-  )({
-    meta: import.meta,
-  });
+  )();
 
   const _ = await use('lodash@latest');
   const { $: $$ } = await use('execa@latest');

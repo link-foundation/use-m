@@ -1,13 +1,7 @@
-// import { createRequire } from 'module';
-
 const use = await eval(
   await fetch('https://unpkg.com/use-m/use.js')
     .then(response => response.text())
-)({
-  meta: import.meta,
-  // pathResolver: createRequire(import.meta.url).resolve,
-  // pathResolver: import.meta.resolve,
-});
+)();
 
 const _ = await use('lodash@latest');
 const { $: $$ } = await use('execa@latest');
