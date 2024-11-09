@@ -53,12 +53,17 @@ If you need to use `use-m` without adding it to a project locally, you can load 
   ```javascript
   #!/usr/bin/env zx --verbose
   
-  const { use } = eval(await fetch('https://unpkg.com/use-m/use.js').then(code => code.text()));
+  const { use } = eval(
+    await fetch('https://unpkg.com/use-m/use.js').then(code => code.text())
+  );
   
   const _ = await use('lodash@latest');
 
   const { stdout } = await $`ls`.pipe`grep js`;
-  const files = _.filter(_.split(stdout, '\n'), (item) => !_.isEmpty(item));
+  const files = _.filter(
+    _.split(stdout, '\n'),
+    (item) => !_.isEmpty(item)
+  );
   console.log(files);
   ```
 
@@ -79,14 +84,19 @@ If you need to use `use-m` without adding it to a project locally, you can load 
 1. Create a file named `example.mjs`:
 
   ```javascript
-  const { use } = eval(await fetch('https://unpkg.com/use-m/use.js').then(code => code.text()));
+  const { use } = eval(
+    await fetch('https://unpkg.com/use-m/use.js').then(code => code.text())
+  );
 
   const _ = await use('lodash@latest');
   const { $: $$ } = await use('execa@latest');
   const $ = $$({ verbose: 'full' });
 
   const { stdout } = await $`ls`.pipe`grep js`;
-  const files = _.filter(_.split(stdout, '\n'), (item) => !_.isEmpty(item));
+  const files = _.filter(
+    _.split(stdout, '\n'),
+    (item) => !_.isEmpty(item)
+  );
   console.log(files);
   ```
 
