@@ -1,6 +1,6 @@
 describe(`'use' import strategies (CJS)`, () => {
   test('Direct CJS Require', async () => {
-    const { use } = require('../use.cjs');
+    const { use } = require('use-m');
     const _ = await use("lodash@4.17.21");
     const result = _.add(2, 3);
     expect(result).toBe(5);
@@ -8,7 +8,7 @@ describe(`'use' import strategies (CJS)`, () => {
 
   // New Test Case: Dynamic import with `await import()` directly
   test('Dynamic Import with await import() of CJS', async () => {
-    const { use } = await import(require.resolve('../use.cjs'));
+    const { use } = await import('use-m/use.cjs');
     const _ = await use("lodash@4.17.21");
     const result = _.add(2, 3);
     expect(result).toBe(5);
@@ -16,7 +16,7 @@ describe(`'use' import strategies (CJS)`, () => {
 
   // New Test Case: Dynamic import with `await import()` directly
   test('Dynamic Import with await import() of MJS', async () => {
-    const { use } = await import(require.resolve('../use.mjs'));
+    const { use } = await import('use-m/use.mjs');
     const _ = await use("lodash@4.17.21");
     const result = _.add(2, 3);
     expect(result).toBe(5);

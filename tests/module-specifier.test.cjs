@@ -1,4 +1,4 @@
-import { parseModuleSpecifier } from 'use-m';
+const { parseModuleSpecifier } = require('use-m');
 
 describe('parseModuleSpecifier', () => {
   test('parses package with name and version', () => {

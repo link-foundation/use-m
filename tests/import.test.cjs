@@ -1,5 +1,3 @@
-// supportsDynamicImport.cjs.test.js
-
 const supportsDynamicImport = async () => {
   try {
     await new Function('return import("data:text/javascript,")')();

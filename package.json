@@ -11,7 +11,7 @@
   },
   "type": "module",
   "scripts": {
-    "test": "NODE_OPTIONS=\"--experimental-vm-modules\" jest",
+    "test": "NODE_OPTIONS=\"--experimental-vm-modules\" jest -i",
     "publish:major": "yarn publish --major --access public && git push && git push --tags",
     "publish:minor": "yarn publish --minor --access public && git push && git push --tags",
     "publish:patch": "yarn publish --patch --access public && git push && git push --tags"
@@ -39,7 +39,7 @@
     "dependency management"
   ],
   "author": "link-foundation",
-  "license": "Unlicense",
+  "license": "UNLICENSED",
   "devDependencies": {
     "@babel/preset-env": "^7.26.0",
     "babel-jest": "^29.7.0",

@@ -1,9 +1,31 @@
+const parseModuleSpecifier = (moduleSpecifier) => {
+  if (!moduleSpecifier || typeof moduleSpecifier !== 'string' || moduleSpecifier.length <= 0) {
+    throw new Error(
+      `Name for a package to be imported is not provided.
+Please specify package name and an optional version (e.g., 'lodash', 'lodash@4.17.21' or '@chakra-ui/react@1.0.0').`
+    );
+  }
+  const regex = /^(?<packageName>@?([^@/]+\/)?[^@/]+)?(?:@(?<version>[^/]*))?(?<modulePath>(?:\/[^@]+)*)?$/;
+  const match = moduleSpecifier.match(regex);
+  if (!match || typeof match.groups.packageName !== 'string' || match.groups.packageName.trim() === '') {
+    throw new Error(
+      `Failed to parse package identifier '${moduleSpecifier}'.
+Please specify a package name, and an optional version (e.g.: 'lodash', 'lodash@4.17.21' or '@chakra-ui/react@1.0.0').`
+    );
+  }
+  let { packageName, version, modulePath } = match.groups;
+  if (typeof version !== 'string' || version.trim() === '') {
+    version = 'latest';
+  }
+  if (typeof modulePath !== 'string' || modulePath.trim() === '') {
+    modulePath = '';
+  }
+  return { packageName, version, modulePath };
+}
+
 const resolvers = {
   npm: async (moduleSpecifier, pathResolver) => {
     const path = await import('path');
-    const { exec } = await import('child_process');
-    const { promisify } = await import('util');
-    const execAsync = promisify(exec);
 
     if (!pathResolver) {
       throw new Error('Failed to get the current resolver.');
@@ -23,9 +45,6 @@ const resolvers = {
     };
 
     const tryResolveModule = async (packagePath) => {
-      if (!await directoryExists(packagePath)) {
-        return null;
-      }
       try {
         return await pathResolver(packagePath);
       } catch (error) {
@@ -36,52 +55,30 @@ const resolvers = {
       }
     };
 
-    function parseModuleSpecifier(moduleSpecifier) {
-      const regex = /^(?<packageName>@?([^@/]+\/)?[^@/]+)?(?:@(?<version>[^/]+))?(?<modulePath>(?:\/[^@]+)*)?$/;
-      const match = moduleSpecifier.match(regex);
-      if (!match || !match.groups.packageName) {
-        throw new Error(
-          `Failed to parse package identifier '${moduleSpecifier}'. Please specify a version (e.g., 'lodash@4.17.21' or '@chakra-ui/react@1.0.0').`
-        );
+    const ensurePackageInstalled = async ({ packageName, version }) => {
+      const { exec } = await import('child_process');
+      const { promisify } = await import('util');
+      const execAsync = promisify(exec);
+      const alias = `${packageName.replace('@', '').replace('/', '-')}-v-${version}`;
+      const { stdout: globalModulesPath } = await execAsync('npm root -g');
+      const packagePath = path.join(globalModulesPath.trim(), alias);
+      if (version === 'latest' || !(await directoryExists(packagePath))) {
+        try {
+          await execAsync(`npm install -g ${alias}@npm:${packageName}@${version}`, { stdio: 'ignore' });
+        } catch (error) {
+          throw new Error(`Failed to install ${packageName}@${version} globally.`, { cause: error });
+        }
       }
-      const { packageName, version = 'latest', modulePath = '' } = match.groups;
-      return { packageName, version, modulePath };
-    }
-
-    if (!moduleSpecifier || typeof moduleSpecifier !== 'string' || moduleSpecifier.length <= 0) {
-      throw new Error(`Name for a package to be installed and imported is not provided. Please specify package name and a version (e.g., 'lodash@4.17.21' or '@chakra-ui/react@1.0.0').`);
-    }
+      return packagePath;
+    };
 
     const { packageName, version, modulePath } = parseModuleSpecifier(moduleSpecifier);
-
-    // Define the alias for global installation
-    const alias = `${packageName.replace('@', '').replace('/', '-')}-v${version}`;
-
-    // Get the global node_modules path
-    const { stdout } = await execAsync('npm root -g');
-    const globalPath = stdout.trim();
-
-    // Resolve the exact path to the installed package with alias
-    const packagePath = path.join(globalPath, alias);
-
+    const packagePath = await ensurePackageInstalled({ packageName, version });
     const packageModulePath = modulePath ? path.join(packagePath, modulePath) : packagePath;
-    let resolvedPath = await tryResolveModule(packageModulePath);
-
-    if (version === 'latest' || !resolvedPath) {
-      // Install the package globally with the specified version and alias if not installed or it is the latest version
-      try {
-        await execAsync(`npm install -g ${alias}@npm:${packageName}@${version}`, { stdio: 'ignore' });
-        // console.log(`${packageName}@${version} installed successfully.`);
-      } catch (error) {
-        throw new Error(`Failed to install ${packageName}@${version} globally.`, { cause: error });
-      }
-    }
-
-    resolvedPath = await tryResolveModule(packageModulePath); // Resolve the path after installation
+    const resolvedPath = await tryResolveModule(packageModulePath);
     if (!resolvedPath) {
-      throw new Error(`Failed to resolve the path to ${packageName}@${version} from '${packageModulePath}'.`);
+      throw new Error(`Failed to resolve the path to '${moduleSpecifier}' from '${packageModulePath}'.`);
     }
-
     return resolvedPath;
   },
   skypack: async (moduleSpecifier, pathResolver) => {
@@ -89,26 +86,16 @@ const resolvers = {
     return resolvedPath;
   },
   jsdelivr: async (moduleSpecifier, pathResolver) => {
-    const match = moduleSpecifier.match(/^([^@\/]+)@([^\/]+)(\/.+)?$/);
-    if (!match) {
-      throw new Error(`Invalid module specifier: ${moduleSpecifier}`);
-    }
-    let [, packageName, version, subpath = ''] = match;
-
-    // If no subpath is provided, append /{packageName}.js
-    const path = subpath ? `${subpath}.js` : `/${packageName}.js`;
+    const { packageName, version, modulePath } = parseModuleSpecifier(moduleSpecifier);
+    // If no modulePath is provided, append /{packageName}.js
+    const path = modulePath ? `${modulePath}.js` : `/${packageName}.js`;
     const resolvedPath = `https://cdn.jsdelivr.net/npm/${packageName}-es@${version}${path}`;
     return resolvedPath;
   },
   unpkg: async (moduleSpecifier, pathResolver) => {
-    const match = moduleSpecifier.match(/^([^@\/]+)@([^\/]+)(\/.+)?$/);
-    if (!match) {
-      throw new Error(`Invalid module specifier: ${moduleSpecifier}`);
-    }
-    let [, packageName, version, subpath = ''] = match;
-
-    // If no subpath is provided, append /{packageName}.js
-    const path = subpath ? `${subpath}.js` : `/${packageName}.js`;
+    const { packageName, version, modulePath } = parseModuleSpecifier(moduleSpecifier);
+    // If no modulePath is provided, append /{packageName}.js
+    const path = modulePath ? `${modulePath}.js` : `/${packageName}.js`;
     const resolvedPath = `https://unpkg.com/${packageName}-es@${version}${path}`;
     return resolvedPath;
   },
@@ -117,15 +104,7 @@ const resolvers = {
     return resolvedPath;
   },
   jspm: async (moduleSpecifier, pathResolver) => {
-    const match = moduleSpecifier.match(/^([^@\/]+)@([^\/]+)(\/.+)?$/);
-    if (!match) {
-      throw new Error(`Invalid module specifier: ${moduleSpecifier}`);
-    }
-    let [, packageName, version, subpath = ''] = match;
-
-    // For jspm, use the package name as is (no '-es')
-    const path = subpath;
-    const resolvedPath = `https://jspm.dev/${packageName}@${version}${path}`;
+    const resolvedPath = `https://jspm.dev/${moduleSpecifier}`;
     return resolvedPath;
   },
 }
@@ -175,7 +154,8 @@ const makeUse = async (options) => {
     }
   }
   return async (moduleSpecifier) => {
-    return baseUse(await specifierResolver(moduleSpecifier, pathResolver));
+    const modulePath = await specifierResolver(moduleSpecifier, pathResolver);
+    return baseUse(modulePath);
   };
 }
 
@@ -188,6 +168,7 @@ const use = async (moduleSpecifier) => {
 };
 
 module.exports = {
+  parseModuleSpecifier,
   resolvers,
   makeUse,
   use,
