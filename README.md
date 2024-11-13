@@ -36,7 +36,7 @@ const _ = await use('lodash@4.17.21');
 console.log(`_.add(1, 2) = ${_.add(1, 2)}`);
 ```
 
-Only 2 lines and now have an interactive playground for JavaScript and almost any NPM library directly in your browser's console. No more cloud based sandboxes required.
+Only 2 lines and now have an interactive playground for JavaScript and almost any NPM library directly in your browser's console. No more cloud based sandboxes required. Sorry VSCode, you don't have such powers yet.
 
 ### Network imports
 
