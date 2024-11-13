@@ -159,14 +159,6 @@ export const baseUse = async (modulePath) => {
 }
 
 export const makeUse = async (options) => {
-  let specifierResolver = options?.specifierResolver;
-  if (typeof specifierResolver !== 'function') {
-    if (typeof window !== 'undefined') {
-      specifierResolver = resolvers[specifierResolver || 'esm'];
-    } else {
-      specifierResolver = resolvers[specifierResolver || 'npm'];
-    }
-  }
   let scriptPath = options?.scriptPath;
   if (!scriptPath && typeof __filename !== 'undefined') {
     scriptPath = __filename;
@@ -180,13 +172,19 @@ export const makeUse = async (options) => {
     scriptPath = import.meta.url;
     protocol = new URL(scriptPath).protocol;
   }
+  let specifierResolver = options?.specifierResolver;
+  if (typeof specifierResolver !== 'function') {
+    if (typeof window !== 'undefined' || (protocol && (protocol === 'http:' || protocol === 'https:'))) {
+      specifierResolver = resolvers[specifierResolver || 'esm'];
+    } else {
+      specifierResolver = resolvers[specifierResolver || 'npm'];
+    }
+  }
   let pathResolver = options?.pathResolver;
   if (!pathResolver) {
     if (typeof require !== 'undefined') {
       pathResolver = require.resolve;
-    } else if (scriptPath) {
-      console.log('scriptPath', scriptPath);
-      console.log('protocol', protocol);
+    } else if (scriptPath && (!protocol || protocol === 'file:')) {
       pathResolver = await import('module')
         .then(module => module.createRequire(scriptPath))
         .then(require => require.resolve);
