@@ -36,6 +36,22 @@ const _ = await use('lodash@4.17.21');
 console.log(`_.add(1, 2) = ${_.add(1, 2)}`);
 ```
 
+### Network imports
+
+It is possible to use `--experimental-network-imports` to enable the same style of imports as in browser version. See [the example](https://github.com/link-foundation/use-m/blob/main/examples/network-imports/index.mjs).
+
+1. Create file named `example.mjs`:
+```javascript
+const { use } = await import('https://unpkg.com/use-m/use.mjs');
+const _ = await use('lodash@4.17.21');
+console.log(`_.add(1, 2) = ${_.add(1, 2)}`);
+```
+
+2. Execute the script using `--experimental-network-imports` option:
+```bash
+node --experimental-network-imports example.mjs
+```
+
 ### Independent Scripts
 
 If you need to use `use-m` without adding it to a project locally, you can load it directly from `unpkg` using `fetch`. This is particularly useful in environments like [zx](https://github.com/google/zx) or in other standalone scripts like `execa`, when you don't want to use any `package.json`, `node_modules`, etc.
