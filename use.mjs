@@ -175,8 +175,10 @@ export const makeUse = async (options) => {
   if (!scriptPath && metaUrl) {
     scriptPath = metaUrl;
   }
+  let protocol;
   if (!scriptPath) {
     scriptPath = import.meta.url;
+    protocol = new URL(scriptPath).protocol;
   }
   let pathResolver = options?.pathResolver;
   if (!pathResolver) {
@@ -184,6 +186,7 @@ export const makeUse = async (options) => {
       pathResolver = require.resolve;
     } else if (scriptPath) {
       console.log('scriptPath', scriptPath);
+      console.log('protocol', protocol);
       pathResolver = await import('module')
         .then(module => module.createRequire(scriptPath))
         .then(require => require.resolve);
