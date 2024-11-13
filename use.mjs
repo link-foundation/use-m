@@ -183,6 +183,7 @@ export const makeUse = async (options) => {
     if (typeof require !== 'undefined') {
       pathResolver = require.resolve;
     } else if (scriptPath) {
+      console.log('scriptPath', scriptPath);
       pathResolver = await import('module')
         .then(module => module.createRequire(scriptPath))
         .then(require => require.resolve);
