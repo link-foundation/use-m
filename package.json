@@ -11,7 +11,7 @@
   },
   "type": "module",
   "scripts": {
-    "test": "NODE_OPTIONS=\"--experimental-vm-modules --experimental-network-imports\" jest",
+    "test": "NODE_OPTIONS=\"--experimental-vm-modules\" jest",
     "test:examples": "./examples/test-examples.mjs",
     "publish:major": "yarn publish --major --access public && git push && git push --tags",
     "publish:minor": "yarn publish --minor --access public && git push && git push --tags",
