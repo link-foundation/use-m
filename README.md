@@ -106,8 +106,8 @@ If you need to use `use-m` without adding it to a project locally, you can load 
     await fetch('https://unpkg.com/use-m/use.js').then(u => u.text())
   );
 
-  const _ = await use('lodash@latest');
-  const { $: $$ } = await use('execa@latest');
+  const _ = await use('lodash');
+  const { $: $$ } = await use('execa');
   const $ = $$({ verbose: 'full' });
 
   const { stdout } = await $`ls`.pipe`grep js`;
