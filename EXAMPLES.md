@@ -35,7 +35,7 @@
    
    svg.append("path")
      .attr("d", "M10,10 Q100,200 200,10")
-     .attr("stroke", "black")
+     .attr("stroke", "white")
      .attr("fill", "none")
      .attr("marker-end", "url(#arrow)");
    ```
