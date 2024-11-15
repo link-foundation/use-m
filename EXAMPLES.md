@@ -21,18 +21,18 @@
      .attr("width", "100%")
      .attr("height", "100%")
      .attr("viewBox", "0 0 220 220");
-   
+
    svg.append("defs").append("marker")
      .attr("id", "arrow")
      .attr("markerWidth", 20)
      .attr("markerHeight", 20)
-     .attr("refX", 12)
+     .attr("refX", 10)
      .attr("refY", 6)
      .attr("orient", "auto")
      .append("path")
      .attr("d", "M0,0 L0,12 L12,6 Z")
      .attr("fill", "white");
-   
+
    svg.append("path")
      .attr("d", "M10,10 Q100,200 200,10")
      .attr("stroke", "white")
