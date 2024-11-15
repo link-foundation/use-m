@@ -31,7 +31,7 @@
      .attr("orient", "auto")
      .append("path")
      .attr("d", "M0,0 L0,12 L12,6 Z")
-     .attr("fill", "black");
+     .attr("fill", "white");
    
    svg.append("path")
      .attr("d", "M10,10 Q100,200 200,10")
