@@ -29,7 +29,7 @@ export async function resolve(specifier, context, defaultResolve) {
   try {
     const { npm } = resolvers;
     const resolvedUrl = await npm(specifier, require.resolve);
-    return { url: pathToFileURL(resolvedUrl) };
+    return { url: pathToFileURL(resolvedUrl).href };
   } catch (error) {
     if (defaultResolveError) {
       console.error(error);
