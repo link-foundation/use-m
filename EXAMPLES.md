@@ -45,7 +45,7 @@
 ## Activate IntelliSense in VS Code
 
 1. Create a file named `example.mjs`
-   ```
+   ```javascript
    import { use } from 'use-m';
 
    /** @type {import('lodash')} */
