@@ -1,3 +1,5 @@
+[![npm](https://img.shields.io/npm/v/use-m.svg)](https://npmjs.com/use-m)
+
 # [use-m](https://github.com/link-foundation/use-m): dynamically load and import any JavaScript module
 
 `use-m` (`m` stands for `module`) is a utility for dynamically importing any JavaScript module (npm package) at runtime. 
