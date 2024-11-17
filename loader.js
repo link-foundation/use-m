@@ -2,8 +2,8 @@
 
 // import { resolve, extname } from 'path';
 import { resolvers } from './use.mjs';
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
+// import { createRequire } from 'module';
+// const require = createRequire(import.meta.url);
 
 // The `resolve` hook customizes how module URLs are resolved
 export async function resolve(specifier, context, defaultResolve) {
@@ -16,20 +16,13 @@ export async function resolve(specifier, context, defaultResolve) {
   //   return { url: resolvedUrl };
   // }
 
-  const { npm } = resolvers;
-
-  try {
-    // Resolve the specifier using the npm resolver
-    const resolvedUrl = await npm(specifier, require.resolve);
-    return { url: resolvedUrl };
-  } catch (err) {
-    // // Handle errors
-    // return { error: err };
-    console.error(err);
+  const resolution = await defaultResolve(specifier, context, defaultResolve);
+  if (resolution && resolution.url) {
+    return resolution;
   }
- 
-  // Fallback to default resolution
-  return defaultResolve(specifier, context, defaultResolve);
+  const { npm } = resolvers;
+  const resolvedUrl = await npm(specifier, defaultResolve);
+  return { url: resolvedUrl };
 }
 
 // The `load` hook customizes how module code is loaded
