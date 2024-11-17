@@ -9,7 +9,6 @@ It may useful for standalone scripts that do not need `package.json`. Also it ma
 ## Table of Contents
 - [Introduction](#introduction)
 - [Key Features](#key-features)
-- [Installation](#installation)
 - [Usage](#usage)
   - [Universal](#universal)
   - [Browser](#browser)
@@ -17,7 +16,7 @@ It may useful for standalone scripts that do not need `package.json`. Also it ma
   - [Independent Scripts](#independent-scripts)
   - [Standard Import](#standard-import)
 - [Examples](#examples)
-- [Contributing](#contributing)
+- [Questions and issues](#questions-and-issues)
 - [License](#license)
 
 ## Key features
