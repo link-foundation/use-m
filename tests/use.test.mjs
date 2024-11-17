@@ -56,7 +56,7 @@ describe(`'use' import strategies`, () => {
   });
 
   test('use.all (cjs)', async () => {
-    const createRequire = require('module').createRequire;
+    const { createRequire } = await import('module');
     const require = createRequire(import.meta.url);
     const { use } = require('use-m');
     const [
