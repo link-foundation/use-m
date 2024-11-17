@@ -11,7 +11,7 @@
     }
   },
   "bin": {
-    "use": "./use-cli.mjs"
+    "use": "./cli.mjs"
   },
   "scripts": {
     "test": "NODE_OPTIONS=\"--experimental-vm-modules\" jest",
