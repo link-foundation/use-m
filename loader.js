@@ -15,14 +15,28 @@ export async function resolve(specifier, context, defaultResolve) {
   //   const resolvedUrl = new URL(specifier.replace('custom:', ''), parentURL).href;
   //   return { url: resolvedUrl };
   // }
+  let defaultResolveError;
 
-  const resolution = await defaultResolve(specifier, context, defaultResolve);
-  if (resolution && resolution.url) {
-    return resolution;
+  try {
+    const resolution = await defaultResolve(specifier, context, defaultResolve);
+    if (resolution && resolution.url) {
+      return resolution;
+    }
+  } catch (error) {
+    defaultResolveError = error;
   }
-  const { npm } = resolvers;
-  const resolvedUrl = await npm(specifier, defaultResolve);
-  return { url: resolvedUrl };
+  try {
+    const { npm } = resolvers;
+    const resolvedUrl = await npm(specifier, defaultResolve);
+    return { url: resolvedUrl };
+  } catch (error) {
+    if (defaultResolveError) {
+      console.error(error);
+      throw defaultResolveError;
+    } else {
+      throw error;
+    }
+  }
 }
 
 // The `load` hook customizes how module code is loaded
