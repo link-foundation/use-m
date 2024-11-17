@@ -1,8 +1,9 @@
 {
   "name": "multiple-versions",
-  "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start:use": "node use.js",
+    "start:use-all": "node use.all.js",
+    "start": "yarn start:use && yarn start:use-all"
   },
   "dependencies": {
     "use-m": "^8.8.6"
