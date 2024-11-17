@@ -40,7 +40,7 @@
      .attr("marker-end", "url(#arrow)");
    ```
 
-<img width="1840" alt="Screenshot 2024-11-15 at 23 28 22" src="https://github.com/user-attachments/assets/8149d619-dca3-4243-97a1-379cb2b6575c">
+   <img width="1840" alt="Screenshot 2024-11-15 at 23 28 22" src="https://github.com/user-attachments/assets/8149d619-dca3-4243-97a1-379cb2b6575c">
 
 ## Activate IntelliSense in VS Code
 
@@ -56,6 +56,7 @@
 
 2. Type `_.` and see the list of available members of `_`.
 
+   <img width="618" alt="Screenshot 2024-11-17 at 16 36 11" src="https://github.com/user-attachments/assets/967c05ba-7977-4a08-a4d2-76ab6cf31e25">
 
 
 
