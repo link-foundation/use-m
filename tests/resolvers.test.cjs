@@ -7,6 +7,16 @@ describe('resolvers tests', () => {
     expect(packagePath).toMatch(/node_modules\/lodash-v-4\.17\.21/);
   });
 
+  test('npm resolver resolves package path with version', async () => {
+    const { npm } = resolvers;
+    const rootPath1 = await npm('yargs@latest', require.resolve);
+    const helpersPath1 = await npm('yargs@latest/helpers', require.resolve);
+    const rootPath2 = await npm('yargs', require.resolve);
+    const helpersPat2 = await npm('yargs/helpers', require.resolve);
+    expect(rootPath1).toBe(rootPath2);
+    expect(helpersPath1).toBe(helpersPat2);
+  });
+
   test('skypack resolver resolves URL', async () => {
     const { skypack } = resolvers;
     const resolvedPath = await skypack('lodash@4.17.21');
