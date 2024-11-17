@@ -58,16 +58,16 @@ Only 2 lines and now have an interactive playground for JavaScript and almost an
 It is possible to use `--experimental-network-imports` to enable the same style of imports as in browser version. See [the example](https://github.com/link-foundation/use-m/blob/main/examples/network-imports/index.mjs).
 
 1. Create file named `example.mjs`:
-```javascript
-const { use } = await import('https://unpkg.com/use-m/use.mjs');
-const _ = await use('lodash@4.17.21');
-console.log(`_.add(1, 2) = ${_.add(1, 2)}`);
-```
+   ```javascript
+   const { use } = await import('https://unpkg.com/use-m/use.mjs');
+   const _ = await use('lodash@4.17.21');
+   console.log(`_.add(1, 2) = ${_.add(1, 2)}`);
+   ```
 
 2. Execute the script using `--experimental-network-imports` option:
-```bash
-node --experimental-network-imports example.mjs
-```
+   ```bash
+   node --experimental-network-imports example.mjs
+   ```
 
 ### Independent Scripts
 
@@ -77,69 +77,69 @@ If you need to use `use-m` without adding it to a project locally, you can load 
 
 1. Install zx globally
 
-  ```bash
-  npm install -g zx
-  ```
+   ```bash
+   npm install -g zx
+   ```
 
 2. Create a file named `example.mjs`:
 
-  ```javascript
-  #!/usr/bin/env zx --verbose
-  
-  const { use } = eval(
-    await fetch('https://unpkg.com/use-m/use.js').then(u => u.text())
-  );
-  
-  const _ = await use('lodash@latest');
-
-  const { stdout } = await $`ls`.pipe`grep js`;
-  const files = _.filter(
-    _.split(stdout, '\n'),
-    (item) => !_.isEmpty(item)
-  );
-  console.log(files);
-  ```
+   ```javascript
+   #!/usr/bin/env zx --verbose
+   
+   const { use } = eval(
+     await fetch('https://unpkg.com/use-m/use.js').then(u => u.text())
+   );
+    
+   const _ = await use('lodash@latest');
+   
+   const { stdout } = await $`ls`.pipe`grep js`;
+   const files = _.filter(
+     _.split(stdout, '\n'),
+     (item) => !_.isEmpty(item)
+   );
+   console.log(files);
+   ```
 
 3. Give execution permissions
 
-  ```bash
-  chmod +x example.mjs
-  ```
+   ```bash
+   chmod +x example.mjs
+   ```
 
 4. Execute:
 
-  ```bash
-  ./example.mjs
-  ```
+   ```bash
+   ./example.mjs
+   ```
 
 #### `use-m` and `execa`
 
 1. Create a file named `example.mjs`:
 
-  ```javascript
-  const { use } = eval(
-    await fetch('https://unpkg.com/use-m/use.js').then(u => u.text())
-  );
-
-  const _ = await use('lodash');
-  const { $: $$ } = await use('execa');
-  const $ = $$({ verbose: 'full' });
-
-  const { stdout } = await $`ls`.pipe`grep js`;
-  const files = _.filter(
-    _.split(stdout, '\n'),
-    (item) => !_.isEmpty(item)
-  );
-  console.log(files);
-  ```
+   ```javascript
+   const { use } = eval(
+     await fetch('https://unpkg.com/use-m/use.js').then(u => u.text())
+   ); 
+   
+   const _ = await use('lodash');
+   const { $: $$ } = await use('execa');
+   const $ = $$({ verbose: 'full' }); 
+   
+   const { stdout } = await $`ls`.pipe`grep js`;
+   const files = _.filter(
+     _.split(stdout, '\n'),
+     (item) => !_.isEmpty(item)
+   );
+   console.log(files);
+   ```
 
 Note: in ES Module environments where `__filename` and `require` are not defined, you may need to add `meta` option into `use` function constructor, as it is not possible to access `import.meta` inside `eval`.
 
 2. Execute:
 
-  ```bash
-  node example.mjs
-  ```
+   ```bash
+   node example.mjs
+   ```
 
 ### Standard Import
 
