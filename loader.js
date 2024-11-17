@@ -2,8 +2,8 @@
 
 // import { resolve, extname } from 'path';
 import { resolvers } from './use.mjs';
-// import { createRequire } from 'module';
-// const { resolve } = createRequire(import.meta.url);
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
 
 // The `resolve` hook customizes how module URLs are resolved
 export async function resolve(specifier, context, defaultResolve) {
@@ -20,7 +20,7 @@ export async function resolve(specifier, context, defaultResolve) {
 
   try {
     // Resolve the specifier using the npm resolver
-    const resolvedUrl = await npm(specifier, defaultResolve);
+    const resolvedUrl = await npm(specifier, require.resolve);
     return { url: resolvedUrl };
   } catch (err) {
     // // Handle errors
