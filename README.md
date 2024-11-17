@@ -17,6 +17,7 @@ It may useful for standalone scripts that do not need `package.json`. Also it ma
   - [Standard Import](#standard-import)
 - [Examples](#examples)
 - [Questions and issues](#questions-and-issues)
+- [Contributing](#contributing)
 - [License](#license)
 
 ## Key features
@@ -207,6 +208,10 @@ You can check out [usage examples source code](https://github.com/link-foundatio
 ## Questions and issues
 
 If you have any questions or issues, [please write us on GitHub](https://github.com/link-foundation/use-m/issues). Together we can ensure this package will have highest quality possible. Your feedback is valuable and helps improve the project.
+
+## Contributing
+
+We welcome contributions! To contribute please [open Pull Request](https://github.com/link-foundation/use-m/pulls) with any suggested changes.
 
 ## License
 
