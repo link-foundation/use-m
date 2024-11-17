@@ -18,7 +18,10 @@ jobs:
       id: get_tag
       run: |
         tag=$(git tag --points-at $GITHUB_SHA)
+        # Remove 'v' prefix if it exists for cleaner handling
+        version=${tag#v}
         echo "tag=$tag" >> $GITHUB_OUTPUT
+        echo "version=$version" >> $GITHUB_OUTPUT
 
     - name: Create release
       if: ${{ steps.get_tag.outputs.tag }}
@@ -27,6 +30,6 @@ jobs:
         tag_name: ${{ steps.get_tag.outputs.tag }}
         release_name: ${{ steps.get_tag.outputs.tag }}
         body: |
-          [![npm](https://img.shields.io/badge/npm-v${{ steps.get_tag.outputs.tag }}-blue.svg)](https://www.npmjs.com/package/use-m/v/${{ steps.get_tag.outputs.tag }})
+          [![npm](https://img.shields.io/badge/npm-v${{ steps.get_tag.outputs.version }}-blue.svg)](https://www.npmjs.com/package/use-m/v/${{ steps.get_tag.outputs.version }})
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
