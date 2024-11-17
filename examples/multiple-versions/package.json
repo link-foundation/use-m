@@ -1,0 +1,7 @@
+{
+  "name": "multiple-versions",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  }
+}
