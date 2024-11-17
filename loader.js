@@ -1,7 +1,7 @@
 // loader.js
 
 // import { resolve, extname } from 'path';
-const { pathToFileURL } = require('url');
+import { pathToFileURL } from 'url';
 import { resolvers } from './use.mjs';
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
