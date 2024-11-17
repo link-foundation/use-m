@@ -1,6 +1,7 @@
 // loader.js
 
 // import { resolve, extname } from 'path';
+const { pathToFileURL } = require('url');
 import { resolvers } from './use.mjs';
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
@@ -28,7 +29,7 @@ export async function resolve(specifier, context, defaultResolve) {
   try {
     const { npm } = resolvers;
     const resolvedUrl = await npm(specifier, require.resolve);
-    return { url: resolvedUrl };
+    return { url: pathToFileURL(resolvedUrl) };
   } catch (error) {
     if (defaultResolveError) {
       console.error(error);
