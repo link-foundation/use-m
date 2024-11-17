@@ -42,7 +42,19 @@
 
 <img width="1840" alt="Screenshot 2024-11-15 at 23 28 22" src="https://github.com/user-attachments/assets/8149d619-dca3-4243-97a1-379cb2b6575c">
 
+## Activate IntelliSense in VS Code
 
+1. Create a file named `example.mjs`
+   ```
+   import { use } from 'use-m';
+
+   /** @type {import('lodash')} */
+   const _ = await use('lodash@4.17.21');
+
+   console.log(`_.add(1, 2) = ${_.add(1, 2)}`);
+   ```
+
+2. Type `_.` and see the list of available members of `_`.
 
 
 
