@@ -44,7 +44,18 @@
 
 ## Activate IntelliSense in VS Code
 
-1. Create a file named `example.mjs`
+1. Install `use-m`:
+   ```bash
+   yarn init
+   yarn add use-m
+   ```
+   or
+   ```bash
+   npm init
+   npm i use-m
+   ```
+
+2. Create a file named `example.mjs`
    ```javascript
    import { use } from 'use-m';
 
@@ -54,7 +65,7 @@
    console.log(`_.add(1, 2) = ${_.add(1, 2)}`);
    ```
 
-2. Type `_.` and see the list of available members of `_`.
+3. Type `_.` and see the list of available members of `_`.
 
    <img width="618" alt="Screenshot 2024-11-17 at 16 36 11" src="https://github.com/user-attachments/assets/967c05ba-7977-4a08-a4d2-76ab6cf31e25">
 
