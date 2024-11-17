@@ -1,0 +1,11 @@
+{
+  "name": "vscode-intellisense",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "use-m": "^8.8.6"
+  }
+}
