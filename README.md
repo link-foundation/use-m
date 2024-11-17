@@ -216,4 +216,4 @@ We welcome contributions! To contribute please [open Pull Request](https://githu
 
 ## License
 
-This project is licensed under the [Unlicense](https://github.com/link-foundation/use-m/blob/main/LICENSE). That means there is no conditions or limitations on how this library and its code can be used.
+This project is licensed under the [Unlicense](https://github.com/link-foundation/use-m/blob/main/LICENSE) (public domain). That means you are absolutely free to use this library, there is no conditions or limitations on how this library and its code can be used.
