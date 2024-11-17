@@ -6,6 +6,20 @@
 
 It may useful for standalone scripts that do not need `package.json`. Also it may make your code portable across environments (for example it may require no changes in your code when executed in CommonJS, ES Modules and browser). You can ensure predictable behavior of your code over time by specifying the exact version to import directly in your script, similar to how versions are specified in package.json. You even can import multiple versions of the same library at the same time.
 
+## Table of Contents
+- [Introduction](#introduction)
+- [Key Features](#key-features)
+- [Installation](#installation)
+- [Usage](#usage)
+  - [Universal](#universal)
+  - [Browser](#browser)
+  - [Network Imports](#network-imports)
+  - [Independent Scripts](#independent-scripts)
+  - [Standard Import](#standard-import)
+- [Examples](#examples)
+- [Contributing](#contributing)
+- [License](#license)
+
 ## Key features
 
 - **Dynamic package loading**: In `node.js`, `use-m` loads and imports npm packages on-demand with **global installation** (using `npm i -g` with separate alias for each version), making them available across projects and reusable without needing to reinstall each time. In case of a browser `use-m` loads npm packages directly from CDNs (by default `esm.sh` is used).
