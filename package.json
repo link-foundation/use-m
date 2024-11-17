@@ -2,6 +2,7 @@
   "name": "use-m",
   "version": "8.9.6",
   "description": "use-m: dynamically import any JavaScript module",
+  "type": "module",
   "main": "use.cjs",
   "exports": {
     ".": {
@@ -9,7 +10,9 @@
       "require": "./use.cjs"
     }
   },
-  "type": "module",
+  "bin": {
+    "use": "./use-cli.mjs"
+  },
   "scripts": {
     "test": "NODE_OPTIONS=\"--experimental-vm-modules\" jest",
     "test:examples": "./examples/test-examples.mjs",
