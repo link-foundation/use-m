@@ -1,4 +1,5 @@
 [![npm](https://img.shields.io/npm/v/use-m.svg)](https://npmjs.com/use-m)
+[![License](https://img.shields.io/badge/license-Unlicense-blue.svg)](https://github.com/link-foundation/use-m/blob/main/LICENSE)
 
 # [use-m](https://github.com/link-foundation/use-m): dynamically load and import any JavaScript module
 
