@@ -54,4 +54,48 @@ describe(`'use' import strategies`, () => {
         expect(_.add(1, 2)).toBe(3);
       });
   });
+
+  test('use.all (cjs)', async () => {
+    const createRequire = require('module').createRequire;
+    const require = createRequire(import.meta.url);
+    const { use } = require('use-m');
+    const [
+      lodash3, 
+      lodash4
+    ] = await use.all(
+      'lodash@3',
+      'lodash@4'
+    );
+    expect(lodash3.add(1, 2)).toBe(3);
+    expect(lodash4.add(1, 2)).toBe(3);
+  });
+
+  test('use.all (mjs)', async () => {
+    const { use } = await import('use-m');
+    const [
+      lodash3, 
+      lodash4
+    ] = await use.all(
+      'lodash@3',
+      'lodash@4'
+    );
+    expect(lodash3.add(1, 2)).toBe(3);
+    expect(lodash4.add(1, 2)).toBe(3);
+  });
+
+  test('use.all (script)', async () => {
+    await fetch('https://unpkg.com/use-m/use.js')
+      .then(async useJs => {
+        const { use } = eval(await useJs.text());
+        const [
+          lodash3, 
+          lodash4
+        ] = await use.all(
+          'lodash@3',
+          'lodash@4'
+        );
+        expect(lodash3.add(1, 2)).toBe(3);
+        expect(lodash4.add(1, 2)).toBe(3);
+      });
+  });
 });

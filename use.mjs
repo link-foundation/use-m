@@ -198,10 +198,17 @@ export const makeUse = async (options) => {
   };
 }
 
-let _use = null;
-export const use = async (moduleSpecifier) => {
-  if (!_use) {
-    _use = await makeUse();
+let __use = null;
+const _use = async (moduleSpecifier) => {
+  if (!__use) {
+    __use = await makeUse();
   }
-  return _use(moduleSpecifier);
-};
+  return __use(moduleSpecifier);
+}
+_use.all = async (...moduleSpecifiers) => {
+  if (!__use) {
+    __use = await makeUse();
+  }
+  return Promise.all(moduleSpecifiers.map(__use));
+}
+export const use = _use;

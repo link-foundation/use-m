@@ -193,13 +193,19 @@ const makeUse = async (options) => {
   };
 }
 
-let _use = null;
+let __use = null;
 const use = async (moduleSpecifier) => {
-  if (!_use) {
-    _use = await makeUse();
+  if (!__use) {
+    __use = await makeUse();
   }
-  return _use(moduleSpecifier);
-};
+  return __use(moduleSpecifier);
+}
+use.all = async (...moduleSpecifiers) => {
+  if (!__use) {
+    __use = await makeUse();
+  }
+  return Promise.all(moduleSpecifiers.map(__use));
+}
 
 module.exports = {
   parseModuleSpecifier,
