@@ -1,9 +1,9 @@
 [![npm](https://img.shields.io/npm/v/use-m.svg)](https://npmjs.com/use-m)
 [![License](https://img.shields.io/badge/license-Unlicense-blue.svg)](https://github.com/link-foundation/use-m/blob/main/LICENSE)
 
-# [use-m](https://github.com/link-foundation/use-m): dynamically load and import any JavaScript module
+# [use-m](https://github.com/link-foundation/use-m): dynamically import any JavaScript module anywhere
 
-`use-m` (`m` stands for `module`) is a utility for dynamically importing any JavaScript module (npm package) at runtime. 
+`use-m` (`m` stands for `module`) is a utility for dynamically importing any JavaScript module (npm package) at runtime anywhere (browser or server). 
 
 It may be useful for standalone scripts that do not require a `package.json`. Also it may make your code portable across environments (for example it may require no changes in your code when executed in CommonJS, ES Modules and browser). You can ensure predictable behavior of your code over time by specifying the exact version to import directly in your script, similar to how versions are specified in package.json. You even can import multiple versions of the same library at the same time. You can use `use-m` when you don't want your `package.json` to be poluted with optional packages. You may keep your `package.json` with as little dependencies as needed thanks to `use-m`.
 
