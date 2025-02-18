@@ -43,7 +43,7 @@ fetch('https://unpkg.com/use-m/use.js')
 
 Universal execution comes at cost of `eval` usage, that is considered potential security threat. In case of this library only single file is evaled, it short, unminified and has no dependencies, so you can check [the contents](https://unpkg.com/use-m/use.js) yourself. Once you have `use` function instance no more `eval` function will be executed by this library. If you don't want to use `eval` you can use `await import()` in browser or in `node.js`. In `node.js` you can also just install the package from `npm` as usual.
 
-### interactive shell in Node.js environment
+### Interactive shell in Node.js environment
 
 1. Get the `use` function from `use-m` package:
    ```javascript
