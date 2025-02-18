@@ -30,7 +30,7 @@ It may be useful for standalone scripts that do not require a `package.json`. Al
 
 ### Universal
 
-Works in CommonJS, ES Modules and browser environments.
+Works in CommonJS, ES Modules and browser, and interactive environments.
 
 ```javascript
 fetch('https://unpkg.com/use-m/use.js')
@@ -42,6 +42,27 @@ fetch('https://unpkg.com/use-m/use.js')
 ```
 
 Universal execution comes at cost of `eval` usage, that is considered potential security threat. In case of this library only single file is evaled, it short, unminified and has no dependencies, so you can check [the contents](https://unpkg.com/use-m/use.js) yourself. Once you have `use` function instance no more `eval` function will be executed by this library. If you don't want to use `eval` you can use `await import()` in browser or in `node.js`. In `node.js` you can also just install the package from `npm` as usual.
+
+### interactive shell in Node.js environment
+
+1. Get the `use` function from `use-m` package:
+   ```javascript
+   const { use } = eval(await (await fetch('https://unpkg.com/use-m/use.js')).text());
+   ```
+
+2. Import your favorite NPM package from the registry (for example `lodash`):
+   ```javascript
+   const _ = await use('lodash@4.17.21');
+   ```
+
+3. Use your favorite function from dynamically imported package (for example `add`):
+   ```javascript
+   _.add(1, 2)
+   ```
+
+Your output should be similar to the next screenshot.
+
+<img width="830" alt="Screenshot 2025-02-19 at 1 58 57 AM" src="https://github.com/user-attachments/assets/0ef7d4e2-f2b6-4998-87a7-5a697877f2d0" />
 
 ### Browser
 
