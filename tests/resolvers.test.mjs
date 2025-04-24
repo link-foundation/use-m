@@ -11,12 +11,12 @@ describe('resolvers tests', () => {
 
   test('npm resolver resolves package path with version', async () => {
     const { npm } = resolvers;
-    const rootPath1 = await npm('yargs@latest', require.resolve);
-    const helpersPath1 = await npm('yargs@latest/helpers', require.resolve);
-    const rootPath2 = await npm('yargs', require.resolve);
-    const helpersPat2 = await npm('yargs/helpers', require.resolve);
+    const rootPath1 = await npm('yargs@latest', resolve);
+    const helpersPath1 = await npm('yargs@latest/helpers', resolve);
+    const rootPath2 = await npm('yargs', resolve);
+    const helpersPath2 = await npm('yargs/helpers', resolve);
     expect(rootPath1).toBe(rootPath2);
-    expect(helpersPath1).toBe(helpersPat2);
+    expect(helpersPath1).toBe(helpersPath2);
   });
 
   test('skypack resolver resolves URL', async () => {
