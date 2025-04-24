@@ -1,18 +1,28 @@
+const resolve = require.resolve;
+
 describe('resolvers tests', () => {
   const { resolvers } = require('../use.cjs');
 
   test('npm resolver resolves package path', async () => {
     const { npm } = resolvers;
-    const packagePath = await npm('lodash@4.17.21', require.resolve);
+    const packagePath = await npm('lodash@4.17.21', resolve);
     expect(packagePath).toMatch(/node_modules\/lodash-v-4\.17\.21/);
+  });
+
+  // Tests for https://github.com/link-foundation/use-m/issues/16 issue
+
+  test('npm resolver resolves scoped package path', async () => {
+    const { npm } = resolvers;
+    const packagePath = await npm('@octokit/core@3.5.0', resolve);
+    expect(packagePath).toMatch(/node_modules\/octokit-core-v-3\.5\.0/);
   });
 
   test('npm resolver resolves package path with version', async () => {
     const { npm } = resolvers;
-    const rootPath1 = await npm('yargs@latest', require.resolve);
-    const helpersPath1 = await npm('yargs@latest/helpers', require.resolve);
-    const rootPath2 = await npm('yargs', require.resolve);
-    const helpersPat2 = await npm('yargs/helpers', require.resolve);
+    const rootPath1 = await npm('yargs@latest', resolve);
+    const helpersPath1 = await npm('yargs@latest/helpers', resolve);
+    const rootPath2 = await npm('yargs', resolve);
+    const helpersPat2 = await npm('yargs/helpers', resolve);
     expect(rootPath1).toBe(rootPath2);
     expect(helpersPath1).toBe(helpersPat2);
   });

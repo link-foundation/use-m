@@ -1,7 +1,7 @@
 import { use as staticUse } from 'use-m';
 
 describe(`'use' import strategies`, () => {
-  test('Direct ESM Import', async () => {
+  test('Direct ESM Import lodash@4.17.21', async () => {
     const use = staticUse;
     const _ = await use("lodash@4.17.21");
     expect(_.add(1, 2)).toBe(3);
@@ -60,7 +60,7 @@ describe(`'use' import strategies`, () => {
     const require = createRequire(import.meta.url);
     const { use } = require('use-m');
     const [
-      lodash3, 
+      lodash3,
       lodash4
     ] = await use.all(
       'lodash@3',
@@ -73,7 +73,7 @@ describe(`'use' import strategies`, () => {
   test('use.all (mjs)', async () => {
     const { use } = await import('use-m');
     const [
-      lodash3, 
+      lodash3,
       lodash4
     ] = await use.all(
       'lodash@3',
@@ -88,7 +88,7 @@ describe(`'use' import strategies`, () => {
       .then(async useJs => {
         const { use } = eval(await useJs.text());
         const [
-          lodash3, 
+          lodash3,
           lodash4
         ] = await use.all(
           'lodash@3',
@@ -96,6 +96,59 @@ describe(`'use' import strategies`, () => {
         );
         expect(lodash3.add(1, 2)).toBe(3);
         expect(lodash4.add(1, 2)).toBe(3);
+      });
+  });
+
+  // Test for https://github.com/link-foundation/use-m/issues/16 issue
+
+  test('Direct ESM Import @octokit/core@3.5.0', async () => {
+    const use = staticUse;
+    const { Octokit } = await use('@octokit/core@3.5.0');
+    const octokit = new Octokit();
+    expect(octokit).toBeDefined();
+  });
+
+  test('Universal (script) @octokit/core@3.5.0', async () => {
+    await fetch('https://unpkg.com/use-m/use.js')
+      .then(async useJs => {
+        const { use } = eval
+          (await useJs.text());
+        const { Octokit } = await use('@octokit/core@3.5.0');
+        const octokit = new Octokit();
+        expect(octokit).toBeDefined();
+      });
+  });
+
+  test('Universal (script) @octokit/core@6.1.5', async () => {
+    await fetch('https://unpkg.com/use-m/use.js')
+      .then(async useJs => {
+        const { use } = eval
+          (await useJs.text());
+        const { Octokit } = await use('@octokit/core@6.1.5');
+        const octokit = new Octokit();
+        expect(octokit).toBeDefined();
+      });
+  });
+
+  test('Universal (script) @octokit/core@5', async () => {
+    await fetch('https://unpkg.com/use-m/use.js')
+      .then(async useJs => {
+        const { use } = eval
+          (await useJs.text());
+        const { Octokit } = await use('@octokit/core@5');
+        const octokit = new Octokit();
+        expect(octokit).toBeDefined();
+      });
+  });
+
+  test('Universal (script) @octokit/core (latest)', async () => {
+    await fetch('https://unpkg.com/use-m/use.js')
+      .then(async useJs => {
+        const { use } = eval
+          (await useJs.text());
+        const { Octokit } = await use('@octokit/core');
+        const octokit = new Octokit();
+        expect(octokit).toBeDefined();
       });
   });
 });
