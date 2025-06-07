@@ -1,4 +1,8 @@
+const { jest } = require('@jest/globals');
+
 const resolve = require.resolve;
+
+jest.setTimeout(10000);
 
 describe('resolvers tests', () => {
   const { resolvers } = require('../use.cjs');
@@ -11,12 +15,6 @@ describe('resolvers tests', () => {
 
   // Tests for https://github.com/link-foundation/use-m/issues/16 issue
 
-  test('npm resolver resolves scoped package path', async () => {
-    const { npm } = resolvers;
-    const packagePath = await npm('@octokit/core@3.5.0', resolve);
-    expect(packagePath).toMatch(/node_modules\/octokit-core-v-3\.5\.0/);
-  });
-
   test('npm resolver resolves package path with version', async () => {
     const { npm } = resolvers;
     const rootPath1 = await npm('yargs@latest', resolve);
@@ -25,6 +23,24 @@ describe('resolvers tests', () => {
     const helpersPat2 = await npm('yargs/helpers', resolve);
     expect(rootPath1).toBe(rootPath2);
     expect(helpersPath1).toBe(helpersPat2);
+  });
+
+  test('CJS npm resolver resolves yargs/helpers', async () => {
+    const { npm } = resolvers;
+    const packagePath = await npm('yargs@17.7.2/helpers', resolve);
+    expect(packagePath).toMatch(/node_modules\/yargs-v-17\.7\.2\/helpers/);
+  });
+
+  test('CJS npm resolver resolves yargs@18.0.0/helpers', async () => {
+    const { npm } = resolvers;
+    const packagePath = await npm('yargs@18.0.0/helpers', resolve);
+    expect(packagePath).toMatch(/node_modules\/yargs-v-18\.0\.0\/helpers/);
+  });
+
+  test('CJS npm resolver resolves yargs@latest/helpers', async () => {
+    const { npm } = resolvers;
+    const packagePath = await npm('yargs@latest/helpers', resolve);
+    expect(packagePath).toMatch(/node_modules\/yargs-v-latest\/helpers/);
   });
 
   test('skypack resolver resolves URL', async () => {

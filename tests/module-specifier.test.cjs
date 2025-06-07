@@ -64,6 +64,33 @@ describe('parseModuleSpecifier', () => {
     });
   });
 
+  test('parses yargs@17.7.2/helpers', () => {
+    const result = parseModuleSpecifier('yargs@17.7.2/helpers');
+    expect(result).toEqual({
+      packageName: 'yargs',
+      version: '17.7.2',
+      modulePath: '/helpers',
+    });
+  });
+
+  test('parses yargs@latest/helpers', () => {
+    const result = parseModuleSpecifier('yargs@latest/helpers');
+    expect(result).toEqual({
+      packageName: 'yargs',
+      version: 'latest',
+      modulePath: '/helpers',
+    });
+  });
+
+  test('parses yargs/helpers', () => {
+    const result = parseModuleSpecifier('yargs/helpers');
+    expect(result).toEqual({
+      packageName: 'yargs',
+      version: 'latest',
+      modulePath: '/helpers',
+    });
+  });
+
   test('throws error for invalid package identifier', () => {
     expect(() => parseModuleSpecifier('invalid@identifier/with@extra@symbols')).toThrow(
       "Failed to parse package identifier 'invalid@identifier/with@extra@symbols'"

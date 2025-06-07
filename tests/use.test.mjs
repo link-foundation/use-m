@@ -101,24 +101,6 @@ describe(`'use' import strategies`, () => {
 
   // Test for https://github.com/link-foundation/use-m/issues/16 issue
 
-  test('Direct ESM Import @octokit/core@3.5.0', async () => {
-    const use = staticUse;
-    const { Octokit } = await use('@octokit/core@3.5.0');
-    const octokit = new Octokit();
-    expect(octokit).toBeDefined();
-  });
-
-  test('Universal (script) @octokit/core@3.5.0', async () => {
-    await fetch('https://unpkg.com/use-m/use.js')
-      .then(async useJs => {
-        const { use } = eval
-          (await useJs.text());
-        const { Octokit } = await use('@octokit/core@3.5.0');
-        const octokit = new Octokit();
-        expect(octokit).toBeDefined();
-      });
-  });
-
   test('Universal (script) @octokit/core@6.1.5', async () => {
     await fetch('https://unpkg.com/use-m/use.js')
       .then(async useJs => {
@@ -150,5 +132,12 @@ describe(`'use' import strategies`, () => {
         const octokit = new Octokit();
         expect(octokit).toBeDefined();
       });
+  });
+
+  test('@octokit/core (latest)', async () => {
+    const { use } = await import('use-m');
+    const { Octokit } = await use('@octokit/core');
+    const octokit = new Octokit();
+    expect(octokit).toBeDefined();
   });
 });

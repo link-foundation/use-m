@@ -5,7 +5,7 @@ export const parseModuleSpecifier = (moduleSpecifier) => {
 Please specify package name and an optional version (e.g., 'lodash', 'lodash@4.17.21' or '@chakra-ui/react@1.0.0').`
     );
   }
-  const regex = /^(?<packageName>@?([^@/]+\/)?[^@/]+)?(?:@(?<version>[^/]*))?(?<modulePath>(?:\/[^@]+)*)?$/;
+  const regex = /^(?<packageName>(@[^@/]+\/)?[^@/]+)?(?:@(?<version>[^/]*))?(?<modulePath>(?:\/[^@]+)*)?$/;
   const match = moduleSpecifier.match(regex);
   if (!match || typeof match.groups.packageName !== 'string' || match.groups.packageName.trim() === '') {
     throw new Error(
@@ -35,6 +35,18 @@ export const resolvers = {
       throw new Error('Failed to get the current resolver.');
     }
 
+    const fileExists = async (filePath) => {
+      try {
+        const stats = await stat(filePath);
+        return stats.isFile();
+      } catch (error) {
+        if (error.code !== 'ENOENT') {
+          throw error;
+        }
+        return false;
+      }
+    };
+
     const directoryExists = async (directoryPath) => {
       try {
         const stats = await stat(directoryPath);
@@ -54,6 +66,35 @@ export const resolvers = {
         if (error.code !== 'MODULE_NOT_FOUND') {
           throw error;
         }
+
+        // Attempt to resolve paths like 'yargs@18.0.0/helpers' to 'yargs-v-18.0.0/helpers/helpers.mjs'
+        if (await directoryExists(packagePath)) {
+          const directoryName = path.basename(packagePath);
+          const resolvedPath = await tryResolveModule(path.join(packagePath, directoryName));
+          if (resolvedPath) {
+            return resolvedPath;
+          }
+
+          // Attempt to resolve paths like 'octokit/core@latest' to 'octokit-core-v-latest/dist-src/index.js' (as it written in package.json)
+          const packageJsonPath = path.join(packagePath, 'package.json');
+          if (await fileExists(packageJsonPath)) {
+            const packageJson = await readFile(packageJsonPath, 'utf8');
+            const { exports } = JSON.parse(packageJson);
+            if (exports) {
+              const rootPath = exports['.'];
+              if (rootPath) {
+                const importPath = rootPath['import'];
+                if (importPath) {
+                  const updatedPath = path.join(packagePath, importPath);
+                  return await tryResolveModule(updatedPath);
+                }
+              }
+            }
+          }
+
+          return null;
+        }
+
         return null;
       }
     };
