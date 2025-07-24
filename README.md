@@ -46,9 +46,27 @@ Universal execution comes at cost of `eval` usage, that is considered potential 
 ### Interactive shell in Node.js environment
 
 1. Get the `use` function from `use-m` package:
+
+   Single line version:
+
    ```javascript
    const { use } = eval(await (await fetch('https://unpkg.com/use-m/use.js')).text());
    ```
+
+   <img width="778" height="420" alt="Screenshot 2025-07-25 at 2 21 28 AM" src="https://github.com/user-attachments/assets/f37692dc-0c2e-4279-8f71-1cde37176c1f" />
+
+   Formatted multiple version:
+
+   ```javascript
+   const { use } = eval(
+     await (
+       await fetch(
+         'https://unpkg.com/use-m/use.js'
+       )
+     ).text()
+   );
+   ```
+
 
 2. Import your favorite NPM package from the registry (for example `lodash`):
    ```javascript
