@@ -1,4 +1,5 @@
-const { jest } = require('@jest/globals');
+const { describe, test, expect, jest } = require('./test-environment.cjs');
+const { exec } = require('child_process');
 
 const resolve = require.resolve;
 
@@ -6,6 +7,13 @@ jest.setTimeout(10000);
 
 describe('resolvers tests', () => {
   const { resolvers } = require('../use.cjs');
+  let hasBun = false;
+  beforeAll((done) => {
+    exec('bun --version', (err) => {
+      hasBun = !err;
+      done();
+    });
+  });
 
   test('npm resolver resolves package path', async () => {
     const { npm } = resolvers;
@@ -101,5 +109,26 @@ describe('resolvers tests', () => {
     const { jspm } = resolvers;
     const resolvedPath = await jspm('lodash@4.17.21/add');
     expect(resolvedPath).toBe('https://jspm.dev/lodash@4.17.21/add');
+  });
+
+  test('bun resolver resolves package path', async () => {
+    if (!hasBun) { return; }
+    const { bun } = resolvers;
+    const packagePath = await bun('lodash@4.17.21', resolve);
+    expect(packagePath).toMatch(/node_modules\/lodash-v-4\.17\.21/);
+  });
+
+  test('bun resolver resolves yargs/helpers', async () => {
+    if (!hasBun) { return; }
+    const { bun } = resolvers;
+    const packagePath = await bun('yargs@17.7.2/helpers', resolve);
+    expect(packagePath).toMatch(/node_modules\/yargs-v-17\.7\.2\/helpers/);
+  });
+
+  test('bun resolver resolves yargs@latest/helpers', async () => {
+    if (!hasBun) { return; }
+    const { bun } = resolvers;
+    const packagePath = await bun('yargs@latest/helpers', resolve);
+    expect(packagePath).toMatch(/node_modules\/yargs-v-latest\/helpers/);
   });
 });

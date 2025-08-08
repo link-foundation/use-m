@@ -1,7 +1,7 @@
+import { describe, test, expect, jest } from './test-environment.mjs';
 import { makeUse } from 'use-m';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import { jest } from '@jest/globals';
 
 // URL of use.mjs to test default scriptPath resolution
 const useMjsUrl = new URL('../use.mjs', import.meta.url).href;

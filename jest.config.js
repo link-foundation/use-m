@@ -3,5 +3,13 @@ export default {
     "^.+\\.cjs$": "babel-jest",
     "^.+\\.mjs$": "babel-jest",
   },
-  testMatch: ["**/tests/**/*.?([mc])[jt]s?(x)", "**/?(*.)+(spec|test).?([mc])[jt]s?(x)"]
+  testMatch: [
+    "**/tests/*.test.cjs",
+    "**/tests/*.test.mjs",
+    "**/tests/**/*.test.cjs",
+    "**/tests/**/*.test.mjs"
+  ],
+  testPathIgnorePatterns: [
+    '/node_modules/'
+  ],
 };

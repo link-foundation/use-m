@@ -79,15 +79,23 @@ const resolvers = {
           const packageJsonPath = path.join(packagePath, 'package.json');
           if (await fileExists(packageJsonPath)) {
             const packageJson = await readFile(packageJsonPath, 'utf8');
-            const { exports } = JSON.parse(packageJson);
-            if (exports) {
-              const rootPath = exports['.'];
-              if (rootPath) {
-                const importPath = rootPath['import'];
-                if (importPath) {
-                  const updatedPath = path.join(packagePath, importPath);
-                  return await tryResolveModule(updatedPath);
+            const parsed = JSON.parse(packageJson);
+            const exp = parsed.exports;
+            if (exp) {
+              let target = null;
+              if (typeof exp === 'string') {
+                target = exp;
+              } else {
+                const root = exp['.'] ?? exp;
+                if (typeof root === 'string') {
+                  target = root;
+                } else if (root && typeof root === 'object') {
+                  target = root.import || root.default || root.require || root.module || root.browser || null;
                 }
+              }
+              if (typeof target === 'string') {
+                const updatedPath = path.join(packagePath, target);
+                return await tryResolveModule(updatedPath);
               }
             }
           }
@@ -146,6 +154,124 @@ const resolvers = {
     }
     return resolvedPath;
   },
+  bun: async (moduleSpecifier, pathResolver) => {
+    const path = await import('path');
+    const { exec } = await import('child_process');
+    const { promisify } = await import('util');
+    const { stat, readFile } = await import('fs/promises');
+    const execAsync = promisify(exec);
+
+    if (!pathResolver) {
+      throw new Error('Failed to get the current resolver.');
+    }
+
+    const fileExists = async (filePath) => {
+      try {
+        const stats = await stat(filePath);
+        return stats.isFile();
+      } catch (error) {
+        if (error.code !== 'ENOENT') {
+          throw error;
+        }
+        return false;
+      }
+    };
+
+    const directoryExists = async (directoryPath) => {
+      try {
+        const stats = await stat(directoryPath);
+        return stats.isDirectory();
+      } catch (error) {
+        if (error.code !== 'ENOENT') {
+          throw error;
+        }
+        return false;
+      }
+    };
+
+    const tryResolveModule = async (packagePath) => {
+      try {
+        return await pathResolver(packagePath);
+      } catch (error) {
+        if (error.code !== 'MODULE_NOT_FOUND') {
+          throw error;
+        }
+
+        if (await directoryExists(packagePath)) {
+          const directoryName = path.basename(packagePath);
+          const resolvedPath = await tryResolveModule(path.join(packagePath, directoryName));
+          if (resolvedPath) {
+            return resolvedPath;
+          }
+
+          const packageJsonPath = path.join(packagePath, 'package.json');
+          if (await fileExists(packageJsonPath)) {
+            const packageJson = await readFile(packageJsonPath, 'utf8');
+            const parsed = JSON.parse(packageJson);
+            const exp = parsed.exports;
+            if (exp) {
+              let target = null;
+              if (typeof exp === 'string') {
+                target = exp;
+              } else {
+                const root = exp['.'] ?? exp;
+                if (typeof root === 'string') {
+                  target = root;
+                } else if (root && typeof root === 'object') {
+                  target = root.import || root.default || root.require || root.module || root.browser || null;
+                }
+              }
+              if (typeof target === 'string') {
+                const updatedPath = path.join(packagePath, target);
+                return await tryResolveModule(updatedPath);
+              }
+            }
+          }
+
+          return null;
+        }
+
+        return null;
+      }
+    };
+
+    const ensurePackageInstalled = async ({ packageName, version }) => {
+      const alias = `${packageName.replace('@', '').replace('/', '-')}-v-${version}`;
+
+      let binDir = '';
+      try {
+        const { stdout } = await execAsync('bun pm bin -g');
+        binDir = stdout.trim();
+      } catch (error) {
+        throw new Error('Bun is not installed or not available in PATH.', { cause: error });
+      }
+
+      const bunInstallRoot = path.resolve(binDir, '..');
+      const globalModulesPath = path.join(bunInstallRoot, 'install', 'global', 'node_modules');
+      const packagePath = path.join(globalModulesPath, alias);
+
+      if (version !== 'latest' && await directoryExists(packagePath)) {
+        return packagePath;
+      }
+
+      try {
+        await execAsync(`bun add -g ${alias}@npm:${packageName}@${version} --silent`, { stdio: 'ignore' });
+      } catch (error) {
+        throw new Error(`Failed to install ${packageName}@${version} globally with Bun.`, { cause: error });
+      }
+
+      return packagePath;
+    };
+
+    const { packageName, version, modulePath } = parseModuleSpecifier(moduleSpecifier);
+    const packagePath = await ensurePackageInstalled({ packageName, version });
+    const packageModulePath = modulePath ? path.join(packagePath, modulePath) : packagePath;
+    const resolvedPath = await tryResolveModule(packageModulePath);
+    if (!resolvedPath) {
+      throw new Error(`Failed to resolve the path to '${moduleSpecifier}' from '${packageModulePath}'.`);
+    }
+    return resolvedPath;
+  },
   skypack: async (moduleSpecifier, pathResolver) => {
     const resolvedPath = `https://cdn.skypack.dev/${moduleSpecifier}`;
     return resolvedPath;
@@ -188,10 +314,24 @@ const baseUse = async (modulePath) => {
   // Dynamically import the module
   try {
     const module = await import(modulePath);
-    // Check if the only key in the module is 'default'
-    const keys = Object.keys(module);
-    if (keys.length === 1 && keys[0] === 'default') {
-      return module.default || module;
+    // Check if we should extract the default export
+    // In Bun, CommonJS modules wrapped as ESM have 'default' plus function properties (length, name, prototype)
+    // In Node.js, they typically only have 'default'
+    if (module.default !== undefined) {
+      // Check if this looks like a CommonJS module wrapped as ESM
+      const keys = Object.keys(module);
+      const hasOnlyDefaultOrFunctionProps = keys.every(key => 
+        key === 'default' || key === 'length' || key === 'name' || key === 'prototype'
+      );
+      
+      if (keys.length === 4 && hasOnlyDefaultOrFunctionProps && typeof module.default === 'function') {
+        return module.default;
+      }
+      
+      // If only has default export (Node.js style)
+      if (keys.length === 1 && keys[0] === 'default') {
+        return module.default;
+      }
     }
     return module;
   } catch (error) {

@@ -8,13 +8,19 @@
     ".": {
       "import": "./use.mjs",
       "require": "./use.cjs"
-    }
+    },
+    "./use.cjs": "./use.cjs",
+    "./use.mjs": "./use.mjs",
+    "./package.json": "./package.json"
   },
   "bin": {
     "use": "./cli.mjs"
   },
   "scripts": {
-    "test": "NODE_OPTIONS=\"--experimental-vm-modules\" jest",
+    "test": "yarn run test:node && yarn run test:bun",
+    "test:node": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --config ./jest.config.js",
+    "test:bun": "bun test",
+    "test:bun:jest": "NODE_OPTIONS=\"--experimental-vm-modules\" bun x jest --config ./jest.config.js --runInBand",
     "test:examples": "./examples/test-examples.mjs",
     "publish:major": "yarn publish --major --access public && git push && git push --tags",
     "publish:minor": "yarn publish --minor --access public && git push && git push --tags",

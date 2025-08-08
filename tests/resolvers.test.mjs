@@ -1,11 +1,22 @@
+import { describe, test, expect, beforeAll, jest } from './test-environment.mjs';
 import { resolvers } from 'use-m';
 import { createRequire } from 'module';
-import { jest } from '@jest/globals';
 const { resolve } = createRequire(import.meta.url);
+import { exec as _exec } from 'child_process';
+import { promisify } from 'util';
+const exec = promisify(_exec);
 
 jest.setTimeout(10000);
 
 describe('resolvers tests', () => {
+  let hasBun = false;
+  beforeAll(async () => {
+    try {
+      await exec('bun --version');
+      hasBun = true;
+    } catch {}
+  });
+
   test('npm resolver resolves package path', async () => {
     const { npm } = resolvers;
     const packagePath = await npm('lodash@4.17.21', resolve);
@@ -120,5 +131,33 @@ describe('resolvers tests', () => {
     const { jspm } = resolvers;
     const resolvedPath = await jspm('lodash@4.17.21/add');
     expect(resolvedPath).toBe('https://jspm.dev/lodash@4.17.21/add');
+  });
+
+  test('bun resolver resolves package path', async () => {
+    if (!hasBun) { return; }
+    const { bun } = resolvers;
+    const packagePath = await bun('lodash@4.17.21', resolve);
+    expect(packagePath).toMatch(/node_modules\/lodash-v-4\.17\.21/);
+  });
+
+  test('bun resolver resolves scoped package path for @octokit/core@6.1.5', async () => {
+    if (!hasBun) { return; }
+    const { bun } = resolvers;
+    const packagePath = await bun('@octokit/core@6.1.5', resolve);
+    expect(packagePath).toMatch(/node_modules\/octokit-core-v-6\.1\.5/);
+  });
+
+  test('bun resolver resolves yargs/helpers', async () => {
+    if (!hasBun) { return; }
+    const { bun } = resolvers;
+    const packagePath = await bun('yargs@17.7.2/helpers', resolve);
+    expect(packagePath).toMatch(/node_modules\/yargs-v-17\.7\.2\/helpers/);
+  });
+
+  test('bun resolver resolves yargs@latest/helpers', async () => {
+    if (!hasBun) { return; }
+    const { bun } = resolvers;
+    const packagePath = await bun('yargs@latest/helpers', resolve);
+    expect(packagePath).toMatch(/node_modules\/yargs-v-latest\/helpers/);
   });
 });

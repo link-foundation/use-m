@@ -1,0 +1,11 @@
+{
+  "name": "library-with-exports",
+  "version": "1.0.0",
+  "type": "module",
+  "exports": {
+    "./test.js": "./test.js",
+    "./test.cjs": "./test.cjs",
+    "./test.mjs": "./test.mjs",
+    "./package.json": "./package.json"
+  }
+}
