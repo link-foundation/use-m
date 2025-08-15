@@ -1,9 +1,9 @@
 const { describe, test, expect } = require('@jest/globals');
 const { use } = require('../use.cjs');
-const module = `[${__filename.split('.').pop()} module]`;
+const moduleName = `[${__filename.split('.').pop()} module]`;
 
-describe(`${module} Universal built-in modules (work in all environments)`, () => {
-  test(`${module} console module should work`, async () => {
+describe(`${moduleName} Universal built-in modules (work in all environments)`, () => {
+  test(`${moduleName} console module should work`, async () => {
     const consoleModule = await use('console');
     
     expect(consoleModule).toBeDefined();
@@ -13,7 +13,7 @@ describe(`${module} Universal built-in modules (work in all environments)`, () =
     expect(typeof consoleModule.info).toBe('function');
   });
 
-  test(`${module} crypto module should work`, async () => {
+  test(`${moduleName} crypto module should work`, async () => {
     const crypto = await use('crypto');
     
     expect(crypto).toBeDefined();
@@ -24,7 +24,7 @@ describe(`${module} Universal built-in modules (work in all environments)`, () =
     expect(uuid).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
   });
 
-  test(`${module} url module should work`, async () => {
+  test(`${moduleName} url module should work`, async () => {
     const url = await use('url');
     
     expect(url).toBeDefined();
@@ -43,7 +43,7 @@ describe(`${module} Universal built-in modules (work in all environments)`, () =
     expect(params.get('b')).toBe('2');
   });
 
-  test(`${module} performance module should work`, async () => {
+  test(`${moduleName} performance module should work`, async () => {
     const perf = await use('performance');
     
     expect(perf).toBeDefined();
@@ -55,7 +55,7 @@ describe(`${module} Universal built-in modules (work in all environments)`, () =
     expect(time).toBeGreaterThan(0);
   });
 
-  test(`${module} modules should work with node: prefix`, async () => {
+  test(`${moduleName} modules should work with node: prefix`, async () => {
     const url = await use('node:url');
     
     expect(url).toBeDefined();

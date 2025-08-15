@@ -1,9 +1,9 @@
 const { describe, test, expect } = require('@jest/globals');
 
-const module = `[${__filename.split('.').pop()} module]`;
+const moduleName = `[${__filename.split('.').pop()} module]`;
 
 describe(`Imports using --experimental-network-imports`, () => {
-  test(`${module} Import using --experimental-network-imports`, async () => {
+  test(`${moduleName} Import using --experimental-network-imports`, async () => {
     const { exec } = await import('child_process');
     const { promisify } = await import('util');
     const execAsync = promisify(exec);
@@ -12,7 +12,7 @@ describe(`Imports using --experimental-network-imports`, () => {
     expect(cleanResult).toEqual("_.add(1, 2) = 3");
   });
 
-  test(`${module} Import using --experimental-network-imports for MJS file`, async () => {
+  test(`${moduleName} Import using --experimental-network-imports for MJS file`, async () => {
     const { exec } = await import('child_process');
     const { promisify } = await import('util');
     const execAsync = promisify(exec);

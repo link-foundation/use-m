@@ -1,9 +1,9 @@
 import { use } from '../use.mjs';
 import { describe, test, expect } from '@jest/globals';
-const module = `[${import.meta.url.split('.').pop()} module]`;
+const moduleName = `[${import.meta.url.split('.').pop()} module]`;
 
-describe(`${module} Node.js/Bun-only built-in modules`, () => {
-  test(`${module} fs module should work`, async () => {
+describe(`${moduleName} Node.js/Bun-only built-in modules`, () => {
+  test(`${moduleName} fs module should work`, async () => {
     const fs = await use('fs');
     
     expect(fs).toBeDefined();
@@ -15,7 +15,7 @@ describe(`${module} Node.js/Bun-only built-in modules`, () => {
     expect(typeof fs.mkdirSync).toBe('function');
   });
 
-  test(`${module} path module should work`, async () => {
+  test(`${moduleName} path module should work`, async () => {
     const path = await use('path');
     
     expect(path).toBeDefined();
@@ -32,7 +32,7 @@ describe(`${module} Node.js/Bun-only built-in modules`, () => {
     expect(path.dirname('/path/to/file.txt')).toBe('/path/to');
   });
 
-  test(`${module} os module should work`, async () => {
+  test(`${moduleName} os module should work`, async () => {
     const os = await use('os');
     
     expect(os).toBeDefined();
@@ -52,7 +52,7 @@ describe(`${module} Node.js/Bun-only built-in modules`, () => {
     expect(Array.isArray(os.cpus())).toBe(true);
   });
 
-  test(`${module} util module should work`, async () => {
+  test(`${moduleName} util module should work`, async () => {
     const util = await use('util');
     
     expect(util).toBeDefined();
@@ -72,7 +72,7 @@ describe(`${module} Node.js/Bun-only built-in modules`, () => {
     expect(typeof util.inspect({a: 1})).toBe('string');
   });
 
-  test(`${module} events module should work`, async () => {
+  test(`${moduleName} events module should work`, async () => {
     const events = await use('events');
     
     expect(events).toBeDefined();
@@ -92,7 +92,7 @@ describe(`${module} Node.js/Bun-only built-in modules`, () => {
     expect(called).toBe(true);
   });
 
-  test(`${module} stream module should work`, async () => {
+  test(`${moduleName} stream module should work`, async () => {
     const stream = await use('stream');
     
     expect(stream).toBeDefined();
@@ -104,7 +104,7 @@ describe(`${module} Node.js/Bun-only built-in modules`, () => {
     expect(stream.Stream).toBe(stream.default);
   });
 
-  test(`${module} buffer module should work`, async () => {
+  test(`${moduleName} buffer module should work`, async () => {
     const buffer = await use('buffer');
     
     expect(buffer).toBeDefined();
@@ -117,7 +117,7 @@ describe(`${module} Node.js/Bun-only built-in modules`, () => {
     expect(buf.toString()).toBe('hello');
   });
 
-  test(`${module} process module should work`, async () => {
+  test(`${moduleName} process module should work`, async () => {
     const processModule = await use('process');
     
     expect(processModule).toBeDefined();
@@ -129,7 +129,7 @@ describe(`${module} Node.js/Bun-only built-in modules`, () => {
     expect(typeof processModule.env).toBe('object');
   });
 
-  test(`${module} child_process module should work`, async () => {
+  test(`${moduleName} child_process module should work`, async () => {
     const cp = await use('child_process');
     
     expect(cp).toBeDefined();
@@ -140,7 +140,7 @@ describe(`${module} Node.js/Bun-only built-in modules`, () => {
     expect(typeof cp.fork).toBe('function');
   });
 
-  test(`${module} http module should work`, async () => {
+  test(`${moduleName} http module should work`, async () => {
     const http = await use('http');
     
     expect(http).toBeDefined();
@@ -150,7 +150,7 @@ describe(`${module} Node.js/Bun-only built-in modules`, () => {
     expect(typeof http.Server).toBe('function');
   });
 
-  test(`${module} https module should work`, async () => {
+  test(`${moduleName} https module should work`, async () => {
     const https = await use('https');
     
     expect(https).toBeDefined();
@@ -160,7 +160,7 @@ describe(`${module} Node.js/Bun-only built-in modules`, () => {
     expect(typeof https.Server).toBe('function');
   });
 
-  test(`${module} net module should work`, async () => {
+  test(`${moduleName} net module should work`, async () => {
     const net = await use('net');
     
     expect(net).toBeDefined();
@@ -171,7 +171,7 @@ describe(`${module} Node.js/Bun-only built-in modules`, () => {
     expect(typeof net.Server).toBe('function');
   });
 
-  test(`${module} dns module should work`, async () => {
+  test(`${moduleName} dns module should work`, async () => {
     const dns = await use('dns');
     
     expect(dns).toBeDefined();
@@ -180,7 +180,7 @@ describe(`${module} Node.js/Bun-only built-in modules`, () => {
     expect(typeof dns.reverse).toBe('function');
   });
 
-  test(`${module} zlib module should work`, async () => {
+  test(`${moduleName} zlib module should work`, async () => {
     const zlib = await use('zlib');
     
     expect(zlib).toBeDefined();
@@ -192,7 +192,7 @@ describe(`${module} Node.js/Bun-only built-in modules`, () => {
     expect(typeof zlib.gunzipSync).toBe('function');
   });
 
-  test(`${module} querystring module should work`, async () => {
+  test(`${moduleName} querystring module should work`, async () => {
     const qs = await use('querystring');
     
     expect(qs).toBeDefined();
@@ -208,7 +208,7 @@ describe(`${module} Node.js/Bun-only built-in modules`, () => {
     expect(stringified).toBe('a=1&b=2');
   });
 
-  test(`${module} assert module should work`, async () => {
+  test(`${moduleName} assert module should work`, async () => {
     const assert = await use('assert');
     
     expect(assert).toBeDefined();
@@ -224,7 +224,7 @@ describe(`${module} Node.js/Bun-only built-in modules`, () => {
     expect(() => assertFn(false)).toThrow();
   });
 
-  test(`${module} all modules should work with node: prefix`, async () => {
+  test(`${moduleName} all modules should work with node: prefix`, async () => {
     const fs = await use('node:fs');
     const path = await use('node:path');
     const os = await use('node:os');
