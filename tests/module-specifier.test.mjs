@@ -1,6 +1,6 @@
 import { parseModuleSpecifier } from 'use-m';
 
-describe('parseModuleSpecifier', () => {
+describe('[MJS Runtime] parseModuleSpecifier', () => {
   test('parses package with name and version', () => {
     const result = parseModuleSpecifier('lodash@4.17.21');
     expect(result).toEqual({

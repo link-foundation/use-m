@@ -6,7 +6,7 @@ import express from 'express';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-describe('Universal built-in modules in browser', () => {
+describe('[MJS Runtime] Universal built-in modules in browser', () => {
   let browser;
   let server;
   let page;
@@ -68,7 +68,7 @@ describe('Universal built-in modules in browser', () => {
     }
   });
 
-  test('console module should work in browser', async () => {
+  test('[MJS Runtime] console module should work in browser', async () => {
     const result = await page.evaluate(() => {
       const results = Array.from(document.querySelectorAll('.test-result'));
       const consoleTest = results.find(el => el.textContent.includes('console module should work'));
@@ -78,7 +78,7 @@ describe('Universal built-in modules in browser', () => {
     expect(result).toBe(true);
   });
 
-  test('crypto module should work in browser', async () => {
+  test('[MJS Runtime] crypto module should work in browser', async () => {
     const result = await page.evaluate(() => {
       const results = Array.from(document.querySelectorAll('.test-result'));
       const cryptoTest = results.find(el => el.textContent.includes('crypto module should work'));
@@ -88,7 +88,7 @@ describe('Universal built-in modules in browser', () => {
     expect(result).toBe(true);
   });
 
-  test('url module should work in browser', async () => {
+  test('[MJS Runtime] url module should work in browser', async () => {
     const result = await page.evaluate(() => {
       const results = Array.from(document.querySelectorAll('.test-result'));
       const urlTest = results.find(el => el.textContent.includes('url module should work'));
@@ -98,7 +98,7 @@ describe('Universal built-in modules in browser', () => {
     expect(result).toBe(true);
   });
 
-  test('performance module should work in browser', async () => {
+  test('[MJS Runtime] performance module should work in browser', async () => {
     const result = await page.evaluate(() => {
       const results = Array.from(document.querySelectorAll('.test-result'));
       const perfTest = results.find(el => el.textContent.includes('performance module should work'));
@@ -108,7 +108,7 @@ describe('Universal built-in modules in browser', () => {
     expect(result).toBe(true);
   });
 
-  test('fs module should fail in browser with correct error', async () => {
+  test('[MJS Runtime] fs module should fail in browser with correct error', async () => {
     const result = await page.evaluate(() => {
       const results = Array.from(document.querySelectorAll('.test-result'));
       const fsTest = results.find(el => el.textContent.includes('fs module should fail in browser'));
@@ -118,7 +118,7 @@ describe('Universal built-in modules in browser', () => {
     expect(result).toBe(true);
   });
 
-  test('node: prefix should work with universal modules', async () => {
+  test('[MJS Runtime] node: prefix should work with universal modules', async () => {
     const result = await page.evaluate(() => {
       const results = Array.from(document.querySelectorAll('.test-result'));
       const nodePrefixTest = results.find(el => el.textContent.includes('node:url prefix should work'));
@@ -128,7 +128,7 @@ describe('Universal built-in modules in browser', () => {
     expect(result).toBe(true);
   });
 
-  test('uppercase module names should fail (strict lowercase only)', async () => {
+  test('[MJS Runtime] uppercase module names should fail (strict lowercase only)', async () => {
     const result = await page.evaluate(() => {
       const results = Array.from(document.querySelectorAll('.test-result'));
       const uppercaseTest = results.find(el => el.textContent.includes('uppercase URL should fail'));
@@ -138,7 +138,7 @@ describe('Universal built-in modules in browser', () => {
     expect(result).toBe(true);
   });
 
-  test('all browser tests should pass', async () => {
+  test('[MJS Runtime] all browser tests should pass', async () => {
     const testResults = await page.evaluate(() => window.testResults);
     
     expect(testResults.total).toBeGreaterThan(0);

@@ -12,8 +12,8 @@ const getScriptUrl = async () => {
 }
 
 // Test
-describe('import.meta.url workaround', () => {
-  test('scriptUrl matches import.meta.url', async () => {
+describe('[MJS Runtime] import.meta.url workaround', () => {
+  test('[MJS Runtime] scriptUrl matches import.meta.url', async () => {
     const scriptUrl = await getScriptUrl();
 
     // Validate scriptUrl is a string and matches import.meta.url
@@ -21,7 +21,7 @@ describe('import.meta.url workaround', () => {
     expect(scriptUrl).toBe(import.meta.url);
   });
 
-  test('scriptUrl matches import.meta.url in eval', async () => {
+  test('[MJS Runtime] scriptUrl matches import.meta.url in eval', async () => {
     const scriptUrl = await eval('getScriptUrl()');
 
     // Validate scriptUrl is a string and matches import.meta.url

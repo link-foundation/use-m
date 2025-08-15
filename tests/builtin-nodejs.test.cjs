@@ -1,7 +1,7 @@
 const { use } = require('../use.cjs');
 
-describe('Node.js/Bun-only built-in modules - CJS', () => {
-  test('fs module should work', async () => {
+describe('[CJS Runtime] Node.js/Bun-only built-in modules', () => {
+  test('[CJS Runtime] fs module should work', async () => {
     const fs = await use('fs');
     
     expect(fs).toBeDefined();
@@ -13,7 +13,7 @@ describe('Node.js/Bun-only built-in modules - CJS', () => {
     expect(typeof fs.mkdirSync).toBe('function');
   });
 
-  test('path module should work', async () => {
+  test('[CJS Runtime] path module should work', async () => {
     const path = await use('path');
     
     expect(path).toBeDefined();
@@ -30,7 +30,7 @@ describe('Node.js/Bun-only built-in modules - CJS', () => {
     expect(path.dirname('/path/to/file.txt')).toBe('/path/to');
   });
 
-  test('os module should work', async () => {
+  test('[CJS Runtime] os module should work', async () => {
     const os = await use('os');
     
     expect(os).toBeDefined();
@@ -50,7 +50,7 @@ describe('Node.js/Bun-only built-in modules - CJS', () => {
     expect(Array.isArray(os.cpus())).toBe(true);
   });
 
-  test('util module should work', async () => {
+  test('[CJS Runtime] util module should work', async () => {
     const util = await use('util');
     
     expect(util).toBeDefined();
@@ -70,7 +70,7 @@ describe('Node.js/Bun-only built-in modules - CJS', () => {
     expect(typeof util.inspect({a: 1})).toBe('string');
   });
 
-  test('events module should work', async () => {
+  test('[CJS Runtime] events module should work', async () => {
     const events = await use('events');
     
     expect(events).toBeDefined();
@@ -90,7 +90,7 @@ describe('Node.js/Bun-only built-in modules - CJS', () => {
     expect(called).toBe(true);
   });
 
-  test('stream module should work', async () => {
+  test('[CJS Runtime] stream module should work', async () => {
     const stream = await use('stream');
     
     expect(stream).toBeDefined();
@@ -102,7 +102,7 @@ describe('Node.js/Bun-only built-in modules - CJS', () => {
     expect(stream.Stream).toBe(stream.default);
   });
 
-  test('buffer module should work', async () => {
+  test('[CJS Runtime] buffer module should work', async () => {
     const buffer = await use('buffer');
     
     expect(buffer).toBeDefined();
@@ -115,7 +115,7 @@ describe('Node.js/Bun-only built-in modules - CJS', () => {
     expect(buf.toString()).toBe('hello');
   });
 
-  test('process module should work', async () => {
+  test('[CJS Runtime] process module should work', async () => {
     const processModule = await use('process');
     
     expect(processModule).toBeDefined();
@@ -127,7 +127,7 @@ describe('Node.js/Bun-only built-in modules - CJS', () => {
     expect(typeof processModule.env).toBe('object');
   });
 
-  test('child_process module should work', async () => {
+  test('[CJS Runtime] child_process module should work', async () => {
     const cp = await use('child_process');
     
     expect(cp).toBeDefined();
@@ -138,7 +138,7 @@ describe('Node.js/Bun-only built-in modules - CJS', () => {
     expect(typeof cp.fork).toBe('function');
   });
 
-  test('http module should work', async () => {
+  test('[CJS Runtime] http module should work', async () => {
     const http = await use('http');
     
     expect(http).toBeDefined();
@@ -148,7 +148,7 @@ describe('Node.js/Bun-only built-in modules - CJS', () => {
     expect(typeof http.Server).toBe('function');
   });
 
-  test('https module should work', async () => {
+  test('[CJS Runtime] https module should work', async () => {
     const https = await use('https');
     
     expect(https).toBeDefined();
@@ -158,7 +158,7 @@ describe('Node.js/Bun-only built-in modules - CJS', () => {
     expect(typeof https.Server).toBe('function');
   });
 
-  test('net module should work', async () => {
+  test('[CJS Runtime] net module should work', async () => {
     const net = await use('net');
     
     expect(net).toBeDefined();
@@ -169,7 +169,7 @@ describe('Node.js/Bun-only built-in modules - CJS', () => {
     expect(typeof net.Server).toBe('function');
   });
 
-  test('dns module should work', async () => {
+  test('[CJS Runtime] dns module should work', async () => {
     const dns = await use('dns');
     
     expect(dns).toBeDefined();
@@ -178,7 +178,7 @@ describe('Node.js/Bun-only built-in modules - CJS', () => {
     expect(typeof dns.reverse).toBe('function');
   });
 
-  test('zlib module should work', async () => {
+  test('[CJS Runtime] zlib module should work', async () => {
     const zlib = await use('zlib');
     
     expect(zlib).toBeDefined();
@@ -190,7 +190,7 @@ describe('Node.js/Bun-only built-in modules - CJS', () => {
     expect(typeof zlib.gunzipSync).toBe('function');
   });
 
-  test('querystring module should work', async () => {
+  test('[CJS Runtime] querystring module should work', async () => {
     const qs = await use('querystring');
     
     expect(qs).toBeDefined();
@@ -206,7 +206,7 @@ describe('Node.js/Bun-only built-in modules - CJS', () => {
     expect(stringified).toBe('a=1&b=2');
   });
 
-  test('assert module should work', async () => {
+  test('[CJS Runtime] assert module should work', async () => {
     const assert = await use('assert');
     
     expect(assert).toBeDefined();
@@ -222,7 +222,7 @@ describe('Node.js/Bun-only built-in modules - CJS', () => {
     expect(() => assertFn(false)).toThrow();
   });
 
-  test('all modules should work with node: prefix', async () => {
+  test('[CJS Runtime] all modules should work with node: prefix', async () => {
     const fs = await use('node:fs');
     const path = await use('node:path');
     const os = await use('node:os');

@@ -7,6 +7,6 @@ const supportsDynamicImport = async () => {
   }
 };
 
-test('supportsDynamicImport returns true in .cjs file', async () => {
+test('[CJS Runtime] supportsDynamicImport returns true in .cjs file', async () => {
   expect(await supportsDynamicImport()).toBe(true);
 });

@@ -1,7 +1,7 @@
 const { use } = require('use-m');
 
-describe(`typescript`, () => {
-  test('use typescript', async () => {
+describe(`[CJS Runtime] typescript`, () => {
+  test('[CJS Runtime] use typescript', async () => {
     const ts = await use('typescript');
     expect(ts.version).toBeDefined();
     const tsCode = 'const a: number = 1;';

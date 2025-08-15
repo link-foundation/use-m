@@ -7,6 +7,6 @@ const supportsDynamicImport = async () => {
   }
 };
 
-test('supportsDynamicImport returns true in .mjs file', async () => {
+test('[MJS Runtime] supportsDynamicImport returns true in .mjs file', async () => {
   expect(await supportsDynamicImport()).toBe(true);
 });

@@ -12,8 +12,8 @@ const getScriptUrl = async () => {
 }
 
 // Test
-describe('__filename workaround', () => {
-  test('scriptUrl matches __filename as URL', async () => {
+describe('[CJS Runtime] __filename workaround', () => {
+  test('[CJS Runtime] scriptUrl matches __filename as URL', async () => {
     const scriptUrl = await getScriptUrl();
     const { pathToFileURL } = await import('url');
     const expectedUrl = pathToFileURL(__filename).href;
@@ -23,7 +23,7 @@ describe('__filename workaround', () => {
     expect(scriptUrl).toBe(expectedUrl);
   });
 
-  test('scriptUrl matches __filename as URL in eval', async () => {
+  test('[CJS Runtime] scriptUrl matches __filename as URL in eval', async () => {
     const scriptUrl = await eval('getScriptUrl()');
     const { pathToFileURL } = await import('url');
     const expectedUrl = pathToFileURL(__filename).href;

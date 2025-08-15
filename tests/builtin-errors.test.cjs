@@ -1,7 +1,7 @@
 const { use } = require('../use.cjs');
 
-describe('Built-in module error handling - CJS', () => {
-  test('should return null for non-builtin modules from builtin resolver', async () => {
+describe('[CJS Runtime] Built-in module error handling', () => {
+  test('[CJS Runtime] should return null for non-builtin modules from builtin resolver', async () => {
     const { resolvers } = require('../use.cjs');
     
     // Test that builtin resolver returns null for non-builtin modules
@@ -9,13 +9,13 @@ describe('Built-in module error handling - CJS', () => {
     expect(result).toBeNull();
   });
 
-  test('should throw error for unsupported builtin modules', async () => {
+  test('[CJS Runtime] should throw error for unsupported builtin modules', async () => {
     // Create a module name that looks like a builtin but isn't
     const { baseUse } = require('../use.cjs');
     await expect(baseUse('builtin:unsupported_builtin_module')).rejects.toThrow('Built-in module \'unsupported_builtin_module\' is not supported');
   });
 
-  test('should handle modules not available in browser environment', async () => {
+  test('[CJS Runtime] should handle modules not available in browser environment', async () => {
     // Mock browser environment
     const originalWindow = global.window;
     global.window = {}; // Mock browser environment
@@ -32,7 +32,7 @@ describe('Built-in module error handling - CJS', () => {
     }
   });
 
-  test('should only work with exact lowercase module names', async () => {
+  test('[CJS Runtime] should only work with exact lowercase module names', async () => {
     // Only lowercase should work
     const url = await use('url');
     expect(url).toBeDefined();
@@ -42,7 +42,7 @@ describe('Built-in module error handling - CJS', () => {
     await expect(use('URL')).rejects.toThrow(); // Should fail to install from npm
   });
 
-  test('should handle node: prefix removal correctly', async () => {
+  test('[CJS Runtime] should handle node: prefix removal correctly', async () => {
     const crypto1 = await use('crypto');
     const crypto2 = await use('node:crypto');
     
@@ -54,14 +54,14 @@ describe('Built-in module error handling - CJS', () => {
     expect(typeof crypto2.randomUUID).toBe('function');
   });
 
-  test('should throw meaningful errors for import failures', async () => {
+  test('[CJS Runtime] should throw meaningful errors for import failures', async () => {
     // We can't easily test import failures without mocking, but we can test error message structure
     const { baseUse } = require('../use.cjs');
     
     await expect(baseUse('builtin:nonexistent')).rejects.toThrow('Built-in module \'nonexistent\' is not supported');
   });
 
-  test('builtin resolver should handle empty/invalid module specifiers gracefully', async () => {
+  test('[CJS Runtime] builtin resolver should handle empty/invalid module specifiers gracefully', async () => {
     const { resolvers, parseModuleSpecifier } = require('../use.cjs');
     
     // parseModuleSpecifier should throw for invalid specifiers
@@ -70,7 +70,7 @@ describe('Built-in module error handling - CJS', () => {
     expect(() => parseModuleSpecifier(undefined)).toThrow();
   });
 
-  test('should handle modules with special characters in names', async () => {
+  test('[CJS Runtime] should handle modules with special characters in names', async () => {
     const { resolvers } = require('../use.cjs');
     
     // Test with module that looks like a scoped package

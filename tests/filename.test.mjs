@@ -10,8 +10,8 @@ const currentFileUrl = import.meta.url;
 const currentFilePath = fileURLToPath(currentFileUrl);
 const currentDir = dirname(currentFilePath);
 
-describe('scriptPath detection in ESM (functional)', () => {
-  test('default pathResolver resolves modules relative to use.mjs', async () => {
+describe('[MJS Runtime] scriptPath detection in ESM (functional)', () => {
+  test('[MJS Runtime] default pathResolver resolves modules relative to use.mjs', async () => {
     let capturedResolver;
     const stubSpecifierResolver = (specifier, pathResolver) => {
       capturedResolver = pathResolver;
@@ -25,7 +25,7 @@ describe('scriptPath detection in ESM (functional)', () => {
     expect(resolved).toBe(expected);
   });
 
-  test('override scriptPath resolves relative to provided path', async () => {
+  test('[MJS Runtime] override scriptPath resolves relative to provided path', async () => {
     let capturedResolver;
     const stubSpecifierResolver = (specifier, pathResolver) => {
       capturedResolver = pathResolver;
@@ -41,7 +41,7 @@ describe('scriptPath detection in ESM (functional)', () => {
 });
 
 // Tests when global require is undefined (force createRequire fallback)
-describe('scriptPath detection in ESM (createRequire fallback)', () => {
+describe('[MJS Runtime] scriptPath detection in ESM (createRequire fallback)', () => {
   let originalRequire;
   beforeAll(() => {
     originalRequire = global.require;
@@ -51,7 +51,7 @@ describe('scriptPath detection in ESM (createRequire fallback)', () => {
     if (originalRequire) global.require = originalRequire;
   });
 
-  test('fallback default resolves modules relative to use.mjs', async () => {
+  test('[MJS Runtime] fallback default resolves modules relative to use.mjs', async () => {
     let capturedResolver;
     const stubSpecifierResolver = (specifier, pathResolver) => {
       capturedResolver = pathResolver;
@@ -64,7 +64,7 @@ describe('scriptPath detection in ESM (createRequire fallback)', () => {
     expect(resolved).toBe(expected);
   });
 
-  test('fallback explicit scriptPath resolves relative to provided path', async () => {
+  test('[MJS Runtime] fallback explicit scriptPath resolves relative to provided path', async () => {
     let capturedResolver;
     const stubSpecifierResolver = (specifier, pathResolver) => {
       capturedResolver = pathResolver;
@@ -77,7 +77,7 @@ describe('scriptPath detection in ESM (createRequire fallback)', () => {
     expect(resolved).toBe(expected);
   });
 
-  test('fallback meta override changes pathResolver behavior in ESM', async () => {
+  test('[MJS Runtime] fallback meta override changes pathResolver behavior in ESM', async () => {
     let capturedResolver;
     const stubSpecifierResolver = (specifier, pathResolver) => {
       capturedResolver = pathResolver;
@@ -95,8 +95,8 @@ describe('scriptPath detection in ESM (createRequire fallback)', () => {
 });
 
 // Additional test for meta.url with use.js path
-describe('scriptPath detection in ESM (meta URL)', () => {
-  test('meta override resolves modules relative to provided meta URL (use.js)', async () => {
+describe('[MJS Runtime] scriptPath detection in ESM (meta URL)', () => {
+  test('[MJS Runtime] meta override resolves modules relative to provided meta URL (use.js)', async () => {
     let capturedResolver;
     const stubSpecifierResolver = (specifier, pathResolver) => {
       capturedResolver = pathResolver;

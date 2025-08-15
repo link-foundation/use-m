@@ -1,7 +1,7 @@
 const { parseModuleSpecifier } = require('use-m');
 
-describe('parseModuleSpecifier', () => {
-  test('parses package with name and version', () => {
+describe('[CJS Runtime] parseModuleSpecifier', () => {
+  test('[CJS Runtime] parses package with name and version', () => {
     const result = parseModuleSpecifier('lodash@4.17.21');
     expect(result).toEqual({
       packageName: 'lodash',
@@ -10,7 +10,7 @@ describe('parseModuleSpecifier', () => {
     });
   });
 
-  test('parses scoped package with name and version', () => {
+  test('[CJS Runtime] parses scoped package with name and version', () => {
     const result = parseModuleSpecifier('@chakra-ui/react@1.0.0');
     expect(result).toEqual({
       packageName: '@chakra-ui/react',
@@ -19,7 +19,7 @@ describe('parseModuleSpecifier', () => {
     });
   });
 
-  test('parses package with name, version, and inner path', () => {
+  test('[CJS Runtime] parses package with name, version, and inner path', () => {
     const result = parseModuleSpecifier('lodash@4.17.21/path/to/module');
     expect(result).toEqual({
       packageName: 'lodash',
@@ -28,7 +28,7 @@ describe('parseModuleSpecifier', () => {
     });
   });
 
-  test('parses package with name, version, and inner path', () => {
+  test('[CJS Runtime] parses package with name, version, and inner path', () => {
     const result = parseModuleSpecifier('lodash@latest/path/to/module');
     expect(result).toEqual({
       packageName: 'lodash',
@@ -37,7 +37,7 @@ describe('parseModuleSpecifier', () => {
     });
   });
 
-  test('parses scoped package with name, version, and inner path', () => {
+  test('[CJS Runtime] parses scoped package with name, version, and inner path', () => {
     const result = parseModuleSpecifier('@chakra-ui/react@1.0.0/path/to/module');
     expect(result).toEqual({
       packageName: '@chakra-ui/react',
@@ -46,7 +46,7 @@ describe('parseModuleSpecifier', () => {
     });
   });
 
-  test('parses scoped package with name', () => {
+  test('[CJS Runtime] parses scoped package with name', () => {
     const result = parseModuleSpecifier('lodash');
     expect(result).toEqual({
       packageName: 'lodash',
@@ -55,7 +55,7 @@ describe('parseModuleSpecifier', () => {
     });
   });
 
-  test('parses scoped package with name', () => {
+  test('[CJS Runtime] parses scoped package with name', () => {
     const result = parseModuleSpecifier('@chakra-ui/react');
     expect(result).toEqual({
       packageName: '@chakra-ui/react',
@@ -64,7 +64,7 @@ describe('parseModuleSpecifier', () => {
     });
   });
 
-  test('parses yargs@17.7.2/helpers', () => {
+  test('[CJS Runtime] parses yargs@17.7.2/helpers', () => {
     const result = parseModuleSpecifier('yargs@17.7.2/helpers');
     expect(result).toEqual({
       packageName: 'yargs',
@@ -73,7 +73,7 @@ describe('parseModuleSpecifier', () => {
     });
   });
 
-  test('parses yargs@latest/helpers', () => {
+  test('[CJS Runtime] parses yargs@latest/helpers', () => {
     const result = parseModuleSpecifier('yargs@latest/helpers');
     expect(result).toEqual({
       packageName: 'yargs',
@@ -82,7 +82,7 @@ describe('parseModuleSpecifier', () => {
     });
   });
 
-  test('parses yargs/helpers', () => {
+  test('[CJS Runtime] parses yargs/helpers', () => {
     const result = parseModuleSpecifier('yargs/helpers');
     expect(result).toEqual({
       packageName: 'yargs',
@@ -91,7 +91,7 @@ describe('parseModuleSpecifier', () => {
     });
   });
 
-  test('throws error for invalid package identifier', () => {
+  test('[CJS Runtime] throws error for invalid package identifier', () => {
     expect(() => parseModuleSpecifier('invalid@identifier/with@extra@symbols')).toThrow(
       "Failed to parse package identifier 'invalid@identifier/with@extra@symbols'"
     );

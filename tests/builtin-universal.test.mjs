@@ -1,7 +1,7 @@
 import { use } from '../use.mjs';
 
-describe('Universal built-in modules (work in all environments)', () => {
-  test('console module should work', async () => {
+describe('[MJS Runtime] Universal built-in modules (work in all environments)', () => {
+  test('[MJS Runtime] console module should work', async () => {
     const consoleModule = await use('console');
     
     expect(consoleModule).toBeDefined();
@@ -11,7 +11,7 @@ describe('Universal built-in modules (work in all environments)', () => {
     expect(typeof consoleModule.info).toBe('function');
   });
 
-  test('crypto module should work', async () => {
+  test('[MJS Runtime] crypto module should work', async () => {
     const crypto = await use('crypto');
     
     expect(crypto).toBeDefined();
@@ -22,7 +22,7 @@ describe('Universal built-in modules (work in all environments)', () => {
     expect(uuid).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
   });
 
-  test('url module should work', async () => {
+  test('[MJS Runtime] url module should work', async () => {
     const url = await use('url');
     
     expect(url).toBeDefined();
@@ -41,7 +41,7 @@ describe('Universal built-in modules (work in all environments)', () => {
     expect(params.get('b')).toBe('2');
   });
 
-  test('performance module should work', async () => {
+  test('[MJS Runtime] performance module should work', async () => {
     const perf = await use('performance');
     
     expect(perf).toBeDefined();
@@ -53,7 +53,7 @@ describe('Universal built-in modules (work in all environments)', () => {
     expect(time).toBeGreaterThan(0);
   });
 
-  test('modules should work with node: prefix', async () => {
+  test('[MJS Runtime] modules should work with node: prefix', async () => {
     const url = await use('node:url');
     
     expect(url).toBeDefined();
