@@ -70,4 +70,22 @@ describe('scriptPath detection in CJS (fallback)', () => {
     const expected = path.resolve(currentDir, '..', 'package.json');
     expect(resolved).toBe(expected);
   });
+});
+
+// Additional test for meta.url with use.js path
+describe('scriptPath detection in CJS (meta URL)', () => {
+  test('meta override with use.js URL resolves relative to use.js', async () => {
+    let capturedResolver;
+    const stubSpecifierResolver = (specifier, pathResolver) => {
+      capturedResolver = pathResolver;
+      return __filename;
+    };
+    const { pathToFileURL } = require('url');
+    const metaUrl = pathToFileURL(path.resolve(__dirname, '..', 'use.js')).href;
+    const useFn = await makeUse({ specifierResolver: stubSpecifierResolver, meta: { url: metaUrl } });
+    await useFn('anything');
+    const resolved = capturedResolver('./use.js');
+    const expected = path.resolve(__dirname, '..', 'use.js');
+    expect(resolved).toBe(expected);
+  });
 }); 
