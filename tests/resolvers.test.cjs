@@ -15,14 +15,20 @@ describe('resolvers tests', () => {
 
   // Tests for https://github.com/link-foundation/use-m/issues/16 issue
 
+  test('npm resolver resolves scoped package path for @octokit/core@6.1.5', async () => {
+    const { npm } = resolvers;
+    const packagePath = await npm('@octokit/core@6.1.5', resolve);
+    expect(packagePath).toMatch(/node_modules\/octokit-core-v-6\.1\.5/);
+  });
+
   test('npm resolver resolves package path with version', async () => {
     const { npm } = resolvers;
     const rootPath1 = await npm('yargs@latest', resolve);
     const helpersPath1 = await npm('yargs@latest/helpers', resolve);
     const rootPath2 = await npm('yargs', resolve);
-    const helpersPat2 = await npm('yargs/helpers', resolve);
+    const helpersPath2 = await npm('yargs/helpers', resolve);
     expect(rootPath1).toBe(rootPath2);
-    expect(helpersPath1).toBe(helpersPat2);
+    expect(helpersPath1).toBe(helpersPath2);
   });
 
   test('CJS npm resolver resolves yargs/helpers', async () => {

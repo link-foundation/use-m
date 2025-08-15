@@ -56,7 +56,7 @@ describe('resolvers tests', () => {
     expect(packagePath).toMatch(/node_modules\/yargs-v-18\.0\.0\/helpers/);
   });
 
-  test('MJS npm resolver resolves yarn@latest/helpers', async () => {
+  test('MJS npm resolver resolves yargs@latest/helpers', async () => {
     const { npm } = resolvers;
     const packagePath = await npm('yargs@latest/helpers', resolve);
     expect(packagePath).toMatch(/node_modules\/yargs-v-latest\/helpers/);

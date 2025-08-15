@@ -77,7 +77,26 @@ describe('scriptPath detection in ESM (createRequire fallback)', () => {
     expect(resolved).toBe(expected);
   });
 
-  test('fallback meta override resolves modules relative to provided meta URL (use.js)', async () => {
+  test('fallback meta override changes pathResolver behavior in ESM', async () => {
+    let capturedResolver;
+    const stubSpecifierResolver = (specifier, pathResolver) => {
+      capturedResolver = pathResolver;
+      return currentFileUrl;
+    };
+    // In ESM, providing a meta.url affects pathResolver
+    // We need to use a valid path that exists to avoid errors
+    const metaUrl = new URL('../use.mjs', import.meta.url).href;
+    const useFn = await makeUse({ specifierResolver: stubSpecifierResolver, meta: { url: metaUrl } });
+    await useFn('anything');
+    const resolved = capturedResolver('./package.json');
+    const expected = fileURLToPath(new URL('./package.json', metaUrl));
+    expect(resolved).toBe(expected);
+  });
+});
+
+// Additional test for meta.url with use.js path
+describe('scriptPath detection in ESM (meta URL)', () => {
+  test('meta override resolves modules relative to provided meta URL (use.js)', async () => {
     let capturedResolver;
     const stubSpecifierResolver = (specifier, pathResolver) => {
       capturedResolver = pathResolver;

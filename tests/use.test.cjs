@@ -96,4 +96,46 @@ describe(`'use' import strategies (CJS)`, () => {
         expect(lodash4.add(1, 2)).toBe(3);
       });
   });
+
+  // Test for https://github.com/link-foundation/use-m/issues/16 issue
+
+  test('Universal (script) @octokit/core@6.1.5', async () => {
+    await fetch('https://unpkg.com/use-m/use.js')
+      .then(async useJs => {
+        const { use } = eval
+          (await useJs.text());
+        const { Octokit } = await use('@octokit/core@6.1.5');
+        const octokit = new Octokit();
+        expect(octokit).toBeDefined();
+      });
+  });
+
+  test('Universal (script) @octokit/core@5', async () => {
+    await fetch('https://unpkg.com/use-m/use.js')
+      .then(async useJs => {
+        const { use } = eval
+          (await useJs.text());
+        const { Octokit } = await use('@octokit/core@5');
+        const octokit = new Octokit();
+        expect(octokit).toBeDefined();
+      });
+  });
+
+  test('Universal (script) @octokit/core (latest)', async () => {
+    await fetch('https://unpkg.com/use-m/use.js')
+      .then(async useJs => {
+        const { use } = eval
+          (await useJs.text());
+        const { Octokit } = await use('@octokit/core');
+        const octokit = new Octokit();
+        expect(octokit).toBeDefined();
+      });
+  });
+
+  test('@octokit/core (latest)', async () => {
+    const { use } = require('use-m');
+    const { Octokit } = await use('@octokit/core');
+    const octokit = new Octokit();
+    expect(octokit).toBeDefined();
+  });
 });
