@@ -257,10 +257,6 @@ export const resolvers = {
     }
     return resolvedPath;
   },
-  skypack: async (moduleSpecifier, pathResolver) => {
-    const resolvedPath = `https://cdn.skypack.dev/${moduleSpecifier}`;
-    return resolvedPath;
-  },
   bun: async (moduleSpecifier, pathResolver) => {
     const path = await import('path');
     const { exec } = await import('child_process');
@@ -377,6 +373,10 @@ export const resolvers = {
     if (!resolvedPath) {
       throw new Error(`Failed to resolve the path to '${moduleSpecifier}' from '${packageModulePath}'.`);
     }
+    return resolvedPath;
+  },
+  skypack: async (moduleSpecifier, pathResolver) => {
+    const resolvedPath = `https://cdn.skypack.dev/${moduleSpecifier}`;
     return resolvedPath;
   },
   jsdelivr: async (moduleSpecifier, pathResolver) => {
