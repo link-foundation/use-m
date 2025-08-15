@@ -318,11 +318,41 @@ const baseUse = async (modulePath) => {
   // Dynamically import the module
   try {
     const module = await import(modulePath);
-    // Check if the only key in the module is 'default'
+    
+    // More robust default export handling for cross-environment compatibility
     const keys = Object.keys(module);
-    if (keys.length === 1 && keys[0] === 'default') {
-      return module.default || module;
+    
+    // If it's a Module object with a default property, unwrap it
+    if (module.default !== undefined) {
+      // Check if this is likely a CommonJS module with only default export
+      if (keys.length === 1 && keys[0] === 'default') {
+        return module.default;
+      }
+      
+      // Check if default is the main export and other keys are just function/module metadata
+      const metadataKeys = new Set([
+        'default', '__esModule', 'Symbol(Symbol.toStringTag)',
+        'length', 'name', 'prototype', 'constructor',
+        'toString', 'valueOf', 'hasOwnProperty', 'isPrototypeOf', 'propertyIsEnumerable'
+      ]);
+      
+      const nonMetadataKeys = keys.filter(key => !metadataKeys.has(key));
+      
+      // If there are no significant non-metadata keys, return the default
+      if (nonMetadataKeys.length === 0) {
+        return module.default;
+      }
+      
+      // Special case: If the module looks like a Module object (has toString that returns '[object Module]')
+      // and default is a function, prefer the default
+      if (typeof module.default === 'function' && 
+          module.toString && 
+          module.toString().includes('[object Module]')) {
+        return module.default;
+      }
     }
+    
+    // Return the whole module if it has multiple meaningful exports or no default
     return module;
   } catch (error) {
     throw new Error(`Failed to import module from '${modulePath}'.`, { cause: error });
