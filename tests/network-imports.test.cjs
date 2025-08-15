@@ -8,7 +8,7 @@ describe(`Imports using --experimental-network-imports`, () => {
     expect(cleanResult).toEqual("_.add(1, 2) = 3");
   });
 
-  test('[CJS Runtime] Import using --experimental-network-imports (MJS example)', async () => {
+  test('[CJS Runtime] Import using --experimental-network-imports for MJS file', async () => {
     const { exec } = await import('child_process');
     const { promisify } = await import('util');
     const execAsync = promisify(exec);

@@ -1,5 +1,5 @@
 describe(`Imports using --experimental-network-imports`, () => {
-  test('[MJS Runtime] Import using --experimental-network-imports (CJS example)', async () => {
+  test('[MJS Runtime] Import using --experimental-network-imports for CJS file', async () => {
     const { exec } = await import('child_process');
     const { promisify } = await import('util');
     const execAsync = promisify(exec);

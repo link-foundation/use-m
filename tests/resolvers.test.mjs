@@ -39,19 +39,6 @@ describe('[MJS Runtime] resolvers tests', () => {
   test('[MJS Runtime] npm resolver resolves yargs@18.0.0/helpers', async () => {
     const { npm } = resolvers;
 
-    // const cjsResolver = (specifier) => {
-    //   console.log('cjsResolver', specifier);
-    //   try {
-    //     const cjsPath = resolve(specifier + "/helpers.mjs");
-    //     console.log('cjsPath', cjsPath);
-    //     return cjsPath;
-    //   } catch (error) {
-    //     console.log('error', error);
-    //     throw error;
-    //   }
-    // };
-    
-    // const packagePath = await npm('yargs@18.0.0/helpers', cjsResolver);
     const packagePath = await npm('yargs@18.0.0/helpers', resolve);
     expect(packagePath).toMatch(/node_modules\/yargs-v-18\.0\.0\/helpers/);
   });
