@@ -110,7 +110,7 @@ describe(`${runtime} resolvers tests`, () => {
     expect(resolvedPath).toBe('https://jspm.dev/lodash@4.17.21/add');
   });
 
-  test('bun resolver resolves package path', async () => {
+  test(`${runtime} bun resolver resolves package path`, async () => {
     if (typeof Bun === 'undefined') {
       return;
     }
@@ -119,7 +119,7 @@ describe(`${runtime} resolvers tests`, () => {
     expect(packagePath).toMatch(/node_modules\/lodash-v-4\.17\.21/);
   });
 
-  test('bun resolver resolves yargs/helpers', async () => {
+  test(`${runtime} bun resolver resolves yargs/helpers`, async () => {
     if (typeof Bun === 'undefined') {
       return;
     }
@@ -128,7 +128,7 @@ describe(`${runtime} resolvers tests`, () => {
     expect(packagePath).toMatch(/node_modules\/yargs-v-17\.7\.2\/helpers/);
   });
 
-  test('bun resolver resolves yargs@latest/helpers', async () => {
+  test(`${runtime} bun resolver resolves yargs@latest/helpers`, async () => {
     if (typeof Bun === 'undefined') {
       return;
     }
