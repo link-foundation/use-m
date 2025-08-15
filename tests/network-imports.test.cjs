@@ -1,5 +1,5 @@
 describe(`Imports using --experimental-network-imports`, () => {
-  test('Import using --experimental-network-imports (cjs)', async () => {
+  test('[CJS Runtime] Import using --experimental-network-imports', async () => {
     const { exec } = await import('child_process');
     const { promisify } = await import('util');
     const execAsync = promisify(exec);
@@ -8,7 +8,7 @@ describe(`Imports using --experimental-network-imports`, () => {
     expect(cleanResult).toEqual("_.add(1, 2) = 3");
   });
 
-  test('Import using --experimental-network-imports (mjs)', async () => {
+  test('[CJS Runtime] Import using --experimental-network-imports (MJS example)', async () => {
     const { exec } = await import('child_process');
     const { promisify } = await import('util');
     const execAsync = promisify(exec);

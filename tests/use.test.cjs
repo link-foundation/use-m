@@ -27,7 +27,7 @@ describe(`[CJS Runtime] 'use' import strategies`, () => {
     expect(_.add(1, 2)).toBe(3);
   });
 
-  test('[CJS Runtime] Universal (then style, use inside) with CJS', async () => {
+  test('[CJS Runtime] Universal (then style, use inside)', async () => {
     await fetch('https://unpkg.com/use-m/use.js')
       .then(response => response.text())
       .then(code => eval(code))
@@ -55,7 +55,7 @@ describe(`[CJS Runtime] 'use' import strategies`, () => {
       });
   });
 
-  test('[CJS Runtime] use.all (cjs)', async () => {
+  test('[CJS Runtime] use.all', async () => {
     const { use } = require('use-m');
     const [
       lodash3, 
@@ -68,7 +68,7 @@ describe(`[CJS Runtime] 'use' import strategies`, () => {
     expect(lodash4.add(1, 2)).toBe(3);
   });
 
-  test('[CJS Runtime] use.all (mjs)', async () => {
+  test('[CJS Runtime] use.all with dynamic import', async () => {
     const { use } = await import('use-m');
     const [
       lodash3, 
