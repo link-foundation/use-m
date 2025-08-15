@@ -1,4 +1,4 @@
-import { makeUse } from 'use-m';
+import { makeUse } from '../use.mjs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { jest } from '@jest/globals';

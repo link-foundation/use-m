@@ -390,7 +390,26 @@ export const makeUse = async (options) => {
   let pathResolver = options?.pathResolver;
   if (!pathResolver) {
     if (typeof require !== 'undefined') {
-      pathResolver = require.resolve;
+      // Bun has require but createRequire behaves differently for relative paths
+      if (typeof Bun !== 'undefined' && scriptPath && (!protocol || protocol === 'file:')) {
+        const module = await import('module');
+        const path = await import('path');
+        
+        pathResolver = (specifier) => {
+          try {
+            return module.createRequire(scriptPath).resolve(specifier);
+          } catch (error) {
+            // Bun fallback for relative paths only
+            if (specifier.startsWith('./') || specifier.startsWith('../')) {
+              const normalizedPath = scriptPath.startsWith('file://') ? new URL(scriptPath).pathname : scriptPath;
+              return path.resolve(path.dirname(normalizedPath), specifier);
+            }
+            throw error;
+          }
+        };
+      } else {
+        pathResolver = require.resolve;
+      }
     } else if (scriptPath && (!protocol || protocol === 'file:')) {
       pathResolver = await import('module')
         .then(module => module.createRequire(scriptPath))
