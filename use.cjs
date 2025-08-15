@@ -522,7 +522,7 @@ const makeUse = async (options) => {
     if (builtinPath) {
       return baseUse(builtinPath);
     }
-    
+
     // If not a built-in module, use the configured resolver
     const modulePath = await specifierResolver(moduleSpecifier, pathResolver);
     return baseUse(modulePath);
