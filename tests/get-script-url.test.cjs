@@ -1,4 +1,8 @@
+const { describe, test, expect } = require('@jest/globals');
+
 // Function to retrieve this script URL from the stack trace
+const runtime = `[${__filename.split('.').pop()} runtime]`;
+
 const getScriptUrl = async () => {
   const error = new Error();
   const stack = error.stack || '';
@@ -12,8 +16,8 @@ const getScriptUrl = async () => {
 }
 
 // Test
-describe('[CJS Runtime] __filename workaround', () => {
-  test('[CJS Runtime] scriptUrl matches __filename as URL', async () => {
+describe(`${runtime} __filename workaround`, () => {
+  test(`${runtime} scriptUrl matches __filename as URL`, async () => {
     const scriptUrl = await getScriptUrl();
     const { pathToFileURL } = await import('url');
     const expectedUrl = pathToFileURL(__filename).href;
@@ -23,7 +27,7 @@ describe('[CJS Runtime] __filename workaround', () => {
     expect(scriptUrl).toBe(expectedUrl);
   });
 
-  test('[CJS Runtime] scriptUrl matches __filename as URL in eval', async () => {
+  test(`${runtime} scriptUrl matches __filename as URL in eval`, async () => {
     const scriptUrl = await eval('getScriptUrl()');
     const { pathToFileURL } = await import('url');
     const expectedUrl = pathToFileURL(__filename).href;

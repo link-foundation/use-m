@@ -1,12 +1,13 @@
 import { resolvers } from 'use-m';
 import { createRequire } from 'module';
-import { jest } from '@jest/globals';
+import { jest, describe, test, expect } from '@jest/globals';
 const { resolve } = createRequire(import.meta.url);
+const runtime = `[${import.meta.url.split('.').pop()} runtime]`;
 
 jest.setTimeout(10000);
 
-describe('[MJS Runtime] resolvers tests', () => {
-  test('[MJS Runtime] npm resolver resolves package path', async () => {
+describe(`${runtime} resolvers tests`, () => {
+  test(`${runtime} npm resolver resolves package path`, async () => {
     const { npm } = resolvers;
     const packagePath = await npm('lodash@4.17.21', resolve);
     expect(packagePath).toMatch(/node_modules\/lodash-v-4\.17\.21/);
@@ -14,13 +15,13 @@ describe('[MJS Runtime] resolvers tests', () => {
 
   // Tests for https://github.com/link-foundation/use-m/issues/16 issue
 
-  test('[MJS Runtime] npm resolver resolves scoped package path for @octokit/core@6.1.5', async () => {
+  test(`${runtime} npm resolver resolves scoped package path for @octokit/core@6.1.5`, async () => {
     const { npm } = resolvers;
     const packagePath = await npm('@octokit/core@6.1.5', resolve);
     expect(packagePath).toMatch(/node_modules\/octokit-core-v-6\.1\.5/);
   });
 
-  test('[MJS Runtime] npm resolver resolves package path with version', async () => {
+  test(`${runtime} npm resolver resolves package path with version`, async () => {
     const { npm } = resolvers;
     const rootPath1 = await npm('yargs@latest', resolve);
     const helpersPath1 = await npm('yargs@latest/helpers', resolve);
@@ -30,80 +31,80 @@ describe('[MJS Runtime] resolvers tests', () => {
     expect(helpersPath1).toBe(helpersPath2);
   });
 
-  test('[MJS Runtime] npm resolver resolves yargs/helpers', async () => {
+  test(`${runtime} npm resolver resolves yargs/helpers`, async () => {
     const { npm } = resolvers;
     const packagePath = await npm('yargs@17.7.2/helpers', resolve);
     expect(packagePath).toMatch(/node_modules\/yargs-v-17\.7\.2\/helpers/);
   });
 
-  test('[MJS Runtime] npm resolver resolves yargs@18.0.0/helpers', async () => {
+  test(`${runtime} npm resolver resolves yargs@18.0.0/helpers`, async () => {
     const { npm } = resolvers;
 
     const packagePath = await npm('yargs@18.0.0/helpers', resolve);
     expect(packagePath).toMatch(/node_modules\/yargs-v-18\.0\.0\/helpers/);
   });
 
-  test('[MJS Runtime] npm resolver resolves yargs@latest/helpers', async () => {
+  test(`${runtime} npm resolver resolves yargs@latest/helpers`, async () => {
     const { npm } = resolvers;
     const packagePath = await npm('yargs@latest/helpers', resolve);
     expect(packagePath).toMatch(/node_modules\/yargs-v-latest\/helpers/);
   });
 
-  test('[MJS Runtime] skypack resolver resolves URL', async () => {
+  test(`${runtime} skypack resolver resolves URL`, async () => {
     const { skypack } = resolvers;
     const resolvedPath = await skypack('lodash@4.17.21');
     expect(resolvedPath).toBe('https://cdn.skypack.dev/lodash@4.17.21');
   });
 
-  test('[MJS Runtime] skypack resolver resolves subpath', async () => {
+  test(`${runtime} skypack resolver resolves subpath`, async () => {
     const { skypack } = resolvers;
     const resolvedPath = await skypack('lodash@4.17.21/add');
     expect(resolvedPath).toBe('https://cdn.skypack.dev/lodash@4.17.21/add');
   });
 
-  test('[MJS Runtime] jsdelivr resolver resolves URL', async () => {
+  test(`${runtime} jsdelivr resolver resolves URL`, async () => {
     const { jsdelivr } = resolvers;
     const resolvedPath = await jsdelivr('lodash@4.17.21');
     expect(resolvedPath).toBe('https://cdn.jsdelivr.net/npm/lodash-es@4.17.21/lodash.js');
   });
 
-  test('[MJS Runtime] jsdelivr resolver resolves subpath', async () => {
+  test(`${runtime} jsdelivr resolver resolves subpath`, async () => {
     const { jsdelivr } = resolvers;
     const resolvedPath = await jsdelivr('lodash@4.17.21/add');
     expect(resolvedPath).toBe('https://cdn.jsdelivr.net/npm/lodash-es@4.17.21/add.js');
   });
 
-  test('[MJS Runtime] unpkg resolver resolves URL', async () => {
+  test(`${runtime} unpkg resolver resolves URL`, async () => {
     const { unpkg } = resolvers;
     const resolvedPath = await unpkg('lodash@4.17.21');
     expect(resolvedPath).toBe('https://unpkg.com/lodash-es@4.17.21/lodash.js');
   });
 
-  test('[MJS Runtime] unpkg resolver resolves subpath', async () => {
+  test(`${runtime} unpkg resolver resolves subpath`, async () => {
     const { unpkg } = resolvers;
     const resolvedPath = await unpkg('lodash@4.17.21/add');
     expect(resolvedPath).toBe('https://unpkg.com/lodash-es@4.17.21/add.js');
   });
 
-  test('[MJS Runtime] esm resolver resolves URL', async () => {
+  test(`${runtime} esm resolver resolves URL`, async () => {
     const { esm } = resolvers;
     const resolvedPath = await esm('lodash@4.17.21');
     expect(resolvedPath).toBe('https://esm.sh/lodash@4.17.21');
   });
 
-  test('[MJS Runtime] esm resolver resolves subpath', async () => {
+  test(`${runtime} esm resolver resolves subpath`, async () => {
     const { esm } = resolvers;
     const resolvedPath = await esm('lodash@4.17.21/add');
     expect(resolvedPath).toBe('https://esm.sh/lodash@4.17.21/add');
   });
 
-  test('[MJS Runtime] jspm resolver resolves URL', async () => {
+  test(`${runtime} jspm resolver resolves URL`, async () => {
     const { jspm } = resolvers;
     const resolvedPath = await jspm('lodash@4.17.21');
     expect(resolvedPath).toBe('https://jspm.dev/lodash@4.17.21');
   });
 
-  test('[MJS Runtime] jspm resolver resolves subpath', async () => {
+  test(`${runtime} jspm resolver resolves subpath`, async () => {
     const { jspm } = resolvers;
     const resolvedPath = await jspm('lodash@4.17.21/add');
     expect(resolvedPath).toBe('https://jspm.dev/lodash@4.17.21/add');

@@ -1,7 +1,9 @@
 import { use } from '../use.mjs';
+import { describe, test, expect } from '@jest/globals';
+const runtime = `[${import.meta.url.split('.').pop()} runtime]`;
 
-describe('[MJS Runtime] Node.js/Bun-only built-in modules', () => {
-  test('[MJS Runtime] fs module should work', async () => {
+describe(`${runtime} Node.js/Bun-only built-in modules`, () => {
+  test(`${runtime} fs module should work`, async () => {
     const fs = await use('fs');
     
     expect(fs).toBeDefined();
@@ -13,7 +15,7 @@ describe('[MJS Runtime] Node.js/Bun-only built-in modules', () => {
     expect(typeof fs.mkdirSync).toBe('function');
   });
 
-  test('[MJS Runtime] path module should work', async () => {
+  test(`${runtime} path module should work`, async () => {
     const path = await use('path');
     
     expect(path).toBeDefined();
@@ -30,7 +32,7 @@ describe('[MJS Runtime] Node.js/Bun-only built-in modules', () => {
     expect(path.dirname('/path/to/file.txt')).toBe('/path/to');
   });
 
-  test('[MJS Runtime] os module should work', async () => {
+  test(`${runtime} os module should work`, async () => {
     const os = await use('os');
     
     expect(os).toBeDefined();
@@ -50,7 +52,7 @@ describe('[MJS Runtime] Node.js/Bun-only built-in modules', () => {
     expect(Array.isArray(os.cpus())).toBe(true);
   });
 
-  test('[MJS Runtime] util module should work', async () => {
+  test(`${runtime} util module should work`, async () => {
     const util = await use('util');
     
     expect(util).toBeDefined();
@@ -70,7 +72,7 @@ describe('[MJS Runtime] Node.js/Bun-only built-in modules', () => {
     expect(typeof util.inspect({a: 1})).toBe('string');
   });
 
-  test('[MJS Runtime] events module should work', async () => {
+  test(`${runtime} events module should work`, async () => {
     const events = await use('events');
     
     expect(events).toBeDefined();
@@ -90,7 +92,7 @@ describe('[MJS Runtime] Node.js/Bun-only built-in modules', () => {
     expect(called).toBe(true);
   });
 
-  test('[MJS Runtime] stream module should work', async () => {
+  test(`${runtime} stream module should work`, async () => {
     const stream = await use('stream');
     
     expect(stream).toBeDefined();
@@ -102,7 +104,7 @@ describe('[MJS Runtime] Node.js/Bun-only built-in modules', () => {
     expect(stream.Stream).toBe(stream.default);
   });
 
-  test('[MJS Runtime] buffer module should work', async () => {
+  test(`${runtime} buffer module should work`, async () => {
     const buffer = await use('buffer');
     
     expect(buffer).toBeDefined();
@@ -115,7 +117,7 @@ describe('[MJS Runtime] Node.js/Bun-only built-in modules', () => {
     expect(buf.toString()).toBe('hello');
   });
 
-  test('[MJS Runtime] process module should work', async () => {
+  test(`${runtime} process module should work`, async () => {
     const processModule = await use('process');
     
     expect(processModule).toBeDefined();
@@ -127,7 +129,7 @@ describe('[MJS Runtime] Node.js/Bun-only built-in modules', () => {
     expect(typeof processModule.env).toBe('object');
   });
 
-  test('[MJS Runtime] child_process module should work', async () => {
+  test(`${runtime} child_process module should work`, async () => {
     const cp = await use('child_process');
     
     expect(cp).toBeDefined();
@@ -138,7 +140,7 @@ describe('[MJS Runtime] Node.js/Bun-only built-in modules', () => {
     expect(typeof cp.fork).toBe('function');
   });
 
-  test('[MJS Runtime] http module should work', async () => {
+  test(`${runtime} http module should work`, async () => {
     const http = await use('http');
     
     expect(http).toBeDefined();
@@ -148,7 +150,7 @@ describe('[MJS Runtime] Node.js/Bun-only built-in modules', () => {
     expect(typeof http.Server).toBe('function');
   });
 
-  test('[MJS Runtime] https module should work', async () => {
+  test(`${runtime} https module should work`, async () => {
     const https = await use('https');
     
     expect(https).toBeDefined();
@@ -158,7 +160,7 @@ describe('[MJS Runtime] Node.js/Bun-only built-in modules', () => {
     expect(typeof https.Server).toBe('function');
   });
 
-  test('[MJS Runtime] net module should work', async () => {
+  test(`${runtime} net module should work`, async () => {
     const net = await use('net');
     
     expect(net).toBeDefined();
@@ -169,7 +171,7 @@ describe('[MJS Runtime] Node.js/Bun-only built-in modules', () => {
     expect(typeof net.Server).toBe('function');
   });
 
-  test('[MJS Runtime] dns module should work', async () => {
+  test(`${runtime} dns module should work`, async () => {
     const dns = await use('dns');
     
     expect(dns).toBeDefined();
@@ -178,7 +180,7 @@ describe('[MJS Runtime] Node.js/Bun-only built-in modules', () => {
     expect(typeof dns.reverse).toBe('function');
   });
 
-  test('[MJS Runtime] zlib module should work', async () => {
+  test(`${runtime} zlib module should work`, async () => {
     const zlib = await use('zlib');
     
     expect(zlib).toBeDefined();
@@ -190,7 +192,7 @@ describe('[MJS Runtime] Node.js/Bun-only built-in modules', () => {
     expect(typeof zlib.gunzipSync).toBe('function');
   });
 
-  test('[MJS Runtime] querystring module should work', async () => {
+  test(`${runtime} querystring module should work`, async () => {
     const qs = await use('querystring');
     
     expect(qs).toBeDefined();
@@ -206,7 +208,7 @@ describe('[MJS Runtime] Node.js/Bun-only built-in modules', () => {
     expect(stringified).toBe('a=1&b=2');
   });
 
-  test('[MJS Runtime] assert module should work', async () => {
+  test(`${runtime} assert module should work`, async () => {
     const assert = await use('assert');
     
     expect(assert).toBeDefined();
@@ -222,7 +224,7 @@ describe('[MJS Runtime] Node.js/Bun-only built-in modules', () => {
     expect(() => assertFn(false)).toThrow();
   });
 
-  test('[MJS Runtime] all modules should work with node: prefix', async () => {
+  test(`${runtime} all modules should work with node: prefix`, async () => {
     const fs = await use('node:fs');
     const path = await use('node:path');
     const os = await use('node:os');

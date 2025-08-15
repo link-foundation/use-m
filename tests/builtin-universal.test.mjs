@@ -1,7 +1,9 @@
+import { describe, test, expect } from '@jest/globals';
 import { use } from '../use.mjs';
+const runtime = `[${import.meta.url.split('.').pop()} runtime]`;
 
-describe('[MJS Runtime] Universal built-in modules (work in all environments)', () => {
-  test('[MJS Runtime] console module should work', async () => {
+describe(`${runtime} Universal built-in modules (work in all environments)`, () => {
+  test(`${runtime} console module should work`, async () => {
     const consoleModule = await use('console');
     
     expect(consoleModule).toBeDefined();
@@ -11,7 +13,7 @@ describe('[MJS Runtime] Universal built-in modules (work in all environments)', 
     expect(typeof consoleModule.info).toBe('function');
   });
 
-  test('[MJS Runtime] crypto module should work', async () => {
+  test(`${runtime} crypto module should work`, async () => {
     const crypto = await use('crypto');
     
     expect(crypto).toBeDefined();
@@ -22,7 +24,7 @@ describe('[MJS Runtime] Universal built-in modules (work in all environments)', 
     expect(uuid).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
   });
 
-  test('[MJS Runtime] url module should work', async () => {
+  test(`${runtime} url module should work`, async () => {
     const url = await use('url');
     
     expect(url).toBeDefined();
@@ -41,7 +43,7 @@ describe('[MJS Runtime] Universal built-in modules (work in all environments)', 
     expect(params.get('b')).toBe('2');
   });
 
-  test('[MJS Runtime] performance module should work', async () => {
+  test(`${runtime} performance module should work`, async () => {
     const perf = await use('performance');
     
     expect(perf).toBeDefined();
@@ -53,7 +55,7 @@ describe('[MJS Runtime] Universal built-in modules (work in all environments)', 
     expect(time).toBeGreaterThan(0);
   });
 
-  test('[MJS Runtime] modules should work with node: prefix', async () => {
+  test(`${runtime} modules should work with node: prefix`, async () => {
     const url = await use('node:url');
     
     expect(url).toBeDefined();
