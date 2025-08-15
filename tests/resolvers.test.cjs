@@ -7,13 +7,6 @@ jest.setTimeout(10000);
 
 describe(`${runtime} resolvers tests`, () => {
   const { resolvers } = require('../use.cjs');
-  let hasBun = false;
-  beforeAll((done) => {
-    exec('bun --version', (err) => {
-      hasBun = !err;
-      done();
-    });
-  });
 
   test(`${runtime} npm resolver resolves package path`, async () => {
     const { npm } = resolvers;
@@ -118,21 +111,27 @@ describe(`${runtime} resolvers tests`, () => {
   });
 
   test('bun resolver resolves package path', async () => {
-    if (!hasBun) { return; }
+    if (typeof Bun === 'undefined') {
+      return;
+    }
     const { bun } = resolvers;
     const packagePath = await bun('lodash@4.17.21', resolve);
     expect(packagePath).toMatch(/node_modules\/lodash-v-4\.17\.21/);
   });
 
   test('bun resolver resolves yargs/helpers', async () => {
-    if (!hasBun) { return; }
+    if (typeof Bun === 'undefined') {
+      return;
+    }
     const { bun } = resolvers;
     const packagePath = await bun('yargs@17.7.2/helpers', resolve);
     expect(packagePath).toMatch(/node_modules\/yargs-v-17\.7\.2\/helpers/);
   });
 
   test('bun resolver resolves yargs@latest/helpers', async () => {
-    if (!hasBun) { return; }
+    if (typeof Bun === 'undefined') {
+      return;
+    }
     const { bun } = resolvers;
     const packagePath = await bun('yargs@latest/helpers', resolve);
     expect(packagePath).toMatch(/node_modules\/yargs-v-latest\/helpers/);

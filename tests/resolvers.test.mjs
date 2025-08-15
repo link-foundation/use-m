@@ -111,29 +111,37 @@ describe(`${runtime} resolvers tests`, () => {
     expect(resolvedPath).toBe('https://jspm.dev/lodash@4.17.21/add');
   });
 
-  test('bun resolver resolves package path', async () => {
-    if (!hasBun) { return; }
+  test(`${runtime} bun resolver resolves package path`, async () => {
+    if (typeof Bun === 'undefined') {
+      return;
+    }
     const { bun } = resolvers;
     const packagePath = await bun('lodash@4.17.21', resolve);
     expect(packagePath).toMatch(/node_modules\/lodash-v-4\.17\.21/);
   });
 
-  test('bun resolver resolves scoped package path for @octokit/core@6.1.5', async () => {
-    if (!hasBun) { return; }
+  test(`${runtime} bun resolver resolves scoped package path for @octokit/core@6.1.5`, async () => {
+    if (typeof Bun === 'undefined') {
+      return;
+    }
     const { bun } = resolvers;
     const packagePath = await bun('@octokit/core@6.1.5', resolve);
     expect(packagePath).toMatch(/node_modules\/octokit-core-v-6\.1\.5/);
   });
 
-  test('bun resolver resolves yargs/helpers', async () => {
-    if (!hasBun) { return; }
+  test(`${runtime} bun resolver resolves yargs/helpers`, async () => {
+    if (typeof Bun === 'undefined') {
+      return;
+    }
     const { bun } = resolvers;
     const packagePath = await bun('yargs@17.7.2/helpers', resolve);
     expect(packagePath).toMatch(/node_modules\/yargs-v-17\.7\.2\/helpers/);
   });
 
-  test('bun resolver resolves yargs@latest/helpers', async () => {
-    if (!hasBun) { return; }
+  test(`${runtime} bun resolver resolves yargs@latest/helpers`, async () => {
+    if (typeof Bun === 'undefined') {
+      return;
+    }
     const { bun } = resolvers;
     const packagePath = await bun('yargs@latest/helpers', resolve);
     expect(packagePath).toMatch(/node_modules\/yargs-v-latest\/helpers/);
