@@ -8,7 +8,9 @@
     ".": {
       "import": "./use.mjs",
       "require": "./use.cjs"
-    }
+    },
+    "./use.cjs": "./use.cjs",
+    "./use.mjs": "./use.mjs"
   },
   "bin": {
     "use": "./cli.mjs"
