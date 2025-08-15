@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>use-m Browser Tests</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 4px;
+        }
+        .test-pass {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .test-fail {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .test-pending {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        #results {
+            margin-top: 20px;
+        }
+        .summary {
+            font-weight: bold;
+            font-size: 18px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>use-m Browser Tests - Universal Built-in Modules</h1>
+    <div id="results">
+        <div class="test-result test-pending">Running tests...</div>
+    </div>
+
+    <script type="module">
+        // Import use-m
+        import { use } from '../use.mjs';
+
+        const results = document.getElementById('results');
+        let passed = 0;
+        let failed = 0;
+        let total = 0;
+
+        function addResult(testName, success, error = null) {
+            total++;
+            const div = document.createElement('div');
+            div.className = `test-result ${success ? 'test-pass' : 'test-fail'}`;
+            div.innerHTML = success 
+                ? `✅ ${testName}` 
+                : `❌ ${testName}: ${error?.message || 'Unknown error'}`;
+            results.appendChild(div);
+            
+            if (success) {
+                passed++;
+            } else {
+                failed++;
+                console.error(`Test failed: ${testName}`, error);
+            }
+        }
+
+        function updateSummary() {
+            const summary = document.createElement('div');
+            summary.className = 'summary';
+            summary.innerHTML = `
+                <div>Tests completed: ${total}</div>
+                <div style="color: green;">Passed: ${passed}</div>
+                <div style="color: red;">Failed: ${failed}</div>
+                <div>Success rate: ${total > 0 ? Math.round((passed / total) * 100) : 0}%</div>
+            `;
+            results.appendChild(summary);
+            
+            // Set result on window for Puppeteer to read
+            window.testResults = {
+                total,
+                passed,
+                failed,
+                success: failed === 0 && total > 0
+            };
+        }
+
+        async function runTests() {
+            // Clear pending message
+            results.innerHTML = '';
+            
+            try {
+                // Test 1: Console module
+                try {
+                    const consoleModule = await use('console');
+                    if (consoleModule && typeof consoleModule.log === 'function') {
+                        addResult('console module should work', true);
+                    } else {
+                        throw new Error('Console module not properly loaded');
+                    }
+                } catch (error) {
+                    addResult('console module should work', false, error);
+                }
+
+                // Test 2: Crypto module
+                try {
+                    const crypto = await use('crypto');
+                    if (crypto && (typeof crypto.randomUUID === 'function' || crypto.subtle)) {
+                        // Test randomUUID if available
+                        if (typeof crypto.randomUUID === 'function') {
+                            const uuid = crypto.randomUUID();
+                            const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+                            if (!uuidRegex.test(uuid)) {
+                                throw new Error(`Invalid UUID generated: ${uuid}`);
+                            }
+                        }
+                        
+                        // Crypto module is loaded correctly (has subtle or randomUUID)
+                        addResult('crypto module should work', true);
+                    } else {
+                        throw new Error('Crypto module not properly loaded - missing both randomUUID and subtle');
+                    }
+                } catch (error) {
+                    addResult('crypto module should work', false, error);
+                }
+
+                // Test 3: URL module
+                try {
+                    const url = await use('url');
+                    if (url && typeof url.URL === 'function' && typeof url.URLSearchParams === 'function') {
+                        // Test URL functionality
+                        const testUrl = new url.URL('https://example.com/path?query=value');
+                        if (testUrl.href === 'https://example.com/path?query=value' && 
+                            testUrl.hostname === 'example.com' && 
+                            testUrl.pathname === '/path') {
+                            
+                            // Test URLSearchParams functionality
+                            const params = new url.URLSearchParams('a=1&b=2');
+                            if (params.get('a') === '1' && params.get('b') === '2') {
+                                addResult('url module should work with URL and URLSearchParams', true);
+                            } else {
+                                throw new Error('URLSearchParams not working correctly');
+                            }
+                        } else {
+                            throw new Error('URL constructor not working correctly');
+                        }
+                    } else {
+                        throw new Error('URL module not properly loaded');
+                    }
+                } catch (error) {
+                    addResult('url module should work', false, error);
+                }
+
+                // Test 4: Performance module
+                try {
+                    const perf = await use('performance');
+                    if (perf && typeof perf.now === 'function') {
+                        const time = perf.now();
+                        if (typeof time === 'number' && time > 0) {
+                            addResult('performance module should work', true);
+                        } else {
+                            throw new Error(`performance.now() returned invalid value: ${time}`);
+                        }
+                    } else {
+                        throw new Error('Performance module not properly loaded or now() missing');
+                    }
+                } catch (error) {
+                    addResult('performance module should work', false, error);
+                }
+
+                // Test 5: Node.js-only modules should not work in browser
+                try {
+                    await use('fs');
+                    addResult('fs module should fail in browser', false, new Error('fs module should not work in browser'));
+                } catch (error) {
+                    if (error.message.includes('not available in browser environment')) {
+                        addResult('fs module should fail in browser with correct error', true);
+                    } else {
+                        addResult('fs module should fail in browser', false, new Error(`Unexpected error: ${error.message}`));
+                    }
+                }
+
+                // Test 6: Node prefix should work with universal modules
+                try {
+                    const url = await use('node:url');
+                    if (url && typeof url.URL === 'function') {
+                        const testUrl = new url.URL('https://example.com');
+                        if (testUrl.href === 'https://example.com/') {
+                            addResult('node:url prefix should work', true);
+                        } else {
+                            throw new Error('node:url not working correctly');
+                        }
+                    } else {
+                        throw new Error('node:url module not properly loaded');
+                    }
+                } catch (error) {
+                    addResult('node:url prefix should work', false, error);
+                }
+
+                // Test 7: Uppercase module names should fail
+                try {
+                    await use('URL');
+                    addResult('uppercase URL should fail', false, new Error('Uppercase module names should not work'));
+                } catch (error) {
+                    // This should fail because it's not a builtin and will try to install from npm
+                    addResult('uppercase URL should fail (strict lowercase only)', true);
+                }
+
+            } catch (globalError) {
+                addResult('Global test execution', false, globalError);
+            }
+
+            updateSummary();
+        }
+
+        // Run tests when page loads
+        runTests().catch(error => {
+            console.error('Failed to run tests:', error);
+            addResult('Test execution failed', false, error);
+            updateSummary();
+        });
+    </script>
+</body>
+</html>

@@ -1,7 +1,9 @@
-import { describe, test, expect, jest } from './test-environment.mjs';
-import { makeUse } from 'use-m';
+import { makeUse } from '../use.mjs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import { jest, describe, test, expect, beforeAll, afterAll } from '@jest/globals';
+
+const runtime = `[${import.meta.url.split('.').pop()} runtime]`;
 
 // URL of use.mjs to test default scriptPath resolution
 const useMjsUrl = new URL('../use.mjs', import.meta.url).href;
@@ -10,8 +12,8 @@ const currentFileUrl = import.meta.url;
 const currentFilePath = fileURLToPath(currentFileUrl);
 const currentDir = dirname(currentFilePath);
 
-describe('scriptPath detection in ESM (functional)', () => {
-  test('default pathResolver resolves modules relative to use.mjs', async () => {
+describe(`${runtime} scriptPath detection in ESM (functional)`, () => {
+  test(`${runtime} default pathResolver resolves modules relative to use.mjs`, async () => {
     let capturedResolver;
     const stubSpecifierResolver = (specifier, pathResolver) => {
       capturedResolver = pathResolver;
@@ -25,7 +27,7 @@ describe('scriptPath detection in ESM (functional)', () => {
     expect(resolved).toBe(expected);
   });
 
-  test('override scriptPath resolves relative to provided path', async () => {
+  test(`${runtime} override scriptPath resolves relative to provided path`, async () => {
     let capturedResolver;
     const stubSpecifierResolver = (specifier, pathResolver) => {
       capturedResolver = pathResolver;
@@ -41,7 +43,7 @@ describe('scriptPath detection in ESM (functional)', () => {
 });
 
 // Tests when global require is undefined (force createRequire fallback)
-describe('scriptPath detection in ESM (createRequire fallback)', () => {
+describe(`${runtime} scriptPath detection in ESM (createRequire fallback)`, () => {
   let originalRequire;
   beforeAll(() => {
     originalRequire = global.require;
@@ -51,7 +53,7 @@ describe('scriptPath detection in ESM (createRequire fallback)', () => {
     if (originalRequire) global.require = originalRequire;
   });
 
-  test('fallback default resolves modules relative to use.mjs', async () => {
+  test(`${runtime} fallback default resolves modules relative to use.mjs`, async () => {
     let capturedResolver;
     const stubSpecifierResolver = (specifier, pathResolver) => {
       capturedResolver = pathResolver;
@@ -64,7 +66,7 @@ describe('scriptPath detection in ESM (createRequire fallback)', () => {
     expect(resolved).toBe(expected);
   });
 
-  test('fallback explicit scriptPath resolves relative to provided path', async () => {
+  test(`${runtime} fallback explicit scriptPath resolves relative to provided path`, async () => {
     let capturedResolver;
     const stubSpecifierResolver = (specifier, pathResolver) => {
       capturedResolver = pathResolver;
@@ -77,7 +79,26 @@ describe('scriptPath detection in ESM (createRequire fallback)', () => {
     expect(resolved).toBe(expected);
   });
 
-  test('fallback meta override resolves modules relative to provided meta URL (use.js)', async () => {
+  test(`${runtime} fallback meta override changes pathResolver behavior in ESM`, async () => {
+    let capturedResolver;
+    const stubSpecifierResolver = (specifier, pathResolver) => {
+      capturedResolver = pathResolver;
+      return currentFileUrl;
+    };
+    // In ESM, providing a meta.url affects pathResolver
+    // We need to use a valid path that exists to avoid errors
+    const metaUrl = new URL('../use.mjs', import.meta.url).href;
+    const useFn = await makeUse({ specifierResolver: stubSpecifierResolver, meta: { url: metaUrl } });
+    await useFn('anything');
+    const resolved = capturedResolver('./package.json');
+    const expected = fileURLToPath(new URL('./package.json', metaUrl));
+    expect(resolved).toBe(expected);
+  });
+});
+
+// Additional test for meta.url with use.js path
+describe(`${runtime} scriptPath detection in ESM (meta URL)`, () => {
+  test(`${runtime} meta override resolves modules relative to provided meta URL (use.js)`, async () => {
     let capturedResolver;
     const stubSpecifierResolver = (specifier, pathResolver) => {
       capturedResolver = pathResolver;

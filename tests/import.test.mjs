@@ -1,3 +1,7 @@
+import { describe, test, expect } from '@jest/globals';
+
+const runtime = `[${import.meta.url.split('.').pop()} runtime]`;
+
 const supportsDynamicImport = async () => {
   try {
     await new Function('return import("data:text/javascript,")')();
@@ -7,6 +11,6 @@ const supportsDynamicImport = async () => {
   }
 };
 
-test('supportsDynamicImport returns true in .mjs file', async () => {
+test(`${runtime} supportsDynamicImport returns true in .mjs file`, async () => {
   expect(await supportsDynamicImport()).toBe(true);
 });

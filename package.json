@@ -10,8 +10,7 @@
       "require": "./use.cjs"
     },
     "./use.cjs": "./use.cjs",
-    "./use.mjs": "./use.mjs",
-    "./package.json": "./package.json"
+    "./use.mjs": "./use.mjs"
   },
   "bin": {
     "use": "./cli.mjs"
@@ -62,6 +61,8 @@
   "devDependencies": {
     "@babel/preset-env": "^7.26.0",
     "babel-jest": "^29.7.0",
-    "jest": "^29.7.0"
+    "express": "^5.1.0",
+    "jest": "^29.7.0",
+    "puppeteer": "^24.16.2"
   }
 }
