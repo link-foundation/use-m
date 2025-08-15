@@ -1,9 +1,9 @@
 const { describe, test, expect } = require('@jest/globals');
 const { use } = require('use-m');
-const runtime = `[${__filename.split('.').pop()} runtime]`;
+const module = `[${__filename.split('.').pop()} module]`;
 
-describe(`${runtime} typescript`, () => {
-  test(`${runtime} use typescript`, async () => {
+describe(`${module} typescript`, () => {
+  test(`${module} use typescript`, async () => {
     const ts = await use('typescript');
     expect(ts.version).toBeDefined();
     const tsCode = 'const a: number = 1;';

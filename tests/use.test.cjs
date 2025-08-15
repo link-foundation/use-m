@@ -1,29 +1,29 @@
 const { describe, test, expect } = require('@jest/globals');
 
-const runtime = `[${__filename.split('.').pop()} runtime]`;
+const module = `[${__filename.split('.').pop()} module]`;
 
-describe(`${runtime} 'use' import strategies`, () => {
-  test(`${runtime} Direct CJS Require`, async () => {
+describe(`${module} 'use' import strategies`, () => {
+  test(`${module} Direct CJS Require`, async () => {
     const { use } = require('use-m');
     const _ = await use("lodash@4.17.21");
     expect(_.add(1, 2)).toBe(3);
   });
 
   // New Test Case: Dynamic import with `await import()` directly
-  test(`${runtime} Dynamic Import with await import() of CJS`, async () => {
+  test(`${module} Dynamic Import with await import() of CJS`, async () => {
     const { use } = await import('use-m/use.cjs');
     const _ = await use("lodash@4.17.21");
     expect(_.add(1, 2)).toBe(3);
   });
 
   // New Test Case: Dynamic import with `await import()` directly
-  test(`${runtime} Dynamic Import with await import() of MJS`, async () => {
+  test(`${module} Dynamic Import with await import() of MJS`, async () => {
     const { use } = await import('use-m/use.mjs');
     const _ = await use("lodash@4.17.21");
     expect(_.add(1, 2)).toBe(3);
   });
 
-  test(`${runtime} Universal (then style)`, async () => {
+  test(`${module} Universal (then style)`, async () => {
     const { use } = await fetch('https://unpkg.com/use-m/use.js')
       .then(response => response.text())
       .then(code => eval(code));
@@ -31,7 +31,7 @@ describe(`${runtime} 'use' import strategies`, () => {
     expect(_.add(1, 2)).toBe(3);
   });
 
-  test(`${runtime} Universal (then style, use inside)`, async () => {
+  test(`${module} Universal (then style, use inside)`, async () => {
     await fetch('https://unpkg.com/use-m/use.js')
       .then(response => response.text())
       .then(code => eval(code))
@@ -41,7 +41,7 @@ describe(`${runtime} 'use' import strategies`, () => {
       });
   });
 
-  test(`${runtime} Universal (eval style)`, async () => {
+  test(`${module} Universal (eval style)`, async () => {
     const { use } = eval(
       await fetch('https://unpkg.com/use-m/use.js')
         .then(useJs => useJs.text())
@@ -50,7 +50,7 @@ describe(`${runtime} 'use' import strategies`, () => {
     expect(_.add(1, 2)).toBe(3);
   });
 
-  test(`${runtime} Universal (single then style)`, async () => {
+  test(`${module} Universal (single then style)`, async () => {
     await fetch('https://unpkg.com/use-m/use.js')
       .then(async useJs => {
         const { use } = eval(await useJs.text());
@@ -59,7 +59,7 @@ describe(`${runtime} 'use' import strategies`, () => {
       });
   });
 
-  test(`${runtime} use.all`, async () => {
+  test(`${module} use.all`, async () => {
     const { use } = require('use-m');
     const [
       lodash3, 
@@ -72,7 +72,7 @@ describe(`${runtime} 'use' import strategies`, () => {
     expect(lodash4.add(1, 2)).toBe(3);
   });
 
-  test(`${runtime} use.all with dynamic import`, async () => {
+  test(`${module} use.all with dynamic import`, async () => {
     const { use } = await import('use-m');
     const [
       lodash3, 
@@ -85,7 +85,7 @@ describe(`${runtime} 'use' import strategies`, () => {
     expect(lodash4.add(1, 2)).toBe(3);
   });
 
-  test(`${runtime} use.all (script)`, async () => {
+  test(`${module} use.all (script)`, async () => {
     await fetch('https://unpkg.com/use-m/use.js')
       .then(async useJs => {
         const { use } = eval(await useJs.text());
@@ -103,7 +103,7 @@ describe(`${runtime} 'use' import strategies`, () => {
 
   // Test for https://github.com/link-foundation/use-m/issues/16 issue
 
-  test(`${runtime} Universal (script) @octokit/core@6.1.5`, async () => {
+  test(`${module} Universal (script) @octokit/core@6.1.5`, async () => {
     await fetch('https://unpkg.com/use-m/use.js')
       .then(async useJs => {
         const { use } = eval
@@ -114,7 +114,7 @@ describe(`${runtime} 'use' import strategies`, () => {
       });
   });
 
-  test(`${runtime} Universal (script) @octokit/core@5`, async () => {
+  test(`${module} Universal (script) @octokit/core@5`, async () => {
     await fetch('https://unpkg.com/use-m/use.js')
       .then(async useJs => {
         const { use } = eval
@@ -125,7 +125,7 @@ describe(`${runtime} 'use' import strategies`, () => {
       });
   });
 
-  test(`${runtime} Universal (script) @octokit/core (latest)`, async () => {
+  test(`${module} Universal (script) @octokit/core (latest)`, async () => {
     await fetch('https://unpkg.com/use-m/use.js')
       .then(async useJs => {
         const { use } = eval
@@ -136,7 +136,7 @@ describe(`${runtime} 'use' import strategies`, () => {
       });
   });
 
-  test(`${runtime} @octokit/core (latest)`, async () => {
+  test(`${module} @octokit/core (latest)`, async () => {
     const { use } = require('use-m');
     const { Octokit } = await use('@octokit/core');
     const octokit = new Octokit();

@@ -1,6 +1,6 @@
 const { describe, test, expect } = require('@jest/globals');
 
-const runtime = `[${__filename.split('.').pop()} runtime]`;
+const module = `[${__filename.split('.').pop()} module]`;
 
 const supportsDynamicImport = async () => {
   try {
@@ -11,6 +11,6 @@ const supportsDynamicImport = async () => {
   }
 };
 
-test(`${runtime} supportsDynamicImport returns true in .cjs file`, async () => {
+test(`${module} supportsDynamicImport returns true in .cjs file`, async () => {
   expect(await supportsDynamicImport()).toBe(true);
 });

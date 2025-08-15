@@ -4,12 +4,12 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import express from 'express';
 
-const runtime = `[${import.meta.url.split('.').pop()} runtime]`;
+const module = `[${import.meta.url.split('.').pop()} module]`;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-describe(`${runtime} Universal built-in modules in browser`, () => {
+describe(`${module} Universal built-in modules in browser`, () => {
   let browser;
   let server;
   let page;
@@ -71,7 +71,7 @@ describe(`${runtime} Universal built-in modules in browser`, () => {
     }
   });
 
-  test(`${runtime} console module should work in browser`, async () => {
+  test(`${module} console module should work in browser`, async () => {
     const result = await page.evaluate(() => {
       const results = Array.from(document.querySelectorAll('.test-result'));
       const consoleTest = results.find(el => el.textContent.includes('console module should work'));
@@ -81,7 +81,7 @@ describe(`${runtime} Universal built-in modules in browser`, () => {
     expect(result).toBe(true);
   });
 
-  test(`${runtime} crypto module should work in browser`, async () => {
+  test(`${module} crypto module should work in browser`, async () => {
     const result = await page.evaluate(() => {
       const results = Array.from(document.querySelectorAll('.test-result'));
       const cryptoTest = results.find(el => el.textContent.includes('crypto module should work'));
@@ -91,7 +91,7 @@ describe(`${runtime} Universal built-in modules in browser`, () => {
     expect(result).toBe(true);
   });
 
-  test(`${runtime} url module should work in browser`, async () => {
+  test(`${module} url module should work in browser`, async () => {
     const result = await page.evaluate(() => {
       const results = Array.from(document.querySelectorAll('.test-result'));
       const urlTest = results.find(el => el.textContent.includes('url module should work'));
@@ -101,7 +101,7 @@ describe(`${runtime} Universal built-in modules in browser`, () => {
     expect(result).toBe(true);
   });
 
-  test(`${runtime} performance module should work in browser`, async () => {
+  test(`${module} performance module should work in browser`, async () => {
     const result = await page.evaluate(() => {
       const results = Array.from(document.querySelectorAll('.test-result'));
       const perfTest = results.find(el => el.textContent.includes('performance module should work'));
@@ -111,7 +111,7 @@ describe(`${runtime} Universal built-in modules in browser`, () => {
     expect(result).toBe(true);
   });
 
-  test(`${runtime} fs module should fail in browser with correct error`, async () => {
+  test(`${module} fs module should fail in browser with correct error`, async () => {
     const result = await page.evaluate(() => {
       const results = Array.from(document.querySelectorAll('.test-result'));
       const fsTest = results.find(el => el.textContent.includes('fs module should fail in browser'));
@@ -121,7 +121,7 @@ describe(`${runtime} Universal built-in modules in browser`, () => {
     expect(result).toBe(true);
   });
 
-  test(`${runtime} node: prefix should work with universal modules`, async () => {
+  test(`${module} node: prefix should work with universal modules`, async () => {
     const result = await page.evaluate(() => {
       const results = Array.from(document.querySelectorAll('.test-result'));
       const nodePrefixTest = results.find(el => el.textContent.includes('node:url prefix should work'));
@@ -131,7 +131,7 @@ describe(`${runtime} Universal built-in modules in browser`, () => {
     expect(result).toBe(true);
   });
 
-  test(`${runtime} uppercase module names should fail (strict lowercase only)`, async () => {
+  test(`${module} uppercase module names should fail (strict lowercase only)`, async () => {
     const result = await page.evaluate(() => {
       const results = Array.from(document.querySelectorAll('.test-result'));
       const uppercaseTest = results.find(el => el.textContent.includes('uppercase URL should fail'));
@@ -141,7 +141,7 @@ describe(`${runtime} Universal built-in modules in browser`, () => {
     expect(result).toBe(true);
   });
 
-  test(`${runtime} all browser tests should pass`, async () => {
+  test(`${module} all browser tests should pass`, async () => {
     const testResults = await page.evaluate(() => window.testResults);
     
     expect(testResults.total).toBeGreaterThan(0);

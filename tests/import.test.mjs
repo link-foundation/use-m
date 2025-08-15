@@ -1,6 +1,6 @@
 import { describe, test, expect } from '@jest/globals';
 
-const runtime = `[${import.meta.url.split('.').pop()} runtime]`;
+const module = `[${import.meta.url.split('.').pop()} module]`;
 
 const supportsDynamicImport = async () => {
   try {
@@ -11,6 +11,6 @@ const supportsDynamicImport = async () => {
   }
 };
 
-test(`${runtime} supportsDynamicImport returns true in .mjs file`, async () => {
+test(`${module} supportsDynamicImport returns true in .mjs file`, async () => {
   expect(await supportsDynamicImport()).toBe(true);
 });

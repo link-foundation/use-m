@@ -1,9 +1,9 @@
 import { describe, test, expect } from '@jest/globals';
 import { use } from '../use.mjs';
-const runtime = `[${import.meta.url.split('.').pop()} runtime]`;
+const module = `[${import.meta.url.split('.').pop()} module]`;
 
-describe(`${runtime} Built-in module error handling`, () => {
-  test(`${runtime} should return null for non-builtin modules from builtin resolver`, async () => {
+describe(`${module} Built-in module error handling`, () => {
+  test(`${module} should return null for non-builtin modules from builtin resolver`, async () => {
     const { resolvers } = await import('../use.mjs');
     
     // Test that builtin resolver returns null for non-builtin modules
@@ -11,7 +11,7 @@ describe(`${runtime} Built-in module error handling`, () => {
     expect(result).toBeNull();
   });
 
-  test(`${runtime} should throw error for unsupported builtin modules`, async () => {
+  test(`${module} should throw error for unsupported builtin modules`, async () => {
     // Create a module name that looks like a builtin but isn't
     const testFn = async () => {
       const { baseUse } = await import('../use.mjs');
@@ -20,7 +20,7 @@ describe(`${runtime} Built-in module error handling`, () => {
     await expect(testFn()).rejects.toThrow('Built-in module \'unsupported_builtin_module\' is not supported');
   });
 
-  test(`${runtime} should handle modules not available in browser environment`, async () => {
+  test(`${module} should handle modules not available in browser environment`, async () => {
     // Mock browser environment
     const originalWindow = global.window;
     global.window = {}; // Mock browser environment
@@ -37,7 +37,7 @@ describe(`${runtime} Built-in module error handling`, () => {
     }
   });
 
-  test(`${runtime} should only work with exact lowercase module names`, async () => {
+  test(`${module} should only work with exact lowercase module names`, async () => {
     // Only lowercase should work
     const url = await use('url');
     expect(url).toBeDefined();
@@ -47,7 +47,7 @@ describe(`${runtime} Built-in module error handling`, () => {
     await expect(use('URL')).rejects.toThrow(); // Should fail to install from npm
   });
 
-  test(`${runtime} should handle node: prefix removal correctly`, async () => {
+  test(`${module} should handle node: prefix removal correctly`, async () => {
     const crypto1 = await use('crypto');
     const crypto2 = await use('node:crypto');
     
@@ -59,14 +59,14 @@ describe(`${runtime} Built-in module error handling`, () => {
     expect(typeof crypto2.randomUUID).toBe('function');
   });
 
-  test(`${runtime} should throw meaningful errors for import failures`, async () => {
+  test(`${module} should throw meaningful errors for import failures`, async () => {
     // We can't easily test import failures without mocking, but we can test error message structure
     const { baseUse } = await import('../use.mjs');
     
     await expect(baseUse('builtin:nonexistent')).rejects.toThrow('Built-in module \'nonexistent\' is not supported');
   });
 
-  test(`${runtime} builtin resolver should handle empty/invalid module specifiers gracefully`, async () => {
+  test(`${module} builtin resolver should handle empty/invalid module specifiers gracefully`, async () => {
     const { resolvers, parseModuleSpecifier } = await import('../use.mjs');
     
     // parseModuleSpecifier should throw for invalid specifiers
@@ -75,7 +75,7 @@ describe(`${runtime} Built-in module error handling`, () => {
     expect(() => parseModuleSpecifier(undefined)).toThrow();
   });
 
-  test(`${runtime} should handle modules with special characters in names`, async () => {
+  test(`${module} should handle modules with special characters in names`, async () => {
     const { resolvers } = await import('../use.mjs');
     
     // Test with module that looks like a scoped package
