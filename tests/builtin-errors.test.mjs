@@ -35,20 +35,14 @@ describe('Built-in module error handling', () => {
     }
   });
 
-  test('should handle case sensitivity properly', async () => {
-    // All these should work (normalized to lowercase)
-    const url1 = await use('url');
-    const url2 = await use('URL');
-    const url3 = await use('Url');
+  test('should only work with exact lowercase module names', async () => {
+    // Only lowercase should work
+    const url = await use('url');
+    expect(url).toBeDefined();
+    expect(typeof url.URL).toBe('function');
     
-    expect(url1).toBeDefined();
-    expect(url2).toBeDefined();
-    expect(url3).toBeDefined();
-    
-    // All should have the same structure
-    expect(typeof url1.URL).toBe('function');
-    expect(typeof url2.URL).toBe('function');
-    expect(typeof url3.URL).toBe('function');
+    // Uppercase should not be recognized as builtin and fall back to npm resolver
+    await expect(use('URL')).rejects.toThrow(); // Should fail to install from npm
   });
 
   test('should handle node: prefix removal correctly', async () => {

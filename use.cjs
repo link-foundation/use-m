@@ -115,8 +115,8 @@ const resolvers = {
   builtin: async (moduleSpecifier, pathResolver) => {
     const { packageName } = parseModuleSpecifier(moduleSpecifier);
     
-    // Remove 'node:' prefix if present and convert to lowercase
-    const moduleName = (packageName.startsWith('node:') ? packageName.slice(5) : packageName).toLowerCase();
+    // Remove 'node:' prefix if present
+    const moduleName = packageName.startsWith('node:') ? packageName.slice(5) : packageName;
     
     // Check if we support this built-in module
     if (supportedBuiltins[moduleName]) {

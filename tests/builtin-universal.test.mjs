@@ -64,11 +64,4 @@ describe('Universal built-in modules (work in all environments)', () => {
     const testUrl = new url.URL('https://example.com');
     expect(testUrl.href).toBe('https://example.com/');
   });
-
-  test('modules should work with uppercase names (normalized to lowercase)', async () => {
-    const url = await use('URL');
-    
-    expect(url).toBeDefined();
-    expect(typeof url.URL).toBe('function');
-  });
 });
