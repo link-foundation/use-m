@@ -127,10 +127,6 @@ const resolvers = {
     // Not a supported built-in module
     return null;
   },
-  bun: async (moduleSpecifier, pathResolver) => {
-    // temporary fallback
-    return resolvers.npm(moduleSpecifier, pathResolver);
-  },
   npm: async (moduleSpecifier, pathResolver) => {
     const path = await import('path');
     const { exec } = await import('child_process');
