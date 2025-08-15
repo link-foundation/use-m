@@ -23,7 +23,110 @@ Please specify a package name, and an optional version (e.g.: 'lodash', 'lodash@
   return { packageName, version, modulePath };
 }
 
+// Built-in modules that we support across all environments
+// Always use lowercase names for consistency
+const supportedBuiltins = {
+  // Universal modules
+  'console': {
+    browser: () => ({ default: console, log: console.log, error: console.error, warn: console.warn, info: console.info }),
+    node: () => import('node:console').then(m => ({ default: m.Console, ...m }))
+  },
+  'crypto': {
+    browser: () => ({ default: crypto, subtle: crypto.subtle }),
+    node: () => import('node:crypto').then(m => ({ default: m, ...m }))
+  },
+  'url': {
+    browser: () => ({ default: URL, URL, URLSearchParams }),
+    node: () => import('node:url').then(m => ({ default: m, ...m }))
+  },
+  'performance': {
+    browser: () => ({ default: performance, now: performance.now.bind(performance) }),
+    node: () => import('node:perf_hooks').then(m => ({ default: m.performance, performance: m.performance, now: m.performance.now.bind(m.performance), ...m }))
+  },
+  
+  // Node.js/Bun only modules
+  'fs': {
+    browser: null, // Not available in browser
+    node: () => import('node:fs').then(m => ({ default: m, ...m }))
+  },
+  'path': {
+    browser: null, // Not available in browser
+    node: () => import('node:path').then(m => ({ default: m, ...m }))
+  },
+  'os': {
+    browser: null, // Not available in browser
+    node: () => import('node:os').then(m => ({ default: m, ...m }))
+  },
+  'util': {
+    browser: null, // Not available in browser
+    node: () => import('node:util').then(m => ({ default: m, ...m }))
+  },
+  'events': {
+    browser: null, // Not available in browser
+    node: () => import('node:events').then(m => ({ default: m.EventEmitter, EventEmitter: m.EventEmitter, ...m }))
+  },
+  'stream': {
+    browser: null, // Not available in browser
+    node: () => import('node:stream').then(m => ({ default: m.Stream, Stream: m.Stream, ...m }))
+  },
+  'buffer': {
+    browser: null, // Not available in browser (would need polyfill)
+    node: () => import('node:buffer').then(m => ({ default: m, Buffer: m.Buffer, ...m }))
+  },
+  'process': {
+    browser: null, // Not available in browser
+    node: () => ({ default: process, ...process })
+  },
+  'child_process': {
+    browser: null,
+    node: () => import('node:child_process').then(m => ({ default: m, ...m }))
+  },
+  'http': {
+    browser: null,
+    node: () => import('node:http').then(m => ({ default: m, ...m }))
+  },
+  'https': {
+    browser: null,
+    node: () => import('node:https').then(m => ({ default: m, ...m }))
+  },
+  'net': {
+    browser: null,
+    node: () => import('node:net').then(m => ({ default: m, ...m }))
+  },
+  'dns': {
+    browser: null,
+    node: () => import('node:dns').then(m => ({ default: m, ...m }))
+  },
+  'zlib': {
+    browser: null,
+    node: () => import('node:zlib').then(m => ({ default: m, ...m }))
+  },
+  'querystring': {
+    browser: null,
+    node: () => import('node:querystring').then(m => ({ default: m, ...m }))
+  },
+  'assert': {
+    browser: null,
+    node: () => import('node:assert').then(m => ({ default: m.default || m, ...m }))
+  }
+};
+
 export const resolvers = {
+  builtin: async (moduleSpecifier, pathResolver) => {
+    const { packageName } = parseModuleSpecifier(moduleSpecifier);
+    
+    // Remove 'node:' prefix if present and convert to lowercase
+    const moduleName = (packageName.startsWith('node:') ? packageName.slice(5) : packageName).toLowerCase();
+    
+    // Check if we support this built-in module
+    if (supportedBuiltins[moduleName]) {
+      // Return special marker indicating this is a built-in module
+      return `builtin:${moduleName}`;
+    }
+    
+    // Not a supported built-in module
+    return null;
+  },
   npm: async (moduleSpecifier, pathResolver) => {
     const path = await import('path');
     const { exec } = await import('child_process');
@@ -185,6 +288,33 @@ export const resolvers = {
 }
 
 export const baseUse = async (modulePath) => {
+  // Handle built-in modules
+  if (typeof modulePath === 'string' && modulePath.startsWith('builtin:')) {
+    const moduleName = modulePath.slice(8); // Remove 'builtin:' prefix
+    const builtinConfig = supportedBuiltins[moduleName];
+    
+    if (!builtinConfig) {
+      throw new Error(`Built-in module '${moduleName}' is not supported.`);
+    }
+    
+    // Determine environment
+    const isBrowser = typeof window !== 'undefined';
+    const environment = isBrowser ? 'browser' : 'node';
+    
+    const moduleFactory = builtinConfig[environment];
+    if (!moduleFactory) {
+      throw new Error(`Built-in module '${moduleName}' is not available in ${environment} environment.`);
+    }
+    
+    try {
+      // Execute the factory function to get the module
+      const result = await moduleFactory();
+      return result;
+    } catch (error) {
+      throw new Error(`Failed to load built-in module '${moduleName}' in ${environment} environment.`, { cause: error });
+    }
+  }
+  
   // Dynamically import the module
   try {
     const module = await import(modulePath);
@@ -234,6 +364,13 @@ export const makeUse = async (options) => {
     }
   }
   return async (moduleSpecifier) => {
+    // Always try built-in resolver first
+    const builtinPath = await resolvers.builtin(moduleSpecifier, pathResolver);
+    if (builtinPath) {
+      return baseUse(builtinPath);
+    }
+    
+    // If not a built-in module, use the configured resolver
     const modulePath = await specifierResolver(moduleSpecifier, pathResolver);
     return baseUse(modulePath);
   };
