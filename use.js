@@ -509,8 +509,8 @@ const makeUse = async (options) => {
     }
   }
   let scriptPath = options?.scriptPath;
-  if (!scriptPath && typeof __filename !== 'undefined') {
-    scriptPath = __filename;
+  if (!scriptPath && typeof global !== 'undefined' && typeof global['__filename'] !== 'undefined') {
+    scriptPath = global['__filename'];
   }
   const metaUrl = options?.meta?.url;
   if (!scriptPath && metaUrl) {
