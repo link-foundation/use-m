@@ -1,4 +1,3 @@
-import { describe, test, expect, beforeAll, jest } from './test-environment.mjs';
 import { resolvers } from 'use-m';
 import { createRequire } from 'module';
 import { jest, describe, test, expect } from '@jest/globals';
