@@ -1,0 +1,13 @@
+{
+  "name": "library-limited-exports",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "test.cjs",
+  "module": "test.mjs", 
+  "exports": {
+    ".": {
+      "import": "./test.mjs",
+      "require": "./test.cjs"
+    }
+  }
+}

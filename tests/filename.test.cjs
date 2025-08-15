@@ -2,10 +2,10 @@ const { describe, test, expect } = require('@jest/globals');
 const { makeUse } = require('../use.cjs');
 const path = require('path');
 const currentDir = path.dirname(__filename);
-const runtime = `[${__filename.split('.').pop()} runtime]`;
+const moduleName = `[${__filename.split('.').pop()} module]`;
 
-describe(`${runtime} scriptPath detection in CJS (functional)`, () => {
-  test(`${runtime} default pathResolver resolves modules relative to this test file`, async () => {
+describe(`${moduleName} scriptPath detection in CJS (functional)`, () => {
+  test(`${moduleName} default pathResolver resolves modules relative to this test file`, async () => {
     let capturedResolver;
     const stubSpecifierResolver = (specifier, pathResolver) => {
       capturedResolver = pathResolver;
@@ -18,7 +18,7 @@ describe(`${runtime} scriptPath detection in CJS (functional)`, () => {
     expect(resolved).toBe(expected);
   });
 
-  test(`${runtime} override scriptPath does not change pathResolver behavior`, async () => {
+  test(`${moduleName} override scriptPath does not change pathResolver behavior`, async () => {
     let capturedResolver;
     const stubSpecifierResolver = (specifier, pathResolver) => {
       capturedResolver = pathResolver;
@@ -33,8 +33,8 @@ describe(`${runtime} scriptPath detection in CJS (functional)`, () => {
 });
 
 // Fallback tests (CJS always uses require.resolve, so behavior is identical)
-describe(`${runtime} scriptPath detection in CJS (fallback)`, () => {
-  test(`${runtime} fallback default resolves modules relative to this test file`, async () => {
+describe(`${moduleName} scriptPath detection in CJS (fallback)`, () => {
+  test(`${moduleName} fallback default resolves modules relative to this test file`, async () => {
     let capturedResolver;
     const stubSpecifierResolver = (specifier, pathResolver) => {
       capturedResolver = pathResolver;
@@ -47,7 +47,7 @@ describe(`${runtime} scriptPath detection in CJS (fallback)`, () => {
     expect(resolved).toBe(expected);
   });
 
-  test(`${runtime} fallback override scriptPath does not change pathResolver behavior`, async () => {
+  test(`${moduleName} fallback override scriptPath does not change pathResolver behavior`, async () => {
     let capturedResolver;
     const stubSpecifierResolver = (specifier, pathResolver) => {
       capturedResolver = pathResolver;
@@ -60,7 +60,7 @@ describe(`${runtime} scriptPath detection in CJS (fallback)`, () => {
     expect(resolved).toBe(expected);
   });
 
-  test(`${runtime} fallback meta override does not change pathResolver behavior`, async () => {
+  test(`${moduleName} fallback meta override does not change pathResolver behavior`, async () => {
     let capturedResolver;
     const stubSpecifierResolver = (specifier, pathResolver) => {
       capturedResolver = pathResolver;
@@ -75,8 +75,8 @@ describe(`${runtime} scriptPath detection in CJS (fallback)`, () => {
 });
 
 // Additional test for meta.url with use.js path
-describe(`${runtime} scriptPath detection in CJS (meta URL)`, () => {
-  test(`${runtime} meta override with use.js URL resolves relative to use.js`, async () => {
+describe(`${moduleName} scriptPath detection in CJS (meta URL)`, () => {
+  test(`${moduleName} meta override with use.js URL resolves relative to use.js`, async () => {
     let capturedResolver;
     const stubSpecifierResolver = (specifier, pathResolver) => {
       capturedResolver = pathResolver;

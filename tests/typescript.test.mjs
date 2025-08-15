@@ -1,9 +1,9 @@
 import { describe, test, expect } from '@jest/globals';
 import { use } from 'use-m';
-const runtime = `[${import.meta.url.split('.').pop()} runtime]`;
+const moduleName = `[${import.meta.url.split('.').pop()} module]`;
 
-describe(`${runtime} typescript`, () => {
-  test(`${runtime} use typescript`, async () => {
+describe(`${moduleName} typescript`, () => {
+  test(`${moduleName} use typescript`, async () => {
     const ts = await use('typescript');
     expect(ts.version).toBeDefined();
     const tsCode = 'const a: number = 1;';

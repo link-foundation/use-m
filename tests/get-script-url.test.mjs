@@ -1,7 +1,7 @@
 import { describe, test, expect } from '@jest/globals';
 
 // Function to retrieve this script URL from the stack trace
-const runtime = `[${import.meta.url.split('.').pop()} runtime]`;
+const moduleName = `[${import.meta.url.split('.').pop()} module]`;
 
 const getScriptUrl = async () => {
   const error = new Error();
@@ -16,8 +16,8 @@ const getScriptUrl = async () => {
 }
 
 // Test
-describe(`${runtime} import.meta.url workaround`, () => {
-  test(`${runtime} scriptUrl matches import.meta.url`, async () => {
+describe(`${moduleName} import.meta.url workaround`, () => {
+  test(`${moduleName} scriptUrl matches import.meta.url`, async () => {
     const scriptUrl = await getScriptUrl();
 
     // Validate scriptUrl is a string and matches import.meta.url
@@ -25,7 +25,7 @@ describe(`${runtime} import.meta.url workaround`, () => {
     expect(scriptUrl).toBe(import.meta.url);
   });
 
-  test(`${runtime} scriptUrl matches import.meta.url in eval`, async () => {
+  test(`${moduleName} scriptUrl matches import.meta.url in eval`, async () => {
     const scriptUrl = await eval('getScriptUrl()');
 
     // Validate scriptUrl is a string and matches import.meta.url
