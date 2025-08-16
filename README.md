@@ -13,6 +13,7 @@ It may be useful for standalone scripts that do not require a `package.json`. Al
 - [Usage](#usage)
   - [Universal](#universal)
   - [Browser](#browser)
+  - [Deno](#deno)
   - [Network Imports](#network-imports)
   - [Independent Scripts](#independent-scripts)
   - [Standard Import](#standard-import)
@@ -93,6 +94,27 @@ console.log(`_.add(1, 2) = ${_.add(1, 2)}`);
 ```
 
 Only 2 lines and now have an interactive playground for JavaScript and almost any NPM library directly in your browser's console. No more cloud based sandboxes required. Sorry VSCode, you don't have such super powers yet.
+
+### Deno
+
+`use-m` works seamlessly with Deno! It automatically detects the Deno runtime and uses `esm.sh` as the default CDN.
+
+```javascript
+// Import use-m from CDN
+const { use } = await import('https://esm.sh/use-m');
+
+// Use any npm package
+const _ = await use('lodash@4.17.21');
+console.log(`_.add(1, 2) = ${_.add(1, 2)}`);
+
+// Import multiple packages
+const [lodash3, lodash4] = await use.all('lodash@3', 'lodash@4');
+```
+
+Run with Deno:
+```bash
+deno run --allow-net example.mjs
+```
 
 ### Network imports
 

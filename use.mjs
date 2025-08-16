@@ -419,6 +419,13 @@ export const resolvers = {
     const resolvedPath = `https://unpkg.com/${packageName}-es@${version}${path}`;
     return resolvedPath;
   },
+  deno: async (moduleSpecifier, pathResolver) => {
+    const { packageName, version, modulePath } = parseModuleSpecifier(moduleSpecifier);
+    
+    // Use esm.sh as the default CDN for Deno, which provides good Deno compatibility
+    const resolvedPath = `https://esm.sh/${packageName}@${version}${modulePath}`;
+    return resolvedPath;
+  },
   esm: async (moduleSpecifier, pathResolver) => {
     const resolvedPath = `https://esm.sh/${moduleSpecifier}`;
     return resolvedPath;
@@ -488,6 +495,8 @@ export const makeUse = async (options) => {
   if (typeof specifierResolver !== 'function') {
     if (typeof window !== 'undefined' || (protocol && (protocol === 'http:' || protocol === 'https:'))) {
       specifierResolver = resolvers[specifierResolver || 'esm'];
+    } else if (typeof Deno !== 'undefined') {
+      specifierResolver = resolvers[specifierResolver || 'deno'];
     } else if (typeof Bun !== 'undefined') {
       specifierResolver = resolvers[specifierResolver || 'bun'];
     } else {

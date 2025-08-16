@@ -1527,11 +1527,6 @@ color-name@~1.1.4:
   resolved "https://registry.npmjs.org/color-name/-/color-name-1.1.4.tgz"
   integrity sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA==
 
-command-stream@^0.0.4:
-  version "0.0.4"
-  resolved "https://registry.npmjs.org/command-stream/-/command-stream-0.0.4.tgz"
-  integrity sha512-F/sT5Ox22TmEq3bKmUZd1k1au6I6T3FjNB5xO3T+BsIJYGOMS5p+RVErVNOB97XGQBw7CNJWpQj/mAQ+F6GkOA==
-
 concat-map@0.0.1:
   version "0.0.1"
   resolved "https://registry.npmjs.org/concat-map/-/concat-map-0.0.1.tgz"
