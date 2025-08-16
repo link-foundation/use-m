@@ -1,14 +1,16 @@
 // Test for command-stream module import bug (Issue #31)
 // Run with: node test-command-stream.mjs
 
+import { readFile } from 'fs/promises';
+
 console.log('=== COMMAND-STREAM IMPORT TEST ===');
 console.log('Testing: https://github.com/link-foundation/use-m/issues/31');
 console.log();
 
 async function testCommandStream() {
-  console.log('--- Test 1: Import via use-m MJS ---');
+  console.log('--- Test 1: Import via eval pattern ---');
   try {
-    const { use } = await import('../../use.mjs');
+    const { use } = eval(await readFile('../../use.js', 'utf8'));
     const { $ } = await use('command-stream');
     
     console.log('$:', { $ });
@@ -44,9 +46,9 @@ async function testCommandStream() {
   }
   console.log();
 
-  console.log('--- Test 3: Import via default export ---');
+  console.log('--- Test 3: Import via use-m MJS ---');
   try {
-    const { use } = await import('use-m');
+    const { use } = await import('../../use.mjs');
     const { $ } = await use('command-stream');
     
     console.log('$:', { $ });

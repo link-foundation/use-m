@@ -11,6 +11,8 @@ const supportsDynamicImport = async () => {
   }
 };
 
-test(`${moduleName} supportsDynamicImport returns true in .mjs file`, async () => {
-  expect(await supportsDynamicImport()).toBe(true);
+describe(`${moduleName} dynamic import support`, () => {
+  test(`${moduleName} supportsDynamicImport returns true in .mjs file`, async () => {
+    expect(await supportsDynamicImport()).toBe(true);
+  });
 });

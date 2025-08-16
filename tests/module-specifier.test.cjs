@@ -30,7 +30,7 @@ describe(`${moduleName} parseModuleSpecifier`, () => {
     });
   });
 
-  test(`${moduleName} parses package with name, version, and inner path`, () => {
+  test(`${moduleName} parses package with name, version, and inner path with latest`, () => {
     const result = parseModuleSpecifier('lodash@latest/path/to/module');
     expect(result).toEqual({
       packageName: 'lodash',
@@ -48,7 +48,7 @@ describe(`${moduleName} parseModuleSpecifier`, () => {
     });
   });
 
-  test(`${moduleName} parses scoped package with name`, () => {
+  test(`${moduleName} parses package with name only`, () => {
     const result = parseModuleSpecifier('lodash');
     expect(result).toEqual({
       packageName: 'lodash',
@@ -57,7 +57,7 @@ describe(`${moduleName} parseModuleSpecifier`, () => {
     });
   });
 
-  test(`${moduleName} parses scoped package with name`, () => {
+  test(`${moduleName} parses scoped package with name only`, () => {
     const result = parseModuleSpecifier('@chakra-ui/react');
     expect(result).toEqual({
       packageName: '@chakra-ui/react',

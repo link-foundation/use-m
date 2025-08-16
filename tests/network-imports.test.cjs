@@ -2,8 +2,8 @@ const { describe, test, expect } = require('@jest/globals');
 
 const moduleName = `[${__filename.split('.').pop()} module]`;
 
-describe(`Imports using --experimental-network-imports`, () => {
-  test(`${moduleName} Import using --experimental-network-imports`, async () => {
+describe(`${moduleName} imports using --experimental-network-imports`, () => {
+  test(`${moduleName} Import using --experimental-network-imports for CJS file`, async () => {
     const { exec } = await import('child_process');
     const { promisify } = await import('util');
     const execAsync = promisify(exec);

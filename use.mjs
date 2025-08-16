@@ -461,14 +461,6 @@ export const baseUse = async (modulePath) => {
       if (nonMetadataKeys.length === 0) {
         return module.default;
       }
-
-      // Special case: If the module looks like a Module object (has toString that returns '[object Module]')
-      // and default is a function, prefer the default
-      if (typeof module.default === 'function' &&
-        module.toString &&
-        module.toString().includes('[object Module]')) {
-        return module.default;
-      }
     }
 
     // Return the whole module if it has multiple meaningful exports or no default

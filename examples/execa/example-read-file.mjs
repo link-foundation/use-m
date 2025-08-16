@@ -2,8 +2,7 @@ import { fileURLToPath } from 'url';
 import path from 'path';
 import fs from 'fs/promises';
 
-const useJsFile = await fs.readFile('../../use.js', 'utf8');
-const { use } = eval(useJsFile);
+const { use } = eval(await fs.readFile('../../use.js', 'utf8'));
 
 // Load environment variables from .env
 const { config } = await use('dotenv@16.1.4');
