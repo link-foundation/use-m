@@ -43,7 +43,7 @@ const supportedBuiltins = {
     browser: () => ({ default: performance, now: performance.now.bind(performance) }),
     node: () => import('node:perf_hooks').then(m => ({ default: m.performance, performance: m.performance, now: m.performance.now.bind(m.performance), ...m }))
   },
-  
+
   // Node.js/Bun only modules
   'fs': {
     browser: null, // Not available in browser
@@ -114,16 +114,36 @@ const supportedBuiltins = {
 export const resolvers = {
   builtin: async (moduleSpecifier, pathResolver) => {
     const { packageName } = parseModuleSpecifier(moduleSpecifier);
-    
+
     // Remove 'node:' prefix if present
     const moduleName = packageName.startsWith('node:') ? packageName.slice(5) : packageName;
-    
+
     // Check if we support this built-in module
     if (supportedBuiltins[moduleName]) {
-      // Return special marker indicating this is a built-in module
-      return `builtin:${moduleName}`;
+      const builtinConfig = supportedBuiltins[moduleName];
+
+      if (!builtinConfig) {
+        throw new Error(`Built-in module '${moduleName}' is not supported.`);
+      }
+
+      // Determine environment
+      const isBrowser = typeof window !== 'undefined';
+      const environment = isBrowser ? 'browser' : 'node';
+
+      const moduleFactory = builtinConfig[environment];
+      if (!moduleFactory) {
+        throw new Error(`Built-in module '${moduleName}' is not available in ${environment} environment.`);
+      }
+
+      try {
+        // Execute the factory function to get the module
+        const result = await moduleFactory();
+        return result;
+      } catch (error) {
+        throw new Error(`Failed to load built-in module '${moduleName}' in ${environment} environment.`, { cause: error });
+      }
     }
-    
+
     // Not a supported built-in module
     return null;
   },
@@ -414,70 +434,43 @@ export const resolvers = {
 }
 
 export const baseUse = async (modulePath) => {
-  // Handle built-in modules
-  if (typeof modulePath === 'string' && modulePath.startsWith('builtin:')) {
-    const moduleName = modulePath.slice(8); // Remove 'builtin:' prefix
-    const builtinConfig = supportedBuiltins[moduleName];
-    
-    if (!builtinConfig) {
-      throw new Error(`Built-in module '${moduleName}' is not supported.`);
-    }
-    
-    // Determine environment
-    const isBrowser = typeof window !== 'undefined';
-    const environment = isBrowser ? 'browser' : 'node';
-    
-    const moduleFactory = builtinConfig[environment];
-    if (!moduleFactory) {
-      throw new Error(`Built-in module '${moduleName}' is not available in ${environment} environment.`);
-    }
-    
-    try {
-      // Execute the factory function to get the module
-      const result = await moduleFactory();
-      return result;
-    } catch (error) {
-      throw new Error(`Failed to load built-in module '${moduleName}' in ${environment} environment.`, { cause: error });
-    }
-  }
-  
   // Dynamically import the module
   try {
     const module = await import(modulePath);
-    
+
     // More robust default export handling for cross-environment compatibility
     const keys = Object.keys(module);
-    
+
     // If it's a Module object with a default property, unwrap it
     if (module.default !== undefined) {
       // Check if this is likely a CommonJS module with only default export
       if (keys.length === 1 && keys[0] === 'default') {
         return module.default;
       }
-      
+
       // Check if default is the main export and other keys are just function/module metadata
       const metadataKeys = new Set([
         'default', '__esModule', 'Symbol(Symbol.toStringTag)',
         'length', 'name', 'prototype', 'constructor',
         'toString', 'valueOf', 'hasOwnProperty', 'isPrototypeOf', 'propertyIsEnumerable'
       ]);
-      
+
       const nonMetadataKeys = keys.filter(key => !metadataKeys.has(key));
-      
+
       // If there are no significant non-metadata keys, return the default
       if (nonMetadataKeys.length === 0) {
         return module.default;
       }
-      
+
       // Special case: If the module looks like a Module object (has toString that returns '[object Module]')
       // and default is a function, prefer the default
-      if (typeof module.default === 'function' && 
-          module.toString && 
-          module.toString().includes('[object Module]')) {
+      if (typeof module.default === 'function' &&
+        module.toString &&
+        module.toString().includes('[object Module]')) {
         return module.default;
       }
     }
-    
+
     // Return the whole module if it has multiple meaningful exports or no default
     return module;
   } catch (error) {
@@ -516,7 +509,7 @@ export const makeUse = async (options) => {
       if (typeof Bun !== 'undefined' && scriptPath && (!protocol || protocol === 'file:')) {
         const module = await import('module');
         const path = await import('path');
-        
+
         pathResolver = (specifier) => {
           try {
             return module.createRequire(scriptPath).resolve(specifier);
@@ -542,11 +535,10 @@ export const makeUse = async (options) => {
   }
   return async (moduleSpecifier) => {
     // Always try built-in resolver first
-    const builtinPath = await resolvers.builtin(moduleSpecifier, pathResolver);
-    if (builtinPath) {
-      return baseUse(builtinPath);
+    const builtinModule = await resolvers.builtin(moduleSpecifier, pathResolver);
+    if (builtinModule) {
+      return builtinModule;
     }
-    
     // If not a built-in module, use the configured resolver
     const modulePath = await specifierResolver(moduleSpecifier, pathResolver);
     return baseUse(modulePath);
