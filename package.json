@@ -1,6 +1,6 @@
 {
   "name": "use-m",
-  "version": "8.10.26",
+  "version": "8.11.0",
   "description": "use-m: dynamically import any JavaScript module",
   "type": "module",
   "main": "use.cjs",
@@ -19,7 +19,7 @@
     "test": "NODE_OPTIONS=\"--experimental-vm-modules\" jest",
     "test:examples": "./examples/test-examples.mjs",
     "publish:major": "yarn publish --major --access public && git push && git push --tags",
-    "publish:minor": "yarn publish --minor --access public && git push && git push --tags",
+    "publish:minor": "yarn version --minor && git push && git push --tags",
     "publish:patch": "yarn publish --patch --access public && git push && git push --tags"
   },
   "repository": {
