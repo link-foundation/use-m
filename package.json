@@ -17,10 +17,7 @@
   },
   "scripts": {
     "test": "NODE_OPTIONS=\"--experimental-vm-modules\" jest",
-    "test:examples": "./examples/test-examples.mjs",
-    "publish:major": "yarn publish --major --access public && git push && git push --tags",
-    "publish:minor": "yarn version --minor && git push && git push --tags",
-    "publish:patch": "yarn publish --patch --access public && git push && git push --tags"
+    "test:examples": "./examples/test-examples.mjs"
   },
   "repository": {
     "type": "git",

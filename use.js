@@ -659,7 +659,7 @@ const makeUse = async (options) => {
       pathResolver = (path) => path;
     }
   }
-  return async (moduleSpecifier) => {
+  return async (moduleSpecifier, providedCallerContext) => {
     const stack = new Error().stack;
 
     // Use provided caller context or try to capture it from stack trace
@@ -709,7 +709,7 @@ const use = async (moduleSpecifier) => {
   if (!__use) {
     __use = await makeUse();
   }
-  return __use(moduleSpecifier);
+  return __use(moduleSpecifier, callerContext);
 }
 use.all = async (...moduleSpecifiers) => {
   if (!__use) {

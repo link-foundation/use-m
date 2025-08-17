@@ -28,6 +28,9 @@ It may be useful for standalone scripts that do not require a `package.json`. Al
 
 - **Dynamic package loading**: In `node.js`, `use-m` loads and imports npm packages on-demand with **global installation** (using `npm i -g` with separate alias for each version), making them available across projects and reusable without needing to reinstall each time. In case of a browser `use-m` loads npm packages directly from CDNs (by default `esm.sh` is used).
 - **Version-safe imports**: Allows multiple versions of the same library to coexist without conflicts, so you can specify any version for each import (usage) without affecting other scripts or other usages (imports) in the same script.
+- **No more `require`, `import`, or `package.json`**: With `use-m`, traditional module loading approaches like `require()`, `import` statements, and `package.json` dependencies become effectively obsolete. You can dynamically load any module at runtime without pre-declaring dependencies in separate file. This enables truly self-contained `.mjs` files that can effectively replace shell scripts.
+- **Built-in modules emulation**: Provides emulation for Node.js built-in modules across all environments (browser, Node.js, Bun, Deno), ensuring consistent behavior regardless of the runtime.
+- **Relative path resolution**: Supports `./ ` and `../` paths for loading local JavaScript and JSON files relative to the executing file, working seamlessly even in browser environments.
 
 ## Usage
 
@@ -118,6 +121,27 @@ Run with Deno:
 deno run --allow-net example.mjs
 ```
 
+### Bun
+
+`use-m` works seamlessly with Bun! It automatically detects the Bun runtime and provides optimized module loading.
+
+```javascript
+// Import use-m from CDN
+const { use } = await import('https://esm.sh/use-m');
+
+// Use any npm package
+const _ = await use('lodash@4.17.21');
+console.log(`_.add(1, 2) = ${_.add(1, 2)}`);
+
+// Import multiple packages
+const [lodash3, lodash4] = await use.all('lodash@3', 'lodash@4');
+```
+
+Run with Bun:
+```bash
+bun run example.mjs
+```
+
 ### Network imports
 
 It is possible to use `--experimental-network-imports` to enable the same style of imports as in browser version. See [the example](https://github.com/link-foundation/use-m/blob/main/examples/network-imports/index.mjs).
@@ -136,7 +160,68 @@ It is possible to use `--experimental-network-imports` to enable the same style 
 
 ### Independent Scripts
 
-If you need to use `use-m` without adding it to a project locally, you can load it directly from `unpkg` using `fetch`. This is particularly useful in environments like [zx](https://github.com/google/zx) or in other standalone scripts like `execa`, when you don't want to use any `package.json`, `node_modules`, etc.
+If you need to use `use-m` without adding it to a project locally, you can load it directly from `unpkg` using `fetch`. This is particularly useful for creating self-contained scripts without any `package.json`, `node_modules`, etc.
+
+#### `use-m` and `command-stream`
+
+[command-stream](https://github.com/link-foundation/command-stream) is a modern shell utility library with streaming, async iteration, and EventEmitter support. It provides the most advanced command execution capabilities including virtual commands, built-in cross-platform commands, and real-time streaming.
+
+1. Create a file named `example.mjs`:
+
+   ```javascript
+   const { use } = eval(
+     await fetch('https://unpkg.com/use-m/use.js').then(u => u.text())
+   );
+   
+   const { $ } = await use('command-stream');
+   const _ = await use('lodash');
+   
+   // Use command-stream's advanced features
+   for await (const chunk of $`ls -la`.stream()) {
+     if (chunk.type === 'stdout') {
+       const files = chunk.data.toString();
+       console.log('Files:', _.filter(files.split('\n'), f => f.includes('.js')));
+     }
+   }
+   
+   // Built-in cross-platform commands
+   await $`mkdir -p build`;
+   await $`echo "Build complete" > build/status.txt`;
+   ```
+
+2. Execute:
+
+   ```bash
+   node example.mjs
+   ```
+
+#### `use-m` and Bun.$
+
+Bun provides a built-in `$` shell API that works seamlessly with `use-m`:
+
+1. Create a file named `example.mjs`:
+
+   ```javascript
+   const { use } = eval(
+     await fetch('https://unpkg.com/use-m/use.js').then(u => u.text())
+   );
+   
+   const _ = await use('lodash');
+   
+   // Use Bun's built-in $ directly
+   const { stdout } = await $`ls`.pipe($`grep js`);
+   const files = _.filter(
+     _.split(stdout.toString(), '\n'),
+     (item) => !_.isEmpty(item)
+   );
+   console.log(files);
+   ```
+
+2. Execute with Bun:
+
+   ```bash
+   bun run example.mjs
+   ```
 
 #### `use-m` and `zx`
 
