@@ -59,6 +59,8 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    outputs:
+      published: ${{ steps.npm_check.outputs.exists == 'false' }}
     
     steps:
     - name: Checkout code
@@ -111,7 +113,7 @@ jobs:
     name: Create GitHub Release
     needs: publish
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && needs.publish.outputs.published == 'true'
     
     steps:
     - name: Checkout code
