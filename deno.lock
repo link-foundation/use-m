@@ -1,9 +1,10 @@
 {
   "version": "5",
   "specifiers": {
-    "npm:@babel/preset-env@^7.26.0": "7.28.3_@babel+core@7.28.3",
+    "npm:@babel/preset-env@^7.28.3": "7.28.3_@babel+core@7.28.3",
     "npm:@types/node@*": "24.2.0",
     "npm:babel-jest@^29.7.0": "29.7.0_@babel+core@7.28.3",
+    "npm:command-stream@^0.0.5": "0.0.5",
     "npm:express@^5.1.0": "5.1.0",
     "npm:jest@^29.7.0": "29.7.0_@types+node@24.2.0",
     "npm:puppeteer@^24.16.2": "24.16.2_devtools-protocol@0.0.1475386"
@@ -1502,6 +1503,9 @@
     },
     "color-name@1.1.4": {
       "integrity": "sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA=="
+    },
+    "command-stream@0.0.5": {
+      "integrity": "sha512-lEtCFjgjzWZIiOWadqjrINxr3Gh9hUhl+hh8CuO+iML0j1VF0M0QWiU/I7pnGfgqwmil0KER7OeUctfHlIWfOQ=="
     },
     "concat-map@0.0.1": {
       "integrity": "sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg=="
@@ -3320,8 +3324,9 @@
   "workspace": {
     "packageJson": {
       "dependencies": [
-        "npm:@babel/preset-env@^7.26.0",
+        "npm:@babel/preset-env@^7.28.3",
         "npm:babel-jest@^29.7.0",
+        "npm:command-stream@^0.0.5",
         "npm:express@^5.1.0",
         "npm:jest@^29.7.0",
         "npm:puppeteer@^24.16.2"
