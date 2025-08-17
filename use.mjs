@@ -1,3 +1,35 @@
+const extractCallerContext = () => {
+  // Extract the caller's file URL from the stack trace
+  const err = new Error();
+  const stack = err.stack;
+  if (!stack) return null;
+
+  const lines = stack.split('\n');
+  // Look for the first file that isn't use.mjs - skip the first few frames
+  // to get past our internal function calls
+  for (const line of lines) {
+    // Skip the first few frames which are internal to use.mjs
+    if (line.includes('extractCallerContext') || 
+        line.includes('_use') || 
+        line.includes('makeUse') ||
+        line.includes('<anonymous>') && line.includes('/use.mjs')) {
+      continue;
+    }
+    
+    // Try to match file:// URLs
+    let match = line.match(/file:\/\/[^\s)]+/);
+    if (match && !match[0].endsWith('/use.mjs')) {
+      return match[0];
+    }
+    // For Node/Deno, try to match absolute paths
+    match = line.match(/at\s+(?:<anonymous>\s+)?[(]?(\/[^\s:)]+\.m?js)/);
+    if (match && !match[1].endsWith('/use.mjs')) {
+      return 'file://' + match[1];
+    }
+  }
+  return null;
+};
+
 export const parseModuleSpecifier = (moduleSpecifier) => {
   if (!moduleSpecifier || typeof moduleSpecifier !== 'string' || moduleSpecifier.length <= 0) {
     throw new Error(
@@ -103,10 +135,10 @@ const supportedBuiltins = {
       if (typeof Deno !== 'undefined') {
         const proc = {
           pid: Deno.pid,
-          platform: Deno.build.os === 'darwin' ? 'darwin' : 
-                     Deno.build.os === 'windows' ? 'win32' : 
-                     Deno.build.os === 'linux' ? 'linux' : 
-                     Deno.build.os,
+          platform: Deno.build.os === 'darwin' ? 'darwin' :
+            Deno.build.os === 'windows' ? 'win32' :
+              Deno.build.os === 'linux' ? 'linux' :
+                Deno.build.os,
           version: `v${Deno.version.deno}`,
           versions: Deno.version,
           argv: Deno.args,
@@ -157,6 +189,48 @@ const supportedBuiltins = {
 };
 
 export const resolvers = {
+  relative: async (moduleSpecifier, pathResolver, callerContext) => {
+    // Check if this is a relative path (supports any depth: ./, ../, ../../, etc.)
+    if (!moduleSpecifier.startsWith('./') && !moduleSpecifier.startsWith('../')) {
+      return null;
+    }
+
+    // Try to get the caller's URL from the context or stack trace
+    let callerUrl = callerContext;
+    let resolvedPath = null;
+
+    // If we have a caller URL, resolve relative to it
+    if (callerUrl && callerUrl.startsWith('file://')) {
+      try {
+        const url = new URL(moduleSpecifier, callerUrl);
+        // For Bun, use a regular path instead of file:// URL
+        if (typeof Bun !== 'undefined') {
+          resolvedPath = url.pathname;
+        } else {
+          resolvedPath = url.href;
+        }
+      } catch (error) {
+        // Fallback to pathResolver if URL resolution fails
+      }
+    }
+
+    // If we couldn't resolve with URL, try pathResolver
+    if (!resolvedPath) {
+      if (!pathResolver) {
+        throw new Error('Path resolver is required for relative path resolution.');
+      }
+
+      try {
+        // Use the provided pathResolver to resolve the relative path
+        resolvedPath = await pathResolver(moduleSpecifier);
+      } catch (error) {
+        throw new Error(`Failed to resolve relative path '${moduleSpecifier}'.`, { cause: error });
+      }
+    }
+
+    // Import the module and return it
+    return baseUse(resolvedPath);
+  },
   builtin: async (moduleSpecifier, pathResolver) => {
     const { packageName } = parseModuleSpecifier(moduleSpecifier);
 
@@ -473,7 +547,7 @@ export const resolvers = {
   },
   deno: async (moduleSpecifier, pathResolver) => {
     const { packageName, version, modulePath } = parseModuleSpecifier(moduleSpecifier);
-    
+
     // Use esm.sh as the default CDN for Deno, which provides good Deno compatibility
     const resolvedPath = `https://esm.sh/${packageName}@${version}${modulePath}`;
     return resolvedPath;
@@ -582,7 +656,7 @@ export const makeUse = async (options) => {
       // Deno path resolver similar to Bun's approach
       const module = await import('node:module');
       const path = await import('node:path');
-      
+
       pathResolver = (specifier) => {
         try {
           // Try using createRequire if available (Deno has Node compat)
@@ -605,13 +679,23 @@ export const makeUse = async (options) => {
       pathResolver = (path) => path;
     }
   }
-  return async (moduleSpecifier) => {
+  return async (moduleSpecifier, providedCallerContext) => {
     // Always try built-in resolver first
     const builtinModule = await resolvers.builtin(moduleSpecifier, pathResolver);
     if (builtinModule) {
       return builtinModule;
     }
-    // If not a built-in module, use the configured resolver
+
+    // Use provided caller context or try to capture it from stack trace
+    const callerContext = providedCallerContext || extractCallerContext();
+
+    // Try relative path resolver second (for ./, ../, ../../, etc.)
+    const relativeModule = await resolvers.relative(moduleSpecifier, pathResolver, callerContext);
+    if (relativeModule) {
+      return relativeModule;
+    }
+
+    // If not a built-in or relative module, use the configured resolver
     const modulePath = await specifierResolver(moduleSpecifier, pathResolver);
     return baseUse(modulePath);
   };
@@ -619,10 +703,32 @@ export const makeUse = async (options) => {
 
 let __use = null;
 const _use = async (moduleSpecifier) => {
+  // For Bun, we need to capture the stack trace before any other calls
+  let bunCallerContext = null;
+  if (typeof Bun !== 'undefined') {
+    const err = new Error();
+    const stack = err.stack;
+    if (stack) {
+      const lines = stack.split('\n');
+      // Look for any .mjs file that's not use.mjs
+      for (const line of lines) {
+        const match = line.match(/[(]?(\/[^\s:)]+\.m?js)/);
+        if (match && !match[1].endsWith('/use.mjs')) {
+          bunCallerContext = 'file://' + match[1];
+          break;
+        }
+      }
+    }
+  }
+
   if (!__use) {
     __use = await makeUse();
   }
-  return __use(moduleSpecifier);
+
+  // Capture the caller context here, before entering makeUse
+  const callerContext = bunCallerContext || extractCallerContext();
+  // Pass the caller context to the use function
+  return __use(moduleSpecifier, callerContext);
 }
 _use.all = async (...moduleSpecifiers) => {
   if (!__use) {
