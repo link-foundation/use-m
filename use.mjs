@@ -411,7 +411,14 @@ export const resolvers = {
         const { stdout } = await execAsync('bun pm bin -g');
         binDir = stdout.trim();
       } catch (error) {
-        throw new Error('Bun is not installed or not available in PATH.', { cause: error });
+        // In CI or fresh environments, the global directory might not exist
+        // Try to get the default Bun install path
+        const home = process.env.HOME || process.env.USERPROFILE;
+        if (home) {
+          binDir = path.join(home, '.bun', 'bin');
+        } else {
+          throw new Error('Unable to determine Bun global directory.', { cause: error });
+        }
       }
 
       const bunInstallRoot = path.resolve(binDir, '..');
