@@ -1,6 +1,6 @@
 import { makeUse } from '../use.mjs';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 import { jest, describe, test, expect, beforeAll, afterAll } from '@jest/globals';
 
 const moduleName = `[${import.meta.url.split('.').pop()} module]`;

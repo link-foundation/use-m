@@ -1,5 +1,5 @@
 import { resolvers } from 'use-m';
-import { createRequire } from 'module';
+import { createRequire } from 'node:module';
 import { jest, describe, test, expect } from '@jest/globals';
 const { resolve } = createRequire(import.meta.url);
 const moduleName = `[${import.meta.url.split('.').pop()} module]`;
