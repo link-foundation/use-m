@@ -1,3 +1,33 @@
+const extractCallerContext = (stack) => {
+  // Extract the caller's file URL from the stack trace
+  if (!stack) return null;
+
+  const lines = stack.split('\n');
+  // Look for the first file that isn't use.mjs - skip the first few frames
+  // to get past our internal function calls
+  for (const line of lines) {
+    // Skip the first few frames which are internal to use.mjs
+    if (line.includes('extractCallerContext') ||
+      line.includes('_use') ||
+      line.includes('makeUse') ||
+      line.includes('<anonymous>') && line.includes('/use.mjs')) {
+      continue;
+    }
+
+    // Try to match file:// URLs
+    let match = line.match(/file:\/\/[^\s)]+/);
+    if (match && !match[0].endsWith('/use.mjs')) {
+      return match[0];
+    }
+    // For Node/Deno, try to match absolute paths
+    match = line.match(/at\s+(?:<anonymous>\s+)?[(]?(\/[^\s:)]+\.m?js)/);
+    if (match && !match[1].endsWith('/use.mjs')) {
+      return 'file://' + match[1];
+    }
+  }
+  return null;
+};
+
 const parseModuleSpecifier = (moduleSpecifier) => {
   if (!moduleSpecifier || typeof moduleSpecifier !== 'string' || moduleSpecifier.length <= 0) {
     throw new Error(
@@ -75,7 +105,36 @@ const supportedBuiltins = {
   },
   'process': {
     browser: null, // Not available in browser
-    node: () => ({ default: process, ...process })
+    node: () => {
+      if (typeof Deno !== 'undefined') {
+        // Deno 2.x has a process global, use it if available
+        if (typeof process !== 'undefined') {
+          // In Deno, process is an EventEmitter and spreading doesn't work properly
+          // We need to explicitly copy the properties we need
+          const proc = {
+            default: process,
+            pid: process.pid,
+            platform: process.platform,
+            version: process.version,
+            versions: process.versions,
+            argv: process.argv,
+            env: process.env,
+            exit: process.exit,
+            cwd: process.cwd,
+            chdir: process.chdir,
+            // Add any other commonly used process properties
+            nextTick: process.nextTick,
+            stdout: process.stdout,
+            stderr: process.stderr,
+            stdin: process.stdin,
+          };
+          return proc;
+        }
+        // This shouldn't happen but provide a fallback
+        throw new Error(`Failed to resolve 'process' module in Deno environment.`);
+      }
+      return ({ default: process, ...process });
+    }
   },
   'child_process': {
     browser: null,
@@ -146,6 +205,52 @@ const resolvers = {
 
     // Not a supported built-in module
     return null;
+  },
+  relative: async (moduleSpecifier, pathResolver, callerContext) => {
+    // Check if this is a relative path (supports any depth: ./, ../, ../../, etc.)
+    if (!moduleSpecifier.startsWith('./') && !moduleSpecifier.startsWith('../')) {
+      return null;
+    }
+
+    // Try to get the caller's URL from the context or stack trace
+    let callerUrl = callerContext;
+    let resolvedPath = null;
+
+    // If we have a caller URL, resolve relative to it
+    if (callerUrl && callerUrl.startsWith('file://')) {
+      try {
+        // Try URL-based resolution first
+        const url = new URL(moduleSpecifier, callerUrl);
+        // For Bun, return pathname instead of full URL
+        if (typeof Bun !== 'undefined') {
+          resolvedPath = url.pathname;
+        } else {
+          resolvedPath = url.href;
+        }
+      } catch (error) {
+        // Fallback for non-URL basePath
+        const path = await import('node:path');
+        const normalizedPath = callerUrl.startsWith('file://') ? new URL(callerUrl).pathname : callerUrl;
+        resolvedPath = path.resolve(path.dirname(normalizedPath), moduleSpecifier);
+      }
+    }
+
+    // If we couldn't resolve with URL, try pathResolver
+    if (!resolvedPath) {
+      if (!pathResolver) {
+        throw new Error('Path resolver is required for relative path resolution.');
+      }
+
+      try {
+        // Use the provided pathResolver to resolve the relative path
+        resolvedPath = await pathResolver(moduleSpecifier);
+      } catch (error) {
+        throw new Error(`Failed to resolve relative path '${moduleSpecifier}'.`, { cause: error });
+      }
+    }
+
+    // Import the module and return it
+    return baseUse(resolvedPath);
   },
   npm: async (moduleSpecifier, pathResolver) => {
     const path = await import('node:path');
@@ -366,7 +471,14 @@ const resolvers = {
         const { stdout } = await execAsync('bun pm bin -g');
         binDir = stdout.trim();
       } catch (error) {
-        throw new Error('Bun is not installed or not available in PATH.', { cause: error });
+        // In CI or fresh environments, the global directory might not exist
+        // Try to get the default Bun install path
+        const home = process.env.HOME || process.env.USERPROFILE;
+        if (home) {
+          binDir = path.join(home, '.bun', 'bin');
+        } else {
+          throw new Error('Unable to determine Bun global directory.', { cause: error });
+        }
       }
 
       const bunInstallRoot = path.resolve(binDir, '..');
@@ -395,6 +507,13 @@ const resolvers = {
     }
     return resolvedPath;
   },
+  deno: async (moduleSpecifier, pathResolver) => {
+    const { packageName, version, modulePath } = parseModuleSpecifier(moduleSpecifier);
+
+    // Use esm.sh as the default CDN for Deno, which provides good Deno compatibility
+    const resolvedPath = `https://esm.sh/${packageName}@${version}${modulePath}`;
+    return resolvedPath;
+  },
   skypack: async (moduleSpecifier, pathResolver) => {
     const resolvedPath = `https://cdn.skypack.dev/${moduleSpecifier}`;
     return resolvedPath;
@@ -417,13 +536,6 @@ const resolvers = {
       path += '.js';
     }
     const resolvedPath = `https://unpkg.com/${packageName}-es@${version}${path}`;
-    return resolvedPath;
-  },
-  deno: async (moduleSpecifier, pathResolver) => {
-    const { packageName, version, modulePath } = parseModuleSpecifier(moduleSpecifier);
-    
-    // Use esm.sh as the default CDN for Deno, which provides good Deno compatibility
-    const resolvedPath = `https://esm.sh/${packageName}@${version}${modulePath}`;
     return resolvedPath;
   },
   esm: async (moduleSpecifier, pathResolver) => {
@@ -490,18 +602,6 @@ const getScriptUrl = async () => {
 }
 
 const makeUse = async (options) => {
-  let specifierResolver = options?.specifierResolver;
-  if (typeof specifierResolver !== 'function') {
-    if (typeof window !== 'undefined') {
-      specifierResolver = resolvers[specifierResolver || 'esm'];
-    } else if (typeof Deno !== 'undefined') {
-      specifierResolver = resolvers[specifierResolver || 'deno'];
-    } else if (typeof Bun !== 'undefined') {
-      specifierResolver = resolvers[specifierResolver || 'bun'];
-    } else {
-      specifierResolver = resolvers[specifierResolver || 'npm'];
-    }
-  }
   let scriptPath = options?.scriptPath;
   if (!scriptPath && typeof global !== 'undefined' && typeof global['__filename'] !== 'undefined') {
     scriptPath = global['__filename'];
@@ -513,9 +613,25 @@ const makeUse = async (options) => {
   if (!scriptPath && typeof window === 'undefined' && typeof require === 'undefined') {
     scriptPath = await getScriptUrl();
   }
+  let protocol;
+  if (scriptPath) {
+    protocol = new URL(scriptPath).protocol;
+  }
+  let specifierResolver = options?.specifierResolver;
+  if (typeof specifierResolver !== 'function') {
+    if (typeof window !== 'undefined' || (protocol && (protocol === 'http:' || protocol === 'https:'))) {
+      specifierResolver = resolvers[specifierResolver || 'esm'];
+    } else if (typeof Deno !== 'undefined') {
+      specifierResolver = resolvers[specifierResolver || 'deno'];
+    } else if (typeof Bun !== 'undefined') {
+      specifierResolver = resolvers[specifierResolver || 'bun'];
+    } else {
+      specifierResolver = resolvers[specifierResolver || 'npm'];
+    }
+  }
   let pathResolver = options?.pathResolver;
   if (!pathResolver) {
-    if (scriptPath) {
+    if (scriptPath && (!protocol || protocol === 'file:')) {
       pathResolver = await import('node:module')
         .then(module => module.createRequire(scriptPath))
         .then(require => require.resolve);
@@ -526,12 +642,24 @@ const makeUse = async (options) => {
     }
   }
   return async (moduleSpecifier) => {
+    const stack = new Error().stack;
+
+    // Use provided caller context or try to capture it from stack trace
+    const callerContext = providedCallerContext || extractCallerContext(stack);
+
     // Always try built-in resolver first
     const builtinModule = await resolvers.builtin(moduleSpecifier, pathResolver);
     if (builtinModule) {
       return builtinModule;
     }
-    // If not a built-in module, use the configured resolver
+
+    // Try relative path resolver second (for ./, ../, ../../, etc.)
+    const relativeModule = await resolvers.relative(moduleSpecifier, pathResolver, callerContext);
+    if (relativeModule) {
+      return relativeModule;
+    }
+
+    // If not a built-in or relative module, use the configured resolver
     const modulePath = await specifierResolver(moduleSpecifier, pathResolver);
     return baseUse(modulePath);
   };
@@ -539,6 +667,27 @@ const makeUse = async (options) => {
 
 let __use = null;
 const use = async (moduleSpecifier) => {
+  const stack = new Error().stack;
+
+  // For Bun, we need to capture the stack trace before any other calls
+  let bunCallerContext = null;
+  if (typeof Bun !== 'undefined') {
+    if (stack) {
+      const lines = stack.split('\n');
+      // Look for any .mjs file that's not use.mjs
+      for (const line of lines) {
+        const match = line.match(/[(]?(\/[^\s:)]+\.m?js)/);
+        if (match && !match[1].endsWith('/use.mjs')) {
+          bunCallerContext = 'file://' + match[1];
+          break;
+        }
+      }
+    }
+  }
+
+  // Capture the caller context here, before entering makeUse
+  const callerContext = bunCallerContext || extractCallerContext(stack);
+
   if (!__use) {
     __use = await makeUse();
   }

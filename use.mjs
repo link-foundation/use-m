@@ -106,50 +106,34 @@ const supportedBuiltins = {
   'process': {
     browser: null, // Not available in browser
     node: () => {
-      // Deno 2.x has a process global, use it if available
-      if (typeof process !== 'undefined') {
-        // In Deno, process is an EventEmitter and spreading doesn't work properly
-        // We need to explicitly copy the properties we need
-        const proc = {
-          default: process,
-          pid: process.pid,
-          platform: process.platform,
-          version: process.version,
-          versions: process.versions,
-          argv: process.argv,
-          env: process.env,
-          exit: process.exit,
-          cwd: process.cwd,
-          chdir: process.chdir,
-          // Add any other commonly used process properties
-          nextTick: process.nextTick,
-          stdout: process.stdout,
-          stderr: process.stderr,
-          stdin: process.stdin,
-        };
-        return proc;
-      }
-      // Fallback for older Deno versions - emulate process module
       if (typeof Deno !== 'undefined') {
-        const proc = {
-          pid: Deno.pid,
-          platform: Deno.build.os === 'darwin' ? 'darwin' :
-            Deno.build.os === 'windows' ? 'win32' :
-              Deno.build.os === 'linux' ? 'linux' :
-                Deno.build.os,
-          version: `v${Deno.version.deno}`,
-          versions: Deno.version,
-          argv: Deno.args,
-          env: Deno.env.toObject(),
-          exit: Deno.exit,
-          cwd: Deno.cwd,
-          chdir: Deno.chdir,
-          // Add more process properties as needed
-        };
-        return { default: proc, ...proc };
+        // Deno 2.x has a process global, use it if available
+        if (typeof process !== 'undefined') {
+          // In Deno, process is an EventEmitter and spreading doesn't work properly
+          // We need to explicitly copy the properties we need
+          const proc = {
+            default: process,
+            pid: process.pid,
+            platform: process.platform,
+            version: process.version,
+            versions: process.versions,
+            argv: process.argv,
+            env: process.env,
+            exit: process.exit,
+            cwd: process.cwd,
+            chdir: process.chdir,
+            // Add any other commonly used process properties
+            nextTick: process.nextTick,
+            stdout: process.stdout,
+            stderr: process.stderr,
+            stdin: process.stdin,
+          };
+          return proc;
+        }
+        // This shouldn't happen but provide a fallback
+        throw new Error(`Failed to resolve 'process' module in Deno environment.`);
       }
-      // This shouldn't happen but provide a fallback
-      return null;
+      return ({ default: process, ...process });
     }
   },
   'child_process': {
@@ -187,6 +171,41 @@ const supportedBuiltins = {
 };
 
 export const resolvers = {
+  builtin: async (moduleSpecifier, pathResolver) => {
+    const { packageName } = parseModuleSpecifier(moduleSpecifier);
+
+    // Remove 'node:' prefix if present
+    const moduleName = packageName.startsWith('node:') ? packageName.slice(5) : packageName;
+
+    // Check if we support this built-in module
+    if (supportedBuiltins[moduleName]) {
+      const builtinConfig = supportedBuiltins[moduleName];
+
+      if (!builtinConfig) {
+        throw new Error(`Built-in module '${moduleName}' is not supported.`);
+      }
+
+      // Determine environment
+      const isBrowser = typeof window !== 'undefined';
+      const environment = isBrowser ? 'browser' : 'node';
+
+      const moduleFactory = builtinConfig[environment];
+      if (!moduleFactory) {
+        throw new Error(`Built-in module '${moduleName}' is not available in ${environment} environment.`);
+      }
+
+      try {
+        // Execute the factory function to get the module
+        const result = await moduleFactory();
+        return result;
+      } catch (error) {
+        throw new Error(`Failed to load built-in module '${moduleName}' in ${environment} environment.`, { cause: error });
+      }
+    }
+
+    // Not a supported built-in module
+    return null;
+  },
   relative: async (moduleSpecifier, pathResolver, callerContext) => {
     // Check if this is a relative path (supports any depth: ./, ../, ../../, etc.)
     if (!moduleSpecifier.startsWith('./') && !moduleSpecifier.startsWith('../')) {
@@ -232,41 +251,6 @@ export const resolvers = {
 
     // Import the module and return it
     return baseUse(resolvedPath);
-  },
-  builtin: async (moduleSpecifier, pathResolver) => {
-    const { packageName } = parseModuleSpecifier(moduleSpecifier);
-
-    // Remove 'node:' prefix if present
-    const moduleName = packageName.startsWith('node:') ? packageName.slice(5) : packageName;
-
-    // Check if we support this built-in module
-    if (supportedBuiltins[moduleName]) {
-      const builtinConfig = supportedBuiltins[moduleName];
-
-      if (!builtinConfig) {
-        throw new Error(`Built-in module '${moduleName}' is not supported.`);
-      }
-
-      // Determine environment
-      const isBrowser = typeof window !== 'undefined';
-      const environment = isBrowser ? 'browser' : 'node';
-
-      const moduleFactory = builtinConfig[environment];
-      if (!moduleFactory) {
-        throw new Error(`Built-in module '${moduleName}' is not available in ${environment} environment.`);
-      }
-
-      try {
-        // Execute the factory function to get the module
-        const result = await moduleFactory();
-        return result;
-      } catch (error) {
-        throw new Error(`Failed to load built-in module '${moduleName}' in ${environment} environment.`, { cause: error });
-      }
-    }
-
-    // Not a supported built-in module
-    return null;
   },
   npm: async (moduleSpecifier, pathResolver) => {
     const path = await import('node:path');
@@ -523,6 +507,13 @@ export const resolvers = {
     }
     return resolvedPath;
   },
+  deno: async (moduleSpecifier, pathResolver) => {
+    const { packageName, version, modulePath } = parseModuleSpecifier(moduleSpecifier);
+
+    // Use esm.sh as the default CDN for Deno, which provides good Deno compatibility
+    const resolvedPath = `https://esm.sh/${packageName}@${version}${modulePath}`;
+    return resolvedPath;
+  },
   skypack: async (moduleSpecifier, pathResolver) => {
     const resolvedPath = `https://cdn.skypack.dev/${moduleSpecifier}`;
     return resolvedPath;
@@ -545,13 +536,6 @@ export const resolvers = {
       path += '.js';
     }
     const resolvedPath = `https://unpkg.com/${packageName}-es@${version}${path}`;
-    return resolvedPath;
-  },
-  deno: async (moduleSpecifier, pathResolver) => {
-    const { packageName, version, modulePath } = parseModuleSpecifier(moduleSpecifier);
-
-    // Use esm.sh as the default CDN for Deno, which provides good Deno compatibility
-    const resolvedPath = `https://esm.sh/${packageName}@${version}${modulePath}`;
     return resolvedPath;
   },
   esm: async (moduleSpecifier, pathResolver) => {
@@ -614,9 +598,11 @@ export const makeUse = async (options) => {
   if (!scriptPath && metaUrl) {
     scriptPath = metaUrl;
   }
-  let protocol;
   if (!scriptPath) {
     scriptPath = import.meta.url;
+  }
+  let protocol;
+  if (scriptPath) {
     protocol = new URL(scriptPath).protocol;
   }
   let specifierResolver = options?.specifierResolver;
@@ -693,8 +679,6 @@ const _use = async (moduleSpecifier) => {
   if (!__use) {
     __use = await makeUse();
   }
-
-  // Pass the caller context to the use function
   return __use(moduleSpecifier, callerContext);
 }
 _use.all = async (...moduleSpecifiers) => {
