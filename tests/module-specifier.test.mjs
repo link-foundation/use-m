@@ -1,4 +1,4 @@
-import { describe, test, expect } from '@jest/globals';
+import { describe, test, expect, beforeAll, afterAll, beforeEach, afterEach } from '../test-adapter.mjs';
 import { parseModuleSpecifier } from 'use-m';
 const moduleName = `[${import.meta.url.split('.').pop()} module]`;
 

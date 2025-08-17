@@ -1,7 +1,7 @@
 // Comprehensive test showing the differences between libraries with and without exports (MJS environment)
-import { createRequire } from 'module';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
+import { createRequire } from 'node:module';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);

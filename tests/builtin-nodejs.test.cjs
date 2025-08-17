@@ -1,4 +1,4 @@
-const { describe, test, expect } = require('@jest/globals');
+const { describe, test, expect, beforeAll, afterAll, beforeEach, afterEach } = require('../test-adapter.cjs');
 const { use } = require('../use.cjs');
 const moduleName = `[${__filename.split('.').pop()} module]`;
 
@@ -16,7 +16,7 @@ describe(`${moduleName} Node.js/Bun-only built-in modules`, () => {
   });
 
   test(`${moduleName} path module should work`, async () => {
-    const path = await use('path');
+    const path = await use('node:path');
     
     expect(path).toBeDefined();
     expect(typeof path.join).toBe('function');

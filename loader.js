@@ -1,9 +1,9 @@
 // loader.js
 
-// import { resolve, extname } from 'path';
-import { pathToFileURL } from 'url';
+// import { resolve, extname } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { resolvers } from './use.mjs';
-import { createRequire } from 'module';
+import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 
 // The `resolve` hook customizes how module URLs are resolved

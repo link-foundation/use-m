@@ -1,4 +1,4 @@
-import { describe, test, expect } from '@jest/globals';
+import { describe, test, expect, beforeAll, afterAll, beforeEach, afterEach } from '../test-adapter.mjs';
 import { makeUse, resolvers } from 'use-m/use.mjs';
 
 const moduleName = `[${import.meta.url.split('.').pop()} module]`;
@@ -25,23 +25,21 @@ describe(`${moduleName} Deno support`, () => {
   });
 
   test(`${moduleName} makeUse should detect Deno runtime when Deno global is present`, async () => {
-    // Mock Deno global
-    const originalDeno = globalThis.Deno;
-    globalThis.Deno = { version: { deno: '2.4.4' } };
-    
+    let mockedDeno = false;
+    if (typeof Deno === "undefined") {
+      globalThis.Deno = { version: { deno: '2.4.4' } };
+      mockedDeno = true;
+    }
     try {
       const use = await makeUse();
-      
+
       // Test by checking which resolver would be used
       // We can't directly test the resolver used, but we can test the behavior
       // by verifying the resolver produces esm.sh URLs
       const testModulePath = await resolvers.deno('lodash@4.17.21');
       expect(testModulePath).toContain('esm.sh');
     } finally {
-      // Restore original state
-      if (originalDeno) {
-        globalThis.Deno = originalDeno;
-      } else {
+      if (mockedDeno) {
         delete globalThis.Deno;
       }
     }
@@ -59,7 +57,7 @@ describe(`${moduleName} Deno support`, () => {
 
   test(`${moduleName} makeUse with explicit deno resolver`, async () => {
     const use = await makeUse({ specifierResolver: 'deno' });
-    
+
     // We can't easily test the full import without network access in CI
     // But we can verify the resolver would produce the correct URL
     const testUrl = await resolvers.deno('lodash@4.17.21');

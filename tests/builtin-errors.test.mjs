@@ -1,4 +1,4 @@
-import { describe, test, expect } from '@jest/globals';
+import { describe, test, expect, beforeAll, afterAll, beforeEach, afterEach } from '../test-adapter.mjs';
 import { use } from '../use.mjs';
 const moduleName = `[${import.meta.url.split('.').pop()} module]`;
 
@@ -39,7 +39,7 @@ describe(`${moduleName} Built-in module error handling`, () => {
 
   test(`${moduleName} should only work with exact lowercase module names`, async () => {
     // Only lowercase should work
-    const url = await use('url');
+    const url = await use('node:url');
     expect(url).toBeDefined();
     expect(typeof url.URL).toBe('function');
 

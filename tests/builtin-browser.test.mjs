@@ -1,8 +1,16 @@
-import { describe, test, expect, beforeAll, afterAll } from '@jest/globals';
-import puppeteer from 'puppeteer';
+import { describe, test, expect, beforeAll, afterAll, beforeEach, afterEach } from '../test-adapter.mjs';
+
+// Skip browser tests in Deno environment
+const isDeno = typeof Deno !== 'undefined';
+
+let puppeteer, express;
+if (!isDeno) {
+  puppeteer = await import('puppeteer').then(m => m.default);
+  express = await import('express').then(m => m.default);
+}
+
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import express from 'express';
 
 const moduleName = `[${import.meta.url.split('.').pop()} module]`;
 
@@ -10,6 +18,15 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 describe(`${moduleName} Universal built-in modules in browser`, () => {
+  // Skip all browser tests in Deno
+  if (isDeno) {
+    test.skip = test.skip || test;
+    test.skip('Browser tests are skipped in Deno environment', () => {
+      expect(true).toBe(true);
+    });
+    return;
+  }
+
   let browser;
   let server;
   let page;

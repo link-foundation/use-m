@@ -1,4 +1,4 @@
-const { describe, test, expect } = require('@jest/globals');
+const { describe, test, expect, beforeAll, afterAll, beforeEach, afterEach } = require('../test-adapter.cjs');
 const { use } = require('../use.cjs');
 const moduleName = `[${__filename.split('.').pop()} module]`;
 
@@ -36,7 +36,7 @@ describe(`${moduleName} Built-in module error handling`, () => {
 
   test(`${moduleName} should only work with exact lowercase module names`, async () => {
     // Only lowercase should work
-    const url = await use('url');
+    const url = await use('node:url');
     expect(url).toBeDefined();
     expect(typeof url.URL).toBe('function');
 

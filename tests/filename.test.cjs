@@ -1,6 +1,6 @@
-const { describe, test, expect } = require('@jest/globals');
+const { describe, test, expect, beforeAll, afterAll, beforeEach, afterEach } = require('../test-adapter.cjs');
 const { makeUse } = require('../use.cjs');
-const path = require('path');
+const path = require('node:path');
 const currentDir = path.dirname(__filename);
 const moduleName = `[${__filename.split('.').pop()} module]`;
 
@@ -82,7 +82,7 @@ describe(`${moduleName} scriptPath detection in CJS (meta URL)`, () => {
       capturedResolver = pathResolver;
       return __filename;
     };
-    const { pathToFileURL } = require('url');
+    const { pathToFileURL } = require('node:url');
     const metaUrl = pathToFileURL(path.resolve(__dirname, '..', 'use.js')).href;
     const useFn = await makeUse({ specifierResolver: stubSpecifierResolver, meta: { url: metaUrl } });
     await useFn('anything');

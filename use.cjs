@@ -148,10 +148,10 @@ const resolvers = {
     return null;
   },
   npm: async (moduleSpecifier, pathResolver) => {
-    const path = await import('path');
-    const { exec } = await import('child_process');
-    const { promisify } = await import('util');
-    const { stat, readFile } = await import('fs/promises');
+    const path = await import('node:path');
+    const { exec } = await import('node:child_process');
+    const { promisify } = await import('node:util');
+    const { stat, readFile } = await import('node:fs/promises');
     const execAsync = promisify(exec);
 
     if (!pathResolver) {
@@ -278,10 +278,10 @@ const resolvers = {
     return resolvedPath;
   },
   bun: async (moduleSpecifier, pathResolver) => {
-    const path = await import('path');
-    const { exec } = await import('child_process');
-    const { promisify } = await import('util');
-    const { stat, readFile } = await import('fs/promises');
+    const path = await import('node:path');
+    const { exec } = await import('node:child_process');
+    const { promisify } = await import('node:util');
+    const { stat, readFile } = await import('node:fs/promises');
     const execAsync = promisify(exec);
 
     if (!pathResolver) {
@@ -503,7 +503,7 @@ const makeUse = async (options) => {
     if (typeof require !== 'undefined') {
       pathResolver = require.resolve;
     } else if (scriptPath) {
-      pathResolver = await import('module')
+      pathResolver = await import('node:module')
         .then(module => module.createRequire(scriptPath))
         .then(require => require.resolve);
     } else {

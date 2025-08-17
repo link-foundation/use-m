@@ -148,10 +148,10 @@ export const resolvers = {
     return null;
   },
   npm: async (moduleSpecifier, pathResolver) => {
-    const path = await import('path');
-    const { exec } = await import('child_process');
-    const { promisify } = await import('util');
-    const { stat, readFile } = await import('fs/promises');
+    const path = await import('node:path');
+    const { exec } = await import('node:child_process');
+    const { promisify } = await import('node:util');
+    const { stat, readFile } = await import('node:fs/promises');
     const execAsync = promisify(exec);
 
     if (!pathResolver) {
@@ -278,10 +278,10 @@ export const resolvers = {
     return resolvedPath;
   },
   bun: async (moduleSpecifier, pathResolver) => {
-    const path = await import('path');
-    const { exec } = await import('child_process');
-    const { promisify } = await import('util');
-    const { stat, readFile } = await import('fs/promises');
+    const path = await import('node:path');
+    const { exec } = await import('node:child_process');
+    const { promisify } = await import('node:util');
+    const { stat, readFile } = await import('node:fs/promises');
     const execAsync = promisify(exec);
 
     if (!pathResolver) {
@@ -508,8 +508,8 @@ export const makeUse = async (options) => {
     if (typeof require !== 'undefined') {
       // Bun has require but createRequire behaves differently for relative paths
       if (typeof Bun !== 'undefined' && scriptPath && (!protocol || protocol === 'file:')) {
-        const module = await import('module');
-        const path = await import('path');
+        const module = await import('node:module');
+        const path = await import('node:path');
 
         pathResolver = (specifier) => {
           try {
@@ -526,8 +526,11 @@ export const makeUse = async (options) => {
       } else {
         pathResolver = require.resolve;
       }
+    } else if (typeof Deno !== 'undefined') {
+      // Deno doesn't have require.resolve, so use a simple path resolver
+      pathResolver = (path) => path;
     } else if (scriptPath && (!protocol || protocol === 'file:')) {
-      pathResolver = await import('module')
+      pathResolver = await import('node:module')
         .then(module => module.createRequire(scriptPath))
         .then(require => require.resolve);
     } else {

@@ -1,4 +1,4 @@
-import { describe, test, expect } from '@jest/globals';
+import { describe, test, expect, beforeAll, afterAll, beforeEach, afterEach } from '../test-adapter.mjs';
 
 // Function to retrieve this script URL from the stack trace
 const moduleName = `[${import.meta.url.split('.').pop()} module]`;
@@ -11,7 +11,7 @@ const getScriptUrl = async () => {
   if (!match?.groups?.path) {
     return null;
   }
-  const { pathToFileURL } = await import('url');
+  const { pathToFileURL } = await import('node:url');
   return pathToFileURL(match.groups.path).href;
 }
 

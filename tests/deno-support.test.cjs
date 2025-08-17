@@ -1,4 +1,4 @@
-const { describe, test, expect } = require('@jest/globals');
+const { describe, test, expect, beforeAll, afterAll, beforeEach, afterEach } = require('../test-adapter.cjs');
 const { makeUse, resolvers } = require('use-m/use.cjs');
 
 const moduleName = `[cjs module]`;

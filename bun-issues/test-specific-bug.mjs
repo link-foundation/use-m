@@ -1,5 +1,5 @@
 // Test that demonstrates the specific Bun bug with package.json access
-import { createRequire } from 'module';
+import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
 

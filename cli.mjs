@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-import { resolve, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { use } from 'use-m';
 import { readFileSync } from 'fs';
 

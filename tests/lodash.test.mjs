@@ -1,4 +1,4 @@
-import { describe, test, expect } from '@jest/globals';
+import { describe, test, expect, beforeAll, afterAll, beforeEach, afterEach } from '../test-adapter.mjs';
 import { use } from 'use-m';
 const moduleName = `[${import.meta.url.split('.').pop()} module]`;
 
@@ -34,6 +34,10 @@ describe(`${moduleName} 'lodash' imports tests`, () => {
   });
 
   test(`${moduleName} npm: lodash@4.17.21/not-found.js`, async () => {
-    await expect(use("lodash@4.17.21/not-found.js")).rejects.toThrow("Failed to resolve the path to 'lodash@4.17.21/not-found.js'");
+    if (typeof Deno !== "undefined") {
+      await expect(use("lodash@4.17.21/not-found.js")).rejects.toThrow("Failed to import module from 'https://esm.sh/lodash@4.17.21/not-found.js'");
+    } else {
+      await expect(use("lodash@4.17.21/not-found.js")).rejects.toThrow("Failed to resolve the path to 'lodash@4.17.21/not-found.js'");
+    }
   });
 });

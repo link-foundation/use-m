@@ -1,4 +1,4 @@
-const { describe, test, expect } = require('@jest/globals');
+const { describe, test, expect, beforeAll, afterAll, beforeEach, afterEach } = require('../test-adapter.cjs');
 const { use } = require('../use.cjs');
 const moduleName = `[${__filename.split('.').pop()} module]`;
 
@@ -25,7 +25,7 @@ describe(`${moduleName} Universal built-in modules (work in all environments)`, 
   });
 
   test(`${moduleName} url module should work`, async () => {
-    const url = await use('url');
+    const url = await use('node:url');
     
     expect(url).toBeDefined();
     expect(typeof url.URL).toBe('function');

@@ -134,7 +134,7 @@
 
                 // Test 3: URL module
                 try {
-                    const url = await use('url');
+                    const url = await use('node:url');
                     if (url && typeof url.URL === 'function' && typeof url.URLSearchParams === 'function') {
                         // Test URL functionality
                         const testUrl = new url.URL('https://example.com/path?query=value');

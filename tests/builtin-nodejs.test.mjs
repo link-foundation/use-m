@@ -1,5 +1,5 @@
 import { use } from '../use.mjs';
-import { describe, test, expect } from '@jest/globals';
+import { describe, test, expect, beforeAll, afterAll, beforeEach, afterEach } from '../test-adapter.mjs';
 const moduleName = `[${import.meta.url.split('.').pop()} module]`;
 
 describe(`${moduleName} Node.js/Bun-only built-in modules`, () => {
@@ -16,7 +16,7 @@ describe(`${moduleName} Node.js/Bun-only built-in modules`, () => {
   });
 
   test(`${moduleName} path module should work`, async () => {
-    const path = await use('path');
+    const path = await use('node:path');
     
     expect(path).toBeDefined();
     expect(typeof path.join).toBe('function');
