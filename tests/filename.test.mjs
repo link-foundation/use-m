@@ -17,7 +17,6 @@ const currentDir = dirname(currentFilePath);
 
 describe(`${moduleName} scriptPath detection in ESM (functional)`, () => {
   test(`${moduleName} default pathResolver resolves modules relative to use.mjs`, async () => {
-
     let capturedResolver;
     const stubSpecifierResolver = (specifier, pathResolver) => {
       capturedResolver = pathResolver;
@@ -32,7 +31,6 @@ describe(`${moduleName} scriptPath detection in ESM (functional)`, () => {
   });
 
   test(`${moduleName} override scriptPath resolves relative to provided path`, async () => {
-
     let capturedResolver;
     const stubSpecifierResolver = (specifier, pathResolver) => {
       capturedResolver = pathResolver;
@@ -49,15 +47,6 @@ describe(`${moduleName} scriptPath detection in ESM (functional)`, () => {
 
 // Tests when global require is undefined (force createRequire fallback)
 describe(`${moduleName} scriptPath detection in ESM (createRequire fallback)`, () => {
-  let originalRequire;
-  beforeAll(() => {
-    originalRequire = global.require;
-    delete global.require;
-  });
-  afterAll(() => {
-    if (originalRequire) global.require = originalRequire;
-  });
-
   test(`${moduleName} fallback default resolves modules relative to use.mjs`, async () => {
 
     let capturedResolver;
@@ -73,7 +62,6 @@ describe(`${moduleName} scriptPath detection in ESM (createRequire fallback)`, (
   });
 
   test(`${moduleName} fallback explicit scriptPath resolves relative to provided path`, async () => {
-
     let capturedResolver;
     const stubSpecifierResolver = (specifier, pathResolver) => {
       capturedResolver = pathResolver;
@@ -87,7 +75,6 @@ describe(`${moduleName} scriptPath detection in ESM (createRequire fallback)`, (
   });
 
   test(`${moduleName} fallback meta override changes pathResolver behavior in ESM`, async () => {
-
     let capturedResolver;
     const stubSpecifierResolver = (specifier, pathResolver) => {
       capturedResolver = pathResolver;
@@ -107,7 +94,6 @@ describe(`${moduleName} scriptPath detection in ESM (createRequire fallback)`, (
 // Additional test for meta.url with use.js path
 describe(`${moduleName} scriptPath detection in ESM (meta URL)`, () => {
   test(`${moduleName} meta override resolves modules relative to provided meta URL (use.js)`, async () => {
-
     let capturedResolver;
     const stubSpecifierResolver = (specifier, pathResolver) => {
       capturedResolver = pathResolver;

@@ -615,7 +615,14 @@ const makeUse = async (options) => {
   }
   let protocol;
   if (scriptPath) {
-    protocol = new URL(scriptPath).protocol;
+    try {
+      protocol = new URL(scriptPath).protocol;
+    } catch {
+      // If scriptPath is a local file path, convert it to file:// URL
+      if (scriptPath.startsWith('/') || scriptPath.includes('\\')) {
+        protocol = 'file:';
+      }
+    }
   }
   let specifierResolver = options?.specifierResolver;
   if (typeof specifierResolver !== 'function') {
@@ -631,12 +638,23 @@ const makeUse = async (options) => {
   }
   let pathResolver = options?.pathResolver;
   if (!pathResolver) {
-    if (scriptPath && (!protocol || protocol === 'file:')) {
+    const isCJS = typeof module !== "undefined" && !!module.exports;
+    const hasRequire = typeof require !== 'undefined';
+    const hasScriptPath = scriptPath && (!protocol || protocol === 'file:');
+    if (hasRequire && hasScriptPath) {
+      if (isCJS) {
+        pathResolver = require.resolve;
+      } else {
+        pathResolver = await import('node:module')
+        .then(module => module.createRequire(scriptPath))
+        .then(require => require.resolve);
+      }
+    } else if (hasRequire) {
+      pathResolver = require.resolve;
+    } else if (hasScriptPath) {
       pathResolver = await import('node:module')
         .then(module => module.createRequire(scriptPath))
         .then(require => require.resolve);
-    } else if (typeof require !== 'undefined') {
-      pathResolver = require.resolve;
     } else {
       pathResolver = (path) => path;
     }
