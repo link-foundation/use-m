@@ -1,0 +1,71 @@
+name: Test Suite (Multi-Platform)
+
+# This workflow tests on multiple OS and Node versions
+# It's triggered on non-main branches and can be manually triggered
+on:
+  push:
+    branches-ignore:
+      - main  # Main branch is handled by ci-cd.yml
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Test on ${{ matrix.runtime }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        runtime: ['node', 'bun', 'deno']
+        node-version: [18.x, 20.x]
+        exclude:
+          # Bun doesn't support Windows yet
+          - os: windows-latest
+            runtime: bun
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+
+    - name: Setup Bun
+      if: matrix.runtime == 'bun'
+      uses: oven-sh/setup-bun@v2
+      with:
+        bun-version: latest
+
+    - name: Setup Deno
+      if: matrix.runtime == 'deno'
+      uses: denoland/setup-deno@v1
+      with:
+        deno-version: v2.x
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run Node.js tests
+      if: matrix.runtime == 'node'
+      run: npm test
+
+    - name: Run Bun tests
+      if: matrix.runtime == 'bun'
+      run: bun test
+
+    - name: Run Deno tests
+      if: matrix.runtime == 'deno'
+      run: deno test --allow-net --allow-env --allow-run --allow-read --allow-sys
+
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-results-${{ matrix.os }}-${{ matrix.runtime }}-node${{ matrix.node-version }}
+        path: |
+          test-results/
+          coverage/
+        retention-days: 7
