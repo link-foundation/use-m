@@ -1,6 +1,15 @@
 const extractCallerContext = (stack) => {
-  // Extract the caller's file URL from the stack trace
-  if (!stack) return null;
+  // In browser environment, use the current document URL as fallback
+  if (typeof window !== 'undefined' && window.location) {
+    // For inline scripts in HTML, use the document's URL
+    // This will be the fallback if we can't extract from stack
+    const documentUrl = window.location.href;
+    
+    // Try to extract from stack first, but we'll fallback to document URL
+    if (!stack) return documentUrl;
+  } else if (!stack) {
+    return null;
+  }
 
   const lines = stack.split('\n');
   // Look for the first file that isn't use.mjs - skip the first few frames
@@ -14,8 +23,14 @@ const extractCallerContext = (stack) => {
       continue;
     }
 
-    // Try to match file:// URLs first
-    let match = line.match(/file:\/\/[^\s)]+/);
+    // Try to match http(s):// URLs for browser environments
+    let match = line.match(/https?:\/\/[^\s)]+/);
+    if (match && !match[0].endsWith('/use.mjs') && !match[0].endsWith('/use.js')) {
+      return match[0];
+    }
+
+    // Try to match file:// URLs
+    match = line.match(/file:\/\/[^\s)]+/);
     if (match && !match[0].endsWith('/use.mjs')) {
       return match[0];
     }
@@ -242,21 +257,23 @@ export const resolvers = {
     let resolvedPath = null;
 
     // If we have a caller URL, resolve relative to it
-    if (callerUrl && callerUrl.startsWith('file://')) {
+    if (callerUrl && (callerUrl.startsWith('file://') || callerUrl.startsWith('http://') || callerUrl.startsWith('https://'))) {
       try {
-        // Try URL-based resolution first
+        // Try URL-based resolution for both file:// and http(s):// URLs
         const url = new URL(moduleSpecifier, callerUrl);
         // For Bun, return pathname instead of full URL
-        if (typeof Bun !== 'undefined') {
+        if (typeof Bun !== 'undefined' && callerUrl.startsWith('file://')) {
           resolvedPath = url.pathname;
         } else {
           resolvedPath = url.href;
         }
       } catch (error) {
-        // Fallback for non-URL basePath
-        const path = await import('node:path');
-        const normalizedPath = callerUrl.startsWith('file://') ? new URL(callerUrl).pathname : callerUrl;
-        resolvedPath = path.resolve(path.dirname(normalizedPath), moduleSpecifier);
+        // Fallback for non-URL basePath (only for file:// URLs)
+        if (callerUrl.startsWith('file://')) {
+          const path = await import('node:path');
+          const normalizedPath = new URL(callerUrl).pathname;
+          resolvedPath = path.resolve(path.dirname(normalizedPath), moduleSpecifier);
+        }
       }
     }
 
