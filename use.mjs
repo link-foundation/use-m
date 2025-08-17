@@ -1,82 +1,5 @@
-const resolveRelativePath = async (specifier, basePath) => {
-  // Helper function for resolving relative paths consistently (for the relative resolver only)
-  if (!specifier.startsWith('./') && !specifier.startsWith('../')) {
-    return null;
-  }
-  
-  try {
-    // Try URL-based resolution first
-    const url = new URL(specifier, basePath);
-    // For Bun, return pathname instead of full URL
-    if (typeof Bun !== 'undefined') {
-      return url.pathname;
-    }
-    return url.href;
-  } catch (error) {
-    // Fallback for non-URL basePath
-    const path = await import('node:path');
-    const normalizedPath = basePath.startsWith('file://') ? new URL(basePath).pathname : basePath;
-    return path.resolve(path.dirname(normalizedPath), specifier);
-  }
-};
-
-const createPathResolverForRuntime = async (scriptPath, protocol) => {
-  // Auto-detect runtime and create appropriate pathResolver
-  const isBun = typeof Bun !== 'undefined';
-  const isDeno = typeof Deno !== 'undefined';
-  const hasRequire = typeof require !== 'undefined';
-  const hasScriptPath = scriptPath && (!protocol || protocol === 'file:');
-  
-  // Simple identity function for fallback
-  if (!hasScriptPath && !hasRequire) {
-    return (path) => path;
-  }
-  
-  // Has require but no scriptPath (Node.js fallback)
-  if (hasRequire && !hasScriptPath) {
-    return require.resolve;
-  }
-  
-  // Get the base requireResolve function for all scriptPath cases
-  let requireResolve;
-  if (hasScriptPath) {
-    const module = await import('node:module');
-    requireResolve = module.createRequire(scriptPath).resolve;
-  }
-  
-  // For vanilla Node.js with scriptPath, just return the requireResolve
-  if (!isBun && !isDeno && hasScriptPath) {
-    return requireResolve;
-  }
-  
-  // For Bun and Deno, add relative path fallback
-  return (specifier) => {
-    try {
-      return requireResolve(specifier);
-    } catch (error) {
-      // Handle relative paths with runtime-specific behavior
-      if (specifier.startsWith('./') || specifier.startsWith('../')) {
-        try {
-          const url = new URL(specifier, scriptPath);
-          if (isBun) return url.pathname;
-          if (isDeno) return url.href;
-          return url.href; // Default
-        } catch (urlError) {
-          if (isDeno) return specifier; // Deno fallback
-          throw error;
-        }
-      }
-      // Deno returns specifier as-is for non-relative paths
-      if (isDeno) return specifier;
-      throw error;
-    }
-  };
-};
-
-const extractCallerContext = () => {
+const extractCallerContext = (stack) => {
   // Extract the caller's file URL from the stack trace
-  const err = new Error();
-  const stack = err.stack;
   if (!stack) return null;
 
   const lines = stack.split('\n');
@@ -84,13 +7,13 @@ const extractCallerContext = () => {
   // to get past our internal function calls
   for (const line of lines) {
     // Skip the first few frames which are internal to use.mjs
-    if (line.includes('extractCallerContext') || 
-        line.includes('_use') || 
-        line.includes('makeUse') ||
-        line.includes('<anonymous>') && line.includes('/use.mjs')) {
+    if (line.includes('extractCallerContext') ||
+      line.includes('_use') ||
+      line.includes('makeUse') ||
+      line.includes('<anonymous>') && line.includes('/use.mjs')) {
       continue;
     }
-    
+
     // Try to match file:// URLs
     let match = line.match(/file:\/\/[^\s)]+/);
     if (match && !match[0].endsWith('/use.mjs')) {
@@ -276,7 +199,21 @@ export const resolvers = {
 
     // If we have a caller URL, resolve relative to it
     if (callerUrl && callerUrl.startsWith('file://')) {
-      resolvedPath = await resolveRelativePath(moduleSpecifier, callerUrl);
+      try {
+        // Try URL-based resolution first
+        const url = new URL(moduleSpecifier, callerUrl);
+        // For Bun, return pathname instead of full URL
+        if (typeof Bun !== 'undefined') {
+          resolvedPath = url.pathname;
+        } else {
+          resolvedPath = url.href;
+        }
+      } catch (error) {
+        // Fallback for non-URL basePath
+        const path = await import('node:path');
+        const normalizedPath = callerUrl.startsWith('file://') ? new URL(callerUrl).pathname : callerUrl;
+        resolvedPath = path.resolve(path.dirname(normalizedPath), moduleSpecifier);
+      }
     }
 
     // If we couldn't resolve with URL, try pathResolver
@@ -696,17 +633,27 @@ export const makeUse = async (options) => {
   }
   let pathResolver = options?.pathResolver;
   if (!pathResolver) {
-    pathResolver = await createPathResolverForRuntime(scriptPath, protocol);
+    if (typeof require !== 'undefined') {
+      pathResolver = require.resolve;
+    } else if (scriptPath && (!protocol || protocol === 'file:')) {
+      pathResolver = await import('node:module')
+        .then(module => module.createRequire(scriptPath))
+        .then(require => require.resolve);
+    } else {
+      pathResolver = (path) => path;
+    }
   }
   return async (moduleSpecifier, providedCallerContext) => {
+    const stack = new Error().stack;
+
+    // Use provided caller context or try to capture it from stack trace
+    const callerContext = providedCallerContext || extractCallerContext(stack);
+
     // Always try built-in resolver first
     const builtinModule = await resolvers.builtin(moduleSpecifier, pathResolver);
     if (builtinModule) {
       return builtinModule;
     }
-
-    // Use provided caller context or try to capture it from stack trace
-    const callerContext = providedCallerContext || extractCallerContext();
 
     // Try relative path resolver second (for ./, ../, ../../, etc.)
     const relativeModule = await resolvers.relative(moduleSpecifier, pathResolver, callerContext);
@@ -722,11 +669,11 @@ export const makeUse = async (options) => {
 
 let __use = null;
 const _use = async (moduleSpecifier) => {
+  const stack = new Error().stack;
+
   // For Bun, we need to capture the stack trace before any other calls
   let bunCallerContext = null;
   if (typeof Bun !== 'undefined') {
-    const err = new Error();
-    const stack = err.stack;
     if (stack) {
       const lines = stack.split('\n');
       // Look for any .mjs file that's not use.mjs
@@ -740,12 +687,13 @@ const _use = async (moduleSpecifier) => {
     }
   }
 
+  // Capture the caller context here, before entering makeUse
+  const callerContext = bunCallerContext || extractCallerContext(stack);
+
   if (!__use) {
     __use = await makeUse();
   }
 
-  // Capture the caller context here, before entering makeUse
-  const callerContext = bunCallerContext || extractCallerContext();
   // Pass the caller context to the use function
   return __use(moduleSpecifier, callerContext);
 }

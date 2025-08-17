@@ -509,7 +509,7 @@ const makeUse = async (options) => {
   if (!pathResolver) {
     if (typeof require !== 'undefined') {
       pathResolver = require.resolve;
-    } else if (scriptPath) {
+    } else if (scriptPath && (!protocol || protocol === 'file:')) {
       pathResolver = await import('node:module')
         .then(module => module.createRequire(scriptPath))
         .then(require => require.resolve);
