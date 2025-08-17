@@ -1,3 +1,25 @@
+const resolveRelativePath = async (specifier, basePath) => {
+  // Helper function for resolving relative paths consistently (for the relative resolver only)
+  if (!specifier.startsWith('./') && !specifier.startsWith('../')) {
+    return null;
+  }
+  
+  try {
+    // Try URL-based resolution first
+    const url = new URL(specifier, basePath);
+    // For Bun, return pathname instead of full URL
+    if (typeof Bun !== 'undefined') {
+      return url.pathname;
+    }
+    return url.href;
+  } catch (error) {
+    // Fallback for non-URL basePath
+    const path = await import('node:path');
+    const normalizedPath = basePath.startsWith('file://') ? new URL(basePath).pathname : basePath;
+    return path.resolve(path.dirname(normalizedPath), specifier);
+  }
+};
+
 const extractCallerContext = () => {
   // Extract the caller's file URL from the stack trace
   const err = new Error();
@@ -201,17 +223,7 @@ export const resolvers = {
 
     // If we have a caller URL, resolve relative to it
     if (callerUrl && callerUrl.startsWith('file://')) {
-      try {
-        const url = new URL(moduleSpecifier, callerUrl);
-        // For Bun, use a regular path instead of file:// URL
-        if (typeof Bun !== 'undefined') {
-          resolvedPath = url.pathname;
-        } else {
-          resolvedPath = url.href;
-        }
-      } catch (error) {
-        // Fallback to pathResolver if URL resolution fails
-      }
+      resolvedPath = await resolveRelativePath(moduleSpecifier, callerUrl);
     }
 
     // If we couldn't resolve with URL, try pathResolver
@@ -635,7 +647,6 @@ export const makeUse = async (options) => {
       // Bun has require but createRequire behaves differently for relative paths
       if (typeof Bun !== 'undefined' && scriptPath && (!protocol || protocol === 'file:')) {
         const module = await import('node:module');
-        const path = await import('node:path');
 
         pathResolver = (specifier) => {
           try {
@@ -643,8 +654,13 @@ export const makeUse = async (options) => {
           } catch (error) {
             // Bun fallback for relative paths only
             if (specifier.startsWith('./') || specifier.startsWith('../')) {
-              const normalizedPath = scriptPath.startsWith('file://') ? new URL(scriptPath).pathname : scriptPath;
-              return path.resolve(path.dirname(normalizedPath), specifier);
+              try {
+                const url = new URL(specifier, scriptPath);
+                return url.pathname; // Bun uses pathname
+              } catch (urlError) {
+                // This shouldn't happen but provide fallback
+                throw error;
+              }
             }
             throw error;
           }
@@ -655,17 +671,21 @@ export const makeUse = async (options) => {
     } else if (typeof Deno !== 'undefined' && scriptPath && (!protocol || protocol === 'file:')) {
       // Deno path resolver similar to Bun's approach
       const module = await import('node:module');
-      const path = await import('node:path');
 
       pathResolver = (specifier) => {
         try {
           // Try using createRequire if available (Deno has Node compat)
           return module.createRequire(scriptPath).resolve(specifier);
         } catch (error) {
-          // Fallback for relative paths
+          // For relative paths, resolve using URL
           if (specifier.startsWith('./') || specifier.startsWith('../')) {
-            const normalizedPath = scriptPath.startsWith('file://') ? new URL(scriptPath).pathname : scriptPath;
-            return path.resolve(path.dirname(normalizedPath), specifier);
+            try {
+              const url = new URL(specifier, scriptPath);
+              return url.href; // Deno uses full URL
+            } catch (urlError) {
+              // This shouldn't happen but provide fallback
+              return specifier;
+            }
           }
           // For absolute paths or module names, just return as-is
           return specifier;
