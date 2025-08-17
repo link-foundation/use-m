@@ -20,6 +20,74 @@ const resolveRelativePath = async (specifier, basePath) => {
   }
 };
 
+const createPathResolverForRuntime = async (scriptPath, protocol) => {
+  // Auto-detect runtime and create appropriate pathResolver
+  const isBun = typeof Bun !== 'undefined';
+  const isDeno = typeof Deno !== 'undefined';
+  const hasRequire = typeof require !== 'undefined';
+  const hasScriptPath = scriptPath && (!protocol || protocol === 'file:');
+  
+  // Simple identity function for fallback
+  if (!hasScriptPath && !hasRequire) {
+    return (path) => path;
+  }
+  
+  // Bun with scriptPath - needs special handling for relative paths
+  if (isBun && hasScriptPath) {
+    const module = await import('node:module');
+    const requireResolve = module.createRequire(scriptPath).resolve;
+    return (specifier) => {
+      try {
+        return requireResolve(specifier);
+      } catch (error) {
+        if (specifier.startsWith('./') || specifier.startsWith('../')) {
+          try {
+            return new URL(specifier, scriptPath).pathname; // Bun uses pathname
+          } catch (urlError) {
+            throw error;
+          }
+        }
+        throw error;
+      }
+    };
+  }
+  
+  // Deno with scriptPath - needs special handling for relative paths
+  if (isDeno && hasScriptPath) {
+    const module = await import('node:module');
+    const requireResolve = module.createRequire(scriptPath).resolve;
+    return (specifier) => {
+      try {
+        return requireResolve(specifier);
+      } catch (error) {
+        if (specifier.startsWith('./') || specifier.startsWith('../')) {
+          try {
+            return new URL(specifier, scriptPath).href; // Deno uses full URL
+          } catch (urlError) {
+            return specifier;
+          }
+        }
+        return specifier; // For absolute paths/modules, return as-is
+      }
+    };
+  }
+  
+  // Node.js with scriptPath - use createRequire
+  if (hasScriptPath) {
+    return await import('node:module')
+      .then(module => module.createRequire(scriptPath))
+      .then(require => require.resolve);
+  }
+  
+  // Has require but no scriptPath (Node.js fallback)
+  if (hasRequire) {
+    return require.resolve;
+  }
+  
+  // Final fallback
+  return (path) => path;
+};
+
 const extractCallerContext = () => {
   // Extract the caller's file URL from the stack trace
   const err = new Error();
@@ -643,61 +711,7 @@ export const makeUse = async (options) => {
   }
   let pathResolver = options?.pathResolver;
   if (!pathResolver) {
-    if (typeof require !== 'undefined') {
-      // Bun has require but createRequire behaves differently for relative paths
-      if (typeof Bun !== 'undefined' && scriptPath && (!protocol || protocol === 'file:')) {
-        const module = await import('node:module');
-
-        pathResolver = (specifier) => {
-          try {
-            return module.createRequire(scriptPath).resolve(specifier);
-          } catch (error) {
-            // Bun fallback for relative paths only
-            if (specifier.startsWith('./') || specifier.startsWith('../')) {
-              try {
-                const url = new URL(specifier, scriptPath);
-                return url.pathname; // Bun uses pathname
-              } catch (urlError) {
-                // This shouldn't happen but provide fallback
-                throw error;
-              }
-            }
-            throw error;
-          }
-        };
-      } else {
-        pathResolver = require.resolve;
-      }
-    } else if (typeof Deno !== 'undefined' && scriptPath && (!protocol || protocol === 'file:')) {
-      // Deno path resolver similar to Bun's approach
-      const module = await import('node:module');
-
-      pathResolver = (specifier) => {
-        try {
-          // Try using createRequire if available (Deno has Node compat)
-          return module.createRequire(scriptPath).resolve(specifier);
-        } catch (error) {
-          // For relative paths, resolve using URL
-          if (specifier.startsWith('./') || specifier.startsWith('../')) {
-            try {
-              const url = new URL(specifier, scriptPath);
-              return url.href; // Deno uses full URL
-            } catch (urlError) {
-              // This shouldn't happen but provide fallback
-              return specifier;
-            }
-          }
-          // For absolute paths or module names, just return as-is
-          return specifier;
-        }
-      };
-    } else if (scriptPath && (!protocol || protocol === 'file:')) {
-      pathResolver = await import('node:module')
-        .then(module => module.createRequire(scriptPath))
-        .then(require => require.resolve);
-    } else {
-      pathResolver = (path) => path;
-    }
+    pathResolver = await createPathResolverForRuntime(scriptPath, protocol);
   }
   return async (moduleSpecifier, providedCallerContext) => {
     // Always try built-in resolver first
