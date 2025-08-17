@@ -250,6 +250,18 @@ export const resolvers = {
     }
 
     // Import the module and return it
+    // Check if this is a JSON file and handle it specially
+    if (resolvedPath.endsWith('.json')) {
+      try {
+        // For JSON files, we need to use import assertions
+        const module = await import(resolvedPath, { with: { type: 'json' } });
+        return module.default || module;
+      } catch (error) {
+        // Fallback to baseUse if import assertions fail
+        return baseUse(resolvedPath);
+      }
+    }
+    
     return baseUse(resolvedPath);
   },
   npm: async (moduleSpecifier, pathResolver) => {
