@@ -14,15 +14,40 @@ const extractCallerContext = (stack) => {
       continue;
     }
 
-    // Try to match file:// URLs
+    // Try to match file:// URLs first
     let match = line.match(/file:\/\/[^\s)]+/);
     if (match && !match[0].endsWith('/use.mjs')) {
       return match[0];
     }
-    // For Node/Deno, try to match absolute paths
-    match = line.match(/at\s+(?:<anonymous>\s+)?[(]?(\/[^\s:)]+\.m?js)/);
-    if (match && !match[1].endsWith('/use.mjs')) {
+
+    // Special handling for Jest environment
+    // Jest paths often look like: at Object.<anonymous> (/path/to/test.mjs:7:24)
+    // Or: at /path/to/test.mjs:7:24
+    if (line.includes('.test.') || line.includes('.spec.')) {
+      // Try to extract the actual test file path from Jest stack traces
+      match = line.match(/\(([^)]+\.(?:test|spec)\.[^)]+):\d+:\d+\)/);
+      if (!match) {
+        match = line.match(/([^(\s]+\.(?:test|spec)\.[^(\s:]+):\d+:\d+/);
+      }
+      if (match && match[1]) {
+        const testPath = match[1];
+        // Convert to file:// URL format if it's an absolute path
+        if (testPath.startsWith('/')) {
+          return `file://${testPath}`;
+        }
+      }
+    }
+
+    // For Node/Deno, try to match absolute paths (improved to handle more cases)
+    match = line.match(/at\s+(?:Object\.<anonymous>\s+)?(?:async\s+)?[(]?(\/[^\s:)]+\.(?:m?js|json))(?::\d+:\d+)?\)?/);
+    if (match && !match[1].endsWith('/use.mjs') && !match[1].includes('node_modules')) {
       return 'file://' + match[1];
+    }
+
+    // Alternative pattern for Jest and other environments
+    match = line.match(/at\s+[^(]*\(([^)]+\.(?:m?js|json)):\d+:\d+\)/);
+    if (match && !match[1].endsWith('/use.mjs') && !match[1].includes('node_modules')) {
+      return 'file://' + (match[1].startsWith('/') ? match[1] : '/' + match[1]);
     }
   }
   return null;
