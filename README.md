@@ -10,19 +10,29 @@
 It may be useful for standalone scripts that do not require a `package.json`. Also it may make your code portable across environments (for example it may require no changes in your code when executed in CommonJS, ES Modules and browser). You can ensure predictable behavior of your code over time by specifying the exact version to import directly in your script, similar to how versions are specified in package.json. You even can import multiple versions of the same library at the same time. You can use `use-m` when you don't want your `package.json` to be poluted with optional packages. You may keep your `package.json` with as little dependencies as needed thanks to `use-m`.
 
 ## Table of Contents
-- [Introduction](#use-m-dynamically-load-and-import-any-javascript-module)
-- [Key Features](#key-features)
-- [Usage](#usage)
-  - [Universal](#universal)
-  - [Browser](#browser)
-  - [Deno](#deno)
-  - [Network Imports](#network-imports)
-  - [Independent Scripts](#independent-scripts)
-  - [Standard Import](#standard-import)
-- [Examples](#examples)
-- [Questions and issues](#questions-and-issues)
-- [Contributing](#contributing)
-- [License](#license)
+- [use-m: dynamically import any JavaScript module anywhere](#use-m-dynamically-import-any-javascript-module-anywhere)
+  - [Table of Contents](#table-of-contents)
+  - [Key features](#key-features)
+  - [Usage](#usage)
+    - [Universal](#universal)
+    - [Interactive shell in Node.js environment](#interactive-shell-in-nodejs-environment)
+    - [Browser](#browser)
+    - [Deno](#deno)
+    - [Bun](#bun)
+    - [Network imports](#network-imports)
+    - [Independent Scripts](#independent-scripts)
+      - [`use-m` and `command-stream`](#use-m-and-command-stream)
+      - [`use-m` and Bun.$](#use-m-and-bun)
+      - [`use-m` and `zx`](#use-m-and-zx)
+      - [`use-m` and `execa`](#use-m-and-execa)
+    - [Standard Import](#standard-import)
+      - [Installation](#installation)
+      - [CommonJS](#commonjs)
+      - [ES Modules](#es-modules)
+  - [Examples](#examples)
+  - [Questions and issues](#questions-and-issues)
+  - [Contributing](#contributing)
+  - [License](#license)
 
 ## Key features
 
@@ -202,6 +212,8 @@ Bun provides a built-in `$` shell API that works seamlessly with `use-m`:
 1. Create a file named `example.mjs`:
 
    ```javascript
+    #!/usr/bin/env bun
+
    const { use } = eval(
      await fetch('https://unpkg.com/use-m/use.js').then(u => u.text())
    );
@@ -267,6 +279,8 @@ Bun provides a built-in `$` shell API that works seamlessly with `use-m`:
 1. Create a file named `example.mjs`:
 
    ```javascript
+   #!/usr/bin/env node
+
    const { use } = eval(
      await fetch('https://unpkg.com/use-m/use.js').then(u => u.text())
    ); 
