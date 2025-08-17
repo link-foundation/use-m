@@ -75,7 +75,52 @@ const supportedBuiltins = {
   },
   'process': {
     browser: null, // Not available in browser
-    node: () => ({ default: process, ...process })
+    node: () => {
+      // Deno 2.x has a process global, use it if available
+      if (typeof process !== 'undefined') {
+        // In Deno, process is an EventEmitter and spreading doesn't work properly
+        // We need to explicitly copy the properties we need
+        const proc = {
+          default: process,
+          pid: process.pid,
+          platform: process.platform,
+          version: process.version,
+          versions: process.versions,
+          argv: process.argv,
+          env: process.env,
+          exit: process.exit,
+          cwd: process.cwd,
+          chdir: process.chdir,
+          // Add any other commonly used process properties
+          nextTick: process.nextTick,
+          stdout: process.stdout,
+          stderr: process.stderr,
+          stdin: process.stdin,
+        };
+        return proc;
+      }
+      // Fallback for older Deno versions - emulate process module
+      if (typeof Deno !== 'undefined') {
+        const proc = {
+          pid: Deno.pid,
+          platform: Deno.build.os === 'darwin' ? 'darwin' : 
+                     Deno.build.os === 'windows' ? 'win32' : 
+                     Deno.build.os === 'linux' ? 'linux' : 
+                     Deno.build.os,
+          version: `v${Deno.version.deno}`,
+          versions: Deno.version,
+          argv: Deno.args,
+          env: Deno.env.toObject(),
+          exit: Deno.exit,
+          cwd: Deno.cwd,
+          chdir: Deno.chdir,
+          // Add more process properties as needed
+        };
+        return { default: proc, ...proc };
+      }
+      // This shouldn't happen but provide a fallback
+      return null;
+    }
   },
   'child_process': {
     browser: null,
