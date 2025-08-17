@@ -32,60 +32,45 @@ const createPathResolverForRuntime = async (scriptPath, protocol) => {
     return (path) => path;
   }
   
-  // Bun with scriptPath - needs special handling for relative paths
-  if (isBun && hasScriptPath) {
-    const module = await import('node:module');
-    const requireResolve = module.createRequire(scriptPath).resolve;
-    return (specifier) => {
-      try {
-        return requireResolve(specifier);
-      } catch (error) {
-        if (specifier.startsWith('./') || specifier.startsWith('../')) {
-          try {
-            return new URL(specifier, scriptPath).pathname; // Bun uses pathname
-          } catch (urlError) {
-            throw error;
-          }
-        }
-        throw error;
-      }
-    };
-  }
-  
-  // Deno with scriptPath - needs special handling for relative paths
-  if (isDeno && hasScriptPath) {
-    const module = await import('node:module');
-    const requireResolve = module.createRequire(scriptPath).resolve;
-    return (specifier) => {
-      try {
-        return requireResolve(specifier);
-      } catch (error) {
-        if (specifier.startsWith('./') || specifier.startsWith('../')) {
-          try {
-            return new URL(specifier, scriptPath).href; // Deno uses full URL
-          } catch (urlError) {
-            return specifier;
-          }
-        }
-        return specifier; // For absolute paths/modules, return as-is
-      }
-    };
-  }
-  
-  // Node.js with scriptPath - use createRequire
-  if (hasScriptPath) {
-    return await import('node:module')
-      .then(module => module.createRequire(scriptPath))
-      .then(require => require.resolve);
-  }
-  
   // Has require but no scriptPath (Node.js fallback)
-  if (hasRequire) {
+  if (hasRequire && !hasScriptPath) {
     return require.resolve;
   }
   
-  // Final fallback
-  return (path) => path;
+  // Get the base requireResolve function for all scriptPath cases
+  let requireResolve;
+  if (hasScriptPath) {
+    const module = await import('node:module');
+    requireResolve = module.createRequire(scriptPath).resolve;
+  }
+  
+  // For vanilla Node.js with scriptPath, just return the requireResolve
+  if (!isBun && !isDeno && hasScriptPath) {
+    return requireResolve;
+  }
+  
+  // For Bun and Deno, add relative path fallback
+  return (specifier) => {
+    try {
+      return requireResolve(specifier);
+    } catch (error) {
+      // Handle relative paths with runtime-specific behavior
+      if (specifier.startsWith('./') || specifier.startsWith('../')) {
+        try {
+          const url = new URL(specifier, scriptPath);
+          if (isBun) return url.pathname;
+          if (isDeno) return url.href;
+          return url.href; // Default
+        } catch (urlError) {
+          if (isDeno) return specifier; // Deno fallback
+          throw error;
+        }
+      }
+      // Deno returns specifier as-is for non-relative paths
+      if (isDeno) return specifier;
+      throw error;
+    }
+  };
 };
 
 const extractCallerContext = () => {
