@@ -515,12 +515,12 @@ const makeUse = async (options) => {
   }
   let pathResolver = options?.pathResolver;
   if (!pathResolver) {
-    if (typeof require !== 'undefined') {
-      pathResolver = require.resolve;
-    } else if (scriptPath) {
+    if (scriptPath) {
       pathResolver = await import('node:module')
         .then(module => module.createRequire(scriptPath))
         .then(require => require.resolve);
+    } else if (typeof require !== 'undefined') {
+      pathResolver = require.resolve;
     } else {
       pathResolver = (path) => path;
     }
