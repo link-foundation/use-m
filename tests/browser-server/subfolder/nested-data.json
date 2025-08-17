@@ -1,0 +1,8 @@
+{
+    "level": "nested",
+    "depth": 1,
+    "location": "subfolder",
+    "data": {
+        "test": true
+    }
+}

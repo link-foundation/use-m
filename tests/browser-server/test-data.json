@@ -1,0 +1,8 @@
+{
+    "test": "data",
+    "value": 123,
+    "array": [1, 2, 3],
+    "object": {
+        "nested": "value"
+    }
+}

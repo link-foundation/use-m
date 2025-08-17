@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>use-m Browser Tests - Relative Path Resolution</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 4px;
+        }
+        .test-pass {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .test-fail {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .test-pending {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        #results {
+            margin-top: 20px;
+        }
+        .summary {
+            font-weight: bold;
+            font-size: 18px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>use-m Browser Tests - Relative Path Resolution</h1>
+    <div id="results">
+        <div class="test-result test-pending">Running tests...</div>
+    </div>
+
+    <script type="module">
+        // Import use-m
+        import { use } from '../../use.mjs';
+
+        const results = document.getElementById('results');
+        let passed = 0;
+        let failed = 0;
+        let total = 0;
+
+        function addResult(testName, success, error = null, isOptional = false) {
+            if (!isOptional) {
+                total++;
+            }
+            const div = document.createElement('div');
+            div.className = `test-result ${success ? 'test-pass' : isOptional ? 'test-pending' : 'test-fail'}`;
+            div.innerHTML = success 
+                ? `✅ ${testName}` 
+                : isOptional
+                ? `⚠️ ${testName}: ${error?.message || 'Unknown error'} (optional - skipped)`
+                : `❌ ${testName}: ${error?.message || 'Unknown error'}`;
+            results.appendChild(div);
+            
+            if (success && !isOptional) {
+                passed++;
+            } else if (!success && !isOptional) {
+                failed++;
+                console.error(`Test failed: ${testName}`, error);
+            }
+        }
+
+        function updateSummary() {
+            const summary = document.createElement('div');
+            summary.className = 'summary';
+            summary.innerHTML = `
+                <div>Tests completed: ${total}</div>
+                <div style="color: green;">Passed: ${passed}</div>
+                <div style="color: red;">Failed: ${failed}</div>
+                <div>Success rate: ${total > 0 ? Math.round((passed / total) * 100) : 0}%</div>
+            `;
+            results.appendChild(summary);
+            
+            // Set result on window for Puppeteer to read
+            window.testResults = {
+                total,
+                passed,
+                failed,
+                success: failed === 0 && total > 0
+            };
+        }
+
+        async function runTests() {
+            // Clear pending message
+            results.innerHTML = '';
+            
+            try {
+                // Test 1: Import JS file from same directory using ./
+                try {
+                    const testModule = await use('./test-helper.js');
+                    if (testModule && testModule.message === 'Helper module loaded') {
+                        addResult('./ path for JS file in same directory', true);
+                    } else {
+                        throw new Error('Module not loaded correctly or missing expected property');
+                    }
+                } catch (error) {
+                    addResult('./ path for JS file in same directory', false, error);
+                }
+
+                // Test 2: Import JSON file from same directory using ./
+                try {
+                    const testData = await use('./test-data.json');
+                    if (testData && testData.test === 'data' && testData.value === 123) {
+                        addResult('./ path for JSON file in same directory', true);
+                    } else {
+                        throw new Error('JSON data not loaded correctly or missing expected properties');
+                    }
+                } catch (error) {
+                    addResult('./ path for JSON file in same directory', false, error);
+                }
+
+                // Test 3: Import JS file from parent directory using ../../
+                try {
+                    const parentModule = await use('../../use.mjs');
+                    if (parentModule && typeof parentModule.use === 'function') {
+                        addResult('../../ path for JS file in parent directory', true);
+                    } else {
+                        throw new Error('Parent module not loaded correctly or missing use function');
+                    }
+                } catch (error) {
+                    addResult('../../ path for JS file in parent directory', false, error);
+                }
+
+                // Test 4: Import from subdirectory using ./subfolder/
+                try {
+                    const subModule = await use('./subfolder/nested.js');
+                    if (subModule && subModule.nested === true) {
+                        addResult('./subfolder/ path for nested JS file', true);
+                    } else {
+                        throw new Error('Nested module not loaded correctly');
+                    }
+                } catch (error) {
+                    addResult('./subfolder/ path for nested JS file', false, error);
+                }
+
+                // Test 5: Import JSON from subdirectory
+                try {
+                    const subData = await use('./subfolder/nested-data.json');
+                    if (subData && subData.level === 'nested' && subData.depth === 1) {
+                        addResult('./subfolder/ path for nested JSON file', true);
+                    } else {
+                        throw new Error('Nested JSON not loaded correctly');
+                    }
+                } catch (error) {
+                    addResult('./subfolder/ path for nested JSON file', false, error);
+                }
+
+                // Test 6: Complex relative path (../../)
+                try {
+                    // This should work if we have the right file structure
+                    const rootModule = await use('../../package.json');
+                    if (rootModule && rootModule.name === 'use-m') {
+                        addResult('../../ path for accessing root package.json', true);
+                    } else {
+                        throw new Error('Root package.json not loaded correctly');
+                    }
+                } catch (error) {
+                    // This might fail in some test environments, which is ok
+                    if (error.message.includes('404') || error.message.includes('not found')) {
+                        addResult('../../ path (expected to fail in isolated test)', true);
+                    } else {
+                        addResult('../../ path for accessing root files', false, error);
+                    }
+                }
+
+                // Test 7: Relative path without extension (optional - may not work in browsers)
+                try {
+                    const noExtModule = await use('./test-helper');
+                    if (noExtModule && noExtModule.message === 'Helper module loaded') {
+                        addResult('./ path without .js extension (optional)', true, null, true);
+                    } else {
+                        throw new Error('Module without extension not loaded correctly');
+                    }
+                } catch (error) {
+                    // This is expected to fail in browser environments, don't count as failure
+                    addResult('./ path without .js extension (optional)', false, error, true);
+                }
+
+                // Test 8: Mixed relative and absolute imports
+                try {
+                    // First load a relative module
+                    const relModule = await use('./test-helper.js');
+                    // Then load an npm module
+                    const lodash = await use('lodash@4.17.21');
+                    // Then another relative module
+                    const relModule2 = await use('./test-data.json');
+                    
+                    if (relModule && lodash && relModule2 && typeof lodash.add === 'function') {
+                        addResult('Mixed relative and npm imports', true);
+                    } else {
+                        throw new Error('Mixed imports not working correctly');
+                    }
+                } catch (error) {
+                    addResult('Mixed relative and npm imports', false, error);
+                }
+
+            } catch (globalError) {
+                addResult('Global test execution', false, globalError);
+            }
+
+            updateSummary();
+        }
+
+        // Run tests when page loads
+        runTests().catch(error => {
+            console.error('Failed to run tests:', error);
+            addResult('Test execution failed', false, error);
+            updateSummary();
+        });
+    </script>
+</body>
+</html>

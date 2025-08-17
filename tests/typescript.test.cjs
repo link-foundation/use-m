@@ -1,4 +1,4 @@
-const { describe, test, expect, beforeAll, afterAll, beforeEach, afterEach } = require('../test-adapter.cjs');
+const { describe, test, expect } = require('../test-adapter.cjs');
 const { use } = require('use-m');
 const moduleName = `[${__filename.split('.').pop()} module]`;
 

@@ -1,4 +1,4 @@
-const { describe, test, expect, beforeAll, afterAll, beforeEach, afterEach } = require('../test-adapter.cjs');
+const { describe, test, expect } = require('../test-adapter.cjs');
 const { makeUse } = require('../use.cjs');
 const path = require('node:path');
 const currentDir = path.dirname(__filename);

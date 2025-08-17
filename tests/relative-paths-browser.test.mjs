@@ -1,4 +1,4 @@
-import { describe, test, expect } from '../test-adapter.mjs';
+import { describe, test, expect, beforeAll, afterAll } from '../test-adapter.mjs';
 
 // Skip browser tests in Deno environment
 const isDeno = typeof Deno !== 'undefined';
@@ -17,7 +17,7 @@ const moduleName = `[${import.meta.url.split('.').pop()} module]`;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-describe(`${moduleName} Universal built-in modules in browser`, () => {
+describe(`${moduleName} Relative path resolution in browser`, () => {
   // Skip all browser tests in Deno
   if (isDeno) {
     test.skip = test.skip || test;
@@ -39,8 +39,8 @@ describe(`${moduleName} Universal built-in modules in browser`, () => {
     // Serve static files from project root
     app.use(express.static(projectRoot));
     
-    // Start server on port 8002 (different from manual script to avoid conflicts)
-    server = app.listen(8002);
+    // Start server on port 8003 (different port to avoid conflicts)
+    server = app.listen(8003);
     
     // Wait for server to be ready
     await new Promise(resolve => setTimeout(resolve, 500));
@@ -67,7 +67,7 @@ describe(`${moduleName} Universal built-in modules in browser`, () => {
     });
 
     // Navigate to the test page
-    await page.goto('http://localhost:8002/tests/browser-server/browser-test.html', {
+    await page.goto('http://localhost:8003/tests/browser-server/relative-paths-browser.test.html', {
       waitUntil: 'networkidle0',
       timeout: 30000
     });
@@ -88,79 +88,70 @@ describe(`${moduleName} Universal built-in modules in browser`, () => {
     }
   });
 
-  test(`${moduleName} console module should work in browser`, async () => {
+  test(`${moduleName} ./ path for JS file in same directory should work`, async () => {
     const result = await page.evaluate(() => {
       const results = Array.from(document.querySelectorAll('.test-result'));
-      const consoleTest = results.find(el => el.textContent.includes('console module should work'));
-      return consoleTest ? consoleTest.classList.contains('test-pass') : false;
+      const test = results.find(el => el.textContent.includes('./ path for JS file in same directory'));
+      return test ? test.classList.contains('test-pass') : false;
     });
     
     expect(result).toBe(true);
   });
 
-  test(`${moduleName} crypto module should work in browser`, async () => {
+  test(`${moduleName} ./ path for JSON file in same directory should work`, async () => {
     const result = await page.evaluate(() => {
       const results = Array.from(document.querySelectorAll('.test-result'));
-      const cryptoTest = results.find(el => el.textContent.includes('crypto module should work'));
-      return cryptoTest ? cryptoTest.classList.contains('test-pass') : false;
+      const test = results.find(el => el.textContent.includes('./ path for JSON file in same directory'));
+      return test ? test.classList.contains('test-pass') : false;
     });
     
     expect(result).toBe(true);
   });
 
-  test(`${moduleName} url module should work in browser`, async () => {
+  test(`${moduleName} ../../ path for JS file in parent directory should work`, async () => {
     const result = await page.evaluate(() => {
       const results = Array.from(document.querySelectorAll('.test-result'));
-      const urlTest = results.find(el => el.textContent.includes('url module should work'));
-      return urlTest ? urlTest.classList.contains('test-pass') : false;
+      const test = results.find(el => el.textContent.includes('../../ path for JS file in parent directory'));
+      return test ? test.classList.contains('test-pass') : false;
     });
     
     expect(result).toBe(true);
   });
 
-  test(`${moduleName} performance module should work in browser`, async () => {
+  test(`${moduleName} ./subfolder/ path for nested JS file should work`, async () => {
     const result = await page.evaluate(() => {
       const results = Array.from(document.querySelectorAll('.test-result'));
-      const perfTest = results.find(el => el.textContent.includes('performance module should work'));
-      return perfTest ? perfTest.classList.contains('test-pass') : false;
+      const test = results.find(el => el.textContent.includes('./subfolder/ path for nested JS file'));
+      return test ? test.classList.contains('test-pass') : false;
     });
     
     expect(result).toBe(true);
   });
 
-  test(`${moduleName} fs module should fail in browser with correct error`, async () => {
+  test(`${moduleName} ./subfolder/ path for nested JSON file should work`, async () => {
     const result = await page.evaluate(() => {
       const results = Array.from(document.querySelectorAll('.test-result'));
-      const fsTest = results.find(el => el.textContent.includes('fs module should fail in browser'));
-      return fsTest ? fsTest.classList.contains('test-pass') : false;
+      const test = results.find(el => el.textContent.includes('./subfolder/ path for nested JSON file'));
+      return test ? test.classList.contains('test-pass') : false;
     });
     
     expect(result).toBe(true);
   });
 
-  test(`${moduleName} node: prefix should work with universal modules`, async () => {
+  test(`${moduleName} mixed relative and npm imports should work`, async () => {
     const result = await page.evaluate(() => {
       const results = Array.from(document.querySelectorAll('.test-result'));
-      const nodePrefixTest = results.find(el => el.textContent.includes('node:url prefix should work'));
-      return nodePrefixTest ? nodePrefixTest.classList.contains('test-pass') : false;
+      const test = results.find(el => el.textContent.includes('Mixed relative and npm imports'));
+      return test ? test.classList.contains('test-pass') : false;
     });
     
     expect(result).toBe(true);
   });
 
-  test(`${moduleName} uppercase module names should fail (strict lowercase only)`, async () => {
-    const result = await page.evaluate(() => {
-      const results = Array.from(document.querySelectorAll('.test-result'));
-      const uppercaseTest = results.find(el => el.textContent.includes('uppercase URL should fail'));
-      return uppercaseTest ? uppercaseTest.classList.contains('test-pass') : false;
-    });
-    
-    expect(result).toBe(true);
-  });
-
-  test(`${moduleName} all browser tests should pass`, async () => {
+  test(`${moduleName} all relative path browser tests should pass`, async () => {
     const testResults = await page.evaluate(() => window.testResults);
     
+    expect(testResults).toBeDefined();
     expect(testResults.total).toBeGreaterThan(0);
     expect(testResults.failed).toBe(0);
     expect(testResults.success).toBe(true);
