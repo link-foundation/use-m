@@ -1,16 +1,9 @@
 {
   "tasks": {
-    "test": "deno test --allow-read --allow-write --allow-net --allow-env --allow-run --allow-sys --unstable-sloppy-imports tests/*.test.mjs"
+    "test": "deno test --allow-all tests/*.test.mjs"
   },
   "test": {
     "include": ["tests/*.test.mjs"],
     "exclude": ["tests/*.test.cjs", "bun-issues/**"]
-  },
-  "nodeModulesDir": "auto",
-  "unstable": ["sloppy-imports"],
-  "compilerOptions": {
-    "allowJs": true,
-    "checkJs": false,
-    "strict": false
   }
 }

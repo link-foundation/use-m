@@ -26,13 +26,17 @@ const extractCallerContext = (stack) => {
     // Try to match http(s):// URLs for browser environments
     let match = line.match(/https?:\/\/[^\s)]+/);
     if (match && !match[0].endsWith('/use.mjs') && !match[0].endsWith('/use.js')) {
-      return match[0];
+      // Remove line:column numbers if present
+      const url = match[0].replace(/:\d+:\d+$/, '');
+      return url;
     }
 
     // Try to match file:// URLs
     match = line.match(/file:\/\/[^\s)]+/);
     if (match && !match[0].endsWith('/use.mjs')) {
-      return match[0];
+      // Remove line:column numbers if present
+      const url = match[0].replace(/:\d+:\d+$/, '');
+      return url;
     }
 
     // Special handling for Jest environment
@@ -65,6 +69,7 @@ const extractCallerContext = (stack) => {
       return 'file://' + (match[1].startsWith('/') ? match[1] : '/' + match[1]);
     }
   }
+  console.log('DEBUG: extractCallerContext returning null - no match found');
   return null;
 };
 

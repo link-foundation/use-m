@@ -18,7 +18,7 @@ describe(`${moduleName} Relative Path Resolution (Integration)`, () => {
       if (typeof Bun !== 'undefined') {
         runtime = 'bun';
       } else if (typeof Deno !== 'undefined') {
-        runtime = 'deno';
+        runtime = 'deno run --allow-all';
       }
 
       // For some reason export NO_COLOR=1 does not have effect when run at `npm test` in parallel, but works when run separately: `npm test -- tests/relative-paths.integration.test.mjs`
