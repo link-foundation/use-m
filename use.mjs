@@ -571,9 +571,25 @@ export const makeUse = async (options) => {
       } else {
         pathResolver = require.resolve;
       }
-    } else if (typeof Deno !== 'undefined') {
-      // Deno doesn't have require.resolve, so use a simple path resolver
-      pathResolver = (path) => path;
+    } else if (typeof Deno !== 'undefined' && scriptPath && (!protocol || protocol === 'file:')) {
+      // Deno path resolver similar to Bun's approach
+      const module = await import('node:module');
+      const path = await import('node:path');
+      
+      pathResolver = (specifier) => {
+        try {
+          // Try using createRequire if available (Deno has Node compat)
+          return module.createRequire(scriptPath).resolve(specifier);
+        } catch (error) {
+          // Fallback for relative paths
+          if (specifier.startsWith('./') || specifier.startsWith('../')) {
+            const normalizedPath = scriptPath.startsWith('file://') ? new URL(scriptPath).pathname : scriptPath;
+            return path.resolve(path.dirname(normalizedPath), specifier);
+          }
+          // For absolute paths or module names, just return as-is
+          return specifier;
+        }
+      };
     } else if (scriptPath && (!protocol || protocol === 'file:')) {
       pathResolver = await import('node:module')
         .then(module => module.createRequire(scriptPath))

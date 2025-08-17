@@ -17,9 +17,6 @@ const currentDir = dirname(currentFilePath);
 
 describe(`${moduleName} scriptPath detection in ESM (functional)`, () => {
   test(`${moduleName} default pathResolver resolves modules relative to use.mjs`, async () => {
-    if (typeof Deno !== 'undefined') {
-      return;
-    }
 
     let capturedResolver;
     const stubSpecifierResolver = (specifier, pathResolver) => {
@@ -35,9 +32,6 @@ describe(`${moduleName} scriptPath detection in ESM (functional)`, () => {
   });
 
   test(`${moduleName} override scriptPath resolves relative to provided path`, async () => {
-    if (typeof Deno !== 'undefined') {
-      return;
-    }
 
     let capturedResolver;
     const stubSpecifierResolver = (specifier, pathResolver) => {
@@ -65,9 +59,6 @@ describe(`${moduleName} scriptPath detection in ESM (createRequire fallback)`, (
   });
 
   test(`${moduleName} fallback default resolves modules relative to use.mjs`, async () => {
-    if (typeof Deno !== 'undefined') {
-      return;
-    }
 
     let capturedResolver;
     const stubSpecifierResolver = (specifier, pathResolver) => {
@@ -82,9 +73,6 @@ describe(`${moduleName} scriptPath detection in ESM (createRequire fallback)`, (
   });
 
   test(`${moduleName} fallback explicit scriptPath resolves relative to provided path`, async () => {
-    if (typeof Deno !== 'undefined') {
-      return;
-    }
 
     let capturedResolver;
     const stubSpecifierResolver = (specifier, pathResolver) => {
@@ -99,9 +87,6 @@ describe(`${moduleName} scriptPath detection in ESM (createRequire fallback)`, (
   });
 
   test(`${moduleName} fallback meta override changes pathResolver behavior in ESM`, async () => {
-    if (typeof Deno !== 'undefined') {
-      return;
-    }
 
     let capturedResolver;
     const stubSpecifierResolver = (specifier, pathResolver) => {
@@ -122,9 +107,6 @@ describe(`${moduleName} scriptPath detection in ESM (createRequire fallback)`, (
 // Additional test for meta.url with use.js path
 describe(`${moduleName} scriptPath detection in ESM (meta URL)`, () => {
   test(`${moduleName} meta override resolves modules relative to provided meta URL (use.js)`, async () => {
-    if (typeof Deno !== 'undefined') {
-      return;
-    }
 
     let capturedResolver;
     const stubSpecifierResolver = (specifier, pathResolver) => {
