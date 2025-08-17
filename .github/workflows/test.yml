@@ -1,4 +1,4 @@
-name: Test Suite (Multi-Platform)
+name: Tests
 
 # This workflow tests on multiple OS and Node versions
 # It's triggered on non-main branches and can be manually triggered
