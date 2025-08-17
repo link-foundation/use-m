@@ -2,6 +2,3 @@
 # Enable Jest compatibility mode 
 timeout = "30000ms"
 smol = false
-
-# Preload Jest globals for compatibility
-# preload = ["./test-setup.js"]
