@@ -9,6 +9,8 @@
 
 It may be useful for standalone scripts that do not require a `package.json`. Also it may make your code portable across environments (for example it may require no changes in your code when executed in CommonJS, ES Modules and browser). You can ensure predictable behavior of your code over time by specifying the exact version to import directly in your script, similar to how versions are specified in package.json. You even can import multiple versions of the same library at the same time. You can use `use-m` when you don't want your `package.json` to be poluted with optional packages. You may keep your `package.json` with as little dependencies as needed thanks to `use-m`.
 
+<img width="2680" height="2928" alt="ray-so-export-2" src="https://github.com/user-attachments/assets/97909db5-b253-4493-81b8-ee6b6d68b00f" />
+
 ## Table of Contents
 - [use-m: dynamically import any JavaScript module anywhere](#use-m-dynamically-import-any-javascript-module-anywhere)
   - [Table of Contents](#table-of-contents)
