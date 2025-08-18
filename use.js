@@ -1,6 +1,15 @@
 const extractCallerContext = (stack) => {
-  // Extract the caller's file URL from the stack trace
-  if (!stack) return null;
+  // In browser environment, use the current document URL as fallback
+  if (typeof window !== 'undefined' && window.location) {
+    // For inline scripts in HTML, use the document's URL
+    // This will be the fallback if we can't extract from stack
+    const documentUrl = window.location.href;
+    
+    // Try to extract from stack first, but we'll fallback to document URL
+    if (!stack) return documentUrl;
+  } else if (!stack) {
+    return null;
+  }
 
   const lines = stack.split('\n');
   // Look for the first file that isn't use.mjs - skip the first few frames
@@ -14,15 +23,50 @@ const extractCallerContext = (stack) => {
       continue;
     }
 
-    // Try to match file:// URLs
-    let match = line.match(/file:\/\/[^\s)]+/);
-    if (match && !match[0].endsWith('/use.mjs')) {
-      return match[0];
+    // Try to match http(s):// URLs for browser environments
+    let match = line.match(/https?:\/\/[^\s)]+/);
+    if (match && !match[0].endsWith('/use.mjs') && !match[0].endsWith('/use.js')) {
+      // Remove line:column numbers if present
+      const url = match[0].replace(/:\d+:\d+$/, '');
+      return url;
     }
-    // For Node/Deno, try to match absolute paths
-    match = line.match(/at\s+(?:<anonymous>\s+)?[(]?(\/[^\s:)]+\.m?js)/);
-    if (match && !match[1].endsWith('/use.mjs')) {
+
+    // Try to match file:// URLs
+    match = line.match(/file:\/\/[^\s)]+/);
+    if (match && !match[0].endsWith('/use.mjs')) {
+      // Remove line:column numbers if present
+      const url = match[0].replace(/:\d+:\d+$/, '');
+      return url;
+    }
+
+    // Special handling for Jest environment
+    // Jest paths often look like: at Object.<anonymous> (/path/to/test.mjs:7:24)
+    // Or: at /path/to/test.mjs:7:24
+    if (line.includes('.test.') || line.includes('.spec.')) {
+      // Try to extract the actual test file path from Jest stack traces
+      match = line.match(/\(([^)]+\.(?:test|spec)\.[^)]+):\d+:\d+\)/);
+      if (!match) {
+        match = line.match(/([^(\s]+\.(?:test|spec)\.[^(\s:]+):\d+:\d+/);
+      }
+      if (match && match[1]) {
+        const testPath = match[1];
+        // Convert to file:// URL format if it's an absolute path
+        if (testPath.startsWith('/')) {
+          return `file://${testPath}`;
+        }
+      }
+    }
+
+    // For Node/Deno, try to match absolute paths (improved to handle more cases)
+    match = line.match(/at\s+(?:Object\.<anonymous>\s+)?(?:async\s+)?[(]?(\/[^\s:)]+\.(?:m?js|json))(?::\d+:\d+)?\)?/);
+    if (match && !match[1].endsWith('/use.mjs') && !match[1].includes('node_modules')) {
       return 'file://' + match[1];
+    }
+
+    // Alternative pattern for Jest and other environments
+    match = line.match(/at\s+[^(]*\(([^)]+\.(?:m?js|json)):\d+:\d+\)/);
+    if (match && !match[1].endsWith('/use.mjs') && !match[1].includes('node_modules')) {
+      return 'file://' + (match[1].startsWith('/') ? match[1] : '/' + match[1]);
     }
   }
   return null;
@@ -217,21 +261,23 @@ const resolvers = {
     let resolvedPath = null;
 
     // If we have a caller URL, resolve relative to it
-    if (callerUrl && callerUrl.startsWith('file://')) {
+    if (callerUrl && (callerUrl.startsWith('file://') || callerUrl.startsWith('http://') || callerUrl.startsWith('https://'))) {
       try {
-        // Try URL-based resolution first
+        // Try URL-based resolution for both file:// and http(s):// URLs
         const url = new URL(moduleSpecifier, callerUrl);
         // For Bun, return pathname instead of full URL
-        if (typeof Bun !== 'undefined') {
+        if (typeof Bun !== 'undefined' && callerUrl.startsWith('file://')) {
           resolvedPath = url.pathname;
         } else {
           resolvedPath = url.href;
         }
       } catch (error) {
-        // Fallback for non-URL basePath
-        const path = await import('node:path');
-        const normalizedPath = callerUrl.startsWith('file://') ? new URL(callerUrl).pathname : callerUrl;
-        resolvedPath = path.resolve(path.dirname(normalizedPath), moduleSpecifier);
+        // Fallback for non-URL basePath (only for file:// URLs)
+        if (callerUrl.startsWith('file://')) {
+          const path = await import('node:path');
+          const normalizedPath = new URL(callerUrl).pathname;
+          resolvedPath = path.resolve(path.dirname(normalizedPath), moduleSpecifier);
+        }
       }
     }
 
@@ -250,6 +296,18 @@ const resolvers = {
     }
 
     // Import the module and return it
+    // Check if this is a JSON file and handle it specially
+    if (resolvedPath.endsWith('.json')) {
+      try {
+        // For JSON files, we need to use import assertions
+        const module = await import(resolvedPath, { with: { type: 'json' } });
+        return module.default || module;
+      } catch (error) {
+        // Fallback to baseUse if import assertions fail
+        return baseUse(resolvedPath);
+      }
+    }
+    
     return baseUse(resolvedPath);
   },
   npm: async (moduleSpecifier, pathResolver) => {

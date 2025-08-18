@@ -69,7 +69,6 @@ const extractCallerContext = (stack) => {
       return 'file://' + (match[1].startsWith('/') ? match[1] : '/' + match[1]);
     }
   }
-  console.log('DEBUG: extractCallerContext returning null - no match found');
   return null;
 };
 
