@@ -1,5 +1,4 @@
 [![npm](https://img.shields.io/npm/v/use-m.svg)](https://npmjs.com/use-m)
-[![CI/CD](https://github.com/link-foundation/use-m/actions/workflows/deploy.yml/badge.svg)](https://github.com/link-foundation/use-m/actions/workflows/deploy.yml)
 [![License](https://img.shields.io/badge/license-Unlicense-blue.svg)](https://github.com/link-foundation/use-m/blob/main/LICENSE)
 
 # [use-m](https://github.com/link-foundation/use-m): dynamically import any JavaScript module anywhere
