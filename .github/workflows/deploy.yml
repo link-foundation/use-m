@@ -44,7 +44,7 @@ jobs:
 
     - name: Run Node.js tests
       if: matrix.runtime == 'node'
-      run: npm test
+      run: npm test -- --runInBand
 
     - name: Run Bun tests
       if: matrix.runtime == 'bun'
