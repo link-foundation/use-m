@@ -5,8 +5,9 @@ name: Tests
 on:
   push:
     branches-ignore:
-      - main  # Main branch is handled by ci-cd.yml
+      - main  # Main branch is handled by deploy.yml
   workflow_dispatch:
+  workflow_call:
 
 jobs:
   test:
@@ -17,7 +18,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
         runtime: ['node', 'bun', 'deno']
-        node-version: [18.x, 20.x]
+        node-version: [20.x, 22.x, 24.x]
         exclude:
           # Bun doesn't support Windows yet
           - os: windows-latest
@@ -50,7 +51,7 @@ jobs:
 
     - name: Run Node.js tests
       if: matrix.runtime == 'node'
-      run: npm test
+      run: npm test -- --runInBand
 
     - name: Run Bun tests
       if: matrix.runtime == 'bun'
