@@ -776,6 +776,98 @@ use.all = async (...moduleSpecifiers) => {
   return Promise.all(moduleSpecifiers.map(__use));
 }
 
+use.cleanup = async () => {
+  const isNode = typeof process !== 'undefined' && process.versions && process.versions.node;
+  const isBun = typeof Bun !== 'undefined';
+  
+  if (!isNode && !isBun) {
+    // For browser/Deno environments, no cleanup needed as packages are loaded from CDNs
+    return { cleaned: [], skipped: 'Browser/Deno environment does not require cleanup' };
+  }
+
+  const { exec } = await import('node:child_process');
+  const { promisify } = await import('node:util');
+  const path = await import('node:path');
+  const { readdir } = await import('node:fs/promises');
+  const execAsync = promisify(exec);
+  
+  const cleaned = [];
+  const errors = [];
+
+  try {
+    if (isBun) {
+      // Cleanup for Bun environment
+      let binDir = '';
+      try {
+        const { stdout } = await execAsync('bun pm bin -g');
+        binDir = stdout.trim();
+      } catch (error) {
+        const home = process.env.HOME || process.env.USERPROFILE;
+        if (home) {
+          binDir = path.join(home, '.bun', 'bin');
+        } else {
+          throw new Error('Unable to determine Bun global directory.');
+        }
+      }
+
+      const bunInstallRoot = path.resolve(binDir, '..');
+      const globalModulesPath = path.join(bunInstallRoot, 'install', 'global', 'node_modules');
+      
+      try {
+        const packages = await readdir(globalModulesPath);
+        const useManagerPackages = packages.filter(pkg => pkg.match(/^.+-v-.+$/));
+        
+        for (const pkg of useManagerPackages) {
+          try {
+            await execAsync(`bun remove -g ${pkg}`, { stdio: 'ignore' });
+            cleaned.push(pkg);
+          } catch (error) {
+            errors.push({ package: pkg, error: error.message });
+          }
+        }
+      } catch (error) {
+        if (error.code !== 'ENOENT') {
+          errors.push({ error: `Failed to read global modules directory: ${error.message}` });
+        }
+      }
+    } else {
+      // Cleanup for Node.js/npm environment
+      const { stdout: globalModulesPath } = await execAsync('npm root -g');
+      const globalPath = globalModulesPath.trim();
+      
+      try {
+        const packages = await readdir(globalPath);
+        const useManagerPackages = packages.filter(pkg => pkg.match(/^.+-v-.+$/));
+        
+        for (const pkg of useManagerPackages) {
+          try {
+            await execAsync(`npm uninstall -g ${pkg}`, { stdio: 'ignore' });
+            cleaned.push(pkg);
+          } catch (error) {
+            errors.push({ package: pkg, error: error.message });
+          }
+        }
+      } catch (error) {
+        if (error.code !== 'ENOENT') {
+          errors.push({ error: `Failed to read global modules directory: ${error.message}` });
+        }
+      }
+    }
+
+    return { 
+      cleaned, 
+      errors: errors.length > 0 ? errors : undefined,
+      environment: isBun ? 'bun' : 'npm'
+    };
+  } catch (error) {
+    return { 
+      cleaned, 
+      errors: [{ error: error.message }],
+      environment: isBun ? 'bun' : 'npm'
+    };
+  }
+}
+
 makeUse.parseModuleSpecifier = parseModuleSpecifier;
 makeUse.resolvers = resolvers;
 makeUse.makeUse = makeUse;
