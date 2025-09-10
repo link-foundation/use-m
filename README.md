@@ -32,6 +32,9 @@ It may be useful for standalone scripts that do not require a `package.json`. Al
       - [Installation](#installation)
       - [CommonJS](#commonjs)
       - [ES Modules](#es-modules)
+  - [Cleanup](#cleanup)
+    - [Programmatic cleanup](#programmatic-cleanup)
+    - [CLI cleanup command](#cli-cleanup-command)
   - [Examples](#examples)
   - [Questions and issues](#questions-and-issues)
   - [Contributing](#contributing)
@@ -365,6 +368,69 @@ const { use } = await import('use-m');
 
 const _ = await use('lodash@4.17.21');
 console.log(`_.add(1, 2) = ${_.add(1, 2)}`);
+```
+
+## Cleanup
+
+`use-m` automatically installs packages globally in Node.js and Bun environments to provide fast, cached access across different projects. Over time, you may want to clean up these globally installed packages to free up disk space.
+
+### Programmatic cleanup
+
+You can programmatically clean up all packages installed by `use-m` using the `use.cleanup()` function:
+
+```javascript
+import { use } from 'use-m';
+
+// Clean up all use-m installed packages
+const result = await use.cleanup();
+
+console.log(`Cleaned ${result.cleaned.length} packages:`, result.cleaned);
+console.log(`Environment: ${result.environment}`);
+
+if (result.errors) {
+  console.log('Errors:', result.errors);
+}
+```
+
+The cleanup function:
+- **Node.js/npm**: Removes all globally installed packages matching the `use-m` naming pattern (`package-name-v-version`)
+- **Bun**: Removes all globally installed packages from Bun's global directory
+- **Browser/Deno**: Returns a skip message since these environments don't require cleanup (packages are loaded from CDNs)
+
+The function returns an object with:
+- `cleaned`: Array of package names that were successfully removed
+- `environment`: The detected environment (`'npm'` or `'bun'`)
+- `errors`: Array of any errors encountered during cleanup (optional)
+- `skipped`: Message explaining why cleanup was skipped (for browser/Deno environments)
+
+### CLI cleanup command
+
+You can also use the command-line interface to clean up packages:
+
+```bash
+# Using npx
+npx use-m cleanup
+
+# If installed globally
+use-m cleanup
+
+# Using the CLI directly
+node cli.mjs cleanup
+```
+
+The CLI command will:
+1. Display which environment is being cleaned (npm or bun)
+2. List all packages that were successfully removed
+3. Show any errors that occurred during the cleanup process
+
+Example output:
+```
+Starting cleanup of use-m packages...
+Environment: npm
+Successfully removed 3 package(s):
+  - lodash-v-4.17.21
+  - express-v-4.18.0
+  - yargs-v-17.7.2
 ```
 
 ## Examples
