@@ -118,6 +118,48 @@ const supportedBuiltins = {
     node: () => import('node:perf_hooks').then(m => ({ default: m.performance, performance: m.performance, now: m.performance.now.bind(m.performance), ...m }))
   },
 
+  // React.js modules
+  'react': {
+    browser: () => {
+      // In browser, try to use global React if available, otherwise load from CDN
+      if (typeof window !== 'undefined' && window.React) {
+        return { default: window.React, ...window.React };
+      }
+      // Fallback to importing from CDN
+      return import('https://esm.sh/react@18').then(m => ({ default: m.default, ...m }));
+    },
+    node: () => import('react').catch(() => {
+      throw new Error('React is not installed. Install it with: npm install react');
+    }).then(m => ({ default: m.default, ...m }))
+  },
+  'react-dom': {
+    browser: () => {
+      // In browser, try to use global ReactDOM if available, otherwise load from CDN
+      if (typeof window !== 'undefined' && window.ReactDOM) {
+        return { default: window.ReactDOM, ...window.ReactDOM };
+      }
+      // Fallback to importing from CDN
+      return import('https://esm.sh/react-dom@18').then(m => ({ default: m.default, ...m }));
+    },
+    node: () => import('react-dom').catch(() => {
+      throw new Error('ReactDOM is not installed. Install it with: npm install react-dom');
+    }).then(m => ({ default: m.default, ...m }))
+  },
+  'react/jsx-runtime': {
+    browser: () => import('https://esm.sh/react@18/jsx-runtime').then(m => ({ default: m.default, ...m })),
+    node: () => import('react/jsx-runtime').catch(() => {
+      throw new Error('React JSX runtime is not available. Install react with: npm install react');
+    }).then(m => ({ default: m.default, ...m }))
+  },
+
+  // ink modules (Node.js/CLI only)
+  'ink': {
+    browser: null, // ink is CLI-only
+    node: () => import('ink').catch(() => {
+      throw new Error('ink is not installed. Install it with: npm install ink');
+    }).then(m => ({ default: m.default, ...m }))
+  },
+
   // Node.js/Bun only modules
   'fs': {
     browser: null, // Not available in browser

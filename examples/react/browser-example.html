@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>React.js with use-m - Browser Example</title>
+</head>
+<body>
+  <div id="root"></div>
+  
+  <script>
+    // Browser React.js example using use-m
+    fetch('https://unpkg.com/use-m/use.js')
+      .then(async useJs => {
+        const { use } = eval(await useJs.text());
+        
+        try {
+          // Import React and ReactDOM using built-in module support
+          const React = await use('react');
+          const ReactDOM = await use('react-dom');
+          
+          // Create a simple React component
+          const MyComponent = React.createElement('div', { style: { padding: '20px', fontFamily: 'Arial' } },
+            React.createElement('h1', { style: { color: '#0066cc' } }, 'Hello from React with use-m!'),
+            React.createElement('p', null, 'This React component was loaded in the browser using use-m built-in module support.'),
+            React.createElement('p', null, `React version: ${React.version}`),
+            React.createElement('button', 
+              { 
+                onClick: () => alert('React with use-m is working!'),
+                style: { 
+                  padding: '10px 20px', 
+                  backgroundColor: '#0066cc', 
+                  color: 'white', 
+                  border: 'none', 
+                  borderRadius: '4px',
+                  cursor: 'pointer'
+                }
+              }, 
+              'Click me!'
+            )
+          );
+          
+          // Render to DOM
+          const root = document.getElementById('root');
+          if (ReactDOM.createRoot) {
+            // React 18+
+            const reactRoot = ReactDOM.createRoot(root);
+            reactRoot.render(MyComponent);
+          } else {
+            // React 17 and below
+            ReactDOM.render(MyComponent, root);
+          }
+          
+          console.log('React with use-m loaded successfully!');
+          console.log('React version:', React.version);
+        } catch (error) {
+          console.error('Error loading React:', error);
+          document.getElementById('root').innerHTML = `
+            <div style="padding: 20px; color: red; font-family: Arial;">
+              <h2>Error loading React</h2>
+              <p>${error.message}</p>
+              <p>This example demonstrates how use-m can load React.js modules in the browser.</p>
+            </div>
+          `;
+        }
+      })
+      .catch(error => {
+        console.error('Error loading use-m:', error);
+        document.getElementById('root').innerHTML = `
+          <div style="padding: 20px; color: red; font-family: Arial;">
+            <h2>Error loading use-m</h2>
+            <p>${error.message}</p>
+          </div>
+        `;
+      });
+  </script>
+</body>
+</html>
