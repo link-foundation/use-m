@@ -32,6 +32,7 @@ It may be useful for standalone scripts that do not require a `package.json`. Al
       - [Installation](#installation)
       - [CommonJS](#commonjs)
       - [ES Modules](#es-modules)
+  - [How it works](#how-it-works)
   - [Examples](#examples)
   - [Questions and issues](#questions-and-issues)
   - [Contributing](#contributing)
@@ -366,6 +367,109 @@ const { use } = await import('use-m');
 const _ = await use('lodash@4.17.21');
 console.log(`_.add(1, 2) = ${_.add(1, 2)}`);
 ```
+
+## How it works
+
+`use-m` is a sophisticated module loading system that works across different JavaScript environments by implementing environment-specific resolution strategies and providing unified APIs for dynamic imports. Here's how it works internally:
+
+### Architecture Overview
+
+The library consists of several key components:
+
+1. **Module Specifier Parser** (`parseModuleSpecifier`) - Parses package identifiers like `lodash@4.17.21` into package name, version, and module path components
+2. **Environment Detection** - Automatically detects the runtime environment (browser, Node.js, Deno, Bun) 
+3. **Resolver System** - Multiple resolvers handle different types of module imports
+4. **Path Resolution** - Context-aware path resolution for relative imports
+5. **Module Loading** - Cross-environment dynamic import with smart default export handling
+
+### Resolver System
+
+`use-m` uses a hierarchical resolver system that tries different resolution strategies in order:
+
+#### 1. Built-in Module Resolver
+Handles Node.js built-in modules (like `fs`, `path`, `crypto`) with cross-environment compatibility:
+- **Browser**: Provides browser-compatible APIs (e.g., `crypto` maps to `window.crypto`)
+- **Node.js/Bun/Deno**: Uses native `node:` imports with proper module wrapping
+
+#### 2. Relative Path Resolver  
+Resolves local file imports (`./`, `../`) by:
+- Extracting caller context from stack traces
+- Resolving paths relative to the calling file's location
+- Supporting both file:// URLs and http(s):// URLs for browser environments
+
+#### 3. Package Resolvers
+Different strategies based on environment:
+
+**Node.js Environment (`npm` resolver):**
+- Installs packages globally using npm with version-specific aliases
+- Uses `npm install -g package-alias@npm:package@version` for isolation
+- Resolves module paths using Node.js module resolution
+- Caches installations to avoid redundant downloads
+
+**Bun Environment (`bun` resolver):**
+- Similar to npm resolver but uses Bun's package management
+- Handles Bun's global directory structure
+- Uses Bun-specific module resolution
+
+**Deno Environment (`deno` resolver):**
+- Uses CDN-based imports (esm.sh by default)
+- No local installation required
+
+**Browser Environment (`esm` resolver):**
+- Loads modules directly from CDNs (esm.sh, jspm.dev, unpkg, jsdelivr)
+- Provides multiple CDN options for reliability
+- Handles ES module imports natively
+
+### Environment-Specific Behavior
+
+#### Browser
+```javascript
+// Uses CDN resolvers
+const _ = await use('lodash@4.17.21');
+// Resolves to: https://esm.sh/lodash@4.17.21
+```
+
+#### Node.js  
+```javascript
+// Installs globally with alias and resolves locally
+const _ = await use('lodash@4.17.21'); 
+// Installs: lodash-v-4.17.21@npm:lodash@4.17.21
+// Resolves to local path in global node_modules
+```
+
+#### Deno
+```javascript
+// Uses CDN without local installation
+const _ = await use('lodash@4.17.21');
+// Resolves to: https://esm.sh/lodash@4.17.21
+```
+
+### Context Detection
+
+The library automatically determines the calling file's context using:
+- Stack trace analysis to extract file URLs/paths
+- Environment-specific path patterns (file://, http://, https://)
+- Fallback mechanisms for different execution contexts
+
+### Module Loading Pipeline
+
+1. **Parse** the module specifier into components
+2. **Detect** the current environment and select appropriate resolvers
+3. **Try built-in resolver** first for Node.js modules
+4. **Try relative resolver** for local file imports  
+5. **Use environment-specific resolver** for npm packages
+6. **Import and process** the resolved module with smart default handling
+7. **Return** the module with consistent export structure
+
+### Version Isolation
+
+`use-m` allows multiple versions of the same package by:
+- Creating unique aliases for each package@version combination
+- Installing them separately in global directories
+- Maintaining separate resolution paths
+- Enabling side-by-side usage without conflicts
+
+This architecture enables `use-m` to provide a consistent API across all JavaScript environments while leveraging each platform's native capabilities for optimal performance and compatibility.
 
 ## Examples
 
