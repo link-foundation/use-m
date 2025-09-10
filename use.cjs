@@ -618,7 +618,7 @@ const baseUse = async (modulePath) => {
     // More robust default export handling for cross-environment compatibility
     const keys = Object.keys(module);
 
-    // If it's a Module object with a default property, unwrap it
+    // If it's a Module object with a default property, decide whether to unwrap it
     if (module.default !== undefined) {
       // Check if this is likely a CommonJS module with only default export
       if (keys.length === 1 && keys[0] === 'default') {
@@ -637,6 +637,21 @@ const baseUse = async (modulePath) => {
       // If there are no significant non-metadata keys, return the default
       if (nonMetadataKeys.length === 0) {
         return module.default;
+      }
+
+      // Enhanced heuristic: Return default export for packages that primarily export through default
+      // but are commonly used as their default export (like http clients, main APIs, etc.)
+      if (typeof module.default === 'function') {
+        // If there are many utility exports but the default seems to be the main API,
+        // and the module doesn't export things users typically destructure (like $, sh, cli tools)
+        const hasCommonDestructuredExports = nonMetadataKeys.some(key => 
+          /^(\$|sh|cli|cmd|exec|run|create|make|build|test)$/i.test(key)
+        );
+        
+        // Return default if it's a function and there are no common destructured exports
+        if (!hasCommonDestructuredExports) {
+          return module.default;
+        }
       }
     }
 
