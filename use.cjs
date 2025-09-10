@@ -103,49 +103,60 @@ const supportedBuiltins = {
   // Universal modules
   'console': {
     browser: () => ({ default: console, log: console.log, error: console.error, warn: console.warn, info: console.info }),
-    node: () => import('node:console').then(m => ({ default: m.Console, ...m }))
+    node: () => import('node:console').then(m => ({ default: m.Console, ...m })),
+    gjs: () => ({ default: console, log: console.log, error: console.error, warn: console.warn, info: console.info })
   },
   'crypto': {
     browser: () => ({ default: crypto, subtle: crypto.subtle }),
-    node: () => import('node:crypto').then(m => ({ default: m, ...m }))
+    node: () => import('node:crypto').then(m => ({ default: m, ...m })),
+    gjs: null // Not available in GJS
   },
   'url': {
     browser: () => ({ default: URL, URL, URLSearchParams }),
-    node: () => import('node:url').then(m => ({ default: m, ...m }))
+    node: () => import('node:url').then(m => ({ default: m, ...m })),
+    gjs: () => ({ default: URL, URL, URLSearchParams }) // GJS supports URL and URLSearchParams
   },
   'performance': {
     browser: () => ({ default: performance, now: performance.now.bind(performance) }),
-    node: () => import('node:perf_hooks').then(m => ({ default: m.performance, performance: m.performance, now: m.performance.now.bind(m.performance), ...m }))
+    node: () => import('node:perf_hooks').then(m => ({ default: m.performance, performance: m.performance, now: m.performance.now.bind(m.performance), ...m })),
+    gjs: null // Not available in GJS
   },
 
   // Node.js/Bun only modules
   'fs': {
     browser: null, // Not available in browser
-    node: () => import('node:fs').then(m => ({ default: m, ...m }))
+    node: () => import('node:fs').then(m => ({ default: m, ...m })),
+    gjs: null // Not available in GJS
   },
   'path': {
     browser: null, // Not available in browser
-    node: () => import('node:path').then(m => ({ default: m, ...m }))
+    node: () => import('node:path').then(m => ({ default: m, ...m })),
+    gjs: null // Not available in GJS
   },
   'os': {
     browser: null, // Not available in browser
-    node: () => import('node:os').then(m => ({ default: m, ...m }))
+    node: () => import('node:os').then(m => ({ default: m, ...m })),
+    gjs: null // Not available in GJS
   },
   'util': {
     browser: null, // Not available in browser
-    node: () => import('node:util').then(m => ({ default: m, ...m }))
+    node: () => import('node:util').then(m => ({ default: m, ...m })),
+    gjs: null // Not available in GJS
   },
   'events': {
     browser: null, // Not available in browser
-    node: () => import('node:events').then(m => ({ default: m.EventEmitter, EventEmitter: m.EventEmitter, ...m }))
+    node: () => import('node:events').then(m => ({ default: m.EventEmitter, EventEmitter: m.EventEmitter, ...m })),
+    gjs: null // Not available in GJS
   },
   'stream': {
     browser: null, // Not available in browser
-    node: () => import('node:stream').then(m => ({ default: m.Stream, Stream: m.Stream, ...m }))
+    node: () => import('node:stream').then(m => ({ default: m.Stream, Stream: m.Stream, ...m })),
+    gjs: null // Not available in GJS
   },
   'buffer': {
     browser: null, // Not available in browser (would need polyfill)
-    node: () => import('node:buffer').then(m => ({ default: m, Buffer: m.Buffer, ...m }))
+    node: () => import('node:buffer').then(m => ({ default: m, Buffer: m.Buffer, ...m })),
+    gjs: null // Not available in GJS
   },
   'process': {
     browser: null, // Not available in browser
@@ -178,39 +189,48 @@ const supportedBuiltins = {
         throw new Error(`Failed to resolve 'process' module in Deno environment.`);
       }
       return ({ default: process, ...process });
-    }
+    },
+    gjs: null // Not available in GJS
   },
   'child_process': {
     browser: null,
-    node: () => import('node:child_process').then(m => ({ default: m, ...m }))
+    node: () => import('node:child_process').then(m => ({ default: m, ...m })),
+    gjs: null // Not available in GJS
   },
   'http': {
     browser: null,
-    node: () => import('node:http').then(m => ({ default: m, ...m }))
+    node: () => import('node:http').then(m => ({ default: m, ...m })),
+    gjs: null // Not available in GJS
   },
   'https': {
     browser: null,
-    node: () => import('node:https').then(m => ({ default: m, ...m }))
+    node: () => import('node:https').then(m => ({ default: m, ...m })),
+    gjs: null // Not available in GJS
   },
   'net': {
     browser: null,
-    node: () => import('node:net').then(m => ({ default: m, ...m }))
+    node: () => import('node:net').then(m => ({ default: m, ...m })),
+    gjs: null // Not available in GJS
   },
   'dns': {
     browser: null,
-    node: () => import('node:dns').then(m => ({ default: m, ...m }))
+    node: () => import('node:dns').then(m => ({ default: m, ...m })),
+    gjs: null // Not available in GJS
   },
   'zlib': {
     browser: null,
-    node: () => import('node:zlib').then(m => ({ default: m, ...m }))
+    node: () => import('node:zlib').then(m => ({ default: m, ...m })),
+    gjs: null // Not available in GJS
   },
   'querystring': {
     browser: null,
-    node: () => import('node:querystring').then(m => ({ default: m, ...m }))
+    node: () => import('node:querystring').then(m => ({ default: m, ...m })),
+    gjs: null // Not available in GJS
   },
   'assert': {
     browser: null,
-    node: () => import('node:assert').then(m => ({ default: m.default || m, ...m }))
+    node: () => import('node:assert').then(m => ({ default: m.default || m, ...m })),
+    gjs: null // Not available in GJS
   }
 };
 
@@ -231,7 +251,8 @@ const resolvers = {
 
       // Determine environment
       const isBrowser = typeof window !== 'undefined';
-      const environment = isBrowser ? 'browser' : 'node';
+      const isGJS = typeof imports !== 'undefined';
+      const environment = isBrowser ? 'browser' : (isGJS ? 'gjs' : 'node');
 
       const moduleFactory = builtinConfig[environment];
       if (!moduleFactory) {
@@ -572,6 +593,45 @@ const resolvers = {
     const resolvedPath = `https://esm.sh/${packageName}@${version}${modulePath}`;
     return resolvedPath;
   },
+  gjs: async (moduleSpecifier, pathResolver) => {
+    // Handle GJS-specific module patterns
+    
+    // GJS gi:// protocol for GObject introspection libraries
+    if (moduleSpecifier.startsWith('gi://')) {
+      const match = moduleSpecifier.match(/^gi:\/\/([^?]+)(?:\?version=(.+))?$/);
+      if (match) {
+        const [, libraryName, version] = match;
+        
+        // In GJS, we use the legacy imports object for gi modules
+        if (typeof imports !== 'undefined' && imports.gi) {
+          // Set version if specified
+          if (version && imports.gi.versions) {
+            imports.gi.versions[libraryName] = version;
+          }
+          // Check if the module actually exists
+          if (imports.gi[libraryName]) {
+            return imports.gi[libraryName];
+          }
+        }
+        throw new Error(`GObject introspection library '${libraryName}' not available in this GJS environment.`);
+      }
+    }
+    
+    // Handle GJS built-in modules (cairo, system, etc.)
+    const gjsBuiltins = ['cairo', 'system', 'byteArray', 'lang', 'signals', 'tweener', 'gettext', 'format'];
+    if (gjsBuiltins.includes(moduleSpecifier)) {
+      if (typeof imports !== 'undefined' && imports[moduleSpecifier]) {
+        return imports[moduleSpecifier];
+      }
+      throw new Error(`GJS built-in module '${moduleSpecifier}' not available.`);
+    }
+    
+    // For regular npm packages in GJS, fall back to ESM resolution
+    // This allows GJS to use standard npm packages via CDN
+    const { packageName, version, modulePath } = parseModuleSpecifier(moduleSpecifier);
+    const resolvedPath = `https://esm.sh/${packageName}@${version}${modulePath}`;
+    return resolvedPath;
+  },
   skypack: async (moduleSpecifier, pathResolver) => {
     const resolvedPath = `https://cdn.skypack.dev/${moduleSpecifier}`;
     return resolvedPath;
@@ -675,6 +735,8 @@ const makeUse = async (options) => {
       specifierResolver = resolvers[specifierResolver || 'deno'];
     } else if (typeof Bun !== 'undefined') {
       specifierResolver = resolvers[specifierResolver || 'bun'];
+    } else if (typeof imports !== 'undefined') {
+      specifierResolver = resolvers[specifierResolver || 'gjs'];
     } else {
       specifierResolver = resolvers[specifierResolver || 'npm'];
     }
