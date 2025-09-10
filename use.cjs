@@ -761,10 +761,165 @@ use.all = async (...moduleSpecifiers) => {
   return Promise.all(moduleSpecifiers.map(__use));
 }
 
+// Freeze function implementation
+const freeze = (packageSpecifier) => {
+  // Capture the stack trace immediately when freeze is called, before any async operations
+  const initialError = new Error();
+  const initialStack = initialError.stack || '';
+  
+  // Return a Promise that will handle the version resolution and source code modification
+  return new Promise(async (resolve, reject) => {
+    try {
+      // Parse the package specifier to get just the package name
+      const { packageName } = parseModuleSpecifier(packageSpecifier);
+      
+      // Get the latest version from npm
+      const { spawn } = require('child_process');
+      const { promisify } = require('util');
+      const execAsync = promisify(spawn);
+      
+      let latestVersion;
+      try {
+        const npmViewProcess = spawn('npm', ['view', packageName, 'version'], { stdio: 'pipe' });
+        let stdout = '';
+        let stderr = '';
+        
+        npmViewProcess.stdout.on('data', (data) => {
+          stdout += data.toString();
+        });
+        
+        npmViewProcess.stderr.on('data', (data) => {
+          stderr += data.toString();
+        });
+        
+        await new Promise((resolve, reject) => {
+          npmViewProcess.on('close', (code) => {
+            if (code === 0) {
+              resolve();
+            } else {
+              reject(new Error(`npm view failed: ${stderr}`));
+            }
+          });
+        });
+        
+        latestVersion = stdout.trim();
+      } catch (error) {
+        throw new Error(`Failed to get latest version for ${packageName}: ${error.message}`);
+      }
+      
+      if (!latestVersion) {
+        throw new Error(`Could not determine latest version for ${packageName}`);
+      }
+      
+      // Get the calling file path from the initial stack trace (captured when freeze was called)
+      const stack = initialStack;
+      
+      // Custom caller context extraction for freeze function
+      const getFreezeCallerContext = (stack) => {
+        if (!stack) return null;
+        
+        const lines = stack.split('\n');
+        
+        // Look for the first file that isn't use.mjs and isn't inside freeze function definition
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i];
+          
+          // Skip internal framework calls
+          if (line.includes('ModuleJob') || 
+              line.includes('ModuleLoader') || 
+              line.includes('asyncRunEntryPointWithESMLoader') ||
+              line.includes('processTicksAndRejections')) {
+            continue;
+          }
+          
+          // Skip any line that points to use.mjs (including freeze function)
+          if (line.includes('/use.mjs') || line.includes('/use.js') || line.includes('/use.cjs')) {
+            continue;
+          }
+          
+          // Try to match file:// URLs (ESM style)
+          let match = line.match(/file:\/\/([^\s)]+)/);
+          if (match) {
+            // Remove line:column numbers if present
+            const url = match[0].replace(/:\d+:\d+$/, '');
+            return url;
+          }
+          
+          // Try to match CommonJS style paths in parentheses  
+          match = line.match(/\(([^)]+\.(?:cjs|js|mjs)):\d+:\d+\)/);
+          if (match && match[1]) {
+            // Convert absolute path to file:// URL
+            const path = match[1];
+            if (path.startsWith('/')) {
+              return 'file://' + path;
+            }
+            return path;
+          }
+        }
+        return null;
+      };
+      
+      const callerContext = getFreezeCallerContext(stack);
+      
+      if (!callerContext) {
+        throw new Error('Could not determine the source file to modify');
+      }
+      
+      let filePath;
+      if (callerContext.startsWith('file://')) {
+        filePath = callerContext.replace('file://', '');
+      } else if (callerContext.startsWith('http://') || callerContext.startsWith('https://')) {
+        throw new Error('Cannot modify remote files. freeze() only works with local files.');
+      } else {
+        filePath = callerContext;
+      }
+      
+      // Read the source file
+      const fs = require('fs').promises;
+      let sourceContent;
+      try {
+        sourceContent = await fs.readFile(filePath, 'utf8');
+      } catch (error) {
+        throw new Error(`Could not read source file ${filePath}: ${error.message}`);
+      }
+      
+      // Create regex to find and replace freeze() calls (including await prefix)
+      const freezeRegex = new RegExp(
+        `(await\\s+)?freeze\\s*\\(\\s*['"\`]${packageName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}['"\`]\\s*\\)`,
+        'g'
+      );
+      
+      const versionedSpecifier = `use('${packageName}@${latestVersion}')`;
+      const updatedContent = sourceContent.replace(freezeRegex, (match, awaitPrefix) => {
+        return (awaitPrefix || '') + versionedSpecifier;
+      });
+      
+      if (updatedContent === sourceContent) {
+        throw new Error(`Could not find freeze('${packageName}') call in source file`);
+      }
+      
+      // Write the updated content back to the file
+      try {
+        await fs.writeFile(filePath, updatedContent, 'utf8');
+      } catch (error) {
+        throw new Error(`Could not write updated source file ${filePath}: ${error.message}`);
+      }
+      
+      // Now import the module with the resolved version
+      const module = await use(`${packageName}@${latestVersion}`);
+      resolve(module);
+      
+    } catch (error) {
+      reject(error);
+    }
+  });
+};
+
 module.exports = {
   parseModuleSpecifier,
   resolvers,
   makeUse,
   baseUse,
   use,
+  freeze,
 };
