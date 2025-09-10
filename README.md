@@ -42,7 +42,7 @@ It may be useful for standalone scripts that do not require a `package.json`. Al
 - **Dynamic package loading**: In `node.js`, `use-m` loads and imports npm packages on-demand with **global installation** (using `npm i -g` with separate alias for each version), making them available across projects and reusable without needing to reinstall each time. In case of a browser `use-m` loads npm packages directly from CDNs (by default `esm.sh` is used).
 - **Version-safe imports**: Allows multiple versions of the same library to coexist without conflicts, so you can specify any version for each import (usage) without affecting other scripts or other usages (imports) in the same script.
 - **No more `require`, `import`, or `package.json`**: With `use-m`, traditional module loading approaches like `require()`, `import` statements, and `package.json` dependencies become effectively obsolete. You can dynamically load any module at runtime without pre-declaring dependencies in separate file. This enables truly self-contained `.mjs` files that can effectively replace shell scripts.
-- **Built-in modules emulation**: Provides emulation for Node.js built-in modules across all environments (browser, Node.js, Bun, Deno), ensuring consistent behavior regardless of the runtime.
+- **Built-in modules emulation**: Provides emulation for Node.js built-in modules across all environments (browser, Node.js, Bun, Deno), ensuring consistent behavior regardless of the runtime. Also includes support for popular frameworks like React.js and ink (CLI apps).
 - **Relative path resolution**: Supports `./ ` and `../` paths for loading local JavaScript and JSON files relative to the executing file, working seamlessly even in browser environments.
 
 ## Usage
@@ -366,6 +366,64 @@ const { use } = await import('use-m');
 const _ = await use('lodash@4.17.21');
 console.log(`_.add(1, 2) = ${_.add(1, 2)}`);
 ```
+
+### React.js and ink Support
+
+`use-m` includes built-in support for React.js and ink (React for CLI apps) with automatic environment detection and CDN fallbacks.
+
+#### React.js in Browser
+
+```javascript
+const { use } = eval(await (await fetch('https://unpkg.com/use-m/use.js')).text());
+
+// Load React and ReactDOM with automatic CDN fallback
+const React = await use('react');
+const ReactDOM = await use('react-dom');
+
+// Create and render a React component
+const App = React.createElement('h1', null, 'Hello from React with use-m!');
+ReactDOM.render(App, document.getElementById('root'));
+```
+
+#### React.js in Node.js
+
+```javascript
+import { use } from 'use-m';
+
+// Load React for server-side rendering
+const React = await use('react');
+const ReactDOMServer = await use('react-dom/server');
+
+// Create a React component
+const App = React.createElement('div', null, 
+  React.createElement('h1', null, 'Hello from React with use-m!')
+);
+
+// Render to HTML string
+const html = ReactDOMServer.renderToString(App);
+console.log(html);
+```
+
+#### ink CLI Apps
+
+```javascript
+#!/usr/bin/env node
+import { use } from 'use-m';
+
+// Load React and ink for CLI apps
+const React = await use('react');
+const { render, Text, Box } = await use('ink');
+
+// Create a CLI component
+const CliApp = () => React.createElement(Box, { padding: 1 },
+  React.createElement(Text, { color: 'green' }, '🚀 Hello from ink with use-m!')
+);
+
+// Render to terminal
+render(React.createElement(CliApp));
+```
+
+**Note**: React.js and ink modules require the corresponding packages to be installed (`npm install react react-dom` for React.js, `npm install react ink` for ink). In browser environments, React.js will automatically fall back to CDN loading.
 
 ## Examples
 
