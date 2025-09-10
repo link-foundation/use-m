@@ -22,6 +22,7 @@ It may be useful for standalone scripts that do not require a `package.json`. Al
     - [Browser](#browser)
     - [Deno](#deno)
     - [Bun](#bun)
+    - [GJS (GNOME JavaScript)](#gjs-gnome-javascript)
     - [Network imports](#network-imports)
     - [Independent Scripts](#independent-scripts)
       - [`use-m` and `command-stream`](#use-m-and-command-stream)
@@ -42,7 +43,8 @@ It may be useful for standalone scripts that do not require a `package.json`. Al
 - **Dynamic package loading**: In `node.js`, `use-m` loads and imports npm packages on-demand with **global installation** (using `npm i -g` with separate alias for each version), making them available across projects and reusable without needing to reinstall each time. In case of a browser `use-m` loads npm packages directly from CDNs (by default `esm.sh` is used).
 - **Version-safe imports**: Allows multiple versions of the same library to coexist without conflicts, so you can specify any version for each import (usage) without affecting other scripts or other usages (imports) in the same script.
 - **No more `require`, `import`, or `package.json`**: With `use-m`, traditional module loading approaches like `require()`, `import` statements, and `package.json` dependencies become effectively obsolete. You can dynamically load any module at runtime without pre-declaring dependencies in separate file. This enables truly self-contained `.mjs` files that can effectively replace shell scripts.
-- **Built-in modules emulation**: Provides emulation for Node.js built-in modules across all environments (browser, Node.js, Bun, Deno), ensuring consistent behavior regardless of the runtime.
+- **Built-in modules emulation**: Provides emulation for Node.js built-in modules across all environments (browser, Node.js, Bun, Deno, GJS), ensuring consistent behavior regardless of the runtime.
+- **GJS native support**: Full support for GJS (GNOME JavaScript) runtime with native access to GObject introspection libraries via `gi://` protocol and GJS built-in modules.
 - **Relative path resolution**: Supports `./ ` and `../` paths for loading local JavaScript and JSON files relative to the executing file, working seamlessly even in browser environments.
 
 ## Usage
@@ -153,6 +155,45 @@ const [lodash3, lodash4] = await use.all('lodash@3', 'lodash@4');
 Run with Bun:
 ```bash
 bun run example.mjs
+```
+
+### GJS (GNOME JavaScript)
+
+`use-m` works seamlessly with GJS! It automatically detects the GJS runtime and provides support for both legacy imports and modern ES modules, along with GJS-specific features.
+
+```javascript
+// Import use-m from CDN (works in GJS with ES modules)
+const { use } = await import('https://esm.sh/use-m');
+
+// Use any npm package
+const _ = await use('lodash@4.17.21');
+console.log(`_.add(1, 2) = ${_.add(1, 2)}`);
+
+// Import multiple packages
+const [lodash3, lodash4] = await use.all('lodash@3', 'lodash@4');
+
+// Use GJS built-in modules
+const consoleModule = await use('console');
+const urlModule = await use('url');
+
+// Use GObject introspection libraries with gi:// protocol
+const GLib = await use('gi://GLib');
+const Gtk = await use('gi://Gtk?version=4.0');
+```
+
+Run with GJS:
+```bash
+gjs example.mjs
+```
+
+For legacy GJS environments, you can also use the eval approach:
+```javascript
+const useJs = await (await fetch('https://unpkg.com/use-m/use.js')).text();
+const { use } = eval(useJs);
+
+// Now you can use GJS built-ins via use-m
+const cairo = await use('cairo');
+const system = await use('system');
 ```
 
 ### Network imports
