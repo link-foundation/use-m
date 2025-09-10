@@ -214,12 +214,25 @@ const supportedBuiltins = {
   }
 };
 
+// Cache for built-in modules to avoid redundant imports
+const builtinCache = new Map();
+
 const resolvers = {
   builtin: async (moduleSpecifier, pathResolver) => {
     const { packageName } = parseModuleSpecifier(moduleSpecifier);
 
     // Remove 'node:' prefix if present
     const moduleName = packageName.startsWith('node:') ? packageName.slice(5) : packageName;
+
+    // Create cache key including environment for built-in modules
+    const isBrowser = typeof window !== 'undefined';
+    const environment = isBrowser ? 'browser' : 'node';
+    const cacheKey = `${moduleName}:${environment}`;
+
+    // Check if built-in module is already cached
+    if (builtinCache.has(cacheKey)) {
+      return builtinCache.get(cacheKey);
+    }
 
     // Check if we support this built-in module
     if (supportedBuiltins[moduleName]) {
@@ -229,10 +242,6 @@ const resolvers = {
         throw new Error(`Built-in module '${moduleName}' is not supported.`);
       }
 
-      // Determine environment
-      const isBrowser = typeof window !== 'undefined';
-      const environment = isBrowser ? 'browser' : 'node';
-
       const moduleFactory = builtinConfig[environment];
       if (!moduleFactory) {
         throw new Error(`Built-in module '${moduleName}' is not available in ${environment} environment.`);
@@ -241,6 +250,9 @@ const resolvers = {
       try {
         // Execute the factory function to get the module
         const result = await moduleFactory();
+        
+        // Cache the result for future use
+        builtinCache.set(cacheKey, result);
         return result;
       } catch (error) {
         throw new Error(`Failed to load built-in module '${moduleName}' in ${environment} environment.`, { cause: error });
@@ -610,7 +622,15 @@ const resolvers = {
   },
 }
 
+// In-memory cache for loaded modules to avoid redundant file operations
+const moduleCache = new Map();
+
 const baseUse = async (modulePath) => {
+  // Check if module is already cached
+  if (moduleCache.has(modulePath)) {
+    return moduleCache.get(modulePath);
+  }
+
   // Dynamically import the module
   try {
     const module = await import(modulePath);
@@ -618,30 +638,38 @@ const baseUse = async (modulePath) => {
     // More robust default export handling for cross-environment compatibility
     const keys = Object.keys(module);
 
+    let processedModule;
     // If it's a Module object with a default property, unwrap it
     if (module.default !== undefined) {
       // Check if this is likely a CommonJS module with only default export
       if (keys.length === 1 && keys[0] === 'default') {
-        return module.default;
+        processedModule = module.default;
+      } else {
+        // Check if default is the main export and other keys are just function/module metadata
+        const metadataKeys = new Set([
+          'default', '__esModule', 'Symbol(Symbol.toStringTag)',
+          'length', 'name', 'prototype', 'constructor',
+          'toString', 'valueOf', 'hasOwnProperty', 'isPrototypeOf', 'propertyIsEnumerable'
+        ]);
+
+        const nonMetadataKeys = keys.filter(key => !metadataKeys.has(key));
+
+        // If there are no significant non-metadata keys, return the default
+        if (nonMetadataKeys.length === 0) {
+          processedModule = module.default;
+        } else {
+          // Return the whole module if it has multiple meaningful exports or no default
+          processedModule = module;
+        }
       }
-
-      // Check if default is the main export and other keys are just function/module metadata
-      const metadataKeys = new Set([
-        'default', '__esModule', 'Symbol(Symbol.toStringTag)',
-        'length', 'name', 'prototype', 'constructor',
-        'toString', 'valueOf', 'hasOwnProperty', 'isPrototypeOf', 'propertyIsEnumerable'
-      ]);
-
-      const nonMetadataKeys = keys.filter(key => !metadataKeys.has(key));
-
-      // If there are no significant non-metadata keys, return the default
-      if (nonMetadataKeys.length === 0) {
-        return module.default;
-      }
+    } else {
+      // Return the whole module if it has multiple meaningful exports or no default
+      processedModule = module;
     }
 
-    // Return the whole module if it has multiple meaningful exports or no default
-    return module;
+    // Cache the processed module for future use
+    moduleCache.set(modulePath, processedModule);
+    return processedModule;
   } catch (error) {
     throw new Error(`Failed to import module from '${modulePath}'.`, { cause: error });
   }
