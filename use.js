@@ -123,6 +123,26 @@ const supportedBuiltins = {
     browser: null, // Not available in browser
     node: () => import('node:fs').then(m => ({ default: m, ...m }))
   },
+  'fs/promises': {
+    browser: null, // Not available in browser
+    node: () => import('node:fs/promises').then(m => ({ default: m, ...m }))
+  },
+  'dns/promises': {
+    browser: null, // Not available in browser
+    node: () => import('node:dns/promises').then(m => ({ default: m, ...m }))
+  },
+  'stream/promises': {
+    browser: null, // Not available in browser
+    node: () => import('node:stream/promises').then(m => ({ default: m, ...m }))
+  },
+  'readline/promises': {
+    browser: null, // Not available in browser
+    node: () => import('node:readline/promises').then(m => ({ default: m, ...m }))
+  },
+  'timers/promises': {
+    browser: null, // Not available in browser
+    node: () => import('node:timers/promises').then(m => ({ default: m, ...m }))
+  },
   'path': {
     browser: null, // Not available in browser
     node: () => import('node:path').then(m => ({ default: m, ...m }))
@@ -216,10 +236,16 @@ const supportedBuiltins = {
 
 const resolvers = {
   builtin: async (moduleSpecifier, pathResolver) => {
-    const { packageName } = parseModuleSpecifier(moduleSpecifier);
+    const { packageName, modulePath } = parseModuleSpecifier(moduleSpecifier);
 
-    // Remove 'node:' prefix if present
-    const moduleName = packageName.startsWith('node:') ? packageName.slice(5) : packageName;
+    // Handle built-in modules with subpaths like 'node:fs/promises'
+    let moduleName;
+    if (packageName.startsWith('node:')) {
+      // For node: modules, include the path in the module name
+      moduleName = packageName.slice(5) + modulePath;
+    } else {
+      moduleName = packageName + modulePath;
+    }
 
     // Check if we support this built-in module
     if (supportedBuiltins[moduleName]) {
