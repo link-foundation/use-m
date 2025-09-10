@@ -72,7 +72,7 @@ const extractCallerContext = (stack) => {
   return null;
 };
 
-export const parseModuleSpecifier = (moduleSpecifier) => {
+const parseModuleSpecifier = (moduleSpecifier) => {
   if (!moduleSpecifier || typeof moduleSpecifier !== 'string' || moduleSpecifier.length <= 0) {
     throw new Error(
       `Name for a package to be imported is not provided.
@@ -214,7 +214,7 @@ const supportedBuiltins = {
   }
 };
 
-export const resolvers = {
+const resolvers = {
   builtin: async (moduleSpecifier, pathResolver) => {
     const { packageName } = parseModuleSpecifier(moduleSpecifier);
 
@@ -409,24 +409,111 @@ export const resolvers = {
       }
     };
 
+    const isNonSpecificVersion = (version) => {
+      // For now, only cache 'latest' versions to be safe
+      // TODO: extend this to handle major version ranges once we have proper version resolution
+      return version === 'latest';
+    };
+
+    const getVersionCachePath = async (packageName, version) => {
+      const { tmpdir } = await import('node:os');
+      const { existsSync, mkdirSync } = await import('node:fs');
+      const cacheDir = path.join(tmpdir(), 'use-m-cache');
+      if (!existsSync(cacheDir)) {
+        mkdirSync(cacheDir, { recursive: true });
+      }
+      const cacheKey = `${packageName.replace('@', '').replace('/', '-')}-${version}`;
+      return path.join(cacheDir, `${cacheKey}.json`);
+    };
+
+    const getCachedVersion = async (packageName, version, cacheTimeoutMinutes = 5) => {
+      if (!isNonSpecificVersion(version)) {
+        return null; // Don't cache specific versions
+      }
+
+      try {
+        const cachePath = await getVersionCachePath(packageName, version);
+        if (await fileExists(cachePath)) {
+          const cacheData = JSON.parse(await readFile(cachePath, 'utf8'));
+          const cacheAge = Date.now() - cacheData.timestamp;
+          const cacheTimeoutMs = cacheTimeoutMinutes * 60 * 1000;
+          
+          if (cacheAge < cacheTimeoutMs) {
+            return cacheData.resolvedVersion;
+          }
+        }
+      } catch {
+        // Ignore cache read errors, will fetch fresh version
+      }
+      return null;
+    };
+
+    const setCachedVersion = async (packageName, version, resolvedVersion) => {
+      if (!isNonSpecificVersion(version)) {
+        return; // Don't cache specific versions
+      }
+
+      try {
+        const cachePath = await getVersionCachePath(packageName, version);
+        const cacheData = {
+          packageName,
+          requestedVersion: version,
+          resolvedVersion,
+          timestamp: Date.now()
+        };
+        const { writeFile } = await import('node:fs/promises');
+        await writeFile(cachePath, JSON.stringify(cacheData), 'utf8');
+      } catch {
+        // Ignore cache write errors, not critical
+      }
+    };
+
     const ensurePackageInstalled = async ({ packageName, version }) => {
-      const alias = `${packageName.replace('@', '').replace('/', '-')}-v-${version}`;
+      let actualVersion = version;
+      
+      // For non-specific versions, check if we have a cached resolved version
+      if (isNonSpecificVersion(version)) {
+        const cachedVersion = await getCachedVersion(packageName, version);
+        if (cachedVersion) {
+          // Use the cached resolved version to build the alias and path
+          actualVersion = cachedVersion;
+        } else {
+          // Resolve the actual version and cache it
+          if (version === 'latest') {
+            actualVersion = await getLatestVersion(packageName);
+          } else {
+            // For versions like '4', resolve to actual version like '4.17.21'
+            try {
+              const { stdout: resolvedVersion } = await execAsync(`npm view ${packageName}@${version} version --json`);
+              const versions = JSON.parse(resolvedVersion);
+              // Get the highest version from the list
+              actualVersion = Array.isArray(versions) ? versions[versions.length - 1] : versions;
+            } catch (error) {
+              // Fallback to getLatestVersion if specific version resolution fails
+              actualVersion = await getLatestVersion(packageName);
+            }
+          }
+          // Cache the resolved version
+          await setCachedVersion(packageName, version, actualVersion);
+        }
+      }
+
+      const alias = `${packageName.replace('@', '').replace('/', '-')}-v-${actualVersion}`;
       const { stdout: globalModulesPath } = await execAsync('npm root -g');
       const packagePath = path.join(globalModulesPath.trim(), alias);
-      if (version !== 'latest' && await directoryExists(packagePath)) {
-        return packagePath;
-      }
-      if (version === 'latest') {
-        const latestVersion = await getLatestVersion(packageName);
+      
+      // Check if package is already installed
+      if (await directoryExists(packagePath)) {
         const installedVersion = await getInstalledPackageVersion(packagePath);
-        if (installedVersion === latestVersion) {
+        if (installedVersion === actualVersion) {
           return packagePath;
         }
       }
+
       try {
-        await execAsync(`npm install -g ${alias}@npm:${packageName}@${version}`, { stdio: 'ignore' });
+        await execAsync(`npm install -g ${alias}@npm:${packageName}@${actualVersion}`, { stdio: 'ignore' });
       } catch (error) {
-        throw new Error(`Failed to install ${packageName}@${version} globally.`, { cause: error });
+        throw new Error(`Failed to install ${packageName}@${actualVersion} globally.`, { cause: error });
       }
       return packagePath;
     };
@@ -521,8 +608,112 @@ export const resolvers = {
       }
     };
 
+    const isNonSpecificVersion = (version) => {
+      // For now, only cache 'latest' versions to be safe
+      // TODO: extend this to handle major version ranges once we have proper version resolution
+      return version === 'latest';
+    };
+
+    const getVersionCachePath = async (packageName, version) => {
+      const { tmpdir } = await import('node:os');
+      const { existsSync, mkdirSync } = await import('node:fs');
+      const cacheDir = path.join(tmpdir(), 'use-m-cache');
+      if (!existsSync(cacheDir)) {
+        mkdirSync(cacheDir, { recursive: true });
+      }
+      const cacheKey = `${packageName.replace('@', '').replace('/', '-')}-${version}`;
+      return path.join(cacheDir, `${cacheKey}.json`);
+    };
+
+    const getCachedVersion = async (packageName, version, cacheTimeoutMinutes = 5) => {
+      if (!isNonSpecificVersion(version)) {
+        return null; // Don't cache specific versions
+      }
+
+      try {
+        const cachePath = await getVersionCachePath(packageName, version);
+        if (await fileExists(cachePath)) {
+          const cacheData = JSON.parse(await readFile(cachePath, 'utf8'));
+          const cacheAge = Date.now() - cacheData.timestamp;
+          const cacheTimeoutMs = cacheTimeoutMinutes * 60 * 1000;
+          
+          if (cacheAge < cacheTimeoutMs) {
+            return cacheData.resolvedVersion;
+          }
+        }
+      } catch {
+        // Ignore cache read errors, will fetch fresh version
+      }
+      return null;
+    };
+
+    const setCachedVersion = async (packageName, version, resolvedVersion) => {
+      if (!isNonSpecificVersion(version)) {
+        return; // Don't cache specific versions
+      }
+
+      try {
+        const cachePath = await getVersionCachePath(packageName, version);
+        const cacheData = {
+          packageName,
+          requestedVersion: version,
+          resolvedVersion,
+          timestamp: Date.now()
+        };
+        const { writeFile } = await import('node:fs/promises');
+        await writeFile(cachePath, JSON.stringify(cacheData), 'utf8');
+      } catch {
+        // Ignore cache write errors, not critical
+      }
+    };
+
+    const getLatestVersion = async (packageName) => {
+      const { stdout: version } = await execAsync(`npm show ${packageName} version`);
+      return version.trim();
+    };
+
+    const getInstalledPackageVersion = async (packagePath) => {
+      try {
+        const packageJsonPath = path.join(packagePath, 'package.json');
+        const data = await readFile(packageJsonPath, 'utf8');
+        const { version } = JSON.parse(data);
+        return version;
+      } catch {
+        return null;
+      }
+    };
+
     const ensurePackageInstalled = async ({ packageName, version }) => {
-      const alias = `${packageName.replace('@', '').replace('/', '-')}-v-${version}`;
+      let actualVersion = version;
+      
+      // For non-specific versions, check if we have a cached resolved version
+      if (isNonSpecificVersion(version)) {
+        const cachedVersion = await getCachedVersion(packageName, version);
+        if (cachedVersion) {
+          // Use the cached resolved version to build the alias and path
+          actualVersion = cachedVersion;
+        } else {
+          // Resolve the actual version and cache it
+          if (version === 'latest') {
+            actualVersion = await getLatestVersion(packageName);
+          } else {
+            // For versions like '4', resolve to actual version like '4.17.21'
+            try {
+              const { stdout: resolvedVersion } = await execAsync(`npm view ${packageName}@${version} version --json`);
+              const versions = JSON.parse(resolvedVersion);
+              // Get the highest version from the list
+              actualVersion = Array.isArray(versions) ? versions[versions.length - 1] : versions;
+            } catch (error) {
+              // Fallback to getLatestVersion if specific version resolution fails
+              actualVersion = await getLatestVersion(packageName);
+            }
+          }
+          // Cache the resolved version
+          await setCachedVersion(packageName, version, actualVersion);
+        }
+      }
+
+      const alias = `${packageName.replace('@', '').replace('/', '-')}-v-${actualVersion}`;
 
       let binDir = '';
       try {
@@ -543,14 +734,18 @@ export const resolvers = {
       const globalModulesPath = path.join(bunInstallRoot, 'install', 'global', 'node_modules');
       const packagePath = path.join(globalModulesPath, alias);
 
-      if (version !== 'latest' && await directoryExists(packagePath)) {
-        return packagePath;
+      // Check if package is already installed
+      if (await directoryExists(packagePath)) {
+        const installedVersion = await getInstalledPackageVersion(packagePath);
+        if (installedVersion === actualVersion) {
+          return packagePath;
+        }
       }
 
       try {
-        await execAsync(`bun add -g ${alias}@npm:${packageName}@${version} --silent`, { stdio: 'ignore' });
+        await execAsync(`bun add -g ${alias}@npm:${packageName}@${actualVersion} --silent`, { stdio: 'ignore' });
       } catch (error) {
-        throw new Error(`Failed to install ${packageName}@${version} globally with Bun.`, { cause: error });
+        throw new Error(`Failed to install ${packageName}@${actualVersion} globally with Bun.`, { cause: error });
       }
 
       return packagePath;
@@ -610,7 +805,7 @@ export const resolvers = {
   },
 }
 
-export const baseUse = async (modulePath) => {
+const baseUse = async (modulePath) => {
   // Dynamically import the module
   try {
     const module = await import(modulePath);
@@ -647,7 +842,19 @@ export const baseUse = async (modulePath) => {
   }
 }
 
-export const makeUse = async (options) => {
+const getScriptUrl = async () => {
+  const error = new Error();
+  const stack = error.stack || '';
+  const regex = /at[^:\\/]+(file:\/\/)?(?<path>(\/|(?<=\W)\w:)[^):]+):\d+:\d+/;
+  const match = stack.match(regex);
+  if (!match?.groups?.path) {
+    return null;
+  }
+  const { pathToFileURL } = await import('node:url');
+  return pathToFileURL(match.groups.path).href;
+}
+
+const makeUse = async (options) => {
   let scriptPath = options?.scriptPath;
   if (!scriptPath && typeof global !== 'undefined' && typeof global['__filename'] !== 'undefined') {
     scriptPath = global['__filename'];
@@ -656,8 +863,8 @@ export const makeUse = async (options) => {
   if (!scriptPath && metaUrl) {
     scriptPath = metaUrl;
   }
-  if (!scriptPath) {
-    scriptPath = import.meta.url;
+  if (!scriptPath && typeof window === 'undefined' && typeof require === 'undefined') {
+    scriptPath = await getScriptUrl();
   }
   let protocol;
   if (scriptPath) {
@@ -730,7 +937,7 @@ export const makeUse = async (options) => {
 }
 
 let __use = null;
-const _use = async (moduleSpecifier) => {
+const use = async (moduleSpecifier) => {
   const stack = new Error().stack;
 
   // For Bun, we need to capture the stack trace before any other calls
@@ -757,10 +964,11 @@ const _use = async (moduleSpecifier) => {
   }
   return __use(moduleSpecifier, callerContext);
 }
-_use.all = async (...moduleSpecifiers) => {
+use.all = async (...moduleSpecifiers) => {
   if (!__use) {
     __use = await makeUse();
   }
   return Promise.all(moduleSpecifiers.map(__use));
 }
-export const use = _use;
+
+export { parseModuleSpecifier, resolvers, makeUse, baseUse, use };
