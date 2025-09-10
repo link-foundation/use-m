@@ -608,6 +608,138 @@ export const resolvers = {
     const resolvedPath = `https://jspm.dev/${packageName}${version ? `@${version}` : ''}${modulePath}`;
     return resolvedPath;
   },
+  yarn: async (moduleSpecifier, pathResolver) => {
+    const path = await import('node:path');
+    const { exec } = await import('node:child_process');
+    const { promisify } = await import('node:util');
+    const { stat, readFile } = await import('node:fs/promises');
+    const execAsync = promisify(exec);
+
+    if (!pathResolver) {
+      throw new Error('Failed to get the current resolver.');
+    }
+
+    const fileExists = async (filePath) => {
+      try {
+        const stats = await stat(filePath);
+        return stats.isFile();
+      } catch (error) {
+        if (error.code !== 'ENOENT') {
+          throw error;
+        }
+        return false;
+      }
+    };
+
+    const directoryExists = async (directoryPath) => {
+      try {
+        const stats = await stat(directoryPath);
+        return stats.isDirectory();
+      } catch (error) {
+        if (error.code !== 'ENOENT') {
+          throw error;
+        }
+        return false;
+      }
+    };
+
+    const tryResolveModule = async (packagePath) => {
+      try {
+        return await pathResolver(packagePath);
+      } catch (error) {
+        if (error.code !== 'MODULE_NOT_FOUND') {
+          throw error;
+        }
+
+        if (await directoryExists(packagePath)) {
+          const directoryName = path.basename(packagePath);
+          const resolvedPath = await tryResolveModule(path.join(packagePath, directoryName));
+          if (resolvedPath) {
+            return resolvedPath;
+          }
+
+          const packageJsonPath = path.join(packagePath, 'package.json');
+          if (await fileExists(packageJsonPath)) {
+            const packageJson = await readFile(packageJsonPath, 'utf8');
+            const parsed = JSON.parse(packageJson);
+            const exp = parsed.exports;
+            if (exp) {
+              let target = null;
+              if (typeof exp === 'string') {
+                target = exp;
+              } else {
+                const root = exp['.'] ?? exp;
+                if (typeof root === 'string') {
+                  target = root;
+                } else if (root && typeof root === 'object') {
+                  target = root.import || root.default || root.require || root.module || root.browser || null;
+                }
+              }
+              if (typeof target === 'string') {
+                const updatedPath = path.join(packagePath, target);
+                return await tryResolveModule(updatedPath);
+              }
+            }
+          }
+
+          return null;
+        }
+
+        return null;
+      }
+    };
+
+    const ensurePackageInstalled = async ({ packageName, version }) => {
+      let globalDir = '';
+      try {
+        const { stdout } = await execAsync('yarn global dir');
+        globalDir = stdout.trim();
+      } catch (error) {
+        throw new Error('Failed to get yarn global directory. Make sure yarn is installed.', { cause: error });
+      }
+
+      const globalModulesPath = path.join(globalDir, 'node_modules');
+      const packagePath = path.join(globalModulesPath, packageName);
+
+      if (await directoryExists(packagePath)) {
+        if (version === 'latest') {
+          return packagePath;
+        }
+        
+        // Check if installed version matches requested version
+        try {
+          const packageJsonPath = path.join(packagePath, 'package.json');
+          if (await fileExists(packageJsonPath)) {
+            const packageJson = await readFile(packageJsonPath, 'utf8');
+            const parsed = JSON.parse(packageJson);
+            if (parsed.version === version) {
+              return packagePath;
+            }
+          }
+        } catch {
+          // If we can't read version, reinstall
+        }
+      }
+
+      try {
+        const packageSpec = version === 'latest' ? packageName : `${packageName}@${version}`;
+        await execAsync(`yarn global add ${packageSpec}`, { stdio: 'ignore' });
+      } catch (error) {
+        throw new Error(`Failed to install ${packageName}@${version} globally with yarn.`, { cause: error });
+      }
+
+      return packagePath;
+    };
+
+    const { packageName, version, modulePath } = parseModuleSpecifier(moduleSpecifier);
+    const packagePath = await ensurePackageInstalled({ packageName, version });
+    const packageModulePath = modulePath ? path.join(packagePath, modulePath) : packagePath;
+    const resolvedPath = await tryResolveModule(packageModulePath);
+    if (!resolvedPath) {
+      throw new Error(`Failed to resolve the path to '${moduleSpecifier}' from '${packageModulePath}'.`);
+    }
+    return resolvedPath;
+  },
 }
 
 export const baseUse = async (modulePath) => {

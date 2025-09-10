@@ -149,4 +149,28 @@ describe(`${moduleName} resolvers tests`, () => {
     const packagePath = await bun('yargs@latest/helpers', resolve);
     expect(packagePath).toMatch(/node_modules\/yargs-v-latest\/helpers/);
   });
+
+  test(`${moduleName} yarn resolver resolves package path`, async () => {
+    const { yarn } = resolvers;
+    const packagePath = await yarn('lodash@4.17.21', resolve);
+    expect(packagePath).toMatch(/node_modules\/lodash/);
+  });
+
+  test(`${moduleName} yarn resolver resolves scoped package path for @octokit/core@6.1.5`, async () => {
+    const { yarn } = resolvers;
+    const packagePath = await yarn('@octokit/core@6.1.5', resolve);
+    expect(packagePath).toMatch(/node_modules\/@octokit\/core/);
+  });
+
+  test(`${moduleName} yarn resolver resolves yargs/helpers`, async () => {
+    const { yarn } = resolvers;
+    const packagePath = await yarn('yargs@17.7.2/helpers', resolve);
+    expect(packagePath).toMatch(/node_modules\/yargs\/helpers/);
+  });
+
+  test(`${moduleName} yarn resolver resolves yargs@latest/helpers`, async () => {
+    const { yarn } = resolvers;
+    const packagePath = await yarn('yargs@latest/helpers', resolve);
+    expect(packagePath).toMatch(/node_modules\/yargs\/helpers/);
+  });
 });
