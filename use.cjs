@@ -125,23 +125,47 @@ const supportedBuiltins = {
   },
   'fs/promises': {
     browser: null, // Not available in browser
-    node: () => import('node:fs/promises').then(m => ({ default: m, ...m }))
+    node: async () => {
+      const m = await import('node:fs/promises');
+      // Validate that we got promise-based functions, not callback-based ones
+      if (m.mkdir && m.mkdir.length === 3) {
+        // This means we got callback-based fs.mkdir instead of promise-based fs/promises.mkdir
+        // This can happen in some runtime environments where node:fs/promises isn't properly implemented
+        throw new Error(
+          'Runtime returned callback-based fs functions instead of promise-based ones. ' +
+          'This indicates an issue with the runtime\'s node:fs/promises implementation.'
+        );
+      }
+      return { default: m, ...m };
+    }
   },
   'dns/promises': {
     browser: null, // Not available in browser
-    node: () => import('node:dns/promises').then(m => ({ default: m, ...m }))
+    node: async () => {
+      const m = await import('node:dns/promises');
+      return { default: m, ...m };
+    }
   },
   'stream/promises': {
     browser: null, // Not available in browser
-    node: () => import('node:stream/promises').then(m => ({ default: m, ...m }))
+    node: async () => {
+      const m = await import('node:stream/promises');
+      return { default: m, ...m };
+    }
   },
   'readline/promises': {
     browser: null, // Not available in browser
-    node: () => import('node:readline/promises').then(m => ({ default: m, ...m }))
+    node: async () => {
+      const m = await import('node:readline/promises');
+      return { default: m, ...m };
+    }
   },
   'timers/promises': {
     browser: null, // Not available in browser
-    node: () => import('node:timers/promises').then(m => ({ default: m, ...m }))
+    node: async () => {
+      const m = await import('node:timers/promises');
+      return { default: m, ...m };
+    }
   },
   'path': {
     browser: null, // Not available in browser
