@@ -1,3 +1,4 @@
+import { describe, test, expect } from '../test-adapter.mjs';
 import { use } from '../use.mjs';
 
 const moduleName = 'mjs module';

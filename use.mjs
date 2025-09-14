@@ -156,40 +156,48 @@ const supportedBuiltins = {
             return wrapper || promisifiedFn;
           };
           
+          // Helper to safely promisify functions that may not exist
+          const safePromisify = (fn, expectedLength) => {
+            if (typeof fn !== 'function') {
+              return undefined;
+            }
+            return createAsyncWrapper(promisify(fn), expectedLength);
+          };
+          
           const promisifiedFs = {
-            access: createAsyncWrapper(promisify(fs.access), 2),
-            appendFile: createAsyncWrapper(promisify(fs.appendFile), 3),
-            chmod: createAsyncWrapper(promisify(fs.chmod), 2),
-            chown: createAsyncWrapper(promisify(fs.chown), 3),
-            copyFile: createAsyncWrapper(promisify(fs.copyFile), 3),
-            lchmod: createAsyncWrapper(promisify(fs.lchmod), 2),
-            lchown: createAsyncWrapper(promisify(fs.lchown), 3),
-            link: createAsyncWrapper(promisify(fs.link), 2),
-            lstat: createAsyncWrapper(promisify(fs.lstat), 2),
-            mkdir: createAsyncWrapper(promisify(fs.mkdir), 2),
-            mkdtemp: createAsyncWrapper(promisify(fs.mkdtemp), 2),
-            open: createAsyncWrapper(promisify(fs.open), 3),
-            readdir: createAsyncWrapper(promisify(fs.readdir), 2),
-            readFile: createAsyncWrapper(promisify(fs.readFile), 2),
-            readlink: createAsyncWrapper(promisify(fs.readlink), 2),
-            realpath: createAsyncWrapper(promisify(fs.realpath), 2),
-            rename: createAsyncWrapper(promisify(fs.rename), 2),
-            rmdir: createAsyncWrapper(promisify(fs.rmdir), 2),
-            stat: createAsyncWrapper(promisify(fs.stat), 2),
-            symlink: createAsyncWrapper(promisify(fs.symlink), 3),
-            truncate: createAsyncWrapper(promisify(fs.truncate), 2),
-            unlink: createAsyncWrapper(promisify(fs.unlink), 1),
-            utimes: createAsyncWrapper(promisify(fs.utimes), 3),
-            writeFile: createAsyncWrapper(promisify(fs.writeFile), 3),
+            access: safePromisify(fs.access, 2),
+            appendFile: safePromisify(fs.appendFile, 3),
+            chmod: safePromisify(fs.chmod, 2),
+            chown: safePromisify(fs.chown, 3),
+            copyFile: safePromisify(fs.copyFile, 3),
+            lchmod: safePromisify(fs.lchmod, 2),
+            lchown: safePromisify(fs.lchown, 3),
+            link: safePromisify(fs.link, 2),
+            lstat: safePromisify(fs.lstat, 2),
+            mkdir: safePromisify(fs.mkdir, 2),
+            mkdtemp: safePromisify(fs.mkdtemp, 2),
+            open: safePromisify(fs.open, 3),
+            readdir: safePromisify(fs.readdir, 2),
+            readFile: safePromisify(fs.readFile, 2),
+            readlink: safePromisify(fs.readlink, 2),
+            realpath: safePromisify(fs.realpath, 2),
+            rename: safePromisify(fs.rename, 2),
+            rmdir: safePromisify(fs.rmdir, 2),
+            stat: safePromisify(fs.stat, 2),
+            symlink: safePromisify(fs.symlink, 3),
+            truncate: safePromisify(fs.truncate, 2),
+            unlink: safePromisify(fs.unlink, 1),
+            utimes: safePromisify(fs.utimes, 3),
+            writeFile: safePromisify(fs.writeFile, 3),
             constants: fs.constants
           };
           
           // Add newer functions if they exist
-          if (fs.rm) promisifiedFs.rm = createAsyncWrapper(promisify(fs.rm), 2);
-          if (fs.cp) promisifiedFs.cp = createAsyncWrapper(promisify(fs.cp), 3);
-          if (fs.lutimes) promisifiedFs.lutimes = createAsyncWrapper(promisify(fs.lutimes), 3);
-          if (fs.opendir) promisifiedFs.opendir = createAsyncWrapper(promisify(fs.opendir), 2);
-          if (fs.statfs) promisifiedFs.statfs = createAsyncWrapper(promisify(fs.statfs), 2);
+          if (fs.rm) promisifiedFs.rm = safePromisify(fs.rm, 2);
+          if (fs.cp) promisifiedFs.cp = safePromisify(fs.cp, 3);
+          if (fs.lutimes) promisifiedFs.lutimes = safePromisify(fs.lutimes, 3);
+          if (fs.opendir) promisifiedFs.opendir = safePromisify(fs.opendir, 2);
+          if (fs.statfs) promisifiedFs.statfs = safePromisify(fs.statfs, 2);
           if (fs.watch) promisifiedFs.watch = fs.watch.bind(fs); // watch is not callback-based
           
           console.log(`[${runtime}] Fallback mkdir.length:`, promisifiedFs.mkdir?.length);
