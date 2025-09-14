@@ -127,68 +127,82 @@ const supportedBuiltins = {
     browser: null, // Not available in browser
     node: async () => {
       const runtime = typeof Bun !== 'undefined' ? 'Bun' : typeof Deno !== 'undefined' ? 'Deno' : 'Node.js';
-      if (runtime !== 'Node.js') {
-        console.log(`[${runtime}] Loading fs/promises via builtin resolver`);
-      }
-      try {
-        const m = await import('node:fs/promises');
-        // Debug: Log what we got (only in non-Node environments for debugging)
-        const runtime = typeof Bun !== 'undefined' ? 'Bun' : typeof Deno !== 'undefined' ? 'Deno' : 'Node.js';
-        if (runtime !== 'Node.js') {
-          console.log(`[${runtime}] fs/promises mkdir.length:`, m.mkdir?.length);
-        }
-        
-        // Validate that we got promise-based functions, not callback-based ones
-        if (m.mkdir && m.mkdir.length === 3) {
-          console.log(`[${runtime}] Detected callback-based functions, using promisify fallback`);
-          // This means we got callback-based fs.mkdir instead of promise-based fs/promises.mkdir
-          // This can happen in some runtime environments where node:fs/promises isn't properly implemented
-          // Fall back to creating promise-based versions using util.promisify
+      
+      // For Bun and Deno, use a different approach since their node:fs/promises may not be fully compatible
+      if (runtime === 'Bun' || runtime === 'Deno') {
+        console.log(`[${runtime}] Using promisify fallback for fs/promises compatibility`);
+        try {
           const fs = await import('node:fs');
           const { promisify } = await import('node:util');
           
-          // Create promise-based versions of the main fs functions
+          // Create wrapper functions that match native fs/promises signatures
+          // These need to have the correct .length property and be async functions
+          const createAsyncWrapper = (promisifiedFn, expectedLength) => {
+            // Create an async function with the correct length
+            const wrapper = {
+              1: async (a) => promisifiedFn(a),
+              2: async (a, b) => promisifiedFn(a, b),
+              3: async (a, b, c) => promisifiedFn(a, b, c),
+              4: async (a, b, c, d) => promisifiedFn(a, b, c, d)
+            }[expectedLength];
+            
+            // Copy the name if possible
+            try {
+              Object.defineProperty(wrapper, 'name', { value: promisifiedFn.name });
+            } catch (e) {
+              // Ignore if name can't be set
+            }
+            
+            return wrapper || promisifiedFn;
+          };
+          
           const promisifiedFs = {
-            access: promisify(fs.access),
-            appendFile: promisify(fs.appendFile),
-            chmod: promisify(fs.chmod),
-            chown: promisify(fs.chown),
-            copyFile: promisify(fs.copyFile),
-            lchmod: promisify(fs.lchmod),
-            lchown: promisify(fs.lchown),
-            link: promisify(fs.link),
-            lstat: promisify(fs.lstat),
-            mkdir: promisify(fs.mkdir),
-            mkdtemp: promisify(fs.mkdtemp),
-            open: promisify(fs.open),
-            readdir: promisify(fs.readdir),
-            readFile: promisify(fs.readFile),
-            readlink: promisify(fs.readlink),
-            realpath: promisify(fs.realpath),
-            rename: promisify(fs.rename),
-            rmdir: promisify(fs.rmdir),
-            stat: promisify(fs.stat),
-            symlink: promisify(fs.symlink),
-            truncate: promisify(fs.truncate),
-            unlink: promisify(fs.unlink),
-            utimes: promisify(fs.utimes),
-            writeFile: promisify(fs.writeFile),
+            access: createAsyncWrapper(promisify(fs.access), 2),
+            appendFile: createAsyncWrapper(promisify(fs.appendFile), 3),
+            chmod: createAsyncWrapper(promisify(fs.chmod), 2),
+            chown: createAsyncWrapper(promisify(fs.chown), 3),
+            copyFile: createAsyncWrapper(promisify(fs.copyFile), 3),
+            lchmod: createAsyncWrapper(promisify(fs.lchmod), 2),
+            lchown: createAsyncWrapper(promisify(fs.lchown), 3),
+            link: createAsyncWrapper(promisify(fs.link), 2),
+            lstat: createAsyncWrapper(promisify(fs.lstat), 2),
+            mkdir: createAsyncWrapper(promisify(fs.mkdir), 2),
+            mkdtemp: createAsyncWrapper(promisify(fs.mkdtemp), 2),
+            open: createAsyncWrapper(promisify(fs.open), 3),
+            readdir: createAsyncWrapper(promisify(fs.readdir), 2),
+            readFile: createAsyncWrapper(promisify(fs.readFile), 2),
+            readlink: createAsyncWrapper(promisify(fs.readlink), 2),
+            realpath: createAsyncWrapper(promisify(fs.realpath), 2),
+            rename: createAsyncWrapper(promisify(fs.rename), 2),
+            rmdir: createAsyncWrapper(promisify(fs.rmdir), 2),
+            stat: createAsyncWrapper(promisify(fs.stat), 2),
+            symlink: createAsyncWrapper(promisify(fs.symlink), 3),
+            truncate: createAsyncWrapper(promisify(fs.truncate), 2),
+            unlink: createAsyncWrapper(promisify(fs.unlink), 1),
+            utimes: createAsyncWrapper(promisify(fs.utimes), 3),
+            writeFile: createAsyncWrapper(promisify(fs.writeFile), 3),
             constants: fs.constants
           };
           
           // Add newer functions if they exist
-          if (fs.rm) promisifiedFs.rm = promisify(fs.rm);
-          if (fs.cp) promisifiedFs.cp = promisify(fs.cp);
-          if (fs.lutimes) promisifiedFs.lutimes = promisify(fs.lutimes);
-          if (fs.opendir) promisifiedFs.opendir = promisify(fs.opendir);
-          if (fs.statfs) promisifiedFs.statfs = promisify(fs.statfs);
+          if (fs.rm) promisifiedFs.rm = createAsyncWrapper(promisify(fs.rm), 2);
+          if (fs.cp) promisifiedFs.cp = createAsyncWrapper(promisify(fs.cp), 3);
+          if (fs.lutimes) promisifiedFs.lutimes = createAsyncWrapper(promisify(fs.lutimes), 3);
+          if (fs.opendir) promisifiedFs.opendir = createAsyncWrapper(promisify(fs.opendir), 2);
+          if (fs.statfs) promisifiedFs.statfs = createAsyncWrapper(promisify(fs.statfs), 2);
           if (fs.watch) promisifiedFs.watch = fs.watch.bind(fs); // watch is not callback-based
           
-          // Verify the fallback worked
           console.log(`[${runtime}] Fallback mkdir.length:`, promisifiedFs.mkdir?.length);
           console.log(`[${runtime}] Fallback mkdir.constructor.name:`, promisifiedFs.mkdir?.constructor.name);
           return { default: promisifiedFs, ...promisifiedFs };
+        } catch (error) {
+          throw new Error(`Failed to create fs/promises fallback for ${runtime}: ${error.message}`, { cause: error });
         }
+      }
+      
+      // For Node.js, use the native implementation
+      try {
+        const m = await import('node:fs/promises');
         return { default: m, ...m };
       } catch (error) {
         throw new Error(`Failed to load fs/promises module: ${error.message}`, { cause: error });
