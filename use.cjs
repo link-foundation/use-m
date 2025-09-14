@@ -126,17 +126,59 @@ const supportedBuiltins = {
   'fs/promises': {
     browser: null, // Not available in browser
     node: async () => {
-      const m = await import('node:fs/promises');
-      // Validate that we got promise-based functions, not callback-based ones
-      if (m.mkdir && m.mkdir.length === 3) {
-        // This means we got callback-based fs.mkdir instead of promise-based fs/promises.mkdir
-        // This can happen in some runtime environments where node:fs/promises isn't properly implemented
-        throw new Error(
-          'Runtime returned callback-based fs functions instead of promise-based ones. ' +
-          'This indicates an issue with the runtime\'s node:fs/promises implementation.'
-        );
+      try {
+        const m = await import('node:fs/promises');
+        // Validate that we got promise-based functions, not callback-based ones
+        if (m.mkdir && m.mkdir.length === 3) {
+          // This means we got callback-based fs.mkdir instead of promise-based fs/promises.mkdir
+          // This can happen in some runtime environments where node:fs/promises isn't properly implemented
+          // Fall back to creating promise-based versions using util.promisify
+          const fs = await import('node:fs');
+          const { promisify } = await import('node:util');
+          
+          // Create promise-based versions of the main fs functions
+          const promisifiedFs = {
+            access: promisify(fs.access),
+            appendFile: promisify(fs.appendFile),
+            chmod: promisify(fs.chmod),
+            chown: promisify(fs.chown),
+            copyFile: promisify(fs.copyFile),
+            lchmod: promisify(fs.lchmod),
+            lchown: promisify(fs.lchown),
+            link: promisify(fs.link),
+            lstat: promisify(fs.lstat),
+            mkdir: promisify(fs.mkdir),
+            mkdtemp: promisify(fs.mkdtemp),
+            open: promisify(fs.open),
+            readdir: promisify(fs.readdir),
+            readFile: promisify(fs.readFile),
+            readlink: promisify(fs.readlink),
+            realpath: promisify(fs.realpath),
+            rename: promisify(fs.rename),
+            rmdir: promisify(fs.rmdir),
+            stat: promisify(fs.stat),
+            symlink: promisify(fs.symlink),
+            truncate: promisify(fs.truncate),
+            unlink: promisify(fs.unlink),
+            utimes: promisify(fs.utimes),
+            writeFile: promisify(fs.writeFile),
+            constants: fs.constants
+          };
+          
+          // Add newer functions if they exist
+          if (fs.rm) promisifiedFs.rm = promisify(fs.rm);
+          if (fs.cp) promisifiedFs.cp = promisify(fs.cp);
+          if (fs.lutimes) promisifiedFs.lutimes = promisify(fs.lutimes);
+          if (fs.opendir) promisifiedFs.opendir = promisify(fs.opendir);
+          if (fs.statfs) promisifiedFs.statfs = promisify(fs.statfs);
+          if (fs.watch) promisifiedFs.watch = fs.watch.bind(fs); // watch is not callback-based
+          
+          return { default: promisifiedFs, ...promisifiedFs };
+        }
+        return { default: m, ...m };
+      } catch (error) {
+        throw new Error(`Failed to load fs/promises module: ${error.message}`, { cause: error });
       }
-      return { default: m, ...m };
     }
   },
   'dns/promises': {
