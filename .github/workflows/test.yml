@@ -55,7 +55,7 @@ jobs:
 
     - name: Run Deno tests
       if: matrix.runtime == 'deno'
-      run: deno test --allow-net --allow-env --allow-run --allow-read --allow-sys
+      run: deno test --allow-net --allow-env --allow-run --allow-read --allow-write --allow-sys
 
     - name: Upload test results
       if: always()

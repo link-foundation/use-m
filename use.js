@@ -123,6 +123,128 @@ const supportedBuiltins = {
     browser: null, // Not available in browser
     node: () => import('node:fs').then(m => ({ default: m, ...m }))
   },
+  'fs/promises': {
+    browser: null, // Not available in browser
+    node: async () => {
+      const runtime = typeof Bun !== 'undefined' ? 'Bun' : typeof Deno !== 'undefined' ? 'Deno' : 'Node.js';
+      
+      // For Bun and Deno, use a different approach since their node:fs/promises may not be fully compatible
+      if (runtime === 'Bun' || runtime === 'Deno') {
+        console.log(`[${runtime}] Using promisify fallback for fs/promises compatibility`);
+        try {
+          const fs = await import('node:fs');
+          const { promisify } = await import('node:util');
+          
+          // Create wrapper functions that match native fs/promises signatures
+          // These need to have the correct .length property and be async functions
+          const createAsyncWrapper = (promisifiedFn, expectedLength) => {
+            // Create an async function with the correct length
+            const wrapper = {
+              1: async (a) => promisifiedFn(a),
+              2: async (a, b) => promisifiedFn(a, b),
+              3: async (a, b, c) => promisifiedFn(a, b, c),
+              4: async (a, b, c, d) => promisifiedFn(a, b, c, d)
+            }[expectedLength];
+            
+            // Copy the name if possible
+            try {
+              Object.defineProperty(wrapper, 'name', { value: promisifiedFn.name });
+            } catch (e) {
+              // Ignore if name can't be set
+            }
+            
+            return wrapper || promisifiedFn;
+          };
+          
+          // Helper to safely promisify functions that may not exist
+          const safePromisify = (fn, expectedLength) => {
+            if (typeof fn !== 'function') {
+              return undefined;
+            }
+            return createAsyncWrapper(promisify(fn), expectedLength);
+          };
+          
+          const promisifiedFs = {
+            access: safePromisify(fs.access, 2),
+            appendFile: safePromisify(fs.appendFile, 3),
+            chmod: safePromisify(fs.chmod, 2),
+            chown: safePromisify(fs.chown, 3),
+            copyFile: safePromisify(fs.copyFile, 3),
+            lchmod: safePromisify(fs.lchmod, 2),
+            lchown: safePromisify(fs.lchown, 3),
+            link: safePromisify(fs.link, 2),
+            lstat: safePromisify(fs.lstat, 2),
+            mkdir: safePromisify(fs.mkdir, 2),
+            mkdtemp: safePromisify(fs.mkdtemp, 2),
+            open: safePromisify(fs.open, 3),
+            readdir: safePromisify(fs.readdir, 2),
+            readFile: safePromisify(fs.readFile, 2),
+            readlink: safePromisify(fs.readlink, 2),
+            realpath: safePromisify(fs.realpath, 2),
+            rename: safePromisify(fs.rename, 2),
+            rmdir: safePromisify(fs.rmdir, 2),
+            stat: safePromisify(fs.stat, 2),
+            symlink: safePromisify(fs.symlink, 3),
+            truncate: safePromisify(fs.truncate, 2),
+            unlink: safePromisify(fs.unlink, 1),
+            utimes: safePromisify(fs.utimes, 3),
+            writeFile: safePromisify(fs.writeFile, 3),
+            constants: fs.constants
+          };
+          
+          // Add newer functions if they exist
+          if (fs.rm) promisifiedFs.rm = safePromisify(fs.rm, 2);
+          if (fs.cp) promisifiedFs.cp = safePromisify(fs.cp, 3);
+          if (fs.lutimes) promisifiedFs.lutimes = safePromisify(fs.lutimes, 3);
+          if (fs.opendir) promisifiedFs.opendir = safePromisify(fs.opendir, 2);
+          if (fs.statfs) promisifiedFs.statfs = safePromisify(fs.statfs, 2);
+          if (fs.watch) promisifiedFs.watch = fs.watch.bind(fs); // watch is not callback-based
+          
+          console.log(`[${runtime}] Fallback mkdir.length:`, promisifiedFs.mkdir?.length);
+          console.log(`[${runtime}] Fallback mkdir.constructor.name:`, promisifiedFs.mkdir?.constructor.name);
+          return { default: promisifiedFs, ...promisifiedFs };
+        } catch (error) {
+          throw new Error(`Failed to create fs/promises fallback for ${runtime}: ${error.message}`, { cause: error });
+        }
+      }
+      
+      // For Node.js, use the native implementation
+      try {
+        const m = await import('node:fs/promises');
+        return { default: m, ...m };
+      } catch (error) {
+        throw new Error(`Failed to load fs/promises module: ${error.message}`, { cause: error });
+      }
+    }
+  },
+  'dns/promises': {
+    browser: null, // Not available in browser
+    node: async () => {
+      const m = await import('node:dns/promises');
+      return { default: m, ...m };
+    }
+  },
+  'stream/promises': {
+    browser: null, // Not available in browser
+    node: async () => {
+      const m = await import('node:stream/promises');
+      return { default: m, ...m };
+    }
+  },
+  'readline/promises': {
+    browser: null, // Not available in browser
+    node: async () => {
+      const m = await import('node:readline/promises');
+      return { default: m, ...m };
+    }
+  },
+  'timers/promises': {
+    browser: null, // Not available in browser
+    node: async () => {
+      const m = await import('node:timers/promises');
+      return { default: m, ...m };
+    }
+  },
   'path': {
     browser: null, // Not available in browser
     node: () => import('node:path').then(m => ({ default: m, ...m }))
@@ -216,10 +338,16 @@ const supportedBuiltins = {
 
 const resolvers = {
   builtin: async (moduleSpecifier, pathResolver) => {
-    const { packageName } = parseModuleSpecifier(moduleSpecifier);
+    const { packageName, modulePath } = parseModuleSpecifier(moduleSpecifier);
 
-    // Remove 'node:' prefix if present
-    const moduleName = packageName.startsWith('node:') ? packageName.slice(5) : packageName;
+    // Handle built-in modules with subpaths like 'node:fs/promises'
+    let moduleName;
+    if (packageName.startsWith('node:')) {
+      // For node: modules, include the path in the module name
+      moduleName = packageName.slice(5) + modulePath;
+    } else {
+      moduleName = packageName + modulePath;
+    }
 
     // Check if we support this built-in module
     if (supportedBuiltins[moduleName]) {
