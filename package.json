@@ -1,6 +1,6 @@
 {
   "name": "use-m",
-  "version": "8.13.6",
+  "version": "8.13.7",
   "description": "use-m: dynamically import any JavaScript module",
   "type": "module",
   "main": "use.cjs",
