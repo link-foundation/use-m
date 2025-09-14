@@ -126,10 +126,21 @@ const supportedBuiltins = {
   'fs/promises': {
     browser: null, // Not available in browser
     node: async () => {
+      const runtime = typeof Bun !== 'undefined' ? 'Bun' : typeof Deno !== 'undefined' ? 'Deno' : 'Node.js';
+      if (runtime !== 'Node.js') {
+        console.log(`[${runtime}] Loading fs/promises via builtin resolver`);
+      }
       try {
         const m = await import('node:fs/promises');
+        // Debug: Log what we got (only in non-Node environments for debugging)
+        const runtime = typeof Bun !== 'undefined' ? 'Bun' : typeof Deno !== 'undefined' ? 'Deno' : 'Node.js';
+        if (runtime !== 'Node.js') {
+          console.log(`[${runtime}] fs/promises mkdir.length:`, m.mkdir?.length);
+        }
+        
         // Validate that we got promise-based functions, not callback-based ones
         if (m.mkdir && m.mkdir.length === 3) {
+          console.log(`[${runtime}] Detected callback-based functions, using promisify fallback`);
           // This means we got callback-based fs.mkdir instead of promise-based fs/promises.mkdir
           // This can happen in some runtime environments where node:fs/promises isn't properly implemented
           // Fall back to creating promise-based versions using util.promisify
@@ -173,6 +184,9 @@ const supportedBuiltins = {
           if (fs.statfs) promisifiedFs.statfs = promisify(fs.statfs);
           if (fs.watch) promisifiedFs.watch = fs.watch.bind(fs); // watch is not callback-based
           
+          // Verify the fallback worked
+          console.log(`[${runtime}] Fallback mkdir.length:`, promisifiedFs.mkdir?.length);
+          console.log(`[${runtime}] Fallback mkdir.constructor.name:`, promisifiedFs.mkdir?.constructor.name);
           return { default: promisifiedFs, ...promisifiedFs };
         }
         return { default: m, ...m };
