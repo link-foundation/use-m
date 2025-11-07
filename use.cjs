@@ -72,7 +72,7 @@ const extractCallerContext = (stack) => {
   return null;
 };
 
-const parseModuleSpecifier = (moduleSpecifier) => {
+export const parseModuleSpecifier = (moduleSpecifier) => {
   if (!moduleSpecifier || typeof moduleSpecifier !== 'string' || moduleSpecifier.length <= 0) {
     throw new Error(
       `Name for a package to be imported is not provided.
@@ -336,7 +336,7 @@ const supportedBuiltins = {
   }
 };
 
-const resolvers = {
+export const resolvers = {
   builtin: async (moduleSpecifier, pathResolver) => {
     const { packageName, modulePath } = parseModuleSpecifier(moduleSpecifier);
 
@@ -473,7 +473,20 @@ const resolvers = {
       }
     };
 
-    const tryResolveModule = async (packagePath) => {
+    const resolveExportsTarget = (exportsEntry) => {
+      // Helper function to resolve the target from an exports entry
+      // Handles both string values and conditional exports objects
+      if (typeof exportsEntry === 'string') {
+        return exportsEntry;
+      }
+      if (exportsEntry && typeof exportsEntry === 'object') {
+        // Check common condition keys in order of preference
+        return exportsEntry.import || exportsEntry.default || exportsEntry.require || exportsEntry.module || exportsEntry.browser || null;
+      }
+      return null;
+    };
+
+    const tryResolveModule = async (packagePath, subPath = null) => {
       try {
         return await pathResolver(packagePath);
       } catch (error) {
@@ -489,7 +502,7 @@ const resolvers = {
             return resolvedPath;
           }
 
-          // Attempt to resolve paths like 'octokit/core@latest' to 'octokit-core-v-latest/dist-src/index.js' (as it written in package.json)
+          // Attempt to resolve using package.json exports field
           const packageJsonPath = path.join(packagePath, 'package.json');
           if (await fileExists(packageJsonPath)) {
             const packageJson = await readFile(packageJsonPath, 'utf8');
@@ -497,16 +510,30 @@ const resolvers = {
             const exp = parsed.exports;
             if (exp) {
               let target = null;
-              if (typeof exp === 'string') {
-                target = exp;
-              } else {
-                const root = exp['.'] ?? exp;
-                if (typeof root === 'string') {
-                  target = root;
-                } else if (root && typeof root === 'object') {
-                  target = root.import || root.default || root.require || root.module || root.browser || null;
+
+              // If we have a subPath, try to find it in exports first
+              if (subPath) {
+                // Try with leading dot (e.g., "./helpers")
+                const dottedSubPath = `.${subPath}`;
+                if (exp[dottedSubPath]) {
+                  target = resolveExportsTarget(exp[dottedSubPath]);
+                }
+                // Also try without leading dot as fallback
+                if (!target && exp[subPath]) {
+                  target = resolveExportsTarget(exp[subPath]);
                 }
               }
+
+              // If no subPath match found, fall back to root "." export
+              if (!target) {
+                if (typeof exp === 'string') {
+                  target = exp;
+                } else {
+                  const root = exp['.'] ?? exp;
+                  target = resolveExportsTarget(root);
+                }
+              }
+
               if (typeof target === 'string') {
                 const updatedPath = path.join(packagePath, target);
                 return await tryResolveModule(updatedPath);
@@ -562,7 +589,7 @@ const resolvers = {
     const { packageName, version, modulePath } = parseModuleSpecifier(moduleSpecifier);
     const packagePath = await ensurePackageInstalled({ packageName, version });
     const packageModulePath = modulePath ? path.join(packagePath, modulePath) : packagePath;
-    const resolvedPath = await tryResolveModule(packageModulePath);
+    const resolvedPath = await tryResolveModule(packageModulePath, modulePath);
     if (!resolvedPath) {
       throw new Error(`Failed to resolve the path to '${moduleSpecifier}' from '${packageModulePath}'.`);
     }
@@ -603,7 +630,20 @@ const resolvers = {
       }
     };
 
-    const tryResolveModule = async (packagePath) => {
+    const resolveExportsTarget = (exportsEntry) => {
+      // Helper function to resolve the target from an exports entry
+      // Handles both string values and conditional exports objects
+      if (typeof exportsEntry === 'string') {
+        return exportsEntry;
+      }
+      if (exportsEntry && typeof exportsEntry === 'object') {
+        // Check common condition keys in order of preference
+        return exportsEntry.import || exportsEntry.default || exportsEntry.require || exportsEntry.module || exportsEntry.browser || null;
+      }
+      return null;
+    };
+
+    const tryResolveModule = async (packagePath, subPath = null) => {
       try {
         return await pathResolver(packagePath);
       } catch (error) {
@@ -625,16 +665,30 @@ const resolvers = {
             const exp = parsed.exports;
             if (exp) {
               let target = null;
-              if (typeof exp === 'string') {
-                target = exp;
-              } else {
-                const root = exp['.'] ?? exp;
-                if (typeof root === 'string') {
-                  target = root;
-                } else if (root && typeof root === 'object') {
-                  target = root.import || root.default || root.require || root.module || root.browser || null;
+
+              // If we have a subPath, try to find it in exports first
+              if (subPath) {
+                // Try with leading dot (e.g., "./helpers")
+                const dottedSubPath = `.${subPath}`;
+                if (exp[dottedSubPath]) {
+                  target = resolveExportsTarget(exp[dottedSubPath]);
+                }
+                // Also try without leading dot as fallback
+                if (!target && exp[subPath]) {
+                  target = resolveExportsTarget(exp[subPath]);
                 }
               }
+
+              // If no subPath match found, fall back to root "." export
+              if (!target) {
+                if (typeof exp === 'string') {
+                  target = exp;
+                } else {
+                  const root = exp['.'] ?? exp;
+                  target = resolveExportsTarget(root);
+                }
+              }
+
               if (typeof target === 'string') {
                 const updatedPath = path.join(packagePath, target);
                 return await tryResolveModule(updatedPath);
@@ -687,7 +741,7 @@ const resolvers = {
     const { packageName, version, modulePath } = parseModuleSpecifier(moduleSpecifier);
     const packagePath = await ensurePackageInstalled({ packageName, version });
     const packageModulePath = modulePath ? path.join(packagePath, modulePath) : packagePath;
-    const resolvedPath = await tryResolveModule(packageModulePath);
+    const resolvedPath = await tryResolveModule(packageModulePath, modulePath);
     if (!resolvedPath) {
       throw new Error(`Failed to resolve the path to '${moduleSpecifier}' from '${packageModulePath}'.`);
     }
@@ -738,7 +792,7 @@ const resolvers = {
   },
 }
 
-const baseUse = async (modulePath) => {
+export const baseUse = async (modulePath) => {
   // Dynamically import the module
   try {
     const module = await import(modulePath);
@@ -775,7 +829,7 @@ const baseUse = async (modulePath) => {
   }
 }
 
-const makeUse = async (options) => {
+export const makeUse = async (options) => {
   let scriptPath = options?.scriptPath;
   if (!scriptPath && typeof global !== 'undefined' && typeof global['__filename'] !== 'undefined') {
     scriptPath = global['__filename'];
@@ -783,6 +837,9 @@ const makeUse = async (options) => {
   const metaUrl = options?.meta?.url;
   if (!scriptPath && metaUrl) {
     scriptPath = metaUrl;
+  }
+  if (!scriptPath) {
+    scriptPath = import.meta.url;
   }
   let protocol;
   if (scriptPath) {
@@ -855,7 +912,7 @@ const makeUse = async (options) => {
 }
 
 let __use = null;
-const use = async (moduleSpecifier) => {
+const _use = async (moduleSpecifier) => {
   const stack = new Error().stack;
 
   // For Bun, we need to capture the stack trace before any other calls
@@ -882,17 +939,10 @@ const use = async (moduleSpecifier) => {
   }
   return __use(moduleSpecifier, callerContext);
 }
-use.all = async (...moduleSpecifiers) => {
+_use.all = async (...moduleSpecifiers) => {
   if (!__use) {
     __use = await makeUse();
   }
   return Promise.all(moduleSpecifiers.map(__use));
 }
-
-module.exports = {
-  parseModuleSpecifier,
-  resolvers,
-  makeUse,
-  baseUse,
-  use,
-};
+export const use = _use;
