@@ -473,42 +473,75 @@ const resolvers = {
       }
     };
 
-    const tryResolveModule = async (packagePath) => {
+    const resolveExportsTarget = (exportsEntry) => {
+      // Helper function to resolve the target from an exports entry
+      // Handles both string values and conditional exports objects
+      if (typeof exportsEntry === 'string') {
+        return exportsEntry;
+      }
+      if (exportsEntry && typeof exportsEntry === 'object') {
+        // Check common condition keys in order of preference
+        return exportsEntry.import || exportsEntry.default || exportsEntry.require || exportsEntry.module || exportsEntry.browser || null;
+      }
+      return null;
+    };
+
+    const tryResolveModule = async (modulePath, packageRootPath = null, subPath = null) => {
       try {
-        return await pathResolver(packagePath);
+        return await pathResolver(modulePath);
       } catch (error) {
         if (error.code !== 'MODULE_NOT_FOUND') {
           throw error;
         }
 
         // Attempt to resolve paths like 'yargs@18.0.0/helpers' to 'yargs-v-18.0.0/helpers/helpers.mjs'
-        if (await directoryExists(packagePath)) {
-          const directoryName = path.basename(packagePath);
-          const resolvedPath = await tryResolveModule(path.join(packagePath, directoryName));
+        if (await directoryExists(modulePath)) {
+          const directoryName = path.basename(modulePath);
+          const resolvedPath = await tryResolveModule(path.join(modulePath, directoryName), packageRootPath, subPath);
           if (resolvedPath) {
             return resolvedPath;
           }
 
-          // Attempt to resolve paths like 'octokit/core@latest' to 'octokit-core-v-latest/dist-src/index.js' (as it written in package.json)
-          const packageJsonPath = path.join(packagePath, 'package.json');
+          // Attempt to resolve using package.json exports field
+          // Read package.json from the package root, not from the subpath directory
+          const packageJsonPath = packageRootPath
+            ? path.join(packageRootPath, 'package.json')
+            : path.join(modulePath, 'package.json');
+
           if (await fileExists(packageJsonPath)) {
             const packageJson = await readFile(packageJsonPath, 'utf8');
             const parsed = JSON.parse(packageJson);
             const exp = parsed.exports;
             if (exp) {
               let target = null;
-              if (typeof exp === 'string') {
-                target = exp;
-              } else {
-                const root = exp['.'] ?? exp;
-                if (typeof root === 'string') {
-                  target = root;
-                } else if (root && typeof root === 'object') {
-                  target = root.import || root.default || root.require || root.module || root.browser || null;
+
+              // If we have a subPath, try to find it in exports first
+              if (subPath) {
+                // Try with leading dot (e.g., "./helpers")
+                const dottedSubPath = `.${subPath}`;
+                if (exp[dottedSubPath]) {
+                  target = resolveExportsTarget(exp[dottedSubPath]);
+                }
+                // Also try without leading dot as fallback
+                if (!target && exp[subPath]) {
+                  target = resolveExportsTarget(exp[subPath]);
                 }
               }
+
+              // If no subPath match found, fall back to root "." export
+              if (!target) {
+                if (typeof exp === 'string') {
+                  target = exp;
+                } else {
+                  const root = exp['.'] ?? exp;
+                  target = resolveExportsTarget(root);
+                }
+              }
+
               if (typeof target === 'string') {
-                const updatedPath = path.join(packagePath, target);
+                // Resolve the target path relative to the package root
+                const rootPath = packageRootPath || modulePath;
+                const updatedPath = path.join(rootPath, target);
                 return await tryResolveModule(updatedPath);
               }
             }
@@ -562,7 +595,7 @@ const resolvers = {
     const { packageName, version, modulePath } = parseModuleSpecifier(moduleSpecifier);
     const packagePath = await ensurePackageInstalled({ packageName, version });
     const packageModulePath = modulePath ? path.join(packagePath, modulePath) : packagePath;
-    const resolvedPath = await tryResolveModule(packageModulePath);
+    const resolvedPath = await tryResolveModule(packageModulePath, packagePath, modulePath);
     if (!resolvedPath) {
       throw new Error(`Failed to resolve the path to '${moduleSpecifier}' from '${packageModulePath}'.`);
     }
@@ -603,40 +636,74 @@ const resolvers = {
       }
     };
 
-    const tryResolveModule = async (packagePath) => {
+    const resolveExportsTarget = (exportsEntry) => {
+      // Helper function to resolve the target from an exports entry
+      // Handles both string values and conditional exports objects
+      if (typeof exportsEntry === 'string') {
+        return exportsEntry;
+      }
+      if (exportsEntry && typeof exportsEntry === 'object') {
+        // Check common condition keys in order of preference
+        return exportsEntry.import || exportsEntry.default || exportsEntry.require || exportsEntry.module || exportsEntry.browser || null;
+      }
+      return null;
+    };
+
+    const tryResolveModule = async (modulePath, packageRootPath = null, subPath = null) => {
       try {
-        return await pathResolver(packagePath);
+        return await pathResolver(modulePath);
       } catch (error) {
         if (error.code !== 'MODULE_NOT_FOUND') {
           throw error;
         }
 
-        if (await directoryExists(packagePath)) {
-          const directoryName = path.basename(packagePath);
-          const resolvedPath = await tryResolveModule(path.join(packagePath, directoryName));
+        if (await directoryExists(modulePath)) {
+          const directoryName = path.basename(modulePath);
+          const resolvedPath = await tryResolveModule(path.join(modulePath, directoryName), packageRootPath, subPath);
           if (resolvedPath) {
             return resolvedPath;
           }
 
-          const packageJsonPath = path.join(packagePath, 'package.json');
+          // Attempt to resolve using package.json exports field
+          // Read package.json from the package root, not from the subpath directory
+          const packageJsonPath = packageRootPath
+            ? path.join(packageRootPath, 'package.json')
+            : path.join(modulePath, 'package.json');
+
           if (await fileExists(packageJsonPath)) {
             const packageJson = await readFile(packageJsonPath, 'utf8');
             const parsed = JSON.parse(packageJson);
             const exp = parsed.exports;
             if (exp) {
               let target = null;
-              if (typeof exp === 'string') {
-                target = exp;
-              } else {
-                const root = exp['.'] ?? exp;
-                if (typeof root === 'string') {
-                  target = root;
-                } else if (root && typeof root === 'object') {
-                  target = root.import || root.default || root.require || root.module || root.browser || null;
+
+              // If we have a subPath, try to find it in exports first
+              if (subPath) {
+                // Try with leading dot (e.g., "./helpers")
+                const dottedSubPath = `.${subPath}`;
+                if (exp[dottedSubPath]) {
+                  target = resolveExportsTarget(exp[dottedSubPath]);
+                }
+                // Also try without leading dot as fallback
+                if (!target && exp[subPath]) {
+                  target = resolveExportsTarget(exp[subPath]);
                 }
               }
+
+              // If no subPath match found, fall back to root "." export
+              if (!target) {
+                if (typeof exp === 'string') {
+                  target = exp;
+                } else {
+                  const root = exp['.'] ?? exp;
+                  target = resolveExportsTarget(root);
+                }
+              }
+
               if (typeof target === 'string') {
-                const updatedPath = path.join(packagePath, target);
+                // Resolve the target path relative to the package root
+                const rootPath = packageRootPath || modulePath;
+                const updatedPath = path.join(rootPath, target);
                 return await tryResolveModule(updatedPath);
               }
             }
@@ -684,10 +751,10 @@ const resolvers = {
       return packagePath;
     };
 
-    const { packageName, version, modulePath } = parseModuleSpecifier(moduleSpecifier);
+    const { packageName, version, modulePath} = parseModuleSpecifier(moduleSpecifier);
     const packagePath = await ensurePackageInstalled({ packageName, version });
     const packageModulePath = modulePath ? path.join(packagePath, modulePath) : packagePath;
-    const resolvedPath = await tryResolveModule(packageModulePath);
+    const resolvedPath = await tryResolveModule(packageModulePath, packagePath, modulePath);
     if (!resolvedPath) {
       throw new Error(`Failed to resolve the path to '${moduleSpecifier}' from '${packageModulePath}'.`);
     }
