@@ -72,7 +72,7 @@ const extractCallerContext = (stack) => {
   return null;
 };
 
-export const parseModuleSpecifier = (moduleSpecifier) => {
+const parseModuleSpecifier = (moduleSpecifier) => {
   if (!moduleSpecifier || typeof moduleSpecifier !== 'string' || moduleSpecifier.length <= 0) {
     throw new Error(
       `Name for a package to be imported is not provided.
@@ -336,7 +336,7 @@ const supportedBuiltins = {
   }
 };
 
-export const resolvers = {
+const resolvers = {
   builtin: async (moduleSpecifier, pathResolver) => {
     const { packageName, modulePath } = parseModuleSpecifier(moduleSpecifier);
 
@@ -486,24 +486,28 @@ export const resolvers = {
       return null;
     };
 
-    const tryResolveModule = async (packagePath, subPath = null) => {
+    const tryResolveModule = async (modulePath, packageRootPath = null, subPath = null) => {
       try {
-        return await pathResolver(packagePath);
+        return await pathResolver(modulePath);
       } catch (error) {
         if (error.code !== 'MODULE_NOT_FOUND') {
           throw error;
         }
 
         // Attempt to resolve paths like 'yargs@18.0.0/helpers' to 'yargs-v-18.0.0/helpers/helpers.mjs'
-        if (await directoryExists(packagePath)) {
-          const directoryName = path.basename(packagePath);
-          const resolvedPath = await tryResolveModule(path.join(packagePath, directoryName));
+        if (await directoryExists(modulePath)) {
+          const directoryName = path.basename(modulePath);
+          const resolvedPath = await tryResolveModule(path.join(modulePath, directoryName), packageRootPath, subPath);
           if (resolvedPath) {
             return resolvedPath;
           }
 
           // Attempt to resolve using package.json exports field
-          const packageJsonPath = path.join(packagePath, 'package.json');
+          // Read package.json from the package root, not from the subpath directory
+          const packageJsonPath = packageRootPath
+            ? path.join(packageRootPath, 'package.json')
+            : path.join(modulePath, 'package.json');
+
           if (await fileExists(packageJsonPath)) {
             const packageJson = await readFile(packageJsonPath, 'utf8');
             const parsed = JSON.parse(packageJson);
@@ -535,7 +539,9 @@ export const resolvers = {
               }
 
               if (typeof target === 'string') {
-                const updatedPath = path.join(packagePath, target);
+                // Resolve the target path relative to the package root
+                const rootPath = packageRootPath || modulePath;
+                const updatedPath = path.join(rootPath, target);
                 return await tryResolveModule(updatedPath);
               }
             }
@@ -589,7 +595,7 @@ export const resolvers = {
     const { packageName, version, modulePath } = parseModuleSpecifier(moduleSpecifier);
     const packagePath = await ensurePackageInstalled({ packageName, version });
     const packageModulePath = modulePath ? path.join(packagePath, modulePath) : packagePath;
-    const resolvedPath = await tryResolveModule(packageModulePath, modulePath);
+    const resolvedPath = await tryResolveModule(packageModulePath, packagePath, modulePath);
     if (!resolvedPath) {
       throw new Error(`Failed to resolve the path to '${moduleSpecifier}' from '${packageModulePath}'.`);
     }
@@ -643,22 +649,27 @@ export const resolvers = {
       return null;
     };
 
-    const tryResolveModule = async (packagePath, subPath = null) => {
+    const tryResolveModule = async (modulePath, packageRootPath = null, subPath = null) => {
       try {
-        return await pathResolver(packagePath);
+        return await pathResolver(modulePath);
       } catch (error) {
         if (error.code !== 'MODULE_NOT_FOUND') {
           throw error;
         }
 
-        if (await directoryExists(packagePath)) {
-          const directoryName = path.basename(packagePath);
-          const resolvedPath = await tryResolveModule(path.join(packagePath, directoryName));
+        if (await directoryExists(modulePath)) {
+          const directoryName = path.basename(modulePath);
+          const resolvedPath = await tryResolveModule(path.join(modulePath, directoryName), packageRootPath, subPath);
           if (resolvedPath) {
             return resolvedPath;
           }
 
-          const packageJsonPath = path.join(packagePath, 'package.json');
+          // Attempt to resolve using package.json exports field
+          // Read package.json from the package root, not from the subpath directory
+          const packageJsonPath = packageRootPath
+            ? path.join(packageRootPath, 'package.json')
+            : path.join(modulePath, 'package.json');
+
           if (await fileExists(packageJsonPath)) {
             const packageJson = await readFile(packageJsonPath, 'utf8');
             const parsed = JSON.parse(packageJson);
@@ -690,7 +701,9 @@ export const resolvers = {
               }
 
               if (typeof target === 'string') {
-                const updatedPath = path.join(packagePath, target);
+                // Resolve the target path relative to the package root
+                const rootPath = packageRootPath || modulePath;
+                const updatedPath = path.join(rootPath, target);
                 return await tryResolveModule(updatedPath);
               }
             }
@@ -738,10 +751,10 @@ export const resolvers = {
       return packagePath;
     };
 
-    const { packageName, version, modulePath } = parseModuleSpecifier(moduleSpecifier);
+    const { packageName, version, modulePath} = parseModuleSpecifier(moduleSpecifier);
     const packagePath = await ensurePackageInstalled({ packageName, version });
     const packageModulePath = modulePath ? path.join(packagePath, modulePath) : packagePath;
-    const resolvedPath = await tryResolveModule(packageModulePath, modulePath);
+    const resolvedPath = await tryResolveModule(packageModulePath, packagePath, modulePath);
     if (!resolvedPath) {
       throw new Error(`Failed to resolve the path to '${moduleSpecifier}' from '${packageModulePath}'.`);
     }
@@ -792,7 +805,7 @@ export const resolvers = {
   },
 }
 
-export const baseUse = async (modulePath) => {
+const baseUse = async (modulePath) => {
   // Dynamically import the module
   try {
     const module = await import(modulePath);
@@ -829,7 +842,7 @@ export const baseUse = async (modulePath) => {
   }
 }
 
-export const makeUse = async (options) => {
+const makeUse = async (options) => {
   let scriptPath = options?.scriptPath;
   if (!scriptPath && typeof global !== 'undefined' && typeof global['__filename'] !== 'undefined') {
     scriptPath = global['__filename'];
@@ -837,9 +850,6 @@ export const makeUse = async (options) => {
   const metaUrl = options?.meta?.url;
   if (!scriptPath && metaUrl) {
     scriptPath = metaUrl;
-  }
-  if (!scriptPath) {
-    scriptPath = import.meta.url;
   }
   let protocol;
   if (scriptPath) {
@@ -912,7 +922,7 @@ export const makeUse = async (options) => {
 }
 
 let __use = null;
-const _use = async (moduleSpecifier) => {
+const use = async (moduleSpecifier) => {
   const stack = new Error().stack;
 
   // For Bun, we need to capture the stack trace before any other calls
@@ -939,10 +949,17 @@ const _use = async (moduleSpecifier) => {
   }
   return __use(moduleSpecifier, callerContext);
 }
-_use.all = async (...moduleSpecifiers) => {
+use.all = async (...moduleSpecifiers) => {
   if (!__use) {
     __use = await makeUse();
   }
   return Promise.all(moduleSpecifiers.map(__use));
 }
-export const use = _use;
+
+module.exports = {
+  parseModuleSpecifier,
+  resolvers,
+  makeUse,
+  baseUse,
+  use,
+};
