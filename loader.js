@@ -32,10 +32,11 @@ export async function resolve(specifier, context, defaultResolve) {
     return { url: pathToFileURL(resolvedUrl).href };
   } catch (error) {
     if (defaultResolveError) {
-      console.error(error);
-      throw defaultResolveError;
+      throw new Error(`Failed to resolve module: ${specifier}`, {
+        cause: { resolverError: error, defaultError: defaultResolveError }
+      });
     } else {
-      throw error;
+      throw new Error(`Failed to resolve module: ${specifier}`, { cause: error });
     }
   }
 }

@@ -32,6 +32,7 @@ It may be useful for standalone scripts that do not require a `package.json`. Al
       - [Installation](#installation)
       - [CommonJS](#commonjs)
       - [ES Modules](#es-modules)
+  - [Security Considerations](#security-considerations)
   - [Examples](#examples)
   - [Questions and issues](#questions-and-issues)
   - [Contributing](#contributing)
@@ -367,6 +368,67 @@ const _ = await use('lodash@4.17.21');
 console.log(`_.add(1, 2) = ${_.add(1, 2)}`);
 ```
 
+## Security Considerations
+
+### Arbitrary Code Execution
+
+**Important**: When using `use-m` with npm/bun resolvers in Node.js or Bun environments, packages are installed globally using `npm install -g` or `bun add -g`. This means:
+
+- **Install scripts are executed**: npm packages can run arbitrary code during installation via install scripts
+- **Trust required**: Only use packages from trusted sources
+- **Malicious packages**: A compromised or malicious package could execute harmful code on your system
+
+### Best Practices
+
+1. **Pin versions**: Always specify exact versions instead of using `latest`:
+   ```javascript
+   // Good - specific version
+   const _ = await use('lodash@4.17.21');
+
+   // Risky - could download new, potentially compromised version
+   const _ = await use('lodash@latest');
+   ```
+
+2. **Trust your dependencies**: Only import packages from trusted maintainers and npm organizations
+
+3. **Use CDN resolver in untrusted environments**: For browser or Deno environments, packages are loaded from CDNs without running install scripts:
+   ```javascript
+   // Browser - loads from CDN, no install scripts
+   const { use } = await import("https://unpkg.com/use-m/use.mjs");
+   const _ = await use('lodash@4.17.21');
+   ```
+
+4. **Review package contents**: Check package source code before using, especially for critical applications
+
+5. **Use in development/scripts**: `use-m` is ideal for development scripts, exploratory coding, and rapid prototyping where convenience outweighs strict security requirements
+
+### CDN Security
+
+When using CDN resolvers (browser, Deno), be aware that:
+
+- **CDN compromise**: If a CDN is compromised, malicious code could be served
+- **No integrity checking**: By default, there's no Subresource Integrity (SRI) verification
+- **Network dependency**: Your application depends on CDN availability
+
+### Eval Security
+
+Some examples use `eval()` for convenience in interactive shells and browsers. Be aware:
+
+- `eval()` executes arbitrary code
+- Only use with trusted sources
+- The `use-m` library code is short, unminified, and has no dependencies - you can [review it yourself](https://unpkg.com/use-m/use.js)
+- For production code, prefer standard imports without `eval()`
+
+### Recommendations by Use Case
+
+| Use Case | Recommendation | Security Level |
+|----------|---------------|----------------|
+| Development scripts | ✅ Safe to use | Medium |
+| Rapid prototyping | ✅ Safe to use | Medium |
+| Interactive shell/REPL | ✅ Safe to use | Medium |
+| Production applications | ⚠️ Use with caution | Low-Medium |
+| Security-critical apps | ❌ Not recommended | Low |
+
 ## Examples
 
 You can check out [usage examples source code](https://github.com/link-foundation/use-m/tree/main/examples). You can also explore our [tests](https://github.com/link-foundation/use-m/tree/main/tests) to get even more examples.
@@ -377,7 +439,13 @@ If you have any questions or issues, [please write us on GitHub](https://github.
 
 ## Contributing
 
-We welcome contributions! To contribute please [open Pull Request](https://github.com/link-foundation/use-m/pulls) with any suggested changes.
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines on:
+- Setting up the development environment
+- Running tests across different runtimes
+- Code style and standards
+- Submitting pull requests
+
+For quick contributions, feel free to [open a Pull Request](https://github.com/link-foundation/use-m/pulls) with your suggested changes.
 
 ## License
 
