@@ -129,10 +129,10 @@ jobs:
 
     - name: Create GitHub Release
       if: steps.check_tag.outputs.exists == 'true'
-      uses: actions/create-release@v1
+      uses: softprops/action-gh-release@v2
       with:
         tag_name: v${{ needs.check-version.outputs.version }}
-        release_name: v${{ needs.check-version.outputs.version }}
+        name: v${{ needs.check-version.outputs.version }}
         body_path: release_notes.md
         draft: false
         prerelease: false

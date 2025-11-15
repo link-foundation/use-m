@@ -51,7 +51,18 @@
     "unpkg"
   ],
   "author": "link-foundation",
-  "license": "UNLICENSED",
+  "license": "Unlicense",
+  "files": [
+    "use.mjs",
+    "use.cjs",
+    "use.js",
+    "cli.mjs",
+    "loader.js",
+    "test-adapter.mjs",
+    "test-adapter.cjs",
+    "README.md",
+    "LICENSE"
+  ],
   "devDependencies": {
     "@babel/preset-env": "^7.28.3",
     "babel-jest": "^29.7.0",

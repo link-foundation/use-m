@@ -1,10 +1,17 @@
 const extractCallerContext = (stack) => {
+  // Helper to check if a path is a use-m file
+  const isUseMFile = (path) => {
+    return path.endsWith('/use.mjs') ||
+           path.endsWith('/use.cjs') ||
+           path.endsWith('/use.js');
+  };
+
   // In browser environment, use the current document URL as fallback
   if (typeof window !== 'undefined' && window.location) {
     // For inline scripts in HTML, use the document's URL
     // This will be the fallback if we can't extract from stack
     const documentUrl = window.location.href;
-    
+
     // Try to extract from stack first, but we'll fallback to document URL
     if (!stack) return documentUrl;
   } else if (!stack) {
@@ -12,20 +19,20 @@ const extractCallerContext = (stack) => {
   }
 
   const lines = stack.split('\n');
-  // Look for the first file that isn't use.mjs - skip the first few frames
+  // Look for the first file that isn't use.mjs/use.cjs/use.js - skip the first few frames
   // to get past our internal function calls
   for (const line of lines) {
-    // Skip the first few frames which are internal to use.mjs
+    // Skip the first few frames which are internal to use-m
     if (line.includes('extractCallerContext') ||
       line.includes('_use') ||
       line.includes('makeUse') ||
-      line.includes('<anonymous>') && line.includes('/use.mjs')) {
+      (line.includes('<anonymous>') && (line.includes('/use.mjs') || line.includes('/use.cjs') || line.includes('/use.js')))) {
       continue;
     }
 
     // Try to match http(s):// URLs for browser environments
     let match = line.match(/https?:\/\/[^\s)]+/);
-    if (match && !match[0].endsWith('/use.mjs') && !match[0].endsWith('/use.js')) {
+    if (match && !isUseMFile(match[0])) {
       // Remove line:column numbers if present
       const url = match[0].replace(/:\d+:\d+$/, '');
       return url;
@@ -33,7 +40,7 @@ const extractCallerContext = (stack) => {
 
     // Try to match file:// URLs
     match = line.match(/file:\/\/[^\s)]+/);
-    if (match && !match[0].endsWith('/use.mjs')) {
+    if (match && !isUseMFile(match[0])) {
       // Remove line:column numbers if present
       const url = match[0].replace(/:\d+:\d+$/, '');
       return url;
@@ -59,13 +66,13 @@ const extractCallerContext = (stack) => {
 
     // For Node/Deno, try to match absolute paths (improved to handle more cases)
     match = line.match(/at\s+(?:Object\.<anonymous>\s+)?(?:async\s+)?[(]?(\/[^\s:)]+\.(?:m?js|json))(?::\d+:\d+)?\)?/);
-    if (match && !match[1].endsWith('/use.mjs') && !match[1].includes('node_modules')) {
+    if (match && !isUseMFile(match[1]) && !match[1].includes('node_modules')) {
       return 'file://' + match[1];
     }
 
     // Alternative pattern for Jest and other environments
     match = line.match(/at\s+[^(]*\(([^)]+\.(?:m?js|json)):\d+:\d+\)/);
-    if (match && !match[1].endsWith('/use.mjs') && !match[1].includes('node_modules')) {
+    if (match && !isUseMFile(match[1]) && !match[1].includes('node_modules')) {
       return 'file://' + (match[1].startsWith('/') ? match[1] : '/' + match[1]);
     }
   }
@@ -130,7 +137,6 @@ const supportedBuiltins = {
       
       // For Bun and Deno, use a different approach since their node:fs/promises may not be fully compatible
       if (runtime === 'Bun' || runtime === 'Deno') {
-        console.log(`[${runtime}] Using promisify fallback for fs/promises compatibility`);
         try {
           const fs = await import('node:fs');
           const { promisify } = await import('node:util');
@@ -199,9 +205,7 @@ const supportedBuiltins = {
           if (fs.opendir) promisifiedFs.opendir = safePromisify(fs.opendir, 2);
           if (fs.statfs) promisifiedFs.statfs = safePromisify(fs.statfs, 2);
           if (fs.watch) promisifiedFs.watch = fs.watch.bind(fs); // watch is not callback-based
-          
-          console.log(`[${runtime}] Fallback mkdir.length:`, promisifiedFs.mkdir?.length);
-          console.log(`[${runtime}] Fallback mkdir.constructor.name:`, promisifiedFs.mkdir?.constructor.name);
+
           return { default: promisifiedFs, ...promisifiedFs };
         } catch (error) {
           throw new Error(`Failed to create fs/promises fallback for ${runtime}: ${error.message}`, { cause: error });
@@ -478,7 +482,7 @@ export const resolvers = {
         return await pathResolver(packagePath);
       } catch (error) {
         if (error.code !== 'MODULE_NOT_FOUND') {
-          throw error;
+          throw new Error(`Failed to resolve module '${packagePath}'`, { cause: error });
         }
 
         // Attempt to resolve paths like 'yargs@18.0.0/helpers' to 'yargs-v-18.0.0/helpers/helpers.mjs'
@@ -608,7 +612,7 @@ export const resolvers = {
         return await pathResolver(packagePath);
       } catch (error) {
         if (error.code !== 'MODULE_NOT_FOUND') {
-          throw error;
+          throw new Error(`Failed to resolve module '${packagePath}'`, { cause: error });
         }
 
         if (await directoryExists(packagePath)) {
@@ -659,10 +663,11 @@ export const resolvers = {
       } catch (error) {
         // In CI or fresh environments, the global directory might not exist
         // Try to get the default Bun install path
-        const home = process.env.HOME || process.env.USERPROFILE;
-        if (home) {
+        try {
+          const os = await import('node:os');
+          const home = os.homedir();
           binDir = path.join(home, '.bun', 'bin');
-        } else {
+        } catch (osError) {
           throw new Error('Unable to determine Bun global directory.', { cause: error });
         }
       }
@@ -857,7 +862,7 @@ export const makeUse = async (options) => {
   };
 }
 
-let __use = null;
+let __usePromise = null;
 const _use = async (moduleSpecifier) => {
   const stack = new Error().stack;
 
@@ -880,15 +885,17 @@ const _use = async (moduleSpecifier) => {
   // Capture the caller context here, before entering makeUse
   const callerContext = bunCallerContext || extractCallerContext(stack);
 
-  if (!__use) {
-    __use = await makeUse();
+  if (!__usePromise) {
+    __usePromise = makeUse();
   }
-  return __use(moduleSpecifier, callerContext);
+  const useInstance = await __usePromise;
+  return useInstance(moduleSpecifier, callerContext);
 }
 _use.all = async (...moduleSpecifiers) => {
-  if (!__use) {
-    __use = await makeUse();
+  if (!__usePromise) {
+    __usePromise = makeUse();
   }
-  return Promise.all(moduleSpecifiers.map(__use));
+  const useInstance = await __usePromise;
+  return Promise.all(moduleSpecifiers.map(useInstance));
 }
 export const use = _use;
