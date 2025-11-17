@@ -10,7 +10,8 @@
       "require": "./use.cjs"
     },
     "./use.cjs": "./use.cjs",
-    "./use.mjs": "./use.mjs"
+    "./use.mjs": "./use.mjs",
+    "./fetch-polyfill.js": "./fetch-polyfill.js"
   },
   "bin": {
     "use": "./cli.mjs"
