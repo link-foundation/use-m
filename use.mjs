@@ -104,43 +104,88 @@ Please specify a package name, and an optional version (e.g.: 'lodash', 'lodash@
   return { packageName, version, modulePath };
 }
 
-// Built-in modules that we support across all environments
-// Always use lowercase names for consistency
-const supportedBuiltins = {
-  // Universal modules
+// Built-in modules that need special handling (browser polyfills or runtime-specific behavior)
+// Other built-in modules are detected dynamically using module.isBuiltin()
+// Use 'browser: null' to indicate module is not available in browser
+// Use 'node: undefined' (or omit) to indicate module should use dynamic import
+const specialBuiltins = {
+  // Universal modules that have browser implementations
   'console': {
     browser: () => ({ default: console, log: console.log, error: console.error, warn: console.warn, info: console.info }),
     node: () => import('node:console').then(m => ({ default: m.Console, ...m }))
   },
   'crypto': {
-    browser: () => ({ default: crypto, subtle: crypto.subtle }),
-    node: () => import('node:crypto').then(m => ({ default: m, ...m }))
+    browser: () => ({ default: crypto, subtle: crypto.subtle })
+    // node: omitted - uses dynamic import
   },
   'url': {
-    browser: () => ({ default: URL, URL, URLSearchParams }),
-    node: () => import('node:url').then(m => ({ default: m, ...m }))
+    browser: () => ({ default: URL, URL, URLSearchParams })
+    // node: omitted - uses dynamic import
   },
   'performance': {
     browser: () => ({ default: performance, now: performance.now.bind(performance) }),
     node: () => import('node:perf_hooks').then(m => ({ default: m.performance, performance: m.performance, now: m.performance.now.bind(m.performance), ...m }))
   },
 
-  // Node.js/Bun only modules
+  // Node.js-only modules that need explicit browser: null for proper error messages
+  // These modules are common and should have clear error messages in browser
   'fs': {
-    browser: null, // Not available in browser
-    node: () => import('node:fs').then(m => ({ default: m, ...m }))
+    browser: null // Not available in browser
+    // node: omitted - uses dynamic import
   },
+  'path': {
+    browser: null // Not available in browser
+    // node: omitted - uses dynamic import
+  },
+  'os': {
+    browser: null // Not available in browser
+    // node: omitted - uses dynamic import
+  },
+  'child_process': {
+    browser: null // Not available in browser
+    // node: omitted - uses dynamic import
+  },
+  'http': {
+    browser: null // Not available in browser
+    // node: omitted - uses dynamic import
+  },
+  'https': {
+    browser: null // Not available in browser
+    // node: omitted - uses dynamic import
+  },
+  'net': {
+    browser: null // Not available in browser
+    // node: omitted - uses dynamic import
+  },
+  'dns': {
+    browser: null // Not available in browser
+    // node: omitted - uses dynamic import
+  },
+  'zlib': {
+    browser: null // Not available in browser
+    // node: omitted - uses dynamic import
+  },
+  'util': {
+    browser: null // Not available in browser
+    // node: omitted - uses dynamic import
+  },
+  'querystring': {
+    browser: null // Not available in browser
+    // node: omitted - uses dynamic import
+  },
+
+  // Modules requiring special handling for Bun/Deno compatibility
   'fs/promises': {
     browser: null, // Not available in browser
     node: async () => {
       const runtime = typeof Bun !== 'undefined' ? 'Bun' : typeof Deno !== 'undefined' ? 'Deno' : 'Node.js';
-      
+
       // For Bun and Deno, use a different approach since their node:fs/promises may not be fully compatible
       if (runtime === 'Bun' || runtime === 'Deno') {
         try {
           const fs = await import('node:fs');
           const { promisify } = await import('node:util');
-          
+
           // Create wrapper functions that match native fs/promises signatures
           // These need to have the correct .length property and be async functions
           const createAsyncWrapper = (promisifiedFn, expectedLength) => {
@@ -151,17 +196,17 @@ const supportedBuiltins = {
               3: async (a, b, c) => promisifiedFn(a, b, c),
               4: async (a, b, c, d) => promisifiedFn(a, b, c, d)
             }[expectedLength];
-            
+
             // Copy the name if possible
             try {
               Object.defineProperty(wrapper, 'name', { value: promisifiedFn.name });
             } catch (e) {
               // Ignore if name can't be set
             }
-            
+
             return wrapper || promisifiedFn;
           };
-          
+
           // Helper to safely promisify functions that may not exist
           const safePromisify = (fn, expectedLength) => {
             if (typeof fn !== 'function') {
@@ -169,7 +214,7 @@ const supportedBuiltins = {
             }
             return createAsyncWrapper(promisify(fn), expectedLength);
           };
-          
+
           const promisifiedFs = {
             access: safePromisify(fs.access, 2),
             appendFile: safePromisify(fs.appendFile, 3),
@@ -197,7 +242,7 @@ const supportedBuiltins = {
             writeFile: safePromisify(fs.writeFile, 3),
             constants: fs.constants
           };
-          
+
           // Add newer functions if they exist
           if (fs.rm) promisifiedFs.rm = safePromisify(fs.rm, 2);
           if (fs.cp) promisifiedFs.cp = safePromisify(fs.cp, 3);
@@ -211,7 +256,7 @@ const supportedBuiltins = {
           throw new Error(`Failed to create fs/promises fallback for ${runtime}: ${error.message}`, { cause: error });
         }
       }
-      
+
       // For Node.js, use the native implementation
       try {
         const m = await import('node:fs/promises');
@@ -221,46 +266,8 @@ const supportedBuiltins = {
       }
     }
   },
-  'dns/promises': {
-    browser: null, // Not available in browser
-    node: async () => {
-      const m = await import('node:dns/promises');
-      return { default: m, ...m };
-    }
-  },
-  'stream/promises': {
-    browser: null, // Not available in browser
-    node: async () => {
-      const m = await import('node:stream/promises');
-      return { default: m, ...m };
-    }
-  },
-  'readline/promises': {
-    browser: null, // Not available in browser
-    node: async () => {
-      const m = await import('node:readline/promises');
-      return { default: m, ...m };
-    }
-  },
-  'timers/promises': {
-    browser: null, // Not available in browser
-    node: async () => {
-      const m = await import('node:timers/promises');
-      return { default: m, ...m };
-    }
-  },
-  'path': {
-    browser: null, // Not available in browser
-    node: () => import('node:path').then(m => ({ default: m, ...m }))
-  },
-  'os': {
-    browser: null, // Not available in browser
-    node: () => import('node:os').then(m => ({ default: m, ...m }))
-  },
-  'util': {
-    browser: null, // Not available in browser
-    node: () => import('node:util').then(m => ({ default: m, ...m }))
-  },
+
+  // Modules that need special export handling
   'events': {
     browser: null, // Not available in browser
     node: () => import('node:events').then(m => ({ default: m.EventEmitter, EventEmitter: m.EventEmitter, ...m }))
@@ -306,37 +313,49 @@ const supportedBuiltins = {
       return ({ default: process, ...process });
     }
   },
-  'child_process': {
-    browser: null,
-    node: () => import('node:child_process').then(m => ({ default: m, ...m }))
-  },
-  'http': {
-    browser: null,
-    node: () => import('node:http').then(m => ({ default: m, ...m }))
-  },
-  'https': {
-    browser: null,
-    node: () => import('node:https').then(m => ({ default: m, ...m }))
-  },
-  'net': {
-    browser: null,
-    node: () => import('node:net').then(m => ({ default: m, ...m }))
-  },
-  'dns': {
-    browser: null,
-    node: () => import('node:dns').then(m => ({ default: m, ...m }))
-  },
-  'zlib': {
-    browser: null,
-    node: () => import('node:zlib').then(m => ({ default: m, ...m }))
-  },
-  'querystring': {
-    browser: null,
-    node: () => import('node:querystring').then(m => ({ default: m, ...m }))
-  },
   'assert': {
     browser: null,
     node: () => import('node:assert').then(m => ({ default: m.default || m, ...m }))
+  }
+};
+
+// Helper function to check if a module is a Node.js built-in
+// Uses module.isBuiltin() when available, falls back to checking builtinModules list
+let isBuiltinModule = null;
+const checkIsBuiltin = async (moduleName) => {
+  if (isBuiltinModule === null) {
+    try {
+      const nodeModule = await import('node:module');
+      if (typeof nodeModule.isBuiltin === 'function') {
+        isBuiltinModule = nodeModule.isBuiltin;
+      } else if (Array.isArray(nodeModule.builtinModules)) {
+        // Fallback to checking builtinModules array
+        const builtins = new Set(nodeModule.builtinModules);
+        isBuiltinModule = (name) => {
+          // Remove 'node:' prefix if present
+          const cleanName = name.startsWith('node:') ? name.slice(5) : name;
+          return builtins.has(cleanName) || builtins.has(`node:${cleanName}`);
+        };
+      } else {
+        // If neither is available, return a function that always returns false
+        isBuiltinModule = () => false;
+      }
+    } catch {
+      // In browser environment, there are no built-in modules
+      isBuiltinModule = () => false;
+    }
+  }
+  return isBuiltinModule(moduleName);
+};
+
+// Generic loader for built-in modules without special handling
+const loadBuiltinModule = async (moduleName) => {
+  const nodeModuleName = moduleName.startsWith('node:') ? moduleName : `node:${moduleName}`;
+  try {
+    const m = await import(nodeModuleName);
+    return { default: m, ...m };
+  } catch (error) {
+    throw new Error(`Failed to load built-in module '${moduleName}'.`, { cause: error });
   }
 };
 
@@ -353,33 +372,60 @@ export const resolvers = {
       moduleName = packageName + modulePath;
     }
 
-    // Check if we support this built-in module
-    if (supportedBuiltins[moduleName]) {
-      const builtinConfig = supportedBuiltins[moduleName];
+    // Determine environment
+    const isBrowser = typeof window !== 'undefined';
+    const environment = isBrowser ? 'browser' : 'node';
 
-      if (!builtinConfig) {
-        throw new Error(`Built-in module '${moduleName}' is not supported.`);
+    // First, check if this module has special handling
+    const builtinConfig = specialBuiltins[moduleName];
+    if (builtinConfig) {
+      // Check if the module has a handler for this environment
+      if (environment in builtinConfig) {
+        const moduleFactory = builtinConfig[environment];
+        if (moduleFactory === null) {
+          // Explicitly not available in this environment
+          throw new Error(`Built-in module '${moduleName}' is not available in ${environment} environment.`);
+        }
+
+        if (typeof moduleFactory === 'function') {
+          try {
+            // Execute the factory function to get the module
+            const result = await moduleFactory();
+            return result;
+          } catch (error) {
+            throw new Error(`Failed to load built-in module '${moduleName}' in ${environment} environment.`, { cause: error });
+          }
+        }
+      }
+      // If moduleFactory is undefined or not present, fall through to dynamic detection
+    }
+
+    // For non-browser environments, use dynamic built-in detection
+    if (!isBrowser) {
+      // Check if this is a Node.js built-in module using module.isBuiltin()
+      const isBuiltin = await checkIsBuiltin(moduleName);
+      if (isBuiltin) {
+        try {
+          return await loadBuiltinModule(moduleName);
+        } catch (error) {
+          throw new Error(`Failed to load built-in module '${moduleName}'.`, { cause: error });
+        }
       }
 
-      // Determine environment
-      const isBrowser = typeof window !== 'undefined';
-      const environment = isBrowser ? 'browser' : 'node';
-
-      const moduleFactory = builtinConfig[environment];
-      if (!moduleFactory) {
-        throw new Error(`Built-in module '${moduleName}' is not available in ${environment} environment.`);
-      }
-
-      try {
-        // Execute the factory function to get the module
-        const result = await moduleFactory();
-        return result;
-      } catch (error) {
-        throw new Error(`Failed to load built-in module '${moduleName}' in ${environment} environment.`, { cause: error });
+      // Also check with node: prefix if not already prefixed
+      if (!moduleSpecifier.startsWith('node:')) {
+        const isBuiltinWithPrefix = await checkIsBuiltin(`node:${moduleName}`);
+        if (isBuiltinWithPrefix) {
+          try {
+            return await loadBuiltinModule(moduleName);
+          } catch (error) {
+            throw new Error(`Failed to load built-in module '${moduleName}'.`, { cause: error });
+          }
+        }
       }
     }
 
-    // Not a supported built-in module
+    // Not a built-in module
     return null;
   },
   relative: async (moduleSpecifier, pathResolver, callerContext) => {
