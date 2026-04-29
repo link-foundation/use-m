@@ -1,0 +1,28 @@
+[
+  {
+    "databaseId": 22410298646,
+    "name": "CI/CD Pipeline",
+    "conclusion": "failure",
+    "createdAt": "2026-02-25T18:27:44Z",
+    "headSha": "3dd9d248cc08e13147636608698954be14912d1f",
+    "failedJob": "Auto Release",
+    "failedStep": "Publish to Crates.io",
+    "error": "npm error 403 403 Forbidden - GET https://registry.npmjs.org/command-stream"
+  },
+  {
+    "databaseId": 22408222501,
+    "name": "CI/CD Pipeline",
+    "conclusion": "success",
+    "createdAt": "2026-02-25T17:28:52Z",
+    "headSha": "6b64a8204d971459683f365e78375410d1b034d7",
+    "notes": "PR run - Auto Release job was skipped (not a push to main)"
+  },
+  {
+    "databaseId": 22397570337,
+    "name": "CI/CD Pipeline",
+    "conclusion": "success",
+    "createdAt": "2026-02-25T12:49:06Z",
+    "headSha": "7727760c3a5d66710ff3df277eaa6ea27dc70f4d",
+    "notes": "Push to main - Auto Release ran successfully or version already released"
+  }
+]
