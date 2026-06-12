@@ -15,6 +15,8 @@ The failed publish run also showed package metadata corrections and a token-base
 - `assets/issue-56-screenshot.png`: npm package settings evidence from the issue. It shows package version `8.13.7`, license `UNLICENSED`, and trusted publisher workflow `release.yml`.
 - `ci-logs/run-27414850492.json`: GitHub Actions run metadata for failed main run `27414850492`.
 - `ci-logs/run-27414850492.log`: full failed CI log.
+- `ci-logs/pr-run-27417997956.json`: GitHub Actions run metadata for the first PR validation run after the workflow rewrite.
+- `ci-logs/pr-run-27417997956.log`: full first PR validation log, including the Ubuntu Deno `esm.sh` 522 failure.
 - `ci-logs/local-repro-before.log`: local regression test output before the workflow fix.
 - `ci-logs/local-repro-after.log`: local regression test output after the workflow fix.
 - `ci-logs/npm-publish-dry-run.log`: local npm publish dry-run after metadata normalization.
@@ -32,8 +34,10 @@ The failed publish run also showed package metadata corrections and a token-base
 - 2026-06-12 12:13:38 UTC: npm warned that it had to correct `bin[use]` and normalize `repository.url` (`ci-logs/run-27414850492.log`, lines 3494 to 3497).
 - 2026-06-12 12:13:38 UTC: npm publish failed with `E404` on `PUT https://registry.npmjs.org/use-m` (`ci-logs/run-27414850492.log`, lines 3522 to 3529).
 - 2026-06-12: the new regression test reproduced the pre-fix failures: repository URL mismatch, missing `release.yml`, and split workflows (`ci-logs/local-repro-before.log`, lines 15 to 98).
-- 2026-06-12: after the fix, the regression test passed all five release policy checks (`ci-logs/local-repro-after.log`, lines 7 to 19).
+- 2026-06-12: after the fix, the regression test passed all six release policy checks (`ci-logs/local-repro-after.log`, lines 7 to 20).
 - 2026-06-12: `npm publish --dry-run --access public` completed without the earlier npm metadata correction warnings (`ci-logs/npm-publish-dry-run.log`, lines 1 to 26).
+- 2026-06-12 13:14:52 UTC: the first PR validation run `27417997956` started at commit `fbfcae3efd6da78f50c4cf2430c108104f0a33e5`.
+- 2026-06-12 13:19:20 UTC: Ubuntu Deno failed because `esm.sh` returned repeated `522` responses for network imports; Node, Bun, and macOS Deno passed (`ci-logs/pr-run-27417997956.log`, lines 1827 to 2127).
 
 ## Requirements From The Issue
 
@@ -63,7 +67,11 @@ The failed publish run also showed package metadata corrections and a token-base
 
    npm corrected `bin[use]` and normalized `repository.url` in the failed run (`ci-logs/run-27414850492.log`, lines 3494 to 3497). This PR changes `bin.use` from `./cli.mjs` to `cli.mjs` and `repository.url` to `git+https://github.com/link-foundation/use-m.git`.
 
-5. CI emitted avoidable warnings.
+5. Deno network-import tests can fail on transient upstream CDN errors.
+
+   The first PR validation run showed Ubuntu Deno failing on repeated `https://esm.sh/...` imports with `522` responses while macOS Deno, Node, and Bun passed. The workflow now retries the full Deno test command up to three times and still exits with the final failure status if the problem persists.
+
+6. CI emitted avoidable warnings.
 
    The old workflows used action versions that triggered GitHub's Node.js 20 actions deprecation warnings (`ci-logs/run-27414850492.log`, lines 175, 459, 1651, and 3548). They also uploaded `test-results/` and `coverage/` even though those paths were not produced, causing "No files were found" warnings (`ci-logs/run-27414850492.log`, lines 438, 1078, 1630, and later repeated matrix entries).
 
@@ -104,18 +112,19 @@ The selected implementation keeps this repository's existing Node/Bun/Deno matri
 8. Verify the package version after publishing.
 9. Create the git tag and GitHub release idempotently so a rerun can recover if npm publish succeeded but tagging or release creation did not.
 10. Normalize `package.json` metadata so npm publish no longer applies automatic corrections.
-11. Add `tests/release-workflow-policy.test.mjs` to enforce the release workflow shape, OIDC publishing, current action versions, explicit timeouts, and npm metadata.
+11. Retry the Deno CI command for transient `esm.sh` failures while preserving final failure status after the last attempt.
+12. Add `tests/release-workflow-policy.test.mjs` to enforce the release workflow shape, OIDC publishing, current action versions, explicit timeouts, Deno retry behavior, and npm metadata.
 
 ## Verification
 
 Local checks captured in this directory:
 
 - Before fix: `npm test -- tests/release-workflow-policy.test.mjs --runInBand` failed with missing `release.yml`, split workflow files, and repository URL mismatch (`ci-logs/local-repro-before.log`, lines 15 to 98).
-- After fix: the same command passed (`ci-logs/local-repro-after.log`, lines 7 to 19).
+- After fix: the same command passed (`ci-logs/local-repro-after.log`, lines 7 to 20). The policy test was extended after PR run `27417997956` to cover the Deno retry loop.
 - npm dry-run after metadata normalization: `npm publish --dry-run --access public` succeeded without the previous npm metadata correction warnings (`ci-logs/npm-publish-dry-run.log`, lines 1 to 26).
-- Full Node/Jest suite: `npm test -- --runInBand` passed 38 suites and 256 tests (`ci-logs/npm-test.log`, lines 79 to 83).
-- Full Bun suite: `bun test` passed 256 tests (`ci-logs/bun-test.log`, lines 359 to 362).
-- Full Deno suite: `deno test --allow-net --allow-env --allow-run --allow-read --allow-write --allow-sys` passed 24 test modules with 127 steps (`ci-logs/deno-test.log`, line 349).
+- Full Node/Jest suite: `npm test -- --runInBand` passed 38 suites and 257 tests (`ci-logs/npm-test.log`, lines 79 to 83).
+- Full Bun suite: `bun test` passed 257 tests (`ci-logs/bun-test.log`, lines 360 to 363).
+- Full Deno suite: `deno test --allow-net --allow-env --allow-run --allow-read --allow-write --allow-sys` passed 24 test modules with 128 steps (`ci-logs/deno-test.log`, line 254).
 
 `npm run test:examples` was probed as an extra local check but is not included in the release workflow. That harness executes published `use-m@latest` examples and expects `zx` through its script shebang, so it is not a reliable release gate for this branch's unpublished changes.
 

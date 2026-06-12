@@ -103,4 +103,13 @@ describe('release workflow policy', () => {
       expect(/\n    timeout-minutes: \d+/.test(jobText)).toBe(true)
     }
   })
+
+  test('retries Deno network-import tests without hiding persistent failures', () => {
+    const workflowText = readText(releaseWorkflowPath)
+
+    expect(workflowText.includes('for attempt in 1 2 3; do')).toBe(true)
+    expect(workflowText.includes('Deno tests failed on attempt ${attempt}/3')).toBe(true)
+    expect(workflowText.includes('if [ "$attempt" = "3" ]; then')).toBe(true)
+    expect(workflowText.includes('exit "$status"')).toBe(true)
+  })
 })

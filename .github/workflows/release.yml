@@ -63,7 +63,18 @@ jobs:
 
       - name: Run Deno tests
         if: matrix.runtime == 'deno'
-        run: deno test --allow-net --allow-env --allow-run --allow-read --allow-write --allow-sys
+        run: |
+          for attempt in 1 2 3; do
+            deno test --allow-net --allow-env --allow-run --allow-read --allow-write --allow-sys && exit 0
+            status=$?
+
+            if [ "$attempt" = "3" ]; then
+              exit "$status"
+            fi
+
+            echo "Deno tests failed on attempt ${attempt}/3; retrying after a short delay."
+            sleep $((attempt * 15))
+          done
 
   publish:
     name: Publish to npm
