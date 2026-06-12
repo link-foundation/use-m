@@ -7,7 +7,8 @@ describe(`${moduleName} typescript`, () => {
     const ts = await use('typescript');
     expect(ts.version).toBeDefined();
     const tsCode = 'const a: number = 1;';
-    const jsCode = ts.transpile(tsCode);
-    expect(jsCode).toBe('var a = 1;\n');
+    const jsCode = ts.transpile(tsCode, { target: ts.ScriptTarget.ES5 });
+    expect(jsCode).toContain('var a = 1;');
+    expect(jsCode).not.toContain(': number');
   });
 });
