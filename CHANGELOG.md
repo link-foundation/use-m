@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Better error messages with contextual information and error chaining
 
 ### Fixed
+- Redirect npm-backed `use()` installs to a use-m-owned cache prefix when npm's configured global root is not writable.
+- Add a regression check that keeps the npm resolver synchronized across `use.mjs`, `use.cjs`, and `use.js`.
+- Keep default resolver detection from treating Node.js or Bun as a browser when tests temporarily define `global.window`.
+- Refresh Deno lockfile entries for current esm.sh remote integrity.
 - **CRITICAL**: Removed debug console.log statements in production code (use.mjs, use.cjs)
 - **CRITICAL**: Fixed license field from "UNLICENSED" to "Unlicense" in package.json
 - Fixed race condition in global use singleton by using promise-based initialization

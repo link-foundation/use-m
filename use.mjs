@@ -442,12 +442,15 @@ export const resolvers = {
     
     return baseUse(resolvedPath);
   },
-  npm: async (moduleSpecifier, pathResolver) => {
+  npm: async (moduleSpecifier, pathResolver, options = {}) => {
     const path = await import('node:path');
     const { exec } = await import('node:child_process');
     const { promisify } = await import('node:util');
-    const { stat, readFile } = await import('node:fs/promises');
+    const { access, mkdir, stat, readFile } = await import('node:fs/promises');
+    const { constants: fsConstants } = await import('node:fs');
+    const os = await import('node:os');
     const execAsync = promisify(exec);
+    const baseNpmEnv = { ...(options?.env || process.env) };
 
     if (!pathResolver) {
       throw new Error('Failed to get the current resolver.');
@@ -525,8 +528,8 @@ export const resolvers = {
       }
     };
 
-    const getLatestVersion = async (packageName) => {
-      const { stdout: version } = await execAsync(`npm show ${packageName} version`);
+    const getLatestVersion = async (packageName, env) => {
+      const { stdout: version } = await execAsync(`npm show ${packageName} version`, { env });
       return version.trim();
     };
 
@@ -541,24 +544,137 @@ export const resolvers = {
       }
     };
 
-    const ensurePackageInstalled = async ({ packageName, version }) => {
-      const alias = `${packageName.replace('@', '').replace('/', '-')}-v-${version}`;
-      const { stdout: globalModulesPath } = await execAsync('npm root -g');
-      const packagePath = path.join(globalModulesPath.trim(), alias);
-      if (version !== 'latest' && await directoryExists(packagePath)) {
-        return packagePath;
+    const getConfiguredNpmPrefix = (env) => env.npm_config_prefix || env.NPM_CONFIG_PREFIX || '';
+
+    const getNpmGlobalRoot = async (env) => {
+      const { stdout: globalModulesPath } = await execAsync('npm root -g', { env });
+      const trimmedPath = globalModulesPath.trim();
+      if (!trimmedPath) {
+        throw new Error('npm root -g returned an empty global root.');
       }
-      if (version === 'latest') {
-        const latestVersion = await getLatestVersion(packageName);
-        const installedVersion = await getInstalledPackageVersion(packagePath);
-        if (installedVersion === latestVersion) {
-          return packagePath;
+      return trimmedPath;
+    };
+
+    const isWritableDirectoryPath = async (directoryPath) => {
+      let currentPath = directoryPath;
+      while (currentPath && currentPath !== path.dirname(currentPath)) {
+        try {
+          const stats = await stat(currentPath);
+          if (!stats.isDirectory()) {
+            return false;
+          }
+          await access(currentPath, fsConstants.W_OK);
+          return true;
+        } catch (error) {
+          if (error.code === 'ENOENT') {
+            currentPath = path.dirname(currentPath);
+            continue;
+          }
+          return false;
         }
       }
       try {
-        await execAsync(`npm install -g ${alias}@npm:${packageName}@${version}`, { stdio: 'ignore' });
+        await access(currentPath, fsConstants.W_OK);
+        return true;
+      } catch {
+        return false;
+      }
+    };
+
+    const getUseMCachePrefix = (env) => {
+      const home = env.HOME || env.USERPROFILE || os.homedir();
+      if (!home) {
+        return null;
+      }
+      const cacheHome = env.XDG_CACHE_HOME || path.join(home, '.cache');
+      return path.join(cacheHome, 'use-m', 'npm-global');
+    };
+
+    const withNpmPrefix = (env, prefix) => {
+      const nextEnv = { ...env, npm_config_prefix: prefix };
+      const pathKey = Object.keys(nextEnv).find(key => key.toLowerCase() === 'path') || 'PATH';
+      const binPath = path.join(prefix, 'bin');
+      nextEnv[pathKey] = nextEnv[pathKey]
+        ? `${binPath}${path.delimiter}${nextEnv[pathKey]}`
+        : binPath;
+      return nextEnv;
+    };
+
+    const getWritableInstallContext = async (globalModulesPath, env) => {
+      if (await isWritableDirectoryPath(globalModulesPath)) {
+        return { env, globalModulesPath };
+      }
+
+      const configuredPrefix = getConfiguredNpmPrefix(env);
+      if (configuredPrefix) {
+        throw new Error(
+          `The configured npm global root '${globalModulesPath}' is not writable. ` +
+          `use-m will not override the configured npm prefix '${configuredPrefix}'. ` +
+          `Set npm_config_prefix to a writable directory or make the configured prefix writable.`
+        );
+      }
+
+      const fallbackPrefix = getUseMCachePrefix(env);
+      if (!fallbackPrefix) {
+        throw new Error(
+          `The npm global root '${globalModulesPath}' is not writable, and use-m could not determine a home directory for its npm cache prefix. ` +
+          `Set npm_config_prefix to a writable directory before using npm-backed use-m imports.`
+        );
+      }
+
+      const fallbackEnv = withNpmPrefix(env, fallbackPrefix);
+      let fallbackGlobalModulesPath;
+      try {
+        fallbackGlobalModulesPath = await getNpmGlobalRoot(fallbackEnv);
       } catch (error) {
-        throw new Error(`Failed to install ${packageName}@${version} globally.`, { cause: error });
+        throw new Error(`Failed to resolve use-m npm cache root with prefix '${fallbackPrefix}'.`, { cause: error });
+      }
+
+      try {
+        await mkdir(fallbackGlobalModulesPath, { recursive: true });
+      } catch (error) {
+        throw new Error(`Failed to create use-m npm cache root '${fallbackGlobalModulesPath}'.`, { cause: error });
+      }
+
+      if (!await isWritableDirectoryPath(fallbackGlobalModulesPath)) {
+        throw new Error(
+          `The npm global root '${globalModulesPath}' is not writable, and the use-m npm cache root '${fallbackGlobalModulesPath}' is not writable. ` +
+          `Set npm_config_prefix to a writable directory before using npm-backed use-m imports.`
+        );
+      }
+
+      return { env: fallbackEnv, globalModulesPath: fallbackGlobalModulesPath };
+    };
+
+    const isPackageInstalled = async (packagePath, version, latestVersion) => {
+      if (version !== 'latest') {
+        return await directoryExists(packagePath);
+      }
+      const installedVersion = await getInstalledPackageVersion(packagePath);
+      return installedVersion === latestVersion;
+    };
+
+    const ensurePackageInstalled = async ({ packageName, version }) => {
+      const alias = `${packageName.replace('@', '').replace('/', '-')}-v-${version}`;
+      const latestVersion = version === 'latest' ? await getLatestVersion(packageName, baseNpmEnv) : null;
+      const globalModulesPath = await getNpmGlobalRoot(baseNpmEnv);
+      let packagePath = path.join(globalModulesPath, alias);
+      if (await isPackageInstalled(packagePath, version, latestVersion)) {
+        return packagePath;
+      }
+
+      const installContext = await getWritableInstallContext(globalModulesPath, baseNpmEnv);
+      packagePath = path.join(installContext.globalModulesPath, alias);
+      if (installContext.globalModulesPath !== globalModulesPath) {
+        if (await isPackageInstalled(packagePath, version, latestVersion)) {
+          return packagePath;
+        }
+      }
+
+      try {
+        await execAsync(`npm install -g ${alias}@npm:${packageName}@${version}`, { env: installContext.env, stdio: 'ignore' });
+      } catch (error) {
+        throw new Error(`Failed to install ${packageName}@${version} globally into '${installContext.globalModulesPath}'.`, { cause: error });
       }
       return packagePath;
     };
@@ -805,11 +921,15 @@ export const makeUse = async (options) => {
   }
   let specifierResolver = options?.specifierResolver;
   if (typeof specifierResolver !== 'function') {
-    if (typeof window !== 'undefined' || (protocol && (protocol === 'http:' || protocol === 'https:'))) {
+    const isDenoRuntime = typeof Deno !== 'undefined';
+    const isBunRuntime = typeof Bun !== 'undefined';
+    const isNodeRuntime = !isDenoRuntime && !isBunRuntime && typeof process !== 'undefined' && Boolean(process.versions?.node);
+    const isBrowserRuntime = !isDenoRuntime && !isBunRuntime && !isNodeRuntime && typeof window !== 'undefined';
+    if (isBrowserRuntime || (protocol && (protocol === 'http:' || protocol === 'https:'))) {
       specifierResolver = resolvers[specifierResolver || 'esm'];
-    } else if (typeof Deno !== 'undefined') {
+    } else if (isDenoRuntime) {
       specifierResolver = resolvers[specifierResolver || 'deno'];
-    } else if (typeof Bun !== 'undefined') {
+    } else if (isBunRuntime) {
       specifierResolver = resolvers[specifierResolver || 'bun'];
     } else {
       specifierResolver = resolvers[specifierResolver || 'npm'];
