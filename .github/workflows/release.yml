@@ -1,0 +1,177 @@
+name: CI/CD
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  test:
+    name: Test on ${{ matrix.runtime }} (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        runtime: [node, bun, deno]
+        node-version: [20.x]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+
+      - name: Setup Bun
+        if: matrix.runtime == 'bun'
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Setup Deno
+        if: matrix.runtime == 'deno'
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Node.js tests
+        if: matrix.runtime == 'node'
+        run: npm test -- --runInBand
+
+      - name: Run Bun tests
+        if: matrix.runtime == 'bun'
+        run: bun test
+
+      - name: Run Deno tests
+        if: matrix.runtime == 'deno'
+        run: |
+          for attempt in 1 2 3; do
+            deno test --allow-net --allow-env --allow-run --allow-read --allow-write --allow-sys && exit 0
+            status=$?
+
+            if [ "$attempt" = "3" ]; then
+              exit "$status"
+            fi
+
+            echo "Deno tests failed on attempt ${attempt}/3; retrying after a short delay."
+            sleep $((attempt * 15))
+          done
+
+  publish:
+    name: Publish to npm
+    needs: [test]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && needs.test.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js for release
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.x
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Read package metadata
+        id: package
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          NAME=$(node -p "require('./package.json').name")
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "name=${NAME}" >> "$GITHUB_OUTPUT"
+          echo "tag=v${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Package: ${NAME}@${VERSION}"
+
+      - name: Check npm version
+        id: npm-version
+        run: |
+          if npm view "${{ steps.package.outputs.name }}@${{ steps.package.outputs.version }}" version >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "${{ steps.package.outputs.name }}@${{ steps.package.outputs.version }} already exists on npm; skipping npm publish."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "${{ steps.package.outputs.name }}@${{ steps.package.outputs.version }} is not on npm; publishing after tests."
+          fi
+
+      - name: Update npm for trusted publishing
+        if: steps.npm-version.outputs.exists == 'false'
+        run: |
+          npm install -g npm@^11.5.1
+          node --version
+          npm --version
+
+      - name: Publish to npm
+        if: steps.npm-version.outputs.exists == 'false'
+        run: npm publish --access public --provenance
+
+      - name: Verify npm publication
+        if: steps.npm-version.outputs.exists == 'false'
+        run: |
+          for attempt in 1 2 3 4 5 6 7 8 9 10; do
+            PUBLISHED_VERSION=$(npm view "${{ steps.package.outputs.name }}@${{ steps.package.outputs.version }}" version 2>/dev/null || true)
+            if [ "$PUBLISHED_VERSION" = "${{ steps.package.outputs.version }}" ]; then
+              echo "Verified npm package ${{ steps.package.outputs.name }}@${PUBLISHED_VERSION}"
+              exit 0
+            fi
+            echo "npm registry has not returned the new version yet (attempt ${attempt}/10)."
+            sleep 10
+          done
+          echo "Failed to verify ${{ steps.package.outputs.name }}@${{ steps.package.outputs.version }} on npm."
+          exit 1
+
+      - name: Create git tag
+        run: |
+          TAG="${{ steps.package.outputs.tag }}"
+          git config user.email "action@github.com"
+          git config user.name "GitHub Action"
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists."
+          else
+            git tag -a "$TAG" -m "Release $TAG"
+            git push origin "$TAG"
+          fi
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${{ steps.package.outputs.tag }}"
+          VERSION="${{ steps.package.outputs.version }}"
+          NAME="${{ steps.package.outputs.name }}"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "GitHub release $TAG already exists."
+          else
+            gh release create "$TAG" \
+              --title "$TAG" \
+              --notes "npm: https://www.npmjs.com/package/${NAME}/v/${VERSION}"
+          fi

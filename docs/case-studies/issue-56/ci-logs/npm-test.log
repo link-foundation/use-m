@@ -1,0 +1,83 @@
+
+> use-m@8.13.8 test
+> NODE_OPTIONS="--experimental-vm-modules" jest --runInBand
+
+(node:629735) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+PASS tests/resolvers.test.mjs
+PASS tests/resolvers.test.cjs
+PASS tests/use.test.cjs
+PASS tests/lodash.test.mjs
+PASS tests/builtin-browser.test.mjs
+PASS tests/relative-paths-browser.test.mjs
+PASS tests/lodash.test.cjs
+PASS tests/typescript.test.cjs
+PASS tests/command-stream.test.cjs
+PASS tests/command-stream.test.mjs
+PASS tests/use.test.mjs
+PASS tests/typescript.test.mjs
+PASS tests/network-imports.test.mjs
+PASS tests/builtin-errors.test.mjs
+PASS tests/network-imports.test.cjs
+PASS tests/relative-paths.test.cjs
+PASS tests/builtin-errors.test.cjs
+PASS tests/npm-global-prefix.test.mjs
+PASS tests/npm-global-prefix.test.cjs
+PASS tests/builtin-nodejs.test.cjs
+PASS tests/relative-paths.test.mjs
+PASS tests/release-workflow-policy.test.mjs
+PASS tests/relative-paths.integration.test.mjs
+  ● Console
+
+    console.log
+      /tmp/gh-issue-solver-1781268984161/tests
+
+      at Object.<anonymous> (tests/relative-paths.integration.test.mjs:29:15)
+
+    console.log
+      Testing relative paths from tests directory...
+      
+      1. Testing ./browser-server/test-helper.js
+         ✓ Message: Helper module loaded
+      
+      2. Testing ./browser-server/test-data.json
+         ✓ Value: 123
+         ✓ Test: data
+      
+      3. Testing ../use.mjs
+         ✓ use function exists: true
+      
+      4. Testing ./browser-server/subfolder/nested.js
+         ✓ Nested: true Level: subfolder
+      
+      5. Testing ./browser-server/subfolder/nested-data.json
+         ✓ Level: nested Depth: 1
+      
+      6. Testing ../package.json
+         ✓ Package name: use-m
+      
+      ✅ All direct tests passed!
+
+      at Object.<anonymous> (tests/relative-paths.integration.test.mjs:39:15)
+
+PASS tests/builtin-nodejs.test.mjs
+PASS tests/get-script-url.test.cjs
+PASS tests/fs-promises.test.mjs
+PASS tests/script-sync.test.mjs
+PASS tests/get-script-url.test.mjs
+PASS tests/builtin-universal.test.cjs
+PASS tests/builtin-universal.test.mjs
+PASS tests/filename.test.cjs
+PASS tests/module-specifier.test.mjs
+PASS tests/deno-support.test.cjs
+PASS tests/module-specifier.test.cjs
+PASS tests/import.test.mjs
+PASS tests/import.test.cjs
+PASS tests/filename.test.mjs
+PASS tests/deno-support.test.mjs
+
+Test Suites: 38 passed, 38 total
+Tests:       257 passed, 257 total
+Snapshots:   0 total
+Time:        25.827 s, estimated 30 s
+Ran all test suites.
