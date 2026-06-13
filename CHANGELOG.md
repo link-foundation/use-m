@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Robust CDN loader `use-m/load` (`loadUseM`) that validates each response before `eval()`, retries, and falls back across multiple CDN mirrors (unpkg → jsDelivr → esm.sh), failing with a clear, actionable error instead of a cryptic `SyntaxError` when a CDN returns an error body. Resolves [#58](https://github.com/link-foundation/use-m/issues/58).
+- "Robust loading" documentation in README with a packaged-helper option and a dependency-free self-contained snippet, plus runnable `examples/load` demonstrations.
 - CONTRIBUTING.md with comprehensive contribution guidelines
 - CHANGELOG.md to track version history
 - Explicit "files" field in package.json for better npm publish control

@@ -18,6 +18,7 @@ It may be useful for standalone scripts that do not require a `package.json`. Al
   - [Key features](#key-features)
   - [Usage](#usage)
     - [Universal](#universal)
+    - [Robust loading (resilient CDN bootstrap)](#robust-loading-resilient-cdn-bootstrap)
     - [Interactive shell in Node.js environment](#interactive-shell-in-nodejs-environment)
     - [Browser](#browser)
     - [Deno](#deno)
@@ -63,6 +64,74 @@ fetch('https://unpkg.com/use-m/use.js')
 
 Universal execution comes at cost of `eval` usage, that is considered potential security threat. In case of this library only single file is evaled, it short, unminified and has no dependencies, so you can check [the contents](https://unpkg.com/use-m/use.js) yourself. Once you have `use` function instance no more `eval` function will be executed by this library. If you don't want to use `eval` you can use `await import()` in browser or in `node.js`. In `node.js` you can also just install the package from `npm` as usual.
 
+### Robust loading (resilient CDN bootstrap)
+
+The minimal one-liner above is convenient, but it trusts the CDN to always return the module source. When a CDN hiccups and responds with an error body — for example the plain text `Internal Server Error` or an HTML error page — `eval()` tries to parse that text as JavaScript and throws a cryptic, misleading error:
+
+```
+SyntaxError: Unexpected identifier 'Server'
+```
+
+The error points at the `eval` line with no hint that the real cause is a transient network/CDN failure (see [#58](https://github.com/link-foundation/use-m/issues/58)). For long-running scripts, CI jobs, or anything you want to be resilient, use a loader that validates each response before `eval()`, retries, and falls back across multiple CDN mirrors.
+
+**Option 1 — the packaged helper (`use-m/load`).** When `use-m` is installed, import the loader that ships with the package:
+
+```javascript
+import { loadUseM } from 'use-m/load';        // ES Modules
+// const { loadUseM } = require('use-m/load'); // CommonJS
+
+const { use } = await loadUseM();
+const _ = await use('lodash@4.17.21');
+console.log(`_.add(1, 2) = ${_.add(1, 2)}`);
+```
+
+`loadUseM()` validates the HTTP status and the response body before evaluating it, retries each source, falls back across `unpkg` → `jsDelivr` → `esm.sh`, and — when every mirror fails — throws a clear error listing every attempt instead of a `SyntaxError`. It accepts options to customize the behavior:
+
+```javascript
+const { use } = await loadUseM({
+  sources: ['https://unpkg.com/use-m/use.js', 'https://cdn.jsdelivr.net/npm/use-m/use.js'],
+  maxAttemptsPerSource: 3,  // attempts per mirror before moving on
+  retryDelayMs: 250,        // linear backoff between attempts
+  timeoutMs: 10000,         // per-attempt timeout (0 disables)
+});
+```
+
+**Option 2 — self-contained snippet (no install).** For standalone scripts that fetch `use-m` directly, drop in this dependency-free loader. It does the same validation and mirror fallback inline:
+
+```javascript
+async function loadUse(sources = [
+  'https://unpkg.com/use-m/use.js',
+  'https://cdn.jsdelivr.net/npm/use-m/use.js',
+  'https://esm.sh/use-m/use.js',
+]) {
+  const failures = [];
+  for (const url of sources) {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`HTTP ${response.status} ${response.statusText || ''}`.trim());
+      const source = await response.text();
+      // Guard against CDN error bodies (HTML pages, "Internal Server Error", …)
+      // that eval() would choke on. The real module is large and references `use`.
+      if (source.length < 256 || source.trimStart().startsWith('<') || !source.includes('use')) {
+        throw new Error(`unexpected response body: "${source.slice(0, 80).replace(/\s+/g, ' ').trim()}"`);
+      }
+      const exported = eval(source);
+      if (!exported || typeof exported.use !== 'function') throw new Error('module did not export a `use` function');
+      return exported.use;
+    } catch (error) {
+      failures.push(`${url}: ${error.message}`);
+    }
+  }
+  throw new Error('Failed to load use-m from every CDN mirror:\n  - ' + failures.join('\n  - '));
+}
+
+const use = await loadUse();
+const _ = await use('lodash@4.17.21');
+console.log(`_.add(1, 2) = ${_.add(1, 2)}`);
+```
+
+Runnable versions of both options live in [`examples/load`](https://github.com/link-foundation/use-m/tree/main/examples/load).
+
 ### Interactive shell in Node.js environment
 
 1. Get the `use` function from `use-m` package:
@@ -72,6 +141,8 @@ Universal execution comes at cost of `eval` usage, that is considered potential 
    ```javascript
    const { use } = eval(await (await fetch('https://unpkg.com/use-m/use.js')).text());
    ```
+
+   > This minimal form is fine for an interactive REPL. For scripts that should survive a flaky CDN, prefer the resilient loader from [Robust loading](#robust-loading-resilient-cdn-bootstrap) — otherwise a CDN error body makes `eval()` throw a cryptic `SyntaxError` ([#58](https://github.com/link-foundation/use-m/issues/58)).
 
    <img width="778" height="420" alt="Screenshot 2025-07-25 at 2 21 28 AM" src="https://github.com/user-attachments/assets/f37692dc-0c2e-4279-8f71-1cde37176c1f" />
 
