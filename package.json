@@ -1,6 +1,6 @@
 {
   "name": "use-m",
-  "version": "8.13.8",
+  "version": "8.14.0",
   "description": "use-m: dynamically import any JavaScript module",
   "type": "module",
   "main": "use.cjs",
@@ -10,7 +10,13 @@
       "require": "./use.cjs"
     },
     "./use.cjs": "./use.cjs",
-    "./use.mjs": "./use.mjs"
+    "./use.mjs": "./use.mjs",
+    "./load": {
+      "import": "./load.mjs",
+      "require": "./load.cjs"
+    },
+    "./load.cjs": "./load.cjs",
+    "./load.mjs": "./load.mjs"
   },
   "bin": {
     "use": "cli.mjs"
@@ -58,6 +64,8 @@
     "use.js",
     "cli.mjs",
     "loader.js",
+    "load.mjs",
+    "load.cjs",
     "test-adapter.mjs",
     "test-adapter.cjs",
     "README.md",
