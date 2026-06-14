@@ -17,8 +17,14 @@
 //   - it fails with a clear, actionable error listing every attempt instead of a
 //     cryptic SyntaxError.
 //
+// `loadUseM()` reuses the SAME generic retry/fallback engine (`loadWithFallback`)
+// that powers use-m's resilient per-package CDN loading, so the bootstrap and the
+// rest of the codebase share one mechanism instead of duplicating it.
+//
 // NOTE: This is unrelated to `loader.js`, which is a Node.js `--loader` hook used
 // to resolve bare npm specifiers; this file loads the use-m module itself.
+
+import { loadWithFallback } from './use.mjs';
 
 // Ordered list of CDN mirrors that serve the evaluable `use.js` build.
 export const DEFAULT_SOURCES = [
@@ -26,8 +32,6 @@ export const DEFAULT_SOURCES = [
   'https://cdn.jsdelivr.net/npm/use-m/use.js',
   'https://esm.sh/use-m/use.js',
 ];
-
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // Common CDN/proxy plain-text error bodies that would otherwise be eval()'d as code.
 const ERROR_BODY_PATTERN =
@@ -91,34 +95,29 @@ export async function loadUseM(options = {}) {
     throw new Error('Cannot load use-m: `sources` must be a non-empty array of URLs.');
   }
 
-  const failures = [];
-
-  for (const url of sources) {
-    for (let attempt = 1; attempt <= maxAttemptsPerSource; attempt++) {
-      try {
-        const source = await fetchSource(fetchImpl, url, timeoutMs);
-        if (!looksLikeUseModule(source)) {
-          const preview = source.slice(0, 80).replace(/\s+/g, ' ').trim();
-          throw new Error(`response was not the use-m module (got: "${preview}")`);
-        }
-        const exported = await evaluate(source);
-        if (!exported || typeof exported.use !== 'function') {
-          throw new Error('evaluated module did not export a `use` function');
-        }
-        return exported;
-      } catch (error) {
-        failures.push(`${url} (attempt ${attempt}/${maxAttemptsPerSource}): ${error.message}`);
-        if (attempt < maxAttemptsPerSource && retryDelayMs > 0) {
-          await sleep(retryDelayMs * attempt);
-        }
+  // Delegate the retry/fallback loop to the shared engine; the per-source work
+  // (fetch → validate body → eval → check `use` export) is the only loader-specific
+  // part. The engine aggregates failures into the same clear, actionable error.
+  return loadWithFallback(
+    sources,
+    async (url) => {
+      const source = await fetchSource(fetchImpl, url, timeoutMs);
+      if (!looksLikeUseModule(source)) {
+        const preview = source.slice(0, 80).replace(/\s+/g, ' ').trim();
+        throw new Error(`response was not the use-m module (got: "${preview}")`);
       }
+      const exported = await evaluate(source);
+      if (!exported || typeof exported.use !== 'function') {
+        throw new Error('evaluated module did not export a `use` function');
+      }
+      return exported;
+    },
+    {
+      maxAttemptsPerSource,
+      retryDelayMs,
+      label: 'load use-m from every CDN mirror',
+      hint: 'This is usually a transient network or CDN outage — please check your connection and try again.',
     }
-  }
-
-  throw new Error(
-    'Failed to load use-m from every CDN mirror. This is usually a transient ' +
-    'network or CDN outage — please check your connection and try again.\n' +
-    'Attempts:\n  - ' + failures.join('\n  - ')
   );
 }
 
