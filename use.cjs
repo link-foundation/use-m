@@ -859,6 +859,69 @@ const resolvers = {
   },
 }
 
+// Ordered chains of universal-ESM CDN resolvers tried for network/CDN loading.
+// Each entry is a key into `resolvers`; the chains list *distinct* CDN hosts so a
+// single CDN outage no longer breaks `use()` — when the first host fails we fall
+// back to the next. The primary entry preserves the previous default per runtime.
+const networkResolverChain = ['esm', 'jspm', 'skypack']
+const denoResolverChain = ['deno', 'jspm', 'skypack']
+
+// Normalize a resolver reference (a resolver function, or a key into `resolvers`)
+// into a resolver function.
+const toResolverFunction = (resolver) =>
+  typeof resolver === 'function' ? resolver : resolvers[resolver]
+
+// Generic, mechanism-agnostic "try sources in order until one works" engine.
+// Tries each `source` in order (optionally retrying each `maxAttemptsPerSource`
+// times with linear backoff) and returns the first successful `load(source,
+// attempt)` result. If every attempt fails it throws ONE clear, aggregated error
+// listing every attempt — never just the cryptic last failure (issue #58).
+//
+// This is the shared core reused by both resilient per-package CDN imports (see
+// `makeUse` below) and the use-m bootstrap loader (`loadUseM` in load.mjs /
+// load.cjs), so retry/fallback behaves identically everywhere it is used.
+//
+// @param {Array<unknown>} sources - ordered list of things to try (URLs, resolver keys, ...)
+// @param {(source: unknown, attempt: number) => Promise<any>} load - loads one source; throws on failure
+// @param {object} [options]
+// @param {number} [options.maxAttemptsPerSource] - attempts per source (default 1)
+// @param {number} [options.retryDelayMs] - base delay between retries, linear backoff (default 0)
+// @param {(source: unknown) => string} [options.describeSource] - human label for a source in errors
+// @param {string} [options.label] - what we were trying to do (used in the error message)
+// @param {string} [options.hint] - extra guidance appended to the aggregated error
+const loadWithFallback = async (sources, load, options = {}) => {
+  const {
+    maxAttemptsPerSource = 1,
+    retryDelayMs = 0,
+    describeSource = (source) => String(source),
+    label = 'load from any source',
+    hint = '',
+  } = options
+  if (!Array.isArray(sources) || sources.length === 0) {
+    throw new Error(`Failed to ${label}: no sources were provided.`)
+  }
+  if (typeof load !== 'function') {
+    throw new Error(`Failed to ${label}: a load function is required.`)
+  }
+  const failures = []
+  for (const source of sources) {
+    for (let attempt = 1; attempt <= maxAttemptsPerSource; attempt++) {
+      try {
+        return await load(source, attempt)
+      } catch (error) {
+        const reason = error && error.message ? error.message : String(error)
+        failures.push(`${describeSource(source)} (attempt ${attempt}/${maxAttemptsPerSource}): ${reason}`)
+        if (attempt < maxAttemptsPerSource && retryDelayMs > 0) {
+          await new Promise((resolve) => setTimeout(resolve, retryDelayMs * attempt))
+        }
+      }
+    }
+  }
+  throw new Error(
+    `Failed to ${label}.${hint ? ' ' + hint : ''}\nAttempts:\n  - ` + failures.join('\n  - ')
+  )
+}
+
 const baseUse = async (modulePath) => {
   // Dynamically import the module
   try {
@@ -916,20 +979,31 @@ const makeUse = async (options) => {
       }
     }
   }
-  let specifierResolver = options?.specifierResolver;
-  if (typeof specifierResolver !== 'function') {
+  // Build the ordered chain of specifier resolvers to try. A single-entry chain
+  // means "no fallback": an explicit user choice (function or name) and the local
+  // npm/bun runtimes import exactly as before. The browser/HTTP and Deno network
+  // defaults use a multi-host chain so a CDN outage falls back instead of failing.
+  // `import` is an injectable low-level importer (defaults to baseUse) used for
+  // dependency injection in tests and advanced setups.
+  const importModule = typeof options?.import === 'function' ? options.import : baseUse;
+  let resolverChain;
+  if (Array.isArray(options?.specifierResolvers) && options.specifierResolvers.length > 0) {
+    resolverChain = options.specifierResolvers;
+  } else if (typeof options?.specifierResolver === 'function' || options?.specifierResolver) {
+    resolverChain = [options.specifierResolver];
+  } else {
     const isDenoRuntime = typeof Deno !== 'undefined';
     const isBunRuntime = typeof Bun !== 'undefined';
     const isNodeRuntime = !isDenoRuntime && !isBunRuntime && typeof process !== 'undefined' && Boolean(process.versions?.node);
     const isBrowserRuntime = !isDenoRuntime && !isBunRuntime && !isNodeRuntime && typeof window !== 'undefined';
     if (isBrowserRuntime || (protocol && (protocol === 'http:' || protocol === 'https:'))) {
-      specifierResolver = resolvers[specifierResolver || 'esm'];
+      resolverChain = networkResolverChain;
     } else if (isDenoRuntime) {
-      specifierResolver = resolvers[specifierResolver || 'deno'];
+      resolverChain = denoResolverChain;
     } else if (isBunRuntime) {
-      specifierResolver = resolvers[specifierResolver || 'bun'];
+      resolverChain = ['bun'];
     } else {
-      specifierResolver = resolvers[specifierResolver || 'npm'];
+      resolverChain = ['npm'];
     }
   }
   let pathResolver = options?.pathResolver;
@@ -973,9 +1047,25 @@ const makeUse = async (options) => {
       return relativeModule;
     }
 
-    // If not a built-in or relative module, use the configured resolver
-    const modulePath = await specifierResolver(moduleSpecifier, pathResolver);
-    return baseUse(modulePath);
+    // If not a built-in or relative module, resolve + import via the configured
+    // resolver chain. A single-entry chain imports directly (preserving the
+    // original behavior and error); a multi-entry chain falls back across CDN
+    // mirrors via the shared loadWithFallback engine.
+    if (resolverChain.length === 1) {
+      const modulePath = await toResolverFunction(resolverChain[0])(moduleSpecifier, pathResolver);
+      return importModule(modulePath);
+    }
+    return loadWithFallback(
+      resolverChain,
+      async (resolver) => {
+        const modulePath = await toResolverFunction(resolver)(moduleSpecifier, pathResolver);
+        return importModule(modulePath);
+      },
+      {
+        label: `import '${moduleSpecifier}' from any CDN mirror`,
+        describeSource: (resolver) => (typeof resolver === 'function' ? 'custom resolver' : String(resolver)),
+      }
+    );
   };
 }
 
@@ -1021,5 +1111,8 @@ module.exports = {
   resolvers,
   makeUse,
   baseUse,
+  loadWithFallback,
+  networkResolverChain,
+  denoResolverChain,
   use,
 };
