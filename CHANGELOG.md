@@ -9,7 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Robust CDN loader `use-m/load` (`loadUseM`) that validates each response before `eval()`, retries, and falls back across multiple CDN mirrors (unpkg → jsDelivr → esm.sh), failing with a clear, actionable error instead of a cryptic `SyntaxError` when a CDN returns an error body. Resolves [#58](https://github.com/link-foundation/use-m/issues/58).
-- "Robust loading" documentation in README with a packaged-helper option and a dependency-free self-contained snippet, plus runnable `examples/load` demonstrations.
+- Generic, reusable `loadWithFallback(sources, load, options)` engine (exported from `use-m`) — "try each source in order, optionally retry, and fail with one aggregated error listing every attempt." It is now the single mechanism shared by both the `use-m/load` bootstrap and per-package CDN loading, so resilient loading is no longer duplicated.
+- Resilient per-package loading: when `use()` fetches a package over the network (browser, Deno, or `http(s)` entry point) it now falls back across distinct CDN hosts (`esm.sh` → `jspm.dev` → `cdn.skypack.dev`; Deno uses its `esm.sh` target first) instead of depending on a single host. Exposed as `networkResolverChain` / `denoResolverChain`.
+- `makeUse` options `specifierResolvers` (ordered resolver chain to try with fallback) and `import` (injectable low-level importer), enabling custom mirror chains and offline testing of the fallback wiring.
+- "Resilient package loading (shared fallback engine)" documentation in README, plus a "Robust loading" section with a packaged-helper option and a dependency-free self-contained snippet, and runnable `examples/load` demonstrations.
 - CONTRIBUTING.md with comprehensive contribution guidelines
 - CHANGELOG.md to track version history
 - Explicit "files" field in package.json for better npm publish control
@@ -29,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Replaced process.env.HOME with os.homedir() for better cross-platform compatibility
 
 ### Changed
+- Refactored the `use-m/load` bootstrap (`loadUseM`) to delegate its retry/fallback loop to the shared `loadWithFallback` engine instead of a private copy, so the bootstrap and the rest of the codebase use one mechanism (no behavior change; identical aggregated error message).
 - Improved error handling in npm and bun resolvers with better context
 - Clarified TODOs in network-imports examples with explanatory comments
 

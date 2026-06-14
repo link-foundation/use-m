@@ -19,6 +19,7 @@ It may be useful for standalone scripts that do not require a `package.json`. Al
   - [Usage](#usage)
     - [Universal](#universal)
     - [Robust loading (resilient CDN bootstrap)](#robust-loading-resilient-cdn-bootstrap)
+    - [Resilient package loading (shared fallback engine)](#resilient-package-loading-shared-fallback-engine)
     - [Interactive shell in Node.js environment](#interactive-shell-in-nodejs-environment)
     - [Browser](#browser)
     - [Deno](#deno)
@@ -131,6 +132,63 @@ console.log(`_.add(1, 2) = ${_.add(1, 2)}`);
 ```
 
 Runnable versions of both options live in [`examples/load`](https://github.com/link-foundation/use-m/tree/main/examples/load).
+
+### Resilient package loading (shared fallback engine)
+
+The resilience above is not limited to bootstrapping `use-m` itself — once you have a `use` function, the **packages you load are resilient too**. When `use()` fetches a package over the network (in the browser, in Deno, or from an `http(s)` entry point) it now tries a chain of independent CDN hosts and falls back automatically, so a single CDN outage no longer breaks `use()`:
+
+| Runtime / entry point | Mirror chain tried in order |
+| --- | --- |
+| Browser / `http(s)` script | `esm.sh` → `jspm.dev` → `cdn.skypack.dev` |
+| Deno | `esm.sh` (deno target) → `jspm.dev` → `cdn.skypack.dev` |
+| Node.js (`npm i -g`), Bun | unchanged — single local resolver, no network fallback |
+
+If every mirror fails, `use()` throws one clear, aggregated error listing each attempt instead of the cryptic error from a single failing host:
+
+```
+Failed to import 'left-pad@1.3.0' from any CDN mirror.
+Attempts:
+  - esm (attempt 1/1): <reason>
+  - jspm (attempt 1/1): <reason>
+  - skypack (attempt 1/1): <reason>
+```
+
+You can override the chain (or inject a custom resolver) per `use` instance:
+
+```javascript
+import { makeUse } from 'use-m';        // ES Modules
+// const { makeUse } = require('use-m'); // CommonJS
+
+const use = await makeUse({
+  // Try these resolvers in order, falling back on failure. Entries are resolver
+  // names (built-ins: 'esm', 'jspm', 'skypack', 'jsdelivr', 'unpkg', 'deno', …)
+  // or your own `(specifier, pathResolver) => url` functions.
+  specifierResolvers: ['esm', 'jspm', 'skypack'],
+});
+```
+
+**One mechanism, reused everywhere.** Both the `use-m/load` bootstrap and per-package loading are powered by the same generic `loadWithFallback` engine — "try each source in order, optionally retry, and fail with one aggregated error." It is exported so you can reuse it for your own resilient loading:
+
+```javascript
+import { loadWithFallback } from 'use-m';
+
+const data = await loadWithFallback(
+  ['https://primary.example/api', 'https://backup.example/api'],
+  async (url) => {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    return response.json();
+  },
+  {
+    maxAttemptsPerSource: 3,  // attempts per source before moving on
+    retryDelayMs: 250,        // linear backoff between attempts (0 disables)
+    label: 'fetch config from any endpoint',
+    hint: 'Check your network connection and try again.',
+  },
+);
+```
+
+A runnable, dependency-free demonstration lives in [`examples/load/shared-fallback-engine.mjs`](https://github.com/link-foundation/use-m/blob/main/examples/load/shared-fallback-engine.mjs).
 
 ### Interactive shell in Node.js environment
 
