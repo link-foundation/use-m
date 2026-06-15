@@ -1,6 +1,6 @@
 {
   "name": "use-m",
-  "version": "8.14.0",
+  "version": "8.14.1",
   "description": "use-m: dynamically import any JavaScript module",
   "type": "module",
   "main": "src/use.cjs",
@@ -23,7 +23,8 @@
   },
   "scripts": {
     "test": "NODE_OPTIONS=\"--experimental-vm-modules\" jest",
-    "test:examples": "./examples/test-examples.mjs"
+    "test:examples": "./examples/test-examples.mjs",
+    "sync:entries": "node scripts/sync-root-entries.mjs"
   },
   "repository": {
     "type": "git",
@@ -59,6 +60,9 @@
   "author": "link-foundation",
   "license": "Unlicense",
   "files": [
+    "use.mjs",
+    "use.cjs",
+    "use.js",
     "src/use.mjs",
     "src/use.cjs",
     "src/use.js",
