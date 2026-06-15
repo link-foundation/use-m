@@ -1,19 +1,25 @@
 {
   "name": "use-m",
-  "version": "8.13.8",
+  "version": "8.14.0",
   "description": "use-m: dynamically import any JavaScript module",
   "type": "module",
-  "main": "use.cjs",
+  "main": "src/use.cjs",
   "exports": {
     ".": {
-      "import": "./use.mjs",
-      "require": "./use.cjs"
+      "import": "./src/use.mjs",
+      "require": "./src/use.cjs"
     },
-    "./use.cjs": "./use.cjs",
-    "./use.mjs": "./use.mjs"
+    "./use.cjs": "./src/use.cjs",
+    "./use.mjs": "./src/use.mjs",
+    "./load": {
+      "import": "./src/load.mjs",
+      "require": "./src/load.cjs"
+    },
+    "./load.cjs": "./src/load.cjs",
+    "./load.mjs": "./src/load.mjs"
   },
   "bin": {
-    "use": "cli.mjs"
+    "use": "src/cli.mjs"
   },
   "scripts": {
     "test": "NODE_OPTIONS=\"--experimental-vm-modules\" jest",
@@ -53,13 +59,15 @@
   "author": "link-foundation",
   "license": "Unlicense",
   "files": [
-    "use.mjs",
-    "use.cjs",
-    "use.js",
-    "cli.mjs",
-    "loader.js",
-    "test-adapter.mjs",
-    "test-adapter.cjs",
+    "src/use.mjs",
+    "src/use.cjs",
+    "src/use.js",
+    "src/cli.mjs",
+    "src/loader.js",
+    "src/load.mjs",
+    "src/load.cjs",
+    "src/test-adapter.mjs",
+    "src/test-adapter.cjs",
     "README.md",
     "LICENSE"
   ],

@@ -202,7 +202,7 @@ Test on bun (macos-latest)	Run Bun tests	2026-06-12T13:15:26.0738010Z 2. Testing
 Test on bun (macos-latest)	Run Bun tests	2026-06-12T13:15:26.0738410Z    ✓ Value: 123
 Test on bun (macos-latest)	Run Bun tests	2026-06-12T13:15:26.0738640Z    ✓ Test: data
 Test on bun (macos-latest)	Run Bun tests	2026-06-12T13:15:26.0738760Z
-Test on bun (macos-latest)	Run Bun tests	2026-06-12T13:15:26.0738860Z 3. Testing ../use.mjs
+Test on bun (macos-latest)	Run Bun tests	2026-06-12T13:15:26.0738860Z 3. Testing ../src/use.mjs
 Test on bun (macos-latest)	Run Bun tests	2026-06-12T13:15:26.0739220Z    ✓ use function exists: true
 Test on bun (macos-latest)	Run Bun tests	2026-06-12T13:15:26.0739360Z
 Test on bun (macos-latest)	Run Bun tests	2026-06-12T13:15:26.0739590Z 4. Testing ./browser-server/subfolder/nested.js
@@ -1184,7 +1184,7 @@ Test on bun (ubuntu-latest)	Run Bun tests	2026-06-12T13:15:27.2224753Z 2. Testin
 Test on bun (ubuntu-latest)	Run Bun tests	2026-06-12T13:15:27.2225286Z    ✓ Value: 123
 Test on bun (ubuntu-latest)	Run Bun tests	2026-06-12T13:15:27.2225745Z    ✓ Test: data
 Test on bun (ubuntu-latest)	Run Bun tests	2026-06-12T13:15:27.2225912Z
-Test on bun (ubuntu-latest)	Run Bun tests	2026-06-12T13:15:27.2226016Z 3. Testing ../use.mjs
+Test on bun (ubuntu-latest)	Run Bun tests	2026-06-12T13:15:27.2226016Z 3. Testing ../src/use.mjs
 Test on bun (ubuntu-latest)	Run Bun tests	2026-06-12T13:15:27.2226312Z    ✓ use function exists: true
 Test on bun (ubuntu-latest)	Run Bun tests	2026-06-12T13:15:27.2226500Z
 Test on bun (ubuntu-latest)	Run Bun tests	2026-06-12T13:15:27.2226678Z 4. Testing ./browser-server/subfolder/nested.js
@@ -1707,7 +1707,7 @@ Test on deno (ubuntu-latest)	Run Deno tests	2026-06-12T13:17:16.6780257Z 2. Test
 Test on deno (ubuntu-latest)	Run Deno tests	2026-06-12T13:17:16.6780900Z    ✓ Value: 123
 Test on deno (ubuntu-latest)	Run Deno tests	2026-06-12T13:17:16.6781332Z    ✓ Test: data
 Test on deno (ubuntu-latest)	Run Deno tests	2026-06-12T13:17:16.6781556Z
-Test on deno (ubuntu-latest)	Run Deno tests	2026-06-12T13:17:16.6781745Z 3. Testing ../use.mjs
+Test on deno (ubuntu-latest)	Run Deno tests	2026-06-12T13:17:16.6781745Z 3. Testing ../src/use.mjs
 Test on deno (ubuntu-latest)	Run Deno tests	2026-06-12T13:17:16.6782669Z    ✓ use function exists: true
 Test on deno (ubuntu-latest)	Run Deno tests	2026-06-12T13:17:16.6782984Z
 Test on deno (ubuntu-latest)	Run Deno tests	2026-06-12T13:17:16.6783630Z 4. Testing ./browser-server/subfolder/nested.js
@@ -2547,7 +2547,7 @@ Test on deno (macos-latest)	Run Deno tests	2026-06-12T13:15:21.7413620Z 2. Testi
 Test on deno (macos-latest)	Run Deno tests	2026-06-12T13:15:21.7413870Z    ✓ Value: 123
 Test on deno (macos-latest)	Run Deno tests	2026-06-12T13:15:21.7414040Z    ✓ Test: data
 Test on deno (macos-latest)	Run Deno tests	2026-06-12T13:15:21.7414130Z
-Test on deno (macos-latest)	Run Deno tests	2026-06-12T13:15:21.7414210Z 3. Testing ../use.mjs
+Test on deno (macos-latest)	Run Deno tests	2026-06-12T13:15:21.7414210Z 3. Testing ../src/use.mjs
 Test on deno (macos-latest)	Run Deno tests	2026-06-12T13:15:21.7414440Z    ✓ use function exists: true
 Test on deno (macos-latest)	Run Deno tests	2026-06-12T13:15:21.7414570Z
 Test on deno (macos-latest)	Run Deno tests	2026-06-12T13:15:21.7414740Z 4. Testing ./browser-server/subfolder/nested.js
@@ -2940,7 +2940,7 @@ Test on node (ubuntu-latest)	Run Node.js tests	2026-06-12T13:15:26.8944074Z     
 Test on node (ubuntu-latest)	Run Node.js tests	2026-06-12T13:15:26.8944714Z          ✓ Value: 123
 Test on node (ubuntu-latest)	Run Node.js tests	2026-06-12T13:15:26.8945129Z          ✓ Test: data
 Test on node (ubuntu-latest)	Run Node.js tests	2026-06-12T13:15:26.8945471Z
-Test on node (ubuntu-latest)	Run Node.js tests	2026-06-12T13:15:26.8945789Z       3. Testing ../use.mjs
+Test on node (ubuntu-latest)	Run Node.js tests	2026-06-12T13:15:26.8945789Z       3. Testing ../src/use.mjs
 Test on node (ubuntu-latest)	Run Node.js tests	2026-06-12T13:15:26.8946303Z          ✓ use function exists: true
 Test on node (ubuntu-latest)	Run Node.js tests	2026-06-12T13:15:26.8946745Z
 Test on node (ubuntu-latest)	Run Node.js tests	2026-06-12T13:15:26.8947197Z       4. Testing ./browser-server/subfolder/nested.js
@@ -3218,7 +3218,7 @@ Test on node (macos-latest)	Run Node.js tests	2026-06-12T13:15:44.5091720Z      
 Test on node (macos-latest)	Run Node.js tests	2026-06-12T13:15:44.5092230Z          ✓ Value: 123
 Test on node (macos-latest)	Run Node.js tests	2026-06-12T13:15:44.5092630Z          ✓ Test: data
 Test on node (macos-latest)	Run Node.js tests	2026-06-12T13:15:44.5092980Z
-Test on node (macos-latest)	Run Node.js tests	2026-06-12T13:15:44.5093210Z       3. Testing ../use.mjs
+Test on node (macos-latest)	Run Node.js tests	2026-06-12T13:15:44.5093210Z       3. Testing ../src/use.mjs
 Test on node (macos-latest)	Run Node.js tests	2026-06-12T13:15:44.5093620Z          ✓ use function exists: true
 Test on node (macos-latest)	Run Node.js tests	2026-06-12T13:15:44.5094080Z
 Test on node (macos-latest)	Run Node.js tests	2026-06-12T13:15:44.5094390Z       4. Testing ./browser-server/subfolder/nested.js

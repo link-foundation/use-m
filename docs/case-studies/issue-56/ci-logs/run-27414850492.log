@@ -383,7 +383,7 @@ Run Tests / Test on node	UNKNOWN STEP	2026-06-12T12:12:57.6280310Z       2. Test
 Run Tests / Test on node	UNKNOWN STEP	2026-06-12T12:12:57.6281590Z          ✓ Value: 123
 Run Tests / Test on node	UNKNOWN STEP	2026-06-12T12:12:57.6282420Z          ✓ Test: data
 Run Tests / Test on node	UNKNOWN STEP	2026-06-12T12:12:57.6283280Z       
-Run Tests / Test on node	UNKNOWN STEP	2026-06-12T12:12:57.6283980Z       3. Testing ../use.mjs
+Run Tests / Test on node	UNKNOWN STEP	2026-06-12T12:12:57.6283980Z       3. Testing ../src/use.mjs
 Run Tests / Test on node	UNKNOWN STEP	2026-06-12T12:12:57.6285110Z          ✓ use function exists: true
 Run Tests / Test on node	UNKNOWN STEP	2026-06-12T12:12:57.6286100Z       
 Run Tests / Test on node	UNKNOWN STEP	2026-06-12T12:12:57.6286970Z       4. Testing ./browser-server/subfolder/nested.js
@@ -985,7 +985,7 @@ Run Tests / Test on bun	UNKNOWN STEP	2026-06-12T12:12:32.1052261Z 2. Testing ./b
 Run Tests / Test on bun	UNKNOWN STEP	2026-06-12T12:12:32.1052717Z    ✓ Value: 123
 Run Tests / Test on bun	UNKNOWN STEP	2026-06-12T12:12:32.1052951Z    ✓ Test: data
 Run Tests / Test on bun	UNKNOWN STEP	2026-06-12T12:12:32.1053072Z 
-Run Tests / Test on bun	UNKNOWN STEP	2026-06-12T12:12:32.1053178Z 3. Testing ../use.mjs
+Run Tests / Test on bun	UNKNOWN STEP	2026-06-12T12:12:32.1053178Z 3. Testing ../src/use.mjs
 Run Tests / Test on bun	UNKNOWN STEP	2026-06-12T12:12:32.1053471Z    ✓ use function exists: true
 Run Tests / Test on bun	UNKNOWN STEP	2026-06-12T12:12:32.1053668Z 
 Run Tests / Test on bun	UNKNOWN STEP	2026-06-12T12:12:32.1053856Z 4. Testing ./browser-server/subfolder/nested.js
@@ -1487,7 +1487,7 @@ Run Tests / Test on deno	UNKNOWN STEP	2026-06-12T12:12:24.3394400Z 2. Testing ./
 Run Tests / Test on deno	UNKNOWN STEP	2026-06-12T12:12:24.3394813Z    ✓ Value: 123
 Run Tests / Test on deno	UNKNOWN STEP	2026-06-12T12:12:24.3395089Z    ✓ Test: data
 Run Tests / Test on deno	UNKNOWN STEP	2026-06-12T12:12:24.3395278Z 
-Run Tests / Test on deno	UNKNOWN STEP	2026-06-12T12:12:24.3395414Z 3. Testing ../use.mjs
+Run Tests / Test on deno	UNKNOWN STEP	2026-06-12T12:12:24.3395414Z 3. Testing ../src/use.mjs
 Run Tests / Test on deno	UNKNOWN STEP	2026-06-12T12:12:24.3395766Z    ✓ use function exists: true
 Run Tests / Test on deno	UNKNOWN STEP	2026-06-12T12:12:24.3395977Z 
 Run Tests / Test on deno	UNKNOWN STEP	2026-06-12T12:12:24.3396198Z 4. Testing ./browser-server/subfolder/nested.js
@@ -1858,7 +1858,7 @@ Run Tests / Test on node	UNKNOWN STEP	2026-06-12T12:12:36.0536801Z       2. Test
 Run Tests / Test on node	UNKNOWN STEP	2026-06-12T12:12:36.0537130Z          ✓ Value: 123
 Run Tests / Test on node	UNKNOWN STEP	2026-06-12T12:12:36.0537383Z          ✓ Test: data
 Run Tests / Test on node	UNKNOWN STEP	2026-06-12T12:12:36.0537590Z       
-Run Tests / Test on node	UNKNOWN STEP	2026-06-12T12:12:36.0537783Z       3. Testing ../use.mjs
+Run Tests / Test on node	UNKNOWN STEP	2026-06-12T12:12:36.0537783Z       3. Testing ../src/use.mjs
 Run Tests / Test on node	UNKNOWN STEP	2026-06-12T12:12:36.0538088Z          ✓ use function exists: true
 Run Tests / Test on node	UNKNOWN STEP	2026-06-12T12:12:36.0538337Z       
 Run Tests / Test on node	UNKNOWN STEP	2026-06-12T12:12:36.0538625Z       4. Testing ./browser-server/subfolder/nested.js
@@ -2140,7 +2140,7 @@ Run Tests / Test on bun	UNKNOWN STEP	2026-06-12T12:12:23.9103990Z 2. Testing ./b
 Run Tests / Test on bun	UNKNOWN STEP	2026-06-12T12:12:23.9104570Z    ✓ Value: 123
 Run Tests / Test on bun	UNKNOWN STEP	2026-06-12T12:12:23.9104740Z    ✓ Test: data
 Run Tests / Test on bun	UNKNOWN STEP	2026-06-12T12:12:23.9104830Z 
-Run Tests / Test on bun	UNKNOWN STEP	2026-06-12T12:12:23.9105000Z 3. Testing ../use.mjs
+Run Tests / Test on bun	UNKNOWN STEP	2026-06-12T12:12:23.9105000Z 3. Testing ../src/use.mjs
 Run Tests / Test on bun	UNKNOWN STEP	2026-06-12T12:12:23.9105320Z    ✓ use function exists: true
 Run Tests / Test on bun	UNKNOWN STEP	2026-06-12T12:12:23.9105440Z 
 Run Tests / Test on bun	UNKNOWN STEP	2026-06-12T12:12:23.9105690Z 4. Testing ./browser-server/subfolder/nested.js
@@ -2964,7 +2964,7 @@ Run Tests / Test on deno	UNKNOWN STEP	2026-06-12T12:12:24.4224530Z 2. Testing ./
 Run Tests / Test on deno	UNKNOWN STEP	2026-06-12T12:12:24.4224780Z    ✓ Value: 123
 Run Tests / Test on deno	UNKNOWN STEP	2026-06-12T12:12:24.4224940Z    ✓ Test: data
 Run Tests / Test on deno	UNKNOWN STEP	2026-06-12T12:12:24.4225030Z 
-Run Tests / Test on deno	UNKNOWN STEP	2026-06-12T12:12:24.4225130Z 3. Testing ../use.mjs
+Run Tests / Test on deno	UNKNOWN STEP	2026-06-12T12:12:24.4225130Z 3. Testing ../src/use.mjs
 Run Tests / Test on deno	UNKNOWN STEP	2026-06-12T12:12:24.4225360Z    ✓ use function exists: true
 Run Tests / Test on deno	UNKNOWN STEP	2026-06-12T12:12:24.4225530Z 
 Run Tests / Test on deno	UNKNOWN STEP	2026-06-12T12:12:24.4225680Z 4. Testing ./browser-server/subfolder/nested.js

@@ -2,7 +2,7 @@ import { chmod, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { createRequire } from 'node:module';
-import { describe, test, expect, afterEach } from '../test-adapter.mjs';
+import { describe, test, expect, afterEach } from '../src/test-adapter.mjs';
 import { resolvers } from 'use-m';
 
 const moduleName = `[${import.meta.url.split('.').pop()} module]`;

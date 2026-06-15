@@ -7,9 +7,9 @@ console.log();
 
 async function testUseMBehavior() {
   const tests = [
-    { name: 'eval pattern', loader: () => eval(readFile('../../use.js', 'utf8')) },
-    { name: 'use.cjs', loader: () => import('../../use.cjs') },
-    { name: 'use.mjs', loader: () => import('../../use.mjs') },
+    { name: 'eval pattern', loader: () => eval(readFile('../../src/use.js', 'utf8')) },
+    { name: 'use.cjs', loader: () => import('../../src/use.cjs') },
+    { name: 'use.mjs', loader: () => import('../../src/use.mjs') },
     { name: 'use-m package', loader: () => import('use-m') },
   ];
   
@@ -17,7 +17,7 @@ async function testUseMBehavior() {
     console.log(`--- Testing: ${test.name} ---`);
     try {
       const loaderResult = await test.loader();
-      const { use } = test.name === 'eval pattern' ? eval(await readFile('../../use.js', 'utf8')) : loaderResult;
+      const { use } = test.name === 'eval pattern' ? eval(await readFile('../../src/use.js', 'utf8')) : loaderResult;
       const module = await use('command-stream');
       
       console.log('  Success!');
@@ -48,8 +48,8 @@ async function testUseMBehavior() {
   
   console.log('--- Special test: Compare different use-m methods ---');
   try {
-    const { use: useEval } = eval(await readFile('../../use.js', 'utf8'));
-    const { use: useCjs } = await import('../../use.cjs');
+    const { use: useEval } = eval(await readFile('../../src/use.js', 'utf8'));
+    const { use: useCjs } = await import('../../src/use.cjs');
     
     const m1 = await useEval('command-stream');
     const m2 = await useCjs('command-stream');

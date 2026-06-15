@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeAll, afterAll } from '../test-adapter.mjs';
+import { describe, test, expect, beforeAll, afterAll } from '../src/test-adapter.mjs';
 
 // Skip browser tests in Deno environment
 const isDeno = typeof Deno !== 'undefined';

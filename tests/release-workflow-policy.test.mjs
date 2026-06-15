@@ -1,7 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { describe, expect, test } from '../test-adapter.mjs'
+import { describe, expect, test } from '../src/test-adapter.mjs'
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const workflowDir = path.join(rootDir, '.github', 'workflows')
@@ -60,7 +60,7 @@ describe('release workflow policy', () => {
 
     expect(packageJson.license).toBe('Unlicense')
     expect(packageJson.repository.url).toBe('git+https://github.com/link-foundation/use-m.git')
-    expect(packageJson.bin.use).toBe('cli.mjs')
+    expect(packageJson.bin.use).toBe('src/cli.mjs')
   })
 
   test('keeps CI and publishing in the trusted-publisher release workflow', () => {

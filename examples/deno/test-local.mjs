@@ -2,7 +2,7 @@
 // Run with: deno run --allow-read --allow-net test-local.mjs
 
 // Import the local use-m implementation
-const { use } = await import('../../use.mjs');
+const { use } = await import('../../src/use.mjs');
 
 console.log('🦕 Testing local use-m implementation with Deno...');
 

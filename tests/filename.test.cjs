@@ -1,5 +1,5 @@
-const { describe, test, expect } = require('../test-adapter.cjs');
-const { makeUse } = require('../use.cjs');
+const { describe, test, expect } = require('../src/test-adapter.cjs');
+const { makeUse } = require('../src/use.cjs');
 const path = require('node:path');
 const currentDir = path.dirname(__filename);
 const moduleName = `[${__filename.split('.').pop()} module]`;
@@ -13,7 +13,7 @@ describe(`${moduleName} scriptPath detection in CJS (functional)`, () => {
     };
     const useFn = await makeUse({ specifierResolver: stubSpecifierResolver });
     await useFn('anything');
-    const resolved = capturedResolver('./package.json');
+    const resolved = capturedResolver('../package.json');
     const expected = path.resolve(currentDir, '..', 'package.json');
     expect(resolved).toBe(expected);
   });
@@ -26,7 +26,7 @@ describe(`${moduleName} scriptPath detection in CJS (functional)`, () => {
     };
     const useFn = await makeUse({ specifierResolver: stubSpecifierResolver, scriptPath: '/nonexistent/path.js' });
     await useFn('anything');
-    const resolved = capturedResolver('./package.json');
+    const resolved = capturedResolver('../package.json');
     const expected = path.resolve(currentDir, '..', 'package.json');
     expect(resolved).toBe(expected);
   });
@@ -42,7 +42,7 @@ describe(`${moduleName} scriptPath detection in CJS (fallback)`, () => {
     };
     const useFn = await makeUse({ specifierResolver: stubSpecifierResolver });
     await useFn('anything');
-    const resolved = capturedResolver('./package.json');
+    const resolved = capturedResolver('../package.json');
     const expected = path.resolve(currentDir, '..', 'package.json');
     expect(resolved).toBe(expected);
   });
@@ -55,7 +55,7 @@ describe(`${moduleName} scriptPath detection in CJS (fallback)`, () => {
     };
     const useFn = await makeUse({ specifierResolver: stubSpecifierResolver, scriptPath: '/nonexistent/path.js' });
     await useFn('anything');
-    const resolved = capturedResolver('./package.json');
+    const resolved = capturedResolver('../package.json');
     const expected = path.resolve(currentDir, '..', 'package.json');
     expect(resolved).toBe(expected);
   });
@@ -68,7 +68,7 @@ describe(`${moduleName} scriptPath detection in CJS (fallback)`, () => {
     };
     const useFn = await makeUse({ specifierResolver: stubSpecifierResolver, meta: { url: 'file:///foo/bar.js' } });
     await useFn('anything');
-    const resolved = capturedResolver('./package.json');
+    const resolved = capturedResolver('../package.json');
     const expected = path.resolve(currentDir, '..', 'package.json');
     expect(resolved).toBe(expected);
   });
@@ -83,11 +83,11 @@ describe(`${moduleName} scriptPath detection in CJS (meta URL)`, () => {
       return __filename;
     };
     const { pathToFileURL } = require('node:url');
-    const metaUrl = pathToFileURL(path.resolve(__dirname, '..', 'use.js')).href;
+    const metaUrl = pathToFileURL(path.resolve(__dirname, '..', 'src', 'use.js')).href;
     const useFn = await makeUse({ specifierResolver: stubSpecifierResolver, meta: { url: metaUrl } });
     await useFn('anything');
     const resolved = capturedResolver('./use.js');
-    const expected = path.resolve(__dirname, '..', 'use.js');
+    const expected = path.resolve(__dirname, '..', 'src', 'use.js');
     expect(resolved).toBe(expected);
   });
 }); 
