@@ -46,5 +46,24 @@ const realSource = readFileSync(path.join(root, 'src', 'use.js'), 'utf8');
 const exported = eval(realSource);
 console.log(`   typeof src/use.js export.use = ${typeof exported.use} (expected: function)`);
 
-console.log('\nConclusion: restoring root use.js/use.cjs/use.mjs (mirrors of src/) makes');
-console.log('https://unpkg.com/use-m/use.js resolve again, so every existing consumer keeps working.');
+console.log('\n5) Why FULL copies and not `require("./src/use.js")` shims?');
+console.log('   The bootstrap fetches and eval()s use.js directly. A shim body fails');
+console.log('   in exactly the contexts that bootstrap runs in:');
+const shimBody = 'module.exports = require("./src/use.js");';
+try {
+  // The real failing consumer (hive-mind's use-m-bootstrap.lib.mjs) is ESM, where
+  // neither `module` nor `require` exist — so the shim just swaps one cryptic
+  // error for another instead of returning a working `use`.
+  // eslint-disable-next-line no-eval
+  const shimResult = eval(shimBody);
+  console.log(`   shim eval (ESM scope) result: ${JSON.stringify(shimResult)} (no \`use\` ✗)`);
+} catch (error) {
+  console.log(`   shim eval (ESM scope) -> ${error.constructor.name}: ${error.message} ✗`);
+}
+console.log('   (In a browser it is `require is not defined`; in CJS with the wrong');
+console.log('   CWD it is `Cannot find module`; even if it resolved, src/use.js has no');
+console.log('   module.exports, so a shim yields {} — never a working `use`.)');
+
+console.log('\nConclusion: restoring root use.js/use.cjs/use.mjs as FULL mirrors of src/');
+console.log('makes https://unpkg.com/use-m/use.js resolve again AND eval() to a working');
+console.log('`use`, so every existing consumer keeps working. Thin shims cannot.');

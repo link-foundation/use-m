@@ -147,9 +147,11 @@ it hit a packaging regression in `use-m@8.14.0`: the entry files moved under `sr
 This is fixed in **`use-m@8.14.1`**: the bare URLs (`https://unpkg.com/use-m/use.js`, `.cjs`, `.mjs`) resolve again via root-level mirrors of `src/`, so no consumer change is required once that version is installed. To fix an affected project:
 
 - **Recommended — pick up the patched release.** Nothing to change in your code; just ensure your CDN URL resolves to `8.14.1` or later. If you pin an exact version, bump it (e.g. `https://unpkg.com/use-m@8.14.1/use.js`).
-- **One-line workaround (works on every version, including `8.14.0`).** Point the URL at the `src/` path. Every CDN (unpkg, jsDelivr, esm.sh) serves raw files and ignores package.json `exports`, so the bare `/use.js` 404s on `8.14.0` on *all* of them — switching host does not help, but adding `/src/` does:
+- **One-line workaround (works on every version, including `8.14.0`).** Point the URL at the `src/` path — the reliable fix on every CDN host:
   - `https://unpkg.com/use-m/use.js` → `https://unpkg.com/use-m/src/use.js`
   - `https://cdn.jsdelivr.net/npm/use-m/use.js` → `https://cdn.jsdelivr.net/npm/use-m/src/use.js`
+
+  (CDNs serve raw files and ignore package.json `exports`. On `8.14.0` the bare `/use.js` returns `404` on unpkg; jsDelivr may instead return a **stale older** copy for the *unversioned* URL, which silently gives you outdated code — so prefer the explicit `/src/` path to be sure you get the current build.)
 - **Make it future-proof.** Replace the naive `eval(await (await fetch(url)).text())` with a loader that checks `response.ok`, rejects non-JavaScript bodies, and falls back across mirrors — either the packaged [`use-m/load`](#robust-loading-resilient-cdn-bootstrap) helper or the self-contained snippet above. With those two guards, a future 404/redirect can never again be silently `eval()`'d into a cryptic `SyntaxError`.
 
 ### Resilient package loading (shared fallback engine)
