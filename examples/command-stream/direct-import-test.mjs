@@ -8,7 +8,7 @@ console.log();
 async function testUseMImport() {
   console.log('--- Test 1: Import command-stream via use-m ---');
   try {
-    const { use } = eval(await readFile('../../use.js', 'utf8'));
+    const { use } = eval(await readFile('../../src/use.js', 'utf8'));
     const module = await use('command-stream');
     console.log('Module type:', typeof module);
     console.log('Module keys:', Object.keys(module));
@@ -34,13 +34,13 @@ async function testUseMImport() {
   console.log('--- Test 2: Import via different use-m variants ---');
   try {
     console.log('Testing CJS variant...');
-    const { use: useCjs } = await import('../../use.cjs');
+    const { use: useCjs } = await import('../../src/use.cjs');
     const moduleCjs = await useCjs('command-stream');
     console.log('CJS - Module type:', typeof moduleCjs);
     console.log('CJS - Module.$ exists:', moduleCjs.$ !== undefined);
     
     console.log('Testing MJS variant...');
-    const { use: useMjs } = await import('../../use.mjs');
+    const { use: useMjs } = await import('../../src/use.mjs');
     const moduleMjs = await useMjs('command-stream');
     console.log('MJS - Module type:', typeof moduleMjs);
     console.log('MJS - Module.$ exists:', moduleMjs.$ !== undefined);

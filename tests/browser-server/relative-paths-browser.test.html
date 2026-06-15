@@ -49,7 +49,7 @@
 
     <script type="module">
         // Import use-m
-        import { use } from '../../use.mjs';
+        import { use } from '../../src/use.mjs';
 
         const results = document.getElementById('results');
         let passed = 0;
@@ -128,7 +128,7 @@
 
                 // Test 3: Import JS file from parent directory using ../../
                 try {
-                    const parentModule = await use('../../use.mjs');
+                    const parentModule = await use('../../src/use.mjs');
                     if (parentModule && typeof parentModule.use === 'function') {
                         addResult('../../ path for JS file in parent directory', true);
                     } else {

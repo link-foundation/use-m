@@ -1,7 +1,7 @@
 // Smoke test: verify the eval'd use.js build performs multi-mirror fallback and
 // produces a clear aggregated error when every mirror fails (issue #58 reuse).
 const fs = require('fs');
-const makeUse = eval(fs.readFileSync(__dirname + '/../use.js', 'utf8'));
+const makeUse = eval(fs.readFileSync(__dirname + '/../src/use.js', 'utf8'));
 
 (async () => {
   // 1) Multi-mirror fallback: first resolver's import fails, second succeeds.

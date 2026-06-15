@@ -55,7 +55,7 @@ It may be useful for standalone scripts that do not require a `package.json`. Al
 Works in CommonJS, ES Modules and browser, and interactive environments.
 
 ```javascript
-fetch('https://unpkg.com/use-m/use.js')
+fetch('https://unpkg.com/use-m/src/use.js')
   .then(async useJs => {
     const { use } = eval(await useJs.text());
     const _ = await use('lodash@4.17.21');
@@ -63,7 +63,7 @@ fetch('https://unpkg.com/use-m/use.js')
   });
 ```
 
-Universal execution comes at cost of `eval` usage, that is considered potential security threat. In case of this library only single file is evaled, it short, unminified and has no dependencies, so you can check [the contents](https://unpkg.com/use-m/use.js) yourself. Once you have `use` function instance no more `eval` function will be executed by this library. If you don't want to use `eval` you can use `await import()` in browser or in `node.js`. In `node.js` you can also just install the package from `npm` as usual.
+Universal execution comes at cost of `eval` usage, that is considered potential security threat. In case of this library only single file is evaled, it short, unminified and has no dependencies, so you can check [the contents](https://unpkg.com/use-m/src/use.js) yourself. Once you have `use` function instance no more `eval` function will be executed by this library. If you don't want to use `eval` you can use `await import()` in browser or in `node.js`. In `node.js` you can also just install the package from `npm` as usual.
 
 ### Robust loading (resilient CDN bootstrap)
 
@@ -90,7 +90,7 @@ console.log(`_.add(1, 2) = ${_.add(1, 2)}`);
 
 ```javascript
 const { use } = await loadUseM({
-  sources: ['https://unpkg.com/use-m/use.js', 'https://cdn.jsdelivr.net/npm/use-m/use.js'],
+  sources: ['https://unpkg.com/use-m/src/use.js', 'https://cdn.jsdelivr.net/npm/use-m/src/use.js'],
   maxAttemptsPerSource: 3,  // attempts per mirror before moving on
   retryDelayMs: 250,        // linear backoff between attempts
   timeoutMs: 10000,         // per-attempt timeout (0 disables)
@@ -101,9 +101,9 @@ const { use } = await loadUseM({
 
 ```javascript
 async function loadUse(sources = [
-  'https://unpkg.com/use-m/use.js',
-  'https://cdn.jsdelivr.net/npm/use-m/use.js',
-  'https://esm.sh/use-m/use.js',
+  'https://unpkg.com/use-m/src/use.js',
+  'https://cdn.jsdelivr.net/npm/use-m/src/use.js',
+  'https://esm.sh/use-m/src/use.js',
 ]) {
   const failures = [];
   for (const url of sources) {
@@ -197,7 +197,7 @@ A runnable, dependency-free demonstration lives in [`examples/load/shared-fallba
    Single line version:
 
    ```javascript
-   const { use } = eval(await (await fetch('https://unpkg.com/use-m/use.js')).text());
+   const { use } = eval(await (await fetch('https://unpkg.com/use-m/src/use.js')).text());
    ```
 
    > This minimal form is fine for an interactive REPL. For scripts that should survive a flaky CDN, prefer the resilient loader from [Robust loading](#robust-loading-resilient-cdn-bootstrap) — otherwise a CDN error body makes `eval()` throw a cryptic `SyntaxError` ([#58](https://github.com/link-foundation/use-m/issues/58)).
@@ -210,7 +210,7 @@ A runnable, dependency-free demonstration lives in [`examples/load/shared-fallba
    const { use } = eval(
      await (
        await fetch(
-         'https://unpkg.com/use-m/use.js'
+         'https://unpkg.com/use-m/src/use.js'
        )
      ).text()
    );
@@ -291,7 +291,7 @@ It is possible to use `--experimental-network-imports` to enable the same style 
 
 1. Create file named `example.mjs`:
    ```javascript
-   const { use } = await import('https://unpkg.com/use-m/use.mjs');
+   const { use } = await import('https://unpkg.com/use-m/src/use.mjs');
    const _ = await use('lodash@4.17.21');
    console.log(`_.add(1, 2) = ${_.add(1, 2)}`);
    ```
@@ -313,7 +313,7 @@ If you need to use `use-m` without adding it to a project locally, you can load 
 
    ```javascript
    const { use } = eval(
-     await fetch('https://unpkg.com/use-m/use.js').then(u => u.text())
+     await fetch('https://unpkg.com/use-m/src/use.js').then(u => u.text())
    );
    
    const { $ } = await use('command-stream');
@@ -348,7 +348,7 @@ Bun provides a built-in `$` shell API that works seamlessly with `use-m`:
     #!/usr/bin/env bun
 
    const { use } = eval(
-     await fetch('https://unpkg.com/use-m/use.js').then(u => u.text())
+     await fetch('https://unpkg.com/use-m/src/use.js').then(u => u.text())
    );
    
    const _ = await use('lodash');
@@ -382,7 +382,7 @@ Bun provides a built-in `$` shell API that works seamlessly with `use-m`:
    #!/usr/bin/env zx --verbose
    
    const { use } = eval(
-     await fetch('https://unpkg.com/use-m/use.js').then(u => u.text())
+     await fetch('https://unpkg.com/use-m/src/use.js').then(u => u.text())
    );
     
    const _ = await use('lodash@latest');
@@ -415,7 +415,7 @@ Bun provides a built-in `$` shell API that works seamlessly with `use-m`:
    #!/usr/bin/env node
 
    const { use } = eval(
-     await fetch('https://unpkg.com/use-m/use.js').then(u => u.text())
+     await fetch('https://unpkg.com/use-m/src/use.js').then(u => u.text())
    ); 
    
    const _ = await use('lodash');
@@ -523,7 +523,7 @@ console.log(`_.add(1, 2) = ${_.add(1, 2)}`);
 3. **Use CDN resolver in untrusted environments**: For browser or Deno environments, packages are loaded from CDNs without running install scripts:
    ```javascript
    // Browser - loads from CDN, no install scripts
-   const { use } = await import("https://unpkg.com/use-m/use.mjs");
+   const { use } = await import("https://unpkg.com/use-m/src/use.mjs");
    const _ = await use('lodash@4.17.21');
    ```
 
@@ -545,7 +545,7 @@ Some examples use `eval()` for convenience in interactive shells and browsers. B
 
 - `eval()` executes arbitrary code
 - Only use with trusted sources
-- The `use-m` library code is short, unminified, and has no dependencies - you can [review it yourself](https://unpkg.com/use-m/use.js)
+- The `use-m` library code is short, unminified, and has no dependencies - you can [review it yourself](https://unpkg.com/use-m/src/use.js)
 - For production code, prefer standard imports without `eval()`
 
 ### Recommendations by Use Case

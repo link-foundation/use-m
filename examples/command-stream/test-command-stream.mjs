@@ -10,7 +10,7 @@ console.log();
 async function testCommandStream() {
   console.log('--- Test 1: Import via eval pattern ---');
   try {
-    const { use } = eval(await readFile('../../use.js', 'utf8'));
+    const { use } = eval(await readFile('../../src/use.js', 'utf8'));
     const { $ } = await use('command-stream');
     
     console.log('$:', { $ });
@@ -29,7 +29,7 @@ async function testCommandStream() {
 
   console.log('--- Test 2: Import via use-m CJS ---');
   try {
-    const { use } = await import('../../use.cjs');
+    const { use } = await import('../../src/use.cjs');
     const { $ } = await use('command-stream');
     
     console.log('$:', { $ });
@@ -48,7 +48,7 @@ async function testCommandStream() {
 
   console.log('--- Test 3: Import via use-m MJS ---');
   try {
-    const { use } = await import('../../use.mjs');
+    const { use } = await import('../../src/use.mjs');
     const { $ } = await use('command-stream');
     
     console.log('$:', { $ });

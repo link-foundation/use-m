@@ -1,5 +1,5 @@
-const { describe, test, expect } = require('../test-adapter.cjs');
-const { use } = require('../use.cjs');
+const { describe, test, expect } = require('../src/test-adapter.cjs');
+const { use } = require('../src/use.cjs');
 const moduleName = `[${__filename.split('.').pop()} module]`;
 
 describe(`${moduleName} Node.js/Bun-only built-in modules`, () => {

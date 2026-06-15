@@ -1,9 +1,9 @@
 const { readFileSync } = require('node:fs');
 const path = require('node:path');
-const { loadUseM, looksLikeUseModule, DEFAULT_SOURCES } = require('../load.cjs');
+const { loadUseM, looksLikeUseModule, DEFAULT_SOURCES } = require('../src/load.cjs');
 
 (async () => {
-  const realUseJs = readFileSync(path.join(__dirname, '..', 'use.js'), 'utf8');
+  const realUseJs = readFileSync(path.join(__dirname, '..', 'src', 'use.js'), 'utf8');
   console.log('[cjs] looksLikeUseModule(real):', looksLikeUseModule(realUseJs));
   console.log('[cjs] looksLikeUseModule("Not Found"):', looksLikeUseModule('Not Found'));
   console.log('[cjs] DEFAULT_SOURCES length:', DEFAULT_SOURCES.length);

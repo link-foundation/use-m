@@ -155,7 +155,7 @@ Testing relative paths from tests directory...
    ✓ Value: 123
    ✓ Test: data
 
-3. Testing ../use.mjs
+3. Testing ../src/use.mjs
    ✓ use function exists: true
 
 4. Testing ./browser-server/subfolder/nested.js

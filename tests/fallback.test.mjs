@@ -1,4 +1,4 @@
-import { describe, test, expect } from '../test-adapter.mjs';
+import { describe, test, expect } from '../src/test-adapter.mjs';
 import { loadWithFallback, makeUse, networkResolverChain, denoResolverChain } from 'use-m';
 
 const moduleName = `[${import.meta.url.split('.').pop()} module]`;

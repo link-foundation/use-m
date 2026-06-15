@@ -1,8 +1,8 @@
 import { readFileSync } from 'node:fs';
-import { loadUseM, looksLikeUseModule, DEFAULT_SOURCES } from '../load.mjs';
+import { loadUseM, looksLikeUseModule, DEFAULT_SOURCES } from '../src/load.mjs';
 
 // 1) Validation against the real use.js and against error bodies.
-const realUseJs = readFileSync(new URL('../use.js', import.meta.url), 'utf8');
+const realUseJs = readFileSync(new URL('../src/use.js', import.meta.url), 'utf8');
 console.log('looksLikeUseModule(real use.js):', looksLikeUseModule(realUseJs)); // expect true
 console.log('looksLikeUseModule("Internal Server Error"):', looksLikeUseModule('Internal Server Error')); // false
 console.log('looksLikeUseModule("Bad Gateway"):', looksLikeUseModule('Bad Gateway')); // false
@@ -57,7 +57,7 @@ const FAKE_MODULE = '/* ' + 'x'.repeat(300) + ' */\n(() => ({ use: function use(
   const garbage = '/* ' + 'a '.repeat(150) + '*/ use Server Error ((( ';  // passes looksLike, invalid JS
   const fetch = async () => res(garbage);
   try {
-    await loadUseM({ fetch, retryDelayMs: 0, maxAttemptsPerSource: 1, sources: ['https://unpkg.com/use-m/use.js'] });
+    await loadUseM({ fetch, retryDelayMs: 0, maxAttemptsPerSource: 1, sources: ['https://unpkg.com/use-m/src/use.js'] });
     console.log('[eval-garbage] ERROR: should have thrown');
   } catch (e) {
     console.log('[eval-garbage] errorType:', e.constructor.name, '(expect Error, not SyntaxError)');

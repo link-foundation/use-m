@@ -1,5 +1,5 @@
 import { readFile } from 'node:fs/promises';
-import { describe, test, expect } from '../test-adapter.mjs';
+import { describe, test, expect } from '../src/test-adapter.mjs';
 
 const moduleName = `[${import.meta.url.split('.').pop()} module]`;
 
@@ -14,7 +14,7 @@ const extractNpmResolver = (source, fileName) => {
 
 describe(`${moduleName} distributed script synchronization`, () => {
   test(`${moduleName} npm resolver stays synchronized across mjs, cjs, and universal builds`, async () => {
-    const files = ['use.mjs', 'use.cjs', 'use.js'];
+    const files = ['src/use.mjs', 'src/use.cjs', 'src/use.js'];
     const blocks = await Promise.all(files.map(async file => {
       const source = await readFile(file, 'utf8');
       return [file, extractNpmResolver(source, file)];

@@ -1,8 +1,8 @@
 const { chmod, mkdir, mkdtemp, readFile, rm, writeFile } = require('node:fs/promises');
 const { tmpdir } = require('node:os');
 const path = require('node:path');
-const { describe, test, expect, afterEach } = require('../test-adapter.cjs');
-const { resolvers } = require('../use.cjs');
+const { describe, test, expect, afterEach } = require('../src/test-adapter.cjs');
+const { resolvers } = require('../src/use.cjs');
 
 const moduleName = `[${__filename.split('.').pop()} module]`;
 const resolve = require.resolve;

@@ -32,6 +32,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Replaced process.env.HOME with os.homedir() for better cross-platform compatibility
 
 ### Changed
+- Moved all root-level source files (`use.{mjs,cjs,js}`, `load.{mjs,cjs}`, `loader.js`, `cli.mjs`, `test-adapter.{mjs,cjs}`) into a `src/` folder. The package `exports` map, `bin`, `main`, and `files` fields were updated so existing imports (`use-m`, `use-m/load`) keep working unchanged; only direct CDN URLs gain a `src/` segment (e.g. `https://unpkg.com/use-m/src/use.js`).
+- Refactored `loader.js` (the Node `--loader` hook) to delegate to the shared `loadWithFallback` engine instead of bespoke try/catch. The "try the default resolver, then the use-m npm resolver" handshake is now expressed as a two-source fallback chain, making `loadWithFallback` the single retry/fallback mechanism used at all three call sites (per-package CDN loading, the `use-m/load` bootstrap, and the loader hook).
 - Refactored the `use-m/load` bootstrap (`loadUseM`) to delegate its retry/fallback loop to the shared `loadWithFallback` engine instead of a private copy, so the bootstrap and the rest of the codebase use one mechanism (no behavior change; identical aggregated error message).
 - Improved error handling in npm and bun resolvers with better context
 - Clarified TODOs in network-imports examples with explanatory comments

@@ -2,7 +2,7 @@
 //
 // The naive bootstrap recommended for loading use-m anywhere:
 //
-//   const { use } = eval(await (await fetch('https://unpkg.com/use-m/use.js')).text());
+//   const { use } = eval(await (await fetch('https://unpkg.com/use-m/src/use.js')).text());
 //
 // crashes with a confusing error whenever the CDN hiccups. When unpkg (or its
 // upstream) returns an error body such as the plain text "Internal Server Error"
@@ -28,9 +28,9 @@ const { loadWithFallback } = require('./use.cjs');
 
 // Ordered list of CDN mirrors that serve the evaluable `use.js` build.
 const DEFAULT_SOURCES = [
-  'https://unpkg.com/use-m/use.js',
-  'https://cdn.jsdelivr.net/npm/use-m/use.js',
-  'https://esm.sh/use-m/use.js',
+  'https://unpkg.com/use-m/src/use.js',
+  'https://cdn.jsdelivr.net/npm/use-m/src/use.js',
+  'https://esm.sh/use-m/src/use.js',
 ];
 
 // Common CDN/proxy plain-text error bodies that would otherwise be eval()'d as code.

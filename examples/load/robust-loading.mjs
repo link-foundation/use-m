@@ -4,7 +4,7 @@
 //
 // The usual one-liner
 //
-//   const { use } = eval(await (await fetch('https://unpkg.com/use-m/use.js')).text());
+//   const { use } = eval(await (await fetch('https://unpkg.com/use-m/src/use.js')).text());
 //
 // crashes with a cryptic `SyntaxError: Unexpected identifier 'Server'` whenever a
 // CDN returns an error body (e.g. the plain text "Internal Server Error") instead
@@ -16,9 +16,9 @@
 // Copy it into any standalone script — it has no dependencies.
 
 async function loadUse(sources = [
-  'https://unpkg.com/use-m/use.js',
-  'https://cdn.jsdelivr.net/npm/use-m/use.js',
-  'https://esm.sh/use-m/use.js',
+  'https://unpkg.com/use-m/src/use.js',
+  'https://cdn.jsdelivr.net/npm/use-m/src/use.js',
+  'https://esm.sh/use-m/src/use.js',
 ]) {
   const failures = [];
   for (const url of sources) {

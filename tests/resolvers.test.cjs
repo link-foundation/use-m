@@ -1,4 +1,4 @@
-const { describe, test, expect } = require('../test-adapter.cjs');
+const { describe, test, expect } = require('../src/test-adapter.cjs');
 
 const resolve = require.resolve;
 const moduleName = `[${__filename.split('.').pop()} module]`;
@@ -6,7 +6,7 @@ const moduleName = `[${__filename.split('.').pop()} module]`;
 jest.setTimeout(10000);
 
 describe(`${moduleName} resolvers tests`, () => {
-  const { resolvers } = require('../use.cjs');
+  const { resolvers } = require('../src/use.cjs');
 
   test(`${moduleName} npm resolver resolves package path`, async () => {
     const { npm } = resolvers;
