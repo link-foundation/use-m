@@ -19,6 +19,7 @@ It may be useful for standalone scripts that do not require a `package.json`. Al
   - [Usage](#usage)
     - [Universal](#universal)
     - [Robust loading (resilient CDN bootstrap)](#robust-loading-resilient-cdn-bootstrap)
+      - [Troubleshooting: `SyntaxError: Unexpected identifier 'found'`](#troubleshooting-syntaxerror-unexpected-identifier-found)
     - [Resilient package loading (shared fallback engine)](#resilient-package-loading-shared-fallback-engine)
     - [Interactive shell in Node.js environment](#interactive-shell-in-nodejs-environment)
     - [Browser](#browser)
@@ -132,6 +133,24 @@ console.log(`_.add(1, 2) = ${_.add(1, 2)}`);
 ```
 
 Runnable versions of both options live in [`examples/load`](https://github.com/link-foundation/use-m/tree/main/examples/load).
+
+#### Troubleshooting: `SyntaxError: Unexpected identifier 'found'`
+
+If a project that bootstraps `use-m` from a CDN suddenly started failing with:
+
+```
+SyntaxError: Unexpected identifier 'found'
+```
+
+it hit a packaging regression in `use-m@8.14.0`: the entry files moved under `src/`, so the bare URL `https://unpkg.com/use-m/use.js` began returning `404` with the plain-text body `Not found: /use-m@8.14.0/use.js`. A bootstrap that `eval()`s the response without checking the HTTP status evaluates that text as JavaScript and throws the misleading error above (see [#60](https://github.com/link-foundation/use-m/issues/60)).
+
+This is fixed in **`use-m@8.14.1`**: the bare URLs (`https://unpkg.com/use-m/use.js`, `.cjs`, `.mjs`) resolve again via root-level mirrors of `src/`, so no consumer change is required once that version is installed. To fix an affected project:
+
+- **Recommended — pick up the patched release.** Nothing to change in your code; just ensure your CDN URL resolves to `8.14.1` or later. If you pin an exact version, bump it (e.g. `https://unpkg.com/use-m@8.14.1/use.js`).
+- **One-line workaround (works on every version, including `8.14.0`).** Point the URL at the `src/` path. Every CDN (unpkg, jsDelivr, esm.sh) serves raw files and ignores package.json `exports`, so the bare `/use.js` 404s on `8.14.0` on *all* of them — switching host does not help, but adding `/src/` does:
+  - `https://unpkg.com/use-m/use.js` → `https://unpkg.com/use-m/src/use.js`
+  - `https://cdn.jsdelivr.net/npm/use-m/use.js` → `https://cdn.jsdelivr.net/npm/use-m/src/use.js`
+- **Make it future-proof.** Replace the naive `eval(await (await fetch(url)).text())` with a loader that checks `response.ok`, rejects non-JavaScript bodies, and falls back across mirrors — either the packaged [`use-m/load`](#robust-loading-resilient-cdn-bootstrap) helper or the self-contained snippet above. With those two guards, a future 404/redirect can never again be silently `eval()`'d into a cryptic `SyntaxError`.
 
 ### Resilient package loading (shared fallback engine)
 
