@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Better error messages with contextual information and error chaining
 
 ### Fixed
+- **CRITICAL**: Restore root-level `use.js`, `use.cjs`, and `use.mjs` mirrors of `src/use.*` so the long-standing CDN bootstrap URL `https://unpkg.com/use-m/use.js` resolves again. After the 8.14.0 move into `src/`, that bare URL 404'd, and consumers that `eval()`'d the response body without checking the HTTP status crashed with a cryptic `SyntaxError: Unexpected identifier 'found'` (the eval'd `Not found: /use-m@8.14.0/use.js` body). The mirrors are full copies — not `require('./src/use.js')` shims, which cannot work in an `eval()` context — generated from `src/` via `npm run sync:entries` and guarded by `tests/root-entries.test.mjs`. `src/` remains the single source of truth. Resolves [#60](https://github.com/link-foundation/use-m/issues/60).
 - Redirect npm-backed `use()` installs to a use-m-owned cache prefix when npm's configured global root is not writable.
 - Add a regression check that keeps the npm resolver synchronized across `use.mjs`, `use.cjs`, and `use.js`.
 - Keep default resolver detection from treating Node.js or Bun as a browser when tests temporarily define `global.window`.
@@ -32,7 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Replaced process.env.HOME with os.homedir() for better cross-platform compatibility
 
 ### Changed
-- Moved all root-level source files (`use.{mjs,cjs,js}`, `load.{mjs,cjs}`, `loader.js`, `cli.mjs`, `test-adapter.{mjs,cjs}`) into a `src/` folder. The package `exports` map, `bin`, `main`, and `files` fields were updated so existing imports (`use-m`, `use-m/load`) keep working unchanged; only direct CDN URLs gain a `src/` segment (e.g. `https://unpkg.com/use-m/src/use.js`).
+- Moved all root-level source files (`use.{mjs,cjs,js}`, `load.{mjs,cjs}`, `loader.js`, `cli.mjs`, `test-adapter.{mjs,cjs}`) into a `src/` folder, with `src/` as the single source of truth. The package `exports` map, `bin`, `main`, and `files` fields were updated so existing imports (`use-m`, `use-m/load`) keep working unchanged. Direct CDN URLs may use the `src/` segment (e.g. `https://unpkg.com/use-m/src/use.js`), while the bare URLs (`https://unpkg.com/use-m/use.js`, `.cjs`, `.mjs`) keep working via generated root mirrors (see the #60 fix above).
 - Refactored `loader.js` (the Node `--loader` hook) to delegate to the shared `loadWithFallback` engine instead of bespoke try/catch. The "try the default resolver, then the use-m npm resolver" handshake is now expressed as a two-source fallback chain, making `loadWithFallback` the single retry/fallback mechanism used at all three call sites (per-package CDN loading, the `use-m/load` bootstrap, and the loader hook).
 - Refactored the `use-m/load` bootstrap (`loadUseM`) to delegate its retry/fallback loop to the shared `loadWithFallback` engine instead of a private copy, so the bootstrap and the rest of the codebase use one mechanism (no behavior change; identical aggregated error message).
 - Improved error handling in npm and bun resolvers with better context
