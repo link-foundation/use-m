@@ -51,7 +51,11 @@ jobs:
           deno-version: v2.x
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --no-audit --no-fund
+
+      - name: Audit production dependencies
+        if: matrix.runtime == 'node' && matrix.os == 'ubuntu-latest'
+        run: npm audit --omit=dev
 
       - name: Run Node.js tests
         if: matrix.runtime == 'node'
@@ -100,7 +104,7 @@ jobs:
           package-manager-cache: false
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --no-audit --no-fund
 
       - name: Read package metadata
         id: package
@@ -114,13 +118,41 @@ jobs:
 
       - name: Check npm version
         id: npm-version
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PACKAGE_NAME: ${{ steps.package.outputs.name }}
+          PACKAGE_VERSION: ${{ steps.package.outputs.version }}
+          TAG: ${{ steps.package.outputs.tag }}
         run: |
-          if npm view "${{ steps.package.outputs.name }}@${{ steps.package.outputs.version }}" version >/dev/null 2>&1; then
+          if npm view "${PACKAGE_NAME}@${PACKAGE_VERSION}" version >/dev/null 2>&1; then
             echo "exists=true" >> "$GITHUB_OUTPUT"
-            echo "${{ steps.package.outputs.name }}@${{ steps.package.outputs.version }} already exists on npm; skipping npm publish."
+            echo "${PACKAGE_NAME}@${PACKAGE_VERSION} already exists on npm."
+
+            tag_exists=false
+            release_exists=false
+
+            if git rev-parse "$TAG" >/dev/null 2>&1; then
+              tag_exists=true
+            fi
+
+            if gh release view "$TAG" >/dev/null 2>&1; then
+              release_exists=true
+            fi
+
+            echo "tag_exists=${tag_exists}" >> "$GITHUB_OUTPUT"
+            echo "release_exists=${release_exists}" >> "$GITHUB_OUTPUT"
+
+            if [ "$tag_exists" = "true" ] && [ "$release_exists" = "true" ]; then
+              echo "::error::${PACKAGE_NAME}@${PACKAGE_VERSION}, git tag ${TAG}, and GitHub release ${TAG} already exist. Update package.json to the next unpublished version before merging to main."
+              exit 1
+            fi
+
+            echo "release metadata is incomplete; skipping npm publish and repairing tag/release."
           else
             echo "exists=false" >> "$GITHUB_OUTPUT"
-            echo "${{ steps.package.outputs.name }}@${{ steps.package.outputs.version }} is not on npm; publishing after tests."
+            echo "tag_exists=false" >> "$GITHUB_OUTPUT"
+            echo "release_exists=false" >> "$GITHUB_OUTPUT"
+            echo "${PACKAGE_NAME}@${PACKAGE_VERSION} is not on npm; publishing after tests."
           fi
 
       - name: Update npm for trusted publishing

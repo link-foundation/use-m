@@ -1,0 +1,328 @@
+Check tests/builtin-browser.test.mjs
+Check tests/builtin-errors.test.mjs
+Check tests/builtin-nodejs.test.mjs
+Check tests/builtin-universal.test.mjs
+Check tests/command-stream.test.mjs
+Check tests/deno-support.test.mjs
+Check tests/esm-sh-polyfill-browser.test.mjs
+Check tests/fallback.test.mjs
+Check tests/filename.test.mjs
+Check tests/fs-promises.test.mjs
+Check tests/get-script-url.test.mjs
+Check tests/import.test.mjs
+Check tests/load.test.mjs
+Check tests/loader.test.mjs
+Check tests/lodash.test.mjs
+Check tests/module-specifier.test.mjs
+Check tests/network-imports.test.mjs
+Check tests/npm-global-prefix.test.mjs
+Check tests/relative-paths-browser.test.mjs
+Check tests/relative-paths.integration.test.mjs
+Check tests/relative-paths.test.mjs
+Check tests/release-workflow-policy.test.mjs
+Check tests/resolvers.test.mjs
+Check tests/root-entries.test.mjs
+Check tests/script-sync.test.mjs
+Check tests/typescript.test.mjs
+Check tests/use.test.mjs
+running 1 test from ./tests/builtin-browser.test.mjs
+[mjs module] Universal built-in modules in browser ...
+  Browser tests are skipped in Deno environment ... ignored (0ms)
+[mjs module] Universal built-in modules in browser ... ok (25ms)
+running 1 test from ./tests/builtin-errors.test.mjs
+[mjs module] Built-in module error handling ...
+  [mjs module] should return null for non-builtin modules from builtin resolver ... ok (0ms)
+  [mjs module] should throw error for unsupported builtin modules ... ok (1ms)
+  [mjs module] should handle modules not available in browser environment ... ok (2ms)
+  [mjs module] should only work with exact lowercase module names ...Download https://esm.sh/URL@latest
+ ok (163ms)
+  [mjs module] should handle node: prefix removal correctly ... ok (10ms)
+  [mjs module] should throw meaningful errors for import failures ... ok (0ms)
+  [mjs module] builtin resolver should handle empty/invalid module specifiers gracefully ... ok (1ms)
+  [mjs module] should handle modules with special characters in names ... ok (0ms)
+[mjs module] Built-in module error handling ... ok (193ms)
+running 1 test from ./tests/builtin-nodejs.test.mjs
+[mjs module] Node.js/Bun-only built-in modules ...
+  [mjs module] fs module should work ... ok (18ms)
+  [mjs module] path module should work ... ok (1ms)
+  [mjs module] os module should work ... ok (3ms)
+  [mjs module] util module should work ... ok (1ms)
+  [mjs module] events module should work ... ok (1ms)
+  [mjs module] stream module should work ... ok (0ms)
+  [mjs module] buffer module should work ... ok (1ms)
+  [mjs module] process module should work ... ok (1ms)
+  [mjs module] child_process module should work ... ok (3ms)
+  [mjs module] http module should work ... ok (6ms)
+  [mjs module] https module should work ... ok (4ms)
+  [mjs module] net module should work ... ok (0ms)
+  [mjs module] dns module should work ... ok (1ms)
+  [mjs module] zlib module should work ... ok (3ms)
+  [mjs module] querystring module should work ... ok (1ms)
+  [mjs module] assert module should work ... ok (2ms)
+  [mjs module] all modules should work with node: prefix ... ok (1ms)
+[mjs module] Node.js/Bun-only built-in modules ... ok (55ms)
+running 1 test from ./tests/builtin-universal.test.mjs
+[mjs module] Universal built-in modules (work in all environments) ...
+  [mjs module] console module should work ... ok (3ms)
+  [mjs module] crypto module should work ... ok (7ms)
+  [mjs module] url module should work ... ok (1ms)
+  [mjs module] performance module should work ... ok (1ms)
+  [mjs module] modules should work with node: prefix ... ok (1ms)
+[mjs module] Universal built-in modules (work in all environments) ... ok (25ms)
+running 1 test from ./tests/command-stream.test.mjs
+[mjs module] command-stream module import ...
+  [mjs module] Direct ESM Import ... ok (41ms)
+  [mjs module] Dynamic ESM Import of CJS ... ok (5ms)
+  [mjs module] Dynamic ESM Import of MJS ... ok (1ms)
+[mjs module] command-stream module import ... ok (59ms)
+running 1 test from ./tests/deno-support.test.mjs
+[mjs module] Deno support ...
+  [mjs module] Deno resolver should resolve npm packages to esm.sh ... ok (1ms)
+  [mjs module] Deno resolver should handle scoped packages ... ok (0ms)
+  [mjs module] Deno resolver should handle module paths ... ok (0ms)
+  [mjs module] Deno resolver should handle latest version ... ok (1ms)
+  [mjs module] makeUse should detect Deno runtime when Deno global is present ... ok (0ms)
+  [mjs module] Deno resolver should work with complex package names ... ok (0ms)
+  [mjs module] Deno resolver should handle packages without versions ... ok (0ms)
+  [mjs module] makeUse with explicit deno resolver ... ok (1ms)
+[mjs module] Deno support ... ok (19ms)
+running 1 test from ./tests/esm-sh-polyfill-browser.test.mjs
+[mjs module] esm.sh browser polyfill handling ...
+  Browser tests are skipped in Deno environment ... ignored (0ms)
+[mjs module] esm.sh browser polyfill handling ... ok (10ms)
+running 2 tests from ./tests/fallback.test.mjs
+[mjs module] loadWithFallback (shared engine) ...
+  [mjs module] returns the first source's result without trying later ones ... ok (2ms)
+  [mjs module] falls back to a later source when earlier ones fail ... ok (1ms)
+  [mjs module] retries a flaky source before succeeding ... ok (0ms)
+  [mjs module] throws ONE aggregated error listing every attempt ... ok (1ms)
+  [mjs module] rejects empty or non-array sources ... ok (1ms)
+  [mjs module] rejects a missing load function ... ok (0ms)
+[mjs module] loadWithFallback (shared engine) ... ok (21ms)
+[mjs module] makeUse per-package CDN fallback ...
+  [mjs module] falls back to the next mirror when one import fails ... ok (3ms)
+  [mjs module] throws a clear aggregated error when every mirror fails ... ok (1ms)
+  [mjs module] a single explicit resolver imports directly with its raw error (no aggregation) ... ok (1ms)
+  [mjs module] a single-entry specifierResolvers chain also imports directly ... ok (0ms)
+  [mjs module] exposes the default mirror chains ... ok (0ms)
+[mjs module] makeUse per-package CDN fallback ... ok (6ms)
+running 3 tests from ./tests/filename.test.mjs
+[mjs module] scriptPath detection in ESM (functional) ...
+  [mjs module] default pathResolver resolves modules relative to use.mjs ... ok (3ms)
+  [mjs module] override scriptPath resolves relative to provided path ... ok (1ms)
+[mjs module] scriptPath detection in ESM (functional) ... ok (24ms)
+[mjs module] scriptPath detection in ESM (createRequire fallback) ...
+  [mjs module] fallback default resolves modules relative to use.mjs ... ok (1ms)
+  [mjs module] fallback explicit scriptPath resolves relative to provided path ... ok (0ms)
+  [mjs module] fallback meta override changes pathResolver behavior in ESM ... ok (0ms)
+[mjs module] scriptPath detection in ESM (createRequire fallback) ... ok (3ms)
+[mjs module] scriptPath detection in ESM (meta URL) ...
+  [mjs module] meta override resolves modules relative to provided meta URL (use.js) ... ok (1ms)
+[mjs module] scriptPath detection in ESM (meta URL) ... ok (1ms)
+running 1 test from ./tests/fs-promises.test.mjs
+mjs module fs/promises support ...
+  mjs module fs/promises should return promise-based functions ... ok (15ms)
+  mjs module fs/promises should work functionally ... ok (3ms)
+  mjs module fs/promises should differ from regular fs ... ok (2ms)
+mjs module fs/promises support ... ok (37ms)
+running 1 test from ./tests/get-script-url.test.mjs
+[mjs module] import.meta.url workaround ...
+  [mjs module] scriptUrl matches import.meta.url ... ok (2ms)
+  [mjs module] scriptUrl matches import.meta.url in eval ... ok (1ms)
+[mjs module] import.meta.url workaround ... ok (32ms)
+running 1 test from ./tests/import.test.mjs
+[mjs module] dynamic import support ...
+  [mjs module] supportsDynamicImport returns true in .mjs file ... ok (1ms)
+[mjs module] dynamic import support ... ok (29ms)
+running 3 tests from ./tests/load.test.mjs
+[mjs module] looksLikeUseModule ...
+  [mjs module] accepts the real shipped use.js ... ok (3ms)
+  [mjs module] accepts a long module-like body ... ok (0ms)
+  [mjs module] rejects common CDN plain-text error bodies ... ok (1ms)
+  [mjs module] rejects HTML error pages ... ok (0ms)
+  [mjs module] rejects empty, whitespace, short, and non-string input ... ok (0ms)
+[mjs module] looksLikeUseModule ... ok (19ms)
+[mjs module] DEFAULT_SOURCES ...
+  [mjs module] lists unpkg, jsDelivr and esm.sh in priority order ... ok (0ms)
+[mjs module] DEFAULT_SOURCES ... ok (1ms)
+[mjs module] loadUseM ...
+  [mjs module] resolves the use object from the first working source ... ok (1ms)
+  [mjs module] evaluates the real shipped use.js into a working module ... ok (1ms)
+  [mjs module] falls back to a later mirror when earlier ones fail ... ok (0ms)
+  [mjs module] retries a flaky source before succeeding ... ok (1ms)
+  [mjs module] throws a clear aggregated error (not SyntaxError) when every source fails ... ok (1ms)
+  [mjs module] surfaces the HTTP status for non-ok responses ... ok (0ms)
+  [mjs module] rejects when the evaluated module lacks a use function ... ok (0ms)
+  [mjs module] does not let eval errors from a malformed body escape ... ok (0ms)
+  [mjs module] reports a clear error when fetch is unavailable ... ok (1ms)
+  [mjs module] honors a custom evaluate hook ... ok (0ms)
+  [mjs module] times out a hanging request and reports it ... ok (53ms)
+[mjs module] loadUseM ... ok (61ms)
+running 1 test from ./tests/loader.test.mjs
+[mjs module] loader resolve hook ...
+  [mjs module] returns the default resolver's result when it succeeds ... ok (1ms)
+  [mjs module] falls back to the npm resolver when the default resolver throws ... ok (159ms)
+  [mjs module] surfaces a clear aggregated error when BOTH resolvers fail ... ok (795ms)
+[mjs module] loader resolve hook ... ok (968ms)
+running 1 test from ./tests/lodash.test.mjs
+[mjs module] 'lodash' imports tests ...
+  [mjs module] npm: lodash ... ok (65ms)
+  [mjs module] npm: lodash@latest ... ok (1ms)
+  [mjs module] npm: lodash@ ... ok (5ms)
+  [mjs module] npm: lodash@4.17.21 ... ok (29ms)
+  [mjs module] npm: lodash@4.17.21/add ... ok (2ms)
+  [mjs module] npm: lodash@4.17.21/add.js ... ok (1ms)
+  [mjs module] npm: lodash@4.17.21/not-found.js ...Download https://esm.sh/lodash@4.17.21/not-found.js
+ ok (145ms)
+[mjs module] 'lodash' imports tests ... ok (285ms)
+running 1 test from ./tests/module-specifier.test.mjs
+[mjs module] parseModuleSpecifier ...
+  [mjs module] parses package with name and version ... ok (1ms)
+  [mjs module] parses scoped package with name and version ... ok (1ms)
+  [mjs module] parses package with name, version, and inner path ... ok (0ms)
+  [mjs module] parses package with name, version, and inner path with latest ... ok (0ms)
+  [mjs module] parses scoped package with name, version, and inner path ... ok (1ms)
+  [mjs module] parses package with name only ... ok (0ms)
+  [mjs module] parses scoped package with name only ... ok (0ms)
+  [mjs module] parses yargs@17.7.2/helpers ... ok (0ms)
+  [mjs module] parses yargs@latest/helpers ... ok (0ms)
+  [mjs module] parses yargs/helpers ... ok (0ms)
+  [mjs module] throws error for invalid package identifier ... ok (1ms)
+[mjs module] parseModuleSpecifier ... ok (33ms)
+running 1 test from ./tests/network-imports.test.mjs
+[mjs module] imports using --experimental-network-imports ...
+  [mjs module] Import using --experimental-network-imports for CJS file ... ok (342ms)
+  [mjs module] Import using --experimental-network-imports for MJS file ... ok (368ms)
+[mjs module] imports using --experimental-network-imports ... ok (734ms)
+running 1 test from ./tests/npm-global-prefix.test.mjs
+global ...
+  [mjs module] npm global prefix handling ...
+    [mjs module] redirects installs to use-m cache when npm global root is not writable ... ok (0ms)
+    [mjs module] keeps the configured npm root when it is writable ... ok (0ms)
+    [mjs module] respects an explicit npm_config_prefix override ... ok (0ms)
+  [mjs module] npm global prefix handling ... ok (13ms)
+global ... ok (38ms)
+running 1 test from ./tests/relative-paths-browser.test.mjs
+[mjs module] Relative path resolution in browser ...
+  Browser tests are skipped in Deno environment ... ignored (0ms)
+[mjs module] Relative path resolution in browser ... ok (31ms)
+running 1 test from ./tests/relative-paths.integration.test.mjs
+[mjs module] Relative Path Resolution (Integration) ...
+  [mjs module] relative paths should work when run directly with Node.js ...
+------- post-test output -------
+/tmp/gh-issue-solver-1782076987861/tests
+Testing relative paths from tests directory...
+
+1. Testing ./browser-server/test-helper.js
+   ✓ Message: Helper module loaded
+
+2. Testing ./browser-server/test-data.json
+   ✓ Value: 123
+   ✓ Test: data
+
+3. Testing ../src/use.mjs
+   ✓ use function exists: true
+
+4. Testing ./browser-server/subfolder/nested.js
+   ✓ Nested: true Level: subfolder
+
+5. Testing ./browser-server/subfolder/nested-data.json
+   ✓ Level: nested Depth: 1
+
+6. Testing ../package.json
+   ✓ Package name: use-m
+
+✅ All direct tests passed!
+
+----- post-test output end -----
+  [mjs module] relative paths should work when run directly with Node.js ... ok (89ms)
+[mjs module] Relative Path Resolution (Integration) ... ok (103ms)
+running 1 test from ./tests/relative-paths.test.mjs
+Relative Path Resolution ...
+  should import JS file from same directory using ./ ... ok (3ms)
+  should import JSON file from same directory using ./ ... ok (1ms)
+  should import JS file from parent directory using ../ ... ok (1ms)
+  should import from subdirectory using ./subfolder/ ... ok (2ms)
+  should import JSON from subdirectory ... ok (1ms)
+  should handle complex relative paths (../) ... ok (0ms)
+  should work with mixed relative and npm imports ... ok (25ms)
+  should maintain correct context for nested relative imports ... ok (2ms)
+Relative Path Resolution ... ok (64ms)
+running 1 test from ./tests/release-workflow-policy.test.mjs
+release workflow policy ...
+  uses npm package metadata that matches registry and trusted publishing expectations ... ok (1ms)
+  keeps CI and publishing in the trusted-publisher release workflow ... ok (1ms)
+  publishes with npm trusted publishing instead of token auth ... ok (0ms)
+  runs tests before publishing and preserves main-branch release runs ... ok (0ms)
+  fails release runs when the package, tag, and GitHub release already exist ... ok (0ms)
+  keeps dependency install logs quiet while auditing shipped dependencies ... ok (0ms)
+  uses current action versions and explicit job timeouts ... ok (0ms)
+  retries Deno network-import tests without hiding persistent failures ... ok (0ms)
+release workflow policy ... ok (25ms)
+running 1 test from ./tests/resolvers.test.mjs
+[mjs module] resolvers tests ...
+  [mjs module] npm resolver resolves package path ... ok (169ms)
+  [mjs module] npm resolver resolves scoped package path for @octokit/core@6.1.5 ... ok (164ms)
+  [mjs module] npm resolver resolves package path with version ... ok (3s)
+  [mjs module] npm resolver resolves yargs/helpers ... ok (132ms)
+  [mjs module] npm resolver resolves yargs@18.0.0/helpers ... ok (127ms)
+  [mjs module] npm resolver resolves yargs@latest/helpers ... ok (614ms)
+  [mjs module] skypack resolver resolves URL ... ok (0ms)
+  [mjs module] skypack resolver resolves subpath ... ok (0ms)
+  [mjs module] jsdelivr resolver resolves URL ... ok (0ms)
+  [mjs module] jsdelivr resolver resolves subpath ... ok (1ms)
+  [mjs module] unpkg resolver resolves URL ... ok (0ms)
+  [mjs module] unpkg resolver resolves subpath ... ok (0ms)
+  [mjs module] esm resolver resolves URL ... ok (0ms)
+  [mjs module] esm resolver resolves subpath ... ok (0ms)
+  [mjs module] jspm resolver resolves URL ... ok (0ms)
+  [mjs module] jspm resolver resolves subpath ... ok (0ms)
+  [mjs module] bun resolver resolves package path ... ok (0ms)
+  [mjs module] bun resolver resolves scoped package path for @octokit/core@6.1.5 ... ok (0ms)
+  [mjs module] bun resolver resolves yargs/helpers ... ok (0ms)
+  [mjs module] bun resolver resolves yargs@latest/helpers ... ok (0ms)
+[mjs module] resolvers tests ... ok (4s)
+running 1 test from ./tests/root-entries.test.mjs
+[mjs module] root entry mirrors ...
+  [mjs module] mirrors exactly src/use.js, src/use.cjs and src/use.mjs ... ok (1ms)
+  [mjs module] use.js exists at the package root ... ok (0ms)
+  [mjs module] root use.js is in sync with src/use.js ... ok (2ms)
+  [mjs module] root use.js contains the full src/use.js body ... ok (1ms)
+  [mjs module] use.cjs exists at the package root ... ok (0ms)
+  [mjs module] root use.cjs is in sync with src/use.cjs ... ok (1ms)
+  [mjs module] root use.cjs contains the full src/use.cjs body ... ok (1ms)
+  [mjs module] use.mjs exists at the package root ... ok (0ms)
+  [mjs module] root use.mjs is in sync with src/use.mjs ... ok (1ms)
+  [mjs module] root use.mjs contains the full src/use.mjs body ... ok (1ms)
+  [mjs module] root use.js eval()s to a working use function ... ok (1ms)
+  [mjs module] the 404 "Not found" body is not a valid module body ... ok (1ms)
+  [mjs module] root use.mjs imports to a working use function ... ok (2ms)
+  [mjs module] package.json ships the root mirrors and keeps src canonical ... ok (0ms)
+[mjs module] root entry mirrors ... ok (29ms)
+running 1 test from ./tests/script-sync.test.mjs
+[mjs module] distributed script synchronization ...
+  [mjs module] npm resolver stays synchronized across mjs, cjs, and universal builds ... ok (2ms)
+[mjs module] distributed script synchronization ... ok (16ms)
+running 1 test from ./tests/typescript.test.mjs
+[mjs module] typescript ...
+  [mjs module] use typescript ... ok (621ms)
+[mjs module] typescript ... ok (633ms)
+running 1 test from ./tests/use.test.mjs
+[mjs module] 'use' import strategies ...
+  [mjs module] Direct ESM Import lodash@4.17.21 ... ok (26ms)
+  [mjs module] Dynamic ESM Import of CSJ ... ok (4ms)
+  [mjs module] Dynamic ESM Import of MJS ... ok (0ms)
+  [mjs module] Universal (then style) ... ok (1ms)
+  [mjs module] Universal (then style, use inside) ... ok (1ms)
+  [mjs module] Universal (eval style) ... ok (0ms)
+  [mjs module] Universal (single then style) ... ok (0ms)
+  [mjs module] use.all with require ... ok (32ms)
+  [mjs module] use.all ... ok (1ms)
+  [mjs module] use.all (script) ... ok (0ms)
+  [mjs module] Universal (script) @octokit/core@6.1.5 ... ok (1ms)
+  [mjs module] Universal (script) @octokit/core@5 ... ok (0ms)
+  [mjs module] Universal (script) @octokit/core (latest) ... ok (0ms)
+  [mjs module] @octokit/core (latest) ... ok (14ms)
+[mjs module] 'use' import strategies ... ok (107ms)
+
+ok | 32 passed (175 steps) | 0 failed | 0 ignored (3 steps) (10s)

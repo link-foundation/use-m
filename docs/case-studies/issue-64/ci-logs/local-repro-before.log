@@ -1,0 +1,38 @@
+
+> use-m@8.14.1 test
+> NODE_OPTIONS="--experimental-vm-modules" jest tests/release-workflow-policy.test.mjs --runInBand
+
+(node:2934196) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+FAIL tests/release-workflow-policy.test.mjs
+  release workflow policy
+    ✓ uses npm package metadata that matches registry and trusted publishing expectations (2 ms)
+    ✓ keeps CI and publishing in the trusted-publisher release workflow (1 ms)
+    ✓ publishes with npm trusted publishing instead of token auth (1 ms)
+    ✓ runs tests before publishing and preserves main-branch release runs (1 ms)
+    ✕ fails release runs when the package, tag, and GitHub release already exist (2 ms)
+    ✓ uses current action versions and explicit job timeouts (1 ms)
+    ✓ retries Deno network-import tests without hiding persistent failures
+
+  ● release workflow policy › fails release runs when the package, tag, and GitHub release already exist
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: false
+    Received: true
+
+       96 |     const publishJob = jobs.get('publish') || ''
+       97 |
+    >  98 |     expect(publishJob.includes('already exists on npm; skipping npm publish.')).toBe(false)
+          |                                                                                 ^
+       99 |     expect(publishJob.includes('git rev-parse "$TAG"')).toBe(true)
+      100 |     expect(publishJob.includes('gh release view "$TAG"')).toBe(true)
+      101 |     expect(publishJob.includes('::error::')).toBe(true)
+
+      at Object.<anonymous> (tests/release-workflow-policy.test.mjs:98:81)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 6 passed, 7 total
+Snapshots:   0 total
+Time:        0.205 s
+Ran all test suites matching /tests\/release-workflow-policy.test.mjs/i.

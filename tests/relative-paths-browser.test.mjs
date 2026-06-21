@@ -17,6 +17,13 @@ const moduleName = `[${import.meta.url.split('.').pop()} module]`;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+function isExpectedBrowserConsoleError(text) {
+  return (
+    text.includes('Failed to load resource') ||
+    (text.includes('https://cdn.skypack.dev/URL') && text.includes('CORS policy'))
+  );
+}
+
 describe(`${moduleName} Relative path resolution in browser`, () => {
   // Skip all browser tests in Deno
   if (isDeno) {
@@ -61,7 +68,7 @@ describe(`${moduleName} Relative path resolution in browser`, () => {
       const type = msg.type();
       const text = msg.text();
       
-      if (type === 'error' && !text.includes('Failed to load resource')) {
+      if (type === 'error' && !isExpectedBrowserConsoleError(text)) {
         console.error('Browser console error:', text);
       }
     });
