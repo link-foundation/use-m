@@ -90,6 +90,29 @@ describe('release workflow policy', () => {
     expect(publishJob.includes("needs.test.result == 'success'")).toBe(true)
   })
 
+  test('fails release runs when the package, tag, and GitHub release already exist', () => {
+    const workflowText = readText(releaseWorkflowPath)
+    const jobs = jobBlocks(workflowText)
+    const publishJob = jobs.get('publish') || ''
+
+    expect(publishJob.includes('already exists on npm; skipping npm publish.')).toBe(false)
+    expect(publishJob.includes('fetch-depth: 0')).toBe(true)
+    expect(publishJob.includes('git rev-parse "$TAG"')).toBe(true)
+    expect(publishJob.includes('gh release view "$TAG"')).toBe(true)
+    expect(publishJob.includes('::error::')).toBe(true)
+    expect(publishJob.includes('already exist. Update package.json to the next unpublished version')).toBe(true)
+    expect(publishJob.includes('release metadata is incomplete; skipping npm publish and repairing tag/release.')).toBe(true)
+    expect(publishJob.includes('exit 1')).toBe(true)
+  })
+
+  test('keeps dependency install logs quiet while auditing shipped dependencies', () => {
+    const workflowText = readText(releaseWorkflowPath)
+
+    expect(workflowText.match(/npm ci --no-audit --no-fund/g)).toHaveLength(2)
+    expect(workflowText.includes('npm audit --omit=dev')).toBe(true)
+    expect(workflowText.includes("matrix.runtime == 'node' && matrix.os == 'ubuntu-latest'")).toBe(true)
+  })
+
   test('uses current action versions and explicit job timeouts', () => {
     const workflowText = readText(releaseWorkflowPath)
     const jobs = jobBlocks(workflowText)
