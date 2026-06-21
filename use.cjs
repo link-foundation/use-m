@@ -966,7 +966,8 @@ const baseUse = async (modulePath) => {
 
 const makeUse = async (options) => {
   let scriptPath = options?.scriptPath;
-  if (!scriptPath && typeof global !== 'undefined' && typeof global['__filename'] !== 'undefined') {
+  const hasBrowserGlobals = typeof window !== 'undefined' && typeof document !== 'undefined';
+  if (!scriptPath && !hasBrowserGlobals && typeof global !== 'undefined' && typeof global['__filename'] !== 'undefined') {
     scriptPath = global['__filename'];
   }
   const metaUrl = options?.meta?.url;
@@ -999,8 +1000,8 @@ const makeUse = async (options) => {
   } else {
     const isDenoRuntime = typeof Deno !== 'undefined';
     const isBunRuntime = typeof Bun !== 'undefined';
-    const isNodeRuntime = !isDenoRuntime && !isBunRuntime && typeof process !== 'undefined' && Boolean(process.versions?.node);
-    const isBrowserRuntime = !isDenoRuntime && !isBunRuntime && !isNodeRuntime && typeof window !== 'undefined';
+    const isBrowserRuntime = !isDenoRuntime && !isBunRuntime && hasBrowserGlobals;
+    const isNodeRuntime = !isDenoRuntime && !isBunRuntime && !isBrowserRuntime && typeof process !== 'undefined' && Boolean(process.versions?.node);
     if (isBrowserRuntime || (protocol && (protocol === 'http:' || protocol === 'https:'))) {
       resolverChain = networkResolverChain;
     } else if (isDenoRuntime) {
