@@ -1409,6 +1409,13 @@ braces@^3.0.3:
   dependencies:
     fill-range "^7.1.1"
 
+browser-commander@^0.8.1:
+  version "0.8.1"
+  resolved "https://registry.npmjs.org/browser-commander/-/browser-commander-0.8.1.tgz"
+  integrity sha512-e7OdSOzv5k2xFLJU/XRJOxiTACe1T4Du2ZK6I0QMB4tEpB8IuWIaCovWzr8g66MDxzMSSxItDRGXiSVjYv8+Mw==
+  dependencies:
+    log-lazy "^1.0.4"
+
 browserslist@^4.24.0, browserslist@^4.25.1, "browserslist@>= 4.21.0":
   version "4.25.1"
   resolved "https://registry.npmjs.org/browserslist/-/browserslist-4.25.1.tgz"
@@ -2625,6 +2632,11 @@ lodash.debounce@^4.0.8:
   resolved "https://registry.npmjs.org/lodash.debounce/-/lodash.debounce-4.0.8.tgz"
   integrity sha512-FT1yDzDYEoYWhnSGnpE/4Kj1fLZkDFyqRb7fNt6FdYOSxlUWAtp42Eh6Wb0rGIv/m9Bgo7x4GhQbm5Ys4SG5ow==
 
+log-lazy@^1.0.4:
+  version "1.0.4"
+  resolved "https://registry.npmjs.org/log-lazy/-/log-lazy-1.0.4.tgz"
+  integrity sha512-UHTdwIjZymnYIaNA5l6mW7YEQpJYXGhWsRwpblG+BpA8oThnsCj69JPy+CDRo6T2oi39u5TChlcqCfk+Qh6mHg==
+
 lru-cache@^5.1.1:
   version "5.1.1"
   resolved "https://registry.npmjs.org/lru-cache/-/lru-cache-5.1.1.tgz"
@@ -2964,7 +2976,7 @@ puppeteer-core@24.16.2:
     typed-query-selector "^2.12.0"
     ws "^8.18.3"
 
-puppeteer@^24.16.2:
+puppeteer@^24.16.2, puppeteer@>=21.0.0:
   version "24.16.2"
   resolved "https://registry.npmjs.org/puppeteer/-/puppeteer-24.16.2.tgz"
   integrity sha512-eNjKzwjITM4Lvho6iHb+VQamadUBgc8TsjAApsKi5N8DXipxAaAZWssBOFsrIOLo4eYWYj0Qk5gmr4wBSqzJWw==
