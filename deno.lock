@@ -3346,6 +3346,8 @@
     "https://esm.sh/source-map@0.6.1?target=denonext": "3803db0ea481a551d1b0f98b57c3b32597fe2c03a5204fbec3aa58d1892f5fa0",
     "https://esm.sh/typescript@5.9.2": "c2a7b731460ca9bf9fc333d96810151a98ca5e0c6f26892a1a3be78a731fb8fe",
     "https://esm.sh/typescript@5.9.2/denonext/typescript.mjs": "70c8ec7953761f4896f56d8417076a5c564f489b0bcc29bcecbf4c06ceb16557",
+    "https://esm.sh/typescript@5.9.3": "8444891231375e9b3ab2908397af30bba2a199607348135480fb72b82427a388",
+    "https://esm.sh/typescript@5.9.3/denonext/typescript.mjs": "6486186025c9617b64436ed7373c5f80fb5e27aaa469367cb55dce16c1ae262e",
     "https://esm.sh/typescript@6.0.3": "1d89c6c1fd21b46b06b112c50c800b2d7cd6e558a0f5f0d0b8a78e1da896be23",
     "https://esm.sh/typescript@6.0.3/denonext/typescript.mjs": "82f4491e67d8671d89a0a9efd12ba0d6fca5c614d1bacee5355ce8cc6efb5c8a",
     "https://esm.sh/universal-user-agent@7.0.3/denonext/universal-user-agent.mjs": "021090b5f3bb060b1b0364cb79daa2cc3760db58a023cd8892a098e6256a84c4",

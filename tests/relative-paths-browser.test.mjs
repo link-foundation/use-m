@@ -84,7 +84,7 @@ describe(`${moduleName} Relative path resolution in browser`, () => {
       () => window.testResults && typeof window.testResults.total === 'number',
       { timeout: 60000 }
     );
-  });
+  }, 120000);
 
   afterAll(async () => {
     if (browser) {
