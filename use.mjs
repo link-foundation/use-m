@@ -451,11 +451,17 @@ export const resolvers = {
     const path = await import('node:path');
     const { exec } = await import('node:child_process');
     const { promisify } = await import('node:util');
-    const { access, mkdir, stat, readFile } = await import('node:fs/promises');
+    const { access, mkdir, rm, stat, readFile } = await import('node:fs/promises');
     const { constants: fsConstants } = await import('node:fs');
     const os = await import('node:os');
     const execAsync = promisify(exec);
     const baseNpmEnv = { ...(options?.env || process.env) };
+    const installMaxAttempts = Number.isInteger(options?.installMaxAttempts) && options.installMaxAttempts > 0
+      ? options.installMaxAttempts
+      : 3;
+    const installRetryDelayMs = typeof options?.installRetryDelayMs === 'number' && options.installRetryDelayMs >= 0
+      ? options.installRetryDelayMs
+      : 1000;
 
     if (!pathResolver) {
       throw new Error('Failed to get the current resolver.');
@@ -659,39 +665,99 @@ export const resolvers = {
       return installedVersion === latestVersion;
     };
 
-    const ensurePackageInstalled = async ({ packageName, version }) => {
+    const removePackageAlias = async (packagePath, reason) => {
+      try {
+        await rm(packagePath, { recursive: true, force: true });
+      } catch (error) {
+        throw new Error(`Failed to remove ${reason} npm alias '${packagePath}'.`, { cause: error });
+      }
+    };
+
+    const formatInstallFailure = (error) => {
+      const output = [error?.stderr, error?.stdout]
+        .filter(value => typeof value === 'string' && value.trim())
+        .join('\n')
+        .trim();
+      return output || error?.message || String(error);
+    };
+
+    const installPackage = async ({ alias, packageName, version, packagePath, installContext }) => {
+      const failures = [];
+      for (let attempt = 1; attempt <= installMaxAttempts; attempt++) {
+        try {
+          await execAsync(
+            `npm install -g ${alias}@npm:${packageName}@${version}`,
+            { env: installContext.env }
+          );
+          return;
+        } catch (error) {
+          failures.push({ error, details: formatInstallFailure(error) });
+          await removePackageAlias(packagePath, 'incomplete');
+          if (attempt < installMaxAttempts && installRetryDelayMs > 0) {
+            await new Promise(resolve => setTimeout(resolve, installRetryDelayMs * attempt));
+          }
+        }
+      }
+
+      const attempts = failures
+        .map(({ details }, index) => `  - ${index + 1}/${installMaxAttempts}: ${details}`)
+        .join('\n');
+      const cause = failures[failures.length - 1]?.error;
+      throw new Error(
+        `Failed to install ${packageName}@${version} globally into '${installContext.globalModulesPath}' after ${installMaxAttempts} attempts.\n` +
+        `Attempts:\n${attempts}`,
+        { cause }
+      );
+    };
+
+    const ensurePackageInstalled = async ({ packageName, version }, { repair = false } = {}) => {
       const alias = `${packageName.replace('@', '').replace('/', '-')}-v-${version}`;
       const latestVersion = version === 'latest' ? await getLatestVersion(packageName, baseNpmEnv) : null;
       const globalModulesPath = await getNpmGlobalRoot(baseNpmEnv);
       let packagePath = path.join(globalModulesPath, alias);
-      if (await isPackageInstalled(packagePath, version, latestVersion)) {
+      if (repair && await directoryExists(packagePath)) {
+        await removePackageAlias(packagePath, 'corrupt');
+      } else if (await isPackageInstalled(packagePath, version, latestVersion)) {
         return packagePath;
       }
 
       const installContext = await getWritableInstallContext(globalModulesPath, baseNpmEnv);
       packagePath = path.join(installContext.globalModulesPath, alias);
       if (installContext.globalModulesPath !== globalModulesPath) {
-        if (await isPackageInstalled(packagePath, version, latestVersion)) {
+        if (repair && await directoryExists(packagePath)) {
+          await removePackageAlias(packagePath, 'corrupt');
+        } else if (await isPackageInstalled(packagePath, version, latestVersion)) {
           return packagePath;
         }
       }
 
-      try {
-        await execAsync(`npm install -g ${alias}@npm:${packageName}@${version}`, { env: installContext.env, stdio: 'ignore' });
-      } catch (error) {
-        throw new Error(`Failed to install ${packageName}@${version} globally into '${installContext.globalModulesPath}'.`, { cause: error });
-      }
+      await installPackage({ alias, packageName, version, packagePath, installContext });
       return packagePath;
     };
 
     const { packageName, version, modulePath } = parseModuleSpecifier(moduleSpecifier);
-    const packagePath = await ensurePackageInstalled({ packageName, version });
-    const packageModulePath = modulePath ? path.join(packagePath, modulePath) : packagePath;
-    const resolvedPath = await tryResolveModule(packageModulePath);
-    if (!resolvedPath) {
-      throw new Error(`Failed to resolve the path to '${moduleSpecifier}' from '${packageModulePath}'.`);
+    const resolvePackageModule = async (packagePath) => {
+      const packageModulePath = modulePath ? path.join(packagePath, modulePath) : packagePath;
+      const resolvedPath = await tryResolveModule(packageModulePath);
+      if (!resolvedPath) {
+        throw new Error(`Failed to resolve the path to '${moduleSpecifier}' from '${packageModulePath}'.`);
+      }
+      return resolvedPath;
+    };
+
+    let packagePath = await ensurePackageInstalled(
+      { packageName, version },
+      { repair: Boolean(options?.repair) }
+    );
+    try {
+      return await resolvePackageModule(packagePath);
+    } catch (error) {
+      if (options?.repair || modulePath) {
+        throw error;
+      }
+      packagePath = await ensurePackageInstalled({ packageName, version }, { repair: true });
+      return resolvePackageModule(packagePath);
     }
-    return resolvedPath;
   },
   bun: async (moduleSpecifier, pathResolver) => {
     const path = await import('node:path');
@@ -870,6 +936,25 @@ export const resolvers = {
 // back to the next. The primary entry preserves the previous default per runtime.
 export const networkResolverChain = ['esm', 'jspm', 'skypack']
 export const denoResolverChain = ['deno', 'jspm', 'skypack']
+
+let npmImportRecoveryId = 0
+
+const isRecoverableNpmImportError = (error, modulePath) => {
+  if (error?.message !== `Failed to import module from '${modulePath}'.`) {
+    return false
+  }
+  const cause = error.cause
+  return cause?.name === 'SyntaxError' ||
+    cause?.code === 'ERR_INVALID_PACKAGE_CONFIG' ||
+    cause?.code === 'ERR_MODULE_NOT_FOUND'
+}
+
+const cacheBustNpmModulePath = async (modulePath) => {
+  const { pathToFileURL } = await import('node:url')
+  const moduleUrl = pathToFileURL(modulePath)
+  moduleUrl.searchParams.set('use-m-retry', String(++npmImportRecoveryId))
+  return moduleUrl.href
+}
 
 // Normalize a resolver reference (a resolver function, or a key into `resolvers`)
 // into a resolver function.
@@ -1061,8 +1146,22 @@ export const makeUse = async (options) => {
     // original behavior and error); a multi-entry chain falls back across CDN
     // mirrors via the shared loadWithFallback engine.
     if (resolverChain.length === 1) {
-      const modulePath = await toResolverFunction(resolverChain[0])(moduleSpecifier, pathResolver);
-      return importModule(modulePath);
+      const resolver = resolverChain[0];
+      const resolverFunction = toResolverFunction(resolver);
+      const modulePath = await resolverFunction(moduleSpecifier, pathResolver, options);
+      try {
+        return await importModule(modulePath);
+      } catch (error) {
+        if (resolver !== 'npm' || !isRecoverableNpmImportError(error, modulePath)) {
+          throw error;
+        }
+        const repairedModulePath = await resolverFunction(
+          moduleSpecifier,
+          pathResolver,
+          { ...(options || {}), repair: true }
+        );
+        return importModule(await cacheBustNpmModulePath(repairedModulePath));
+      }
     }
     return loadWithFallback(
       resolverChain,

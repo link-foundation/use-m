@@ -1,11 +1,14 @@
 const { chmod, mkdir, mkdtemp, readFile, rm, writeFile } = require('node:fs/promises');
+const { execFile } = require('node:child_process');
 const { tmpdir } = require('node:os');
 const path = require('node:path');
+const { promisify } = require('node:util');
 const { describe, test, expect, afterEach } = require('../src/test-adapter.cjs');
 const { resolvers } = require('../src/use.cjs');
 
 const moduleName = `[${__filename.split('.').pop()} module]`;
 const resolve = require.resolve;
+const execFileAsync = promisify(execFile);
 const temporaryDirectories = [];
 
 afterEach(async () => {
@@ -59,13 +62,32 @@ if (args[0] === 'install' && args[1] === '-g' && args[2]) {
     ? process.env.USE_M_FAKE_NPM_LATEST_VERSION || '1.0.0'
     : requestedVersion;
   const packageDirectory = path.join(root, alias);
+  const installAttempt = fs.readFileSync(logFile, 'utf8')
+    .trim()
+    .split('\\n')
+    .filter(Boolean)
+    .map(line => JSON.parse(line))
+    .filter(call => call.args[0] === 'install')
+    .length;
+  const failuresBeforeSuccess = Number(process.env.USE_M_FAKE_NPM_INSTALL_FAILURES || 0);
+
+  if (installAttempt <= failuresBeforeSuccess) {
+    fs.mkdirSync(packageDirectory, { recursive: true });
+    fs.writeFileSync(path.join(packageDirectory, 'partial-install'), 'incomplete');
+    console.log('fake npm stdout: attempt ' + installAttempt);
+    console.error('fake npm stderr: registry unavailable on attempt ' + installAttempt);
+    process.exit(1);
+  }
 
   fs.mkdirSync(packageDirectory, { recursive: true });
   fs.writeFileSync(
     path.join(packageDirectory, 'package.json'),
-    JSON.stringify({ name: alias, version: installedVersion, main: 'index.js' })
+    JSON.stringify({ name: alias, version: installedVersion, type: 'module', main: 'index.js' })
   );
-  fs.writeFileSync(path.join(packageDirectory, 'index.js'), 'module.exports = { installed: true };\\n');
+  fs.writeFileSync(
+    path.join(packageDirectory, 'index.js'),
+    'export const installed = true; export const installAttempt = ' + installAttempt + ';\\n'
+  );
   process.exit(0);
 }
 
@@ -91,6 +113,71 @@ process.exit(1);
 const readNpmLog = async (logFile) => {
   const log = await readFile(logFile, 'utf8');
   return log.trim().split('\n').filter(Boolean).map(line => JSON.parse(line));
+};
+
+const corruptAlias = async (fixture, { packageJson, source }) => {
+  const packageDirectory = path.join(fixture.defaultRoot, 'fixture-pkg-v-1.0.0');
+  await mkdir(packageDirectory, { recursive: true });
+  await writeFile(path.join(packageDirectory, 'package.json'), packageJson);
+  if (source !== undefined) {
+    await writeFile(path.join(packageDirectory, 'index.js'), source);
+  }
+  return packageDirectory;
+};
+
+const useFixturePackageInFreshProcess = async (fixture) => {
+  const useModulePath = path.resolve(__dirname, '../src/use.cjs');
+  const packageEntryPath = path.join(fixture.defaultRoot, 'fixture-pkg-v-1.0.0', 'index.js');
+  const source = `
+    const { makeUse } = require(${JSON.stringify(useModulePath)});
+    const { readFile } = require('node:fs/promises');
+    (async () => {
+      const use = await makeUse();
+      const loaded = await use('fixture-pkg@1.0.0');
+      process.stdout.write(JSON.stringify(loaded));
+    })().catch(async error => {
+      console.error(error);
+      console.error('entry after recovery:', await readFile(${JSON.stringify(packageEntryPath)}, 'utf8'));
+      console.error('npm calls:', await readFile(${JSON.stringify(fixture.logFile)}, 'utf8'));
+      process.exitCode = 1;
+    });
+  `;
+  const { stdout } = await execFileAsync(
+    process.execPath,
+    ['--eval', source],
+    { env: fixture.baseEnv }
+  );
+  return JSON.parse(stdout);
+};
+
+const failFixtureImportInFreshProcess = async (fixture) => {
+  const useModulePath = path.resolve(__dirname, '../src/use.cjs');
+  const source = `
+    const { makeUse } = require(${JSON.stringify(useModulePath)});
+    (async () => {
+      const use = await makeUse({
+        import: async () => {
+          const error = new Error('application-level missing import');
+          error.code = 'ERR_MODULE_NOT_FOUND';
+          throw error;
+        }
+      });
+      try {
+        await use('fixture-pkg@1.0.0');
+      } catch (error) {
+        process.stdout.write(JSON.stringify({ message: error.message, code: error.code }));
+      }
+    })().catch(error => {
+      console.error(error);
+      process.exitCode = 1;
+    });
+  `;
+  const { stdout } = await execFileAsync(
+    process.execPath,
+    ['--eval', source],
+    { env: fixture.baseEnv }
+  );
+  return JSON.parse(stdout);
 };
 
 describe(`${moduleName} npm global prefix handling`, () => {
@@ -153,5 +240,144 @@ describe(`${moduleName} npm global prefix handling`, () => {
     expect(packagePath).toContain(path.join(customRoot, 'fixture-pkg-v-1.0.0'));
     expect(installCall.prefix).toBe(customPrefix);
     expect(installCall.root).toBe(customRoot);
+  });
+
+  test(`${moduleName} retries transient npm install failures and removes partial aliases`, async () => {
+    if (typeof Deno !== 'undefined' || typeof Bun !== 'undefined') {
+      return;
+    }
+
+    const fixture = await createFakeNpm();
+    const env = {
+      ...fixture.baseEnv,
+      USE_M_FAKE_NPM_INSTALL_FAILURES: '2'
+    };
+    const packagePath = await resolvers.npm(
+      'fixture-pkg@1.0.0',
+      resolve,
+      { env, installRetryDelayMs: 0 }
+    );
+    const npmCalls = await readNpmLog(fixture.logFile);
+    const installCalls = npmCalls.filter(call => call.args[0] === 'install');
+
+    expect(installCalls).toHaveLength(3);
+    expect(await readFile(packagePath, 'utf8')).toContain('installAttempt = 3');
+  });
+
+  test(`${moduleName} reports captured npm output and cleans up after exhausted retries`, async () => {
+    if (typeof Deno !== 'undefined' || typeof Bun !== 'undefined') {
+      return;
+    }
+
+    const fixture = await createFakeNpm();
+    const env = {
+      ...fixture.baseEnv,
+      USE_M_FAKE_NPM_INSTALL_FAILURES: '3'
+    };
+    let thrown;
+    try {
+      await resolvers.npm(
+        'fixture-pkg@1.0.0',
+        resolve,
+        { env, installRetryDelayMs: 0 }
+      );
+    } catch (error) {
+      thrown = error;
+    }
+    const npmCalls = await readNpmLog(fixture.logFile);
+    const installCalls = npmCalls.filter(call => call.args[0] === 'install');
+    const packageDirectory = path.join(fixture.defaultRoot, 'fixture-pkg-v-1.0.0');
+
+    expect(installCalls).toHaveLength(3);
+    expect(thrown.message).toContain('fake npm stderr: registry unavailable on attempt 3');
+    expect(thrown.message).toContain('fake npm stdout: attempt 3');
+    await expect(readFile(path.join(packageDirectory, 'partial-install'), 'utf8')).rejects.toThrow();
+  });
+
+  test(`${moduleName} repairs a truncated entry point and bypasses the cached syntax failure`, async () => {
+    if (typeof Deno !== 'undefined' || typeof Bun !== 'undefined') {
+      return;
+    }
+
+    const fixture = await createFakeNpm();
+    await corruptAlias(fixture, {
+      packageJson: JSON.stringify({ name: 'fixture-pkg', version: '1.0.0', type: 'module', main: 'index.js' }),
+      source: 'export const value = ('
+    });
+
+    const loaded = await useFixturePackageInFreshProcess(fixture);
+    const npmCalls = await readNpmLog(fixture.logFile);
+
+    expect(loaded.installed).toBe(true);
+    expect(npmCalls.filter(call => call.args[0] === 'install')).toHaveLength(1);
+  });
+
+  test(`${moduleName} repairs an alias missing an internal ESM dependency`, async () => {
+    if (typeof Deno !== 'undefined' || typeof Bun !== 'undefined') {
+      return;
+    }
+
+    const fixture = await createFakeNpm();
+    await corruptAlias(fixture, {
+      packageJson: JSON.stringify({ name: 'fixture-pkg', version: '1.0.0', type: 'module', main: 'index.js' }),
+      source: "export { value } from './missing-internal.mjs';\n"
+    });
+
+    const loaded = await useFixturePackageInFreshProcess(fixture);
+    const npmCalls = await readNpmLog(fixture.logFile);
+
+    expect(loaded.installed).toBe(true);
+    expect(npmCalls.filter(call => call.args[0] === 'install')).toHaveLength(1);
+  });
+
+  test(`${moduleName} repairs an alias with invalid package metadata`, async () => {
+    if (typeof Deno !== 'undefined' || typeof Bun !== 'undefined') {
+      return;
+    }
+
+    const fixture = await createFakeNpm();
+    await corruptAlias(fixture, {
+      packageJson: '{"name":"fixture-pkg","version":"1.0.0",',
+      source: 'module.exports = { stale: true };\n'
+    });
+
+    const loaded = await useFixturePackageInFreshProcess(fixture);
+    const npmCalls = await readNpmLog(fixture.logFile);
+
+    expect(loaded.installed).toBe(true);
+    expect(npmCalls.filter(call => call.args[0] === 'install')).toHaveLength(1);
+  });
+
+  test(`${moduleName} repairs an alias whose declared entry point is missing`, async () => {
+    if (typeof Deno !== 'undefined' || typeof Bun !== 'undefined') {
+      return;
+    }
+
+    const fixture = await createFakeNpm();
+    await corruptAlias(fixture, {
+      packageJson: JSON.stringify({ name: 'fixture-pkg', version: '1.0.0', main: 'missing.js' })
+    });
+
+    const loaded = await useFixturePackageInFreshProcess(fixture);
+    const npmCalls = await readNpmLog(fixture.logFile);
+
+    expect(loaded.installed).toBe(true);
+    expect(npmCalls.filter(call => call.args[0] === 'install')).toHaveLength(1);
+  });
+
+  test(`${moduleName} does not reinstall for an unrelated unwrapped missing-module error`, async () => {
+    if (typeof Deno !== 'undefined' || typeof Bun !== 'undefined') {
+      return;
+    }
+
+    const fixture = await createFakeNpm();
+    const thrown = await failFixtureImportInFreshProcess(fixture);
+    const npmCalls = await readNpmLog(fixture.logFile);
+
+    expect(thrown).toEqual({
+      message: 'application-level missing import',
+      code: 'ERR_MODULE_NOT_FOUND'
+    });
+    expect(npmCalls.filter(call => call.args[0] === 'install')).toHaveLength(1);
   });
 });
