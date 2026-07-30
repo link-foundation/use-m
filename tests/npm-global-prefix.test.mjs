@@ -176,6 +176,42 @@ const failFixtureImportInFreshProcess = async (fixture) => {
   return JSON.parse(stdout);
 };
 
+const repairFixtureWithRmRetryProbeInFreshProcess = async (fixture) => {
+  const useModuleUrl = new URL('../src/use.mjs', import.meta.url).href;
+  const source = `
+    import { createRequire, syncBuiltinESMExports } from 'node:module';
+    const require = createRequire(import.meta.url);
+    const fsPromises = require('node:fs/promises');
+    const originalRm = fsPromises.rm;
+    const cleanupCalls = [];
+    fsPromises.rm = async (target, options) => {
+      cleanupCalls.push({ target, options });
+      if (options?.maxRetries !== 5 || options?.retryDelay !== 100) {
+        const error = new Error("ENOTEMPTY: directory not empty, rmdir '" + target + "'");
+        error.code = 'ENOTEMPTY';
+        throw error;
+      }
+      return originalRm(target, options);
+    };
+    syncBuiltinESMExports();
+
+    const { resolvers } = await import(${JSON.stringify(useModuleUrl)});
+    const packagePath = await resolvers.npm(
+      'fixture-pkg@1.0.0',
+      require.resolve,
+      { env: process.env, repair: true, installRetryDelayMs: 0 }
+    );
+    const installedSource = await fsPromises.readFile(packagePath, 'utf8');
+    process.stdout.write(JSON.stringify({ cleanupCalls, installedSource }));
+  `;
+  const { stdout } = await execFileAsync(
+    process.execPath,
+    ['--input-type=module', '--eval', source],
+    { env: fixture.baseEnv }
+  );
+  return JSON.parse(stdout);
+};
+
 describe(`${moduleName} npm global prefix handling`, () => {
   test(`${moduleName} redirects installs to use-m cache when npm global root is not writable`, async () => {
     if (typeof Deno !== 'undefined' || typeof Bun !== 'undefined') {
@@ -288,6 +324,30 @@ describe(`${moduleName} npm global prefix handling`, () => {
     expect(thrown.message).toContain('fake npm stderr: registry unavailable on attempt 3');
     expect(thrown.message).toContain('fake npm stdout: attempt 3');
     await expect(readFile(path.join(packageDirectory, 'partial-install'), 'utf8')).rejects.toThrow();
+  });
+
+  test(`${moduleName} gives corrupt-alias cleanup a recursive rm retry budget`, async () => {
+    if (typeof Deno !== 'undefined' || typeof Bun !== 'undefined') {
+      return;
+    }
+
+    const fixture = await createFakeNpm();
+    const packageDirectory = await corruptAlias(fixture, {
+      packageJson: JSON.stringify({ name: 'fixture-pkg', version: '1.0.0', type: 'module', main: 'index.js' }),
+      source: 'export const stale = true;\n'
+    });
+    const result = await repairFixtureWithRmRetryProbeInFreshProcess(fixture);
+
+    expect(result.cleanupCalls).toEqual([{
+      target: packageDirectory,
+      options: {
+        recursive: true,
+        force: true,
+        maxRetries: 5,
+        retryDelay: 100
+      }
+    }]);
+    expect(result.installedSource).toContain('installed = true');
   });
 
   test(`${moduleName} repairs a truncated entry point and bypasses the cached syntax failure`, async () => {

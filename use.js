@@ -667,7 +667,12 @@ const resolvers = {
 
     const removePackageAlias = async (packagePath, reason) => {
       try {
-        await rm(packagePath, { recursive: true, force: true });
+        await rm(packagePath, {
+          recursive: true,
+          force: true,
+          maxRetries: 5,
+          retryDelay: 100
+        });
       } catch (error) {
         throw new Error(`Failed to remove ${reason} npm alias '${packagePath}'.`, { cause: error });
       }
