@@ -799,15 +799,21 @@ const resolvers = {
             return unlocked;
           }
           const stats = await stat(lockPath).catch(() => null);
+          const expired = Date.now() - startedAt > installLockTimeoutMs;
           if (!stats) {
-            // The owner released it between our mkdir and stat — retry now.
+            // The owner released it between our mkdir and stat, so retry at
+            // once — but still honor the deadline, so a peer that keeps
+            // recreating the lock cannot spin us forever.
+            if (expired) {
+              return unlocked;
+            }
             continue;
           }
           if (Date.now() - stats.mtimeMs > installLockStaleMs
             && await rmdir(lockPath).then(() => true, () => false)) {
             continue;
           }
-          if (Date.now() - startedAt > installLockTimeoutMs) {
+          if (expired) {
             return unlocked;
           }
           await sleep(installLockPollMs);
