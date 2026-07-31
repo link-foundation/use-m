@@ -451,17 +451,33 @@ const resolvers = {
     const path = await import('node:path');
     const { exec } = await import('node:child_process');
     const { promisify } = await import('node:util');
-    const { access, mkdir, rm, stat, readFile } = await import('node:fs/promises');
+    const { access, mkdir, readFile, rename, rm, rmdir, stat, unlink, utimes, writeFile } = await import('node:fs/promises');
     const { constants: fsConstants } = await import('node:fs');
     const os = await import('node:os');
     const execAsync = promisify(exec);
-    const baseNpmEnv = { ...(options?.env || process.env) };
+    const npmEnvSource = options?.env || process.env;
+    const baseNpmEnv = { ...npmEnvSource };
     const installMaxAttempts = Number.isInteger(options?.installMaxAttempts) && options.installMaxAttempts > 0
       ? options.installMaxAttempts
       : 3;
     const installRetryDelayMs = typeof options?.installRetryDelayMs === 'number' && options.installRetryDelayMs >= 0
       ? options.installRetryDelayMs
       : 1000;
+    // Timings of the cross-process install lock (see `acquireInstallLock`).
+    const durationOption = (value, fallback) =>
+      typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : fallback;
+    // How often the lock owner refreshes the lock's mtime.
+    const installLockHeartbeatMs = durationOption(options?.installLockHeartbeatMs, 1000);
+    // How long a lock may go unrefreshed before a waiter treats it as abandoned.
+    const installLockStaleMs = durationOption(options?.installLockStaleMs, 30000);
+    // How long a waiter sleeps between acquisition attempts.
+    const installLockPollMs = durationOption(options?.installLockPollMs, 100);
+    // How long a waiter waits before giving up and installing unlocked.
+    const installLockTimeoutMs = durationOption(options?.installLockTimeoutMs, 300000);
+    // Escape hatch: `installLock: false` restores the pre-8.15.0 unlocked installs.
+    const installLockEnabled = options?.installLock !== false;
+
+    const sleep = (milliseconds) => new Promise(resolve => setTimeout(resolve, milliseconds));
 
     if (!pathResolver) {
       throw new Error('Failed to get the current resolver.');
@@ -657,12 +673,88 @@ const resolvers = {
       return { env: fallbackEnv, globalModulesPath: fallbackGlobalModulesPath };
     };
 
-    const isPackageInstalled = async (packagePath, version, latestVersion) => {
-      if (version !== 'latest') {
-        return await directoryExists(packagePath);
+    // use-m's own bookkeeping inside the npm global root: one lock directory and
+    // one completion marker per alias. The directory name starts with a dot so
+    // npm skips it while reading the global tree, the same way it skips `.bin`
+    // and `.package-lock.json`.
+    const getStatePath = (globalModulesPath, fileName) =>
+      path.join(globalModulesPath, '.use-m', fileName);
+    const getInstallLockPath = (globalModulesPath, alias) =>
+      getStatePath(globalModulesPath, `${alias}.lock`);
+    const getInstallMarkerPath = (globalModulesPath, alias) =>
+      getStatePath(globalModulesPath, `${alias}.installed.json`);
+
+    const readInstallMarker = async (markerPath) => {
+      try {
+        return JSON.parse(await readFile(markerPath, 'utf8'));
+      } catch {
+        return null;
+      }
+    };
+
+    // The marker is written only after `npm install` returned, so — unlike
+    // package.json, which npm extracts first — its presence means extraction
+    // finished. Writing it is best effort: a read-only global root only loses
+    // the fast path, it must not fail the import.
+    const writeInstallMarker = async (markerPath, marker) => {
+      const temporaryPath = `${markerPath}.${process.pid}.tmp`;
+      try {
+        await mkdir(path.dirname(markerPath), { recursive: true });
+        await writeFile(temporaryPath, `${JSON.stringify(marker)}\n`);
+        await rename(temporaryPath, markerPath);
+      } catch {
+        await unlink(temporaryPath).catch(() => {});
+      }
+    };
+
+    // Called before the alias tree changes, so no concurrent reader can trust a
+    // marker that describes the tree we are about to replace.
+    const removeInstallMarker = async (markerPath) => {
+      await unlink(markerPath).catch(() => {});
+    };
+
+    // `adopt: true` may only be used while holding the alias lock. Without a
+    // marker the only evidence available is the tree itself, and every such
+    // check is true long before extraction finishes: a directory exists as soon
+    // as npm creates it, and package.json carries the final version from the
+    // first extracted file onwards. That check-then-act window is how a
+    // concurrent caller used to import a half-written tree (issue #70), so
+    // outside the lock an unmarked alias counts as not installed and the caller
+    // re-checks under the lock instead.
+    const isPackageInstalled = async (packagePath, version, latestVersion, markerPath, { adopt = false } = {}) => {
+      if (!await directoryExists(packagePath)) {
+        return false;
+      }
+      const marker = await readInstallMarker(markerPath);
+      if (marker) {
+        return version === 'latest' ? marker.version === latestVersion : true;
+      }
+      if (!adopt) {
+        return false;
       }
       const installedVersion = await getInstalledPackageVersion(packagePath);
-      return installedVersion === latestVersion;
+      if (version === 'latest' && installedVersion !== latestVersion) {
+        return false;
+      }
+      // An alias installed by an older use-m (or by hand) carries no marker.
+      // Adopt it instead of reinstalling, but only once it resolves — a tree
+      // left behind by an interrupted install must not be adopted.
+      let resolved = null;
+      try {
+        resolved = await tryResolveModule(packagePath);
+      } catch {
+        resolved = null;
+      }
+      if (!resolved) {
+        return false;
+      }
+      await writeInstallMarker(markerPath, {
+        alias: path.basename(packagePath),
+        version: installedVersion,
+        requestedVersion: version,
+        adopted: true
+      });
+      return true;
     };
 
     const removePackageAlias = async (packagePath, reason) => {
@@ -678,6 +770,84 @@ const resolvers = {
       }
     };
 
+    // A cross-process advisory lock over one alias directory. npm takes no lock
+    // on the global prefix, so two `npm install -g <alias>` runs delete and
+    // re-extract each other's trees; separate processes sharing one prefix (a CI
+    // step, a daemon, containers on one volume) need a lock that outlives a
+    // single process. `mkdir` is atomic on every filesystem, which is why the
+    // lock is a directory rather than a file — the strategy proper-lockfile
+    // uses. It is deliberately self-healing: the owner refreshes the mtime, a
+    // lock left behind by a crashed owner is stolen once it goes stale, and
+    // anything unexpected (an unwritable root, a peer that never finishes)
+    // degrades to the previous unlocked behavior instead of hanging.
+    const acquireInstallLock = async (lockPath) => {
+      const unlocked = { acquired: false, release: async () => {} };
+      if (!installLockEnabled) {
+        return unlocked;
+      }
+      try {
+        await mkdir(path.dirname(lockPath), { recursive: true });
+      } catch {
+        return unlocked;
+      }
+      const startedAt = Date.now();
+      for (;;) {
+        try {
+          await mkdir(lockPath);
+        } catch (error) {
+          if (error?.code !== 'EEXIST') {
+            return unlocked;
+          }
+          const stats = await stat(lockPath).catch(() => null);
+          if (!stats) {
+            // The owner released it between our mkdir and stat — retry now.
+            continue;
+          }
+          if (Date.now() - stats.mtimeMs > installLockStaleMs
+            && await rmdir(lockPath).then(() => true, () => false)) {
+            continue;
+          }
+          if (Date.now() - startedAt > installLockTimeoutMs) {
+            return unlocked;
+          }
+          await sleep(installLockPollMs);
+          continue;
+        }
+        // Keep the mtime fresh so waiters do not mistake a slow install (a cold
+        // `npm install -g` can take minutes) for a crashed owner.
+        const heartbeat = installLockHeartbeatMs > 0
+          ? setInterval(() => {
+            const stamp = new Date();
+            Promise.resolve(utimes(lockPath, stamp, stamp)).catch(() => {});
+          }, installLockHeartbeatMs)
+          : null;
+        heartbeat?.unref?.();
+        let released = false;
+        return {
+          acquired: true,
+          release: async () => {
+            if (released) {
+              return;
+            }
+            released = true;
+            if (heartbeat) {
+              clearInterval(heartbeat);
+            }
+            await rmdir(lockPath).catch(() => {});
+          }
+        };
+      }
+    };
+
+    const withInstallLock = async (lockPath, run) => {
+      const lock = await acquireInstallLock(lockPath);
+      try {
+        return await run(lock.acquired);
+      } finally {
+        await lock.release();
+      }
+    };
+
     const formatInstallFailure = (error) => {
       const output = [error?.stderr, error?.stdout]
         .filter(value => typeof value === 'string' && value.trim())
@@ -686,7 +856,7 @@ const resolvers = {
       return output || error?.message || String(error);
     };
 
-    const installPackage = async ({ alias, packageName, version, packagePath, installContext }) => {
+    const installPackage = async ({ alias, packageName, version, packagePath, installContext, exclusive }) => {
       const failures = [];
       for (let attempt = 1; attempt <= installMaxAttempts; attempt++) {
         try {
@@ -697,9 +867,15 @@ const resolvers = {
           return;
         } catch (error) {
           failures.push({ error, details: formatInstallFailure(error) });
-          await removePackageAlias(packagePath, 'incomplete');
+          // Removing the shared alias is only safe while we hold its lock.
+          // Without the lock this deletes the tree a concurrent installer just
+          // wrote successfully, which is what turned a failed install of one
+          // caller into an ERR_MODULE_NOT_FOUND of another (issue #70).
+          if (exclusive) {
+            await removePackageAlias(packagePath, 'incomplete');
+          }
           if (attempt < installMaxAttempts && installRetryDelayMs > 0) {
-            await new Promise(resolve => setTimeout(resolve, installRetryDelayMs * attempt));
+            await sleep(installRetryDelayMs * attempt);
           }
         }
       }
@@ -715,29 +891,62 @@ const resolvers = {
       );
     };
 
-    const ensurePackageInstalled = async ({ packageName, version }, { repair = false } = {}) => {
-      const alias = `${packageName.replace('@', '').replace('/', '-')}-v-${version}`;
+    const resolveInstalledPackagePath = async ({ packageName, version, alias, repair }) => {
       const latestVersion = version === 'latest' ? await getLatestVersion(packageName, baseNpmEnv) : null;
       const globalModulesPath = await getNpmGlobalRoot(baseNpmEnv);
-      let packagePath = path.join(globalModulesPath, alias);
-      if (repair && await directoryExists(packagePath)) {
-        await removePackageAlias(packagePath, 'corrupt');
-      } else if (await isPackageInstalled(packagePath, version, latestVersion)) {
+      const packagePath = path.join(globalModulesPath, alias);
+      if (!repair && await isPackageInstalled(
+        packagePath,
+        version,
+        latestVersion,
+        getInstallMarkerPath(globalModulesPath, alias)
+      )) {
         return packagePath;
       }
 
       const installContext = await getWritableInstallContext(globalModulesPath, baseNpmEnv);
-      packagePath = path.join(installContext.globalModulesPath, alias);
-      if (installContext.globalModulesPath !== globalModulesPath) {
-        if (repair && await directoryExists(packagePath)) {
-          await removePackageAlias(packagePath, 'corrupt');
-        } else if (await isPackageInstalled(packagePath, version, latestVersion)) {
-          return packagePath;
-        }
+      const installPath = path.join(installContext.globalModulesPath, alias);
+      const markerPath = getInstallMarkerPath(installContext.globalModulesPath, alias);
+      if (!repair
+        && installContext.globalModulesPath !== globalModulesPath
+        && await isPackageInstalled(installPath, version, latestVersion, markerPath)) {
+        return installPath;
       }
 
-      await installPackage({ alias, packageName, version, packagePath, installContext });
-      return packagePath;
+      return withInstallLock(getInstallLockPath(installContext.globalModulesPath, alias), async (exclusive) => {
+        // Re-check while holding the lock: a peer we queued behind may have
+        // installed the alias already, and an unmarked alias can only be
+        // adopted here, where nothing else is writing to it.
+        if (!repair && await isPackageInstalled(installPath, version, latestVersion, markerPath, { adopt: true })) {
+          return installPath;
+        }
+        await removeInstallMarker(markerPath);
+        if (repair && await directoryExists(installPath)) {
+          await removePackageAlias(installPath, 'corrupt');
+        }
+        await installPackage({ alias, packageName, version, packagePath: installPath, installContext, exclusive });
+        await writeInstallMarker(markerPath, {
+          alias,
+          version: await getInstalledPackageVersion(installPath),
+          requestedVersion: version
+        });
+        return installPath;
+      });
+    };
+
+    // Collapse the concurrent callers of one alias inside this process: identical
+    // requests share a single install, and an install and a repair of the same
+    // alias are serialized instead of overlapping. Without this every `use()` in
+    // a cold top-level-await wave starts its own `npm install -g` (issue #70).
+    const ensurePackageInstalled = async ({ packageName, version }, { repair = false } = {}) => {
+      const alias = `${packageName.replace('@', '').replace('/', '-')}-v-${version}`;
+      const aliasKey = `${getNpmEnvId(npmEnvSource)} ${alias}`;
+      const requestKey = repair ? `${aliasKey} repair` : aliasKey;
+      return dedupeNpmInstall(
+        requestKey,
+        aliasKey,
+        () => resolveInstalledPackagePath({ packageName, version, alias, repair })
+      );
     };
 
     const { packageName, version, modulePath } = parseModuleSpecifier(moduleSpecifier);
@@ -941,6 +1150,68 @@ const resolvers = {
 // back to the next. The primary entry preserves the previous default per runtime.
 const networkResolverChain = ['esm', 'jspm', 'skypack']
 const denoResolverChain = ['deno', 'jspm', 'skypack']
+
+// npm installs for the same alias must not overlap. `npm install -g` takes no
+// lock on the global prefix, so two runs writing the same alias directory delete
+// and re-extract each other's trees — the loser fails with ENOTEMPTY, and, worse,
+// a caller that saw no error at all can import a half-written tree. Node
+// evaluates sibling top-level-await subgraphs concurrently, so a project whose
+// modules all open with `await use('some-package')` starts exactly that wave on
+// every cold run (issue #70). These maps collapse the wave inside one process;
+// the alias lock in the npm resolver covers separate processes.
+const npmInstallsInFlight = new Map()
+const npmInstallQueues = new Map()
+const npmEnvIds = new WeakMap()
+let npmEnvId = 0
+
+// A stable id per npm environment object. Calls that share an environment (the
+// usual `process.env`) share coordination keys, while calls given explicitly
+// different environments — different npm prefixes, hence different install
+// directories — never collapse into each other.
+const getNpmEnvId = (env) => {
+  if (!env || typeof env !== 'object') {
+    return 'env-default'
+  }
+  let id = npmEnvIds.get(env)
+  if (id === undefined) {
+    id = `env-${++npmEnvId}`
+    npmEnvIds.set(env, id)
+  }
+  return id
+}
+
+// Serialize every install of one alias in this process, so an install and a
+// repair of the same directory can never run at the same time.
+const queueNpmInstall = (aliasKey, run) => {
+  const previous = npmInstallQueues.get(aliasKey) || Promise.resolve()
+  const result = previous.then(run, run)
+  const tail = result.then(() => {}, () => {})
+  npmInstallQueues.set(aliasKey, tail)
+  tail.then(() => {
+    if (npmInstallQueues.get(aliasKey) === tail) {
+      npmInstallQueues.delete(aliasKey)
+    }
+  })
+  return result
+}
+
+// Single flight: identical concurrent requests share one install. The entry is
+// evicted once it settles, so a genuine failure stays retryable.
+const dedupeNpmInstall = (requestKey, aliasKey, run) => {
+  const pending = npmInstallsInFlight.get(requestKey)
+  if (pending) {
+    return pending
+  }
+  const promise = queueNpmInstall(aliasKey, run)
+  npmInstallsInFlight.set(requestKey, promise)
+  const forget = () => {
+    if (npmInstallsInFlight.get(requestKey) === promise) {
+      npmInstallsInFlight.delete(requestKey)
+    }
+  }
+  promise.then(forget, forget)
+  return promise
+}
 
 let npmImportRecoveryId = 0
 
