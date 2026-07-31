@@ -17,7 +17,7 @@ describe(`${moduleName} distributed script synchronization`, () => {
     const files = ['src/use.mjs', 'src/use.cjs', 'src/use.js'];
     const sectionMarkers = [
       ['  npm: async (moduleSpecifier, pathResolver', '\n  bun: async'],
-      ['let npmImportRecoveryId = 0', '\n// Normalize a resolver reference'],
+      ['// npm installs for the same alias must not overlap', '\n// Normalize a resolver reference'],
       ['    if (resolverChain.length === 1) {', '\n    return loadWithFallback('],
     ];
     const blocks = await Promise.all(files.map(async file => {
