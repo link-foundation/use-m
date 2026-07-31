@@ -85,6 +85,27 @@ if (args[0] === 'install' && args[1] === '-g' && args[2]) {
     path.join(packageDirectory, 'package.json'),
     JSON.stringify({ name: alias, version: installedVersion, type: 'module', main: 'index.js' })
   );
+
+  // Real npm writes package.json before the rest of the tree is extracted, so
+  // this delay reproduces the window in which the alias directory already
+  // declares its final version but cannot be imported yet. The sentinel records
+  // whether a second npm run entered that window at the same time.
+  const installDelayMs = Number(process.env.USE_M_FAKE_NPM_INSTALL_DELAY_MS || 0);
+  if (installDelayMs > 0) {
+    const sentinel = path.join(root, '.fake-npm-install-active');
+    let holdsSentinel = false;
+    try {
+      fs.writeFileSync(sentinel, String(process.pid), { flag: 'wx' });
+      holdsSentinel = true;
+    } catch {
+      fs.appendFileSync(logFile, JSON.stringify({ args: ['overlap'], prefix, root }) + '\\n');
+    }
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, installDelayMs);
+    if (holdsSentinel) {
+      fs.rmSync(sentinel, { force: true });
+    }
+  }
+
   fs.writeFileSync(
     path.join(packageDirectory, 'index.js'),
     'export const installed = true; export const installAttempt = ' + installAttempt + ';\\n'
@@ -210,6 +231,34 @@ const repairFixtureWithRmRetryProbeInFreshProcess = async (fixture) => {
     { env: fixture.baseEnv }
   );
   return JSON.parse(stdout);
+};
+
+const installFixtureInFreshProcesses = async (fixture, count, env) => {
+  const useModuleUrl = new URL('../src/use.mjs', import.meta.url).href;
+  const source = `
+    import { createRequire } from 'node:module';
+    import { readFile } from 'node:fs/promises';
+    const require = createRequire(import.meta.url);
+    const { resolvers } = await import(${JSON.stringify(useModuleUrl)});
+    const packagePath = await resolvers.npm(
+      'fixture-pkg@1.0.0',
+      require.resolve,
+      { env: process.env, installRetryDelayMs: 0 }
+    );
+    process.stdout.write(JSON.stringify({ packagePath, source: await readFile(packagePath, 'utf8') }));
+  `;
+  return Promise.all(Array.from({ length: count }, async () => {
+    try {
+      const { stdout } = await execFileAsync(
+        process.execPath,
+        ['--input-type=module', '--eval', source],
+        { env }
+      );
+      return JSON.parse(stdout);
+    } catch (error) {
+      return { error: error.stderr || error.message };
+    }
+  }));
 };
 
 describe(`${moduleName} npm global prefix handling`, () => {
@@ -436,4 +485,75 @@ describe(`${moduleName} npm global prefix handling`, () => {
     });
     expect(npmCalls.filter(call => call.args[0] === 'install')).toHaveLength(1);
   });
+
+  test(`${moduleName} collapses concurrent requests for one package into a single install`, async () => {
+    if (typeof Deno !== 'undefined' || typeof Bun !== 'undefined') {
+      return;
+    }
+
+    const fixture = await createFakeNpm();
+    const env = {
+      ...fixture.baseEnv,
+      USE_M_FAKE_NPM_INSTALL_DELAY_MS: '250'
+    };
+    const packagePaths = await Promise.all(Array.from({ length: 8 }, () => resolvers.npm(
+      'fixture-pkg@1.0.0',
+      resolve,
+      { env, installRetryDelayMs: 0 }
+    )));
+    const npmCalls = await readNpmLog(fixture.logFile);
+
+    expect(npmCalls.filter(call => call.args[0] === 'install')).toHaveLength(1);
+    expect(new Set(packagePaths).size).toBe(1);
+    expect(await readFile(packagePaths[0], 'utf8')).toContain('installed = true');
+  }, 30000);
+
+  test(`${moduleName} keeps a shared failed install retryable`, async () => {
+    if (typeof Deno !== 'undefined' || typeof Bun !== 'undefined') {
+      return;
+    }
+
+    const fixture = await createFakeNpm();
+    const env = {
+      ...fixture.baseEnv,
+      USE_M_FAKE_NPM_INSTALL_FAILURES: '3'
+    };
+    const settled = await Promise.allSettled(Array.from({ length: 3 }, () => resolvers.npm(
+      'fixture-pkg@1.0.0',
+      resolve,
+      { env, installRetryDelayMs: 0 }
+    )));
+    const npmCallsAfterFailure = await readNpmLog(fixture.logFile);
+    const packagePath = await resolvers.npm(
+      'fixture-pkg@1.0.0',
+      resolve,
+      { env, installRetryDelayMs: 0 }
+    );
+
+    expect(settled.map(result => result.status)).toEqual(['rejected', 'rejected', 'rejected']);
+    expect(npmCallsAfterFailure.filter(call => call.args[0] === 'install')).toHaveLength(3);
+    expect(await readFile(packagePath, 'utf8')).toContain('installed = true');
+  }, 30000);
+
+  test(`${moduleName} never lets separate processes install one alias at the same time`, async () => {
+    if (typeof Deno !== 'undefined' || typeof Bun !== 'undefined') {
+      return;
+    }
+
+    const fixture = await createFakeNpm();
+    const env = {
+      ...fixture.baseEnv,
+      USE_M_FAKE_NPM_INSTALL_DELAY_MS: '500'
+    };
+    const results = await installFixtureInFreshProcesses(fixture, 4, env);
+    const npmCalls = await readNpmLog(fixture.logFile);
+
+    expect(results.filter(result => result.error)).toEqual([]);
+    expect(npmCalls.filter(call => call.args[0] === 'overlap')).toEqual([]);
+    expect(npmCalls.filter(call => call.args[0] === 'install')).toHaveLength(1);
+    expect(new Set(results.map(result => result.packagePath)).size).toBe(1);
+    for (const result of results) {
+      expect(result.source).toContain('installed = true');
+    }
+  }, 60000);
 });
