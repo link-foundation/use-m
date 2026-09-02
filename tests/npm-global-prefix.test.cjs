@@ -1,4 +1,4 @@
-const { chmod, mkdir, mkdtemp, readFile, rm, writeFile } = require('node:fs/promises');
+const { chmod, mkdir, mkdtemp, readFile, readlink, rm, symlink, writeFile } = require('node:fs/promises');
 const { execFile } = require('node:child_process');
 const { tmpdir } = require('node:os');
 const path = require('node:path');
@@ -53,15 +53,20 @@ if (args[0] === 'show' && args[2] === 'version') {
   process.exit(0);
 }
 
-if (args[0] === 'install' && args[1] === '-g' && args[2]) {
-  const specifier = args[2];
+const installSpecifier = args.find(arg => arg.includes('@npm:'));
+if (args[0] === 'install' && args[1] === '-g' && installSpecifier) {
+  const specifier = installSpecifier;
   const alias = specifier.split('@npm:')[0];
   const requestedPackage = specifier.slice(specifier.indexOf('@npm:') + 5);
-  const requestedVersion = requestedPackage.slice(requestedPackage.lastIndexOf('@') + 1);
+  const versionSeparator = requestedPackage.lastIndexOf('@');
+  const requestedName = requestedPackage.slice(0, versionSeparator);
+  const requestedVersion = requestedPackage.slice(versionSeparator + 1);
   const installedVersion = requestedVersion === 'latest'
     ? process.env.USE_M_FAKE_NPM_LATEST_VERSION || '1.0.0'
     : requestedVersion;
   const packageDirectory = path.join(root, alias);
+  const binName = process.env.USE_M_FAKE_NPM_BIN_NAME;
+  const binPath = binName ? path.resolve(root, '..', '..', 'bin', binName) : null;
   const installAttempt = fs.readFileSync(logFile, 'utf8')
     .trim()
     .split('\\n')
@@ -70,6 +75,17 @@ if (args[0] === 'install' && args[1] === '-g' && args[2]) {
     .filter(call => call.args[0] === 'install')
     .length;
   const failuresBeforeSuccess = Number(process.env.USE_M_FAKE_NPM_INSTALL_FAILURES || 0);
+
+  // npm 11 checks an existing global executable even with --no-bin-links.
+  // Only --force gets past the collision, after which --no-bin-links keeps the
+  // existing executable untouched.
+  if (binPath && fs.existsSync(binPath) && !args.includes('--force')) {
+    console.error('npm error code EEXIST');
+    console.error('npm error path ' + binPath);
+    console.error('npm error EEXIST: file already exists');
+    console.error('npm error File exists: ' + binPath);
+    process.exit(1);
+  }
 
   if (installAttempt <= failuresBeforeSuccess) {
     fs.mkdirSync(packageDirectory, { recursive: true });
@@ -82,7 +98,7 @@ if (args[0] === 'install' && args[1] === '-g' && args[2]) {
   fs.mkdirSync(packageDirectory, { recursive: true });
   fs.writeFileSync(
     path.join(packageDirectory, 'package.json'),
-    JSON.stringify({ name: alias, version: installedVersion, type: 'module', main: 'index.js' })
+    JSON.stringify({ name: requestedName, version: installedVersion, type: 'module', main: 'index.js' })
   );
 
   // Real npm writes package.json before the rest of the tree is extracted, so
@@ -109,6 +125,10 @@ if (args[0] === 'install' && args[1] === '-g' && args[2]) {
     path.join(packageDirectory, 'index.js'),
     'export const installed = true; export const installAttempt = ' + installAttempt + ';\\n'
   );
+  if (binPath && !args.includes('--no-bin-links')) {
+    fs.mkdirSync(path.dirname(binPath), { recursive: true });
+    fs.symlinkSync(path.relative(path.dirname(binPath), path.join(packageDirectory, 'index.js')), binPath);
+  }
   process.exit(0);
 }
 
@@ -271,6 +291,69 @@ const installFixtureInFreshProcesses = async (fixture, count, env) => {
 };
 
 describe(`${moduleName} npm global prefix handling`, () => {
+  test(`${moduleName} keeps latest and pinned aliases loadable when they share a package binary`, async () => {
+    if (typeof Deno !== 'undefined' || typeof Bun !== 'undefined') {
+      return;
+    }
+
+    const fixture = await createFakeNpm();
+    const env = {
+      ...fixture.baseEnv,
+      USE_M_FAKE_NPM_BIN_NAME: 'fixture-cli'
+    };
+    const binPath = path.resolve(fixture.defaultRoot, '..', '..', 'bin', 'fixture-cli');
+    const latestPath = await resolvers.npm('fixture-pkg', resolve, { env, installRetryDelayMs: 0 });
+    const originalBinTarget = await readlink(binPath);
+    const pinnedPath = await resolvers.npm('fixture-pkg@1.0.0', resolve, { env, installRetryDelayMs: 0 });
+    const npmCalls = await readNpmLog(fixture.logFile);
+    const installCalls = npmCalls.filter(call => call.args[0] === 'install');
+
+    expect(await readFile(latestPath, 'utf8')).toContain('installed = true');
+    expect(await readFile(pinnedPath, 'utf8')).toContain('installed = true');
+    expect(await readlink(binPath)).toBe(originalBinTarget);
+    expect(installCalls).toHaveLength(3);
+    expect(installCalls[2].args).toEqual([
+      'install',
+      '-g',
+      '--force',
+      '--no-bin-links',
+      'fixture-pkg-v-1.0.0@npm:fixture-pkg@1.0.0'
+    ]);
+  });
+
+  test(`${moduleName} never force-installs over an unrelated global executable`, async () => {
+    if (typeof Deno !== 'undefined' || typeof Bun !== 'undefined') {
+      return;
+    }
+
+    const fixture = await createFakeNpm();
+    const env = {
+      ...fixture.baseEnv,
+      USE_M_FAKE_NPM_BIN_NAME: 'fixture-cli'
+    };
+    const unrelatedDirectory = path.join(fixture.defaultRoot, 'unrelated-pkg');
+    const unrelatedEntry = path.join(unrelatedDirectory, 'index.js');
+    const binPath = path.resolve(fixture.defaultRoot, '..', '..', 'bin', 'fixture-cli');
+    await mkdir(unrelatedDirectory, { recursive: true });
+    await writeFile(unrelatedEntry, 'user installed executable\n');
+    await mkdir(path.dirname(binPath), { recursive: true });
+    await symlink(path.relative(path.dirname(binPath), unrelatedEntry), binPath);
+    const originalBinTarget = await readlink(binPath);
+
+    await expect(resolvers.npm(
+      'fixture-pkg@1.0.0',
+      resolve,
+      { env, installRetryDelayMs: 0 }
+    )).rejects.toThrow('EEXIST');
+    const npmCalls = await readNpmLog(fixture.logFile);
+    const installCalls = npmCalls.filter(call => call.args[0] === 'install');
+
+    expect(installCalls).toHaveLength(3);
+    expect(installCalls.some(call => call.args.includes('--force'))).toBe(false);
+    expect(await readlink(binPath)).toBe(originalBinTarget);
+    expect(await readFile(unrelatedEntry, 'utf8')).toBe('user installed executable\n');
+  });
+
   test(`${moduleName} redirects installs to use-m cache when npm global root is not writable`, async () => {
     if (typeof Deno !== 'undefined' || typeof Bun !== 'undefined') {
       return;

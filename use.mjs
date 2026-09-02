@@ -451,7 +451,7 @@ export const resolvers = {
     const path = await import('node:path');
     const { exec } = await import('node:child_process');
     const { promisify } = await import('node:util');
-    const { access, mkdir, readFile, rename, rm, rmdir, stat, unlink, utimes, writeFile } = await import('node:fs/promises');
+    const { access, mkdir, readFile, readlink, rename, rm, rmdir, stat, unlink, utimes, writeFile } = await import('node:fs/promises');
     const { constants: fsConstants } = await import('node:fs');
     const os = await import('node:os');
     const execAsync = promisify(exec);
@@ -862,6 +862,49 @@ export const resolvers = {
       return output || error?.message || String(error);
     };
 
+    const getInstallErrorText = (error) => [
+      error?.stderr,
+      error?.stdout,
+      error?.message,
+      error?.cause?.stderr,
+      error?.cause?.stdout,
+      error?.cause?.message
+    ].filter(value => typeof value === 'string' && value.trim()).join('\n');
+
+    const getOwnedConflictingBinPath = async ({ error, alias, packageName, globalModulesPath }) => {
+      const errorText = getInstallErrorText(error);
+      const pathMatch = errorText.match(/(?:^|\n)npm error path ([^\r\n]+)/);
+      if (!/\bEEXIST\b/.test(errorText) || !pathMatch) {
+        return null;
+      }
+
+      const binPath = pathMatch[1].trim();
+      try {
+        const linkTarget = await readlink(binPath);
+        const resolvedTarget = path.resolve(path.dirname(binPath), linkTarget);
+        const relativeTarget = path.relative(globalModulesPath, resolvedTarget);
+        if (!relativeTarget
+          || path.isAbsolute(relativeTarget)
+          || relativeTarget === '..'
+          || relativeTarget.startsWith(`..${path.sep}`)) {
+          return null;
+        }
+
+        const [ownerAlias] = relativeTarget.split(path.sep);
+        const aliasPrefix = `${packageName.replace('@', '').replace('/', '-')}-v-`;
+        if (ownerAlias === alias || !ownerAlias.startsWith(aliasPrefix)) {
+          return null;
+        }
+
+        const ownerPackageJson = JSON.parse(
+          await readFile(path.join(globalModulesPath, ownerAlias, 'package.json'), 'utf8')
+        );
+        return ownerPackageJson.name === packageName ? binPath : null;
+      } catch {
+        return null;
+      }
+    };
+
     const installPackage = async ({ alias, packageName, version, packagePath, installContext, exclusive }) => {
       const failures = [];
       for (let attempt = 1; attempt <= installMaxAttempts; attempt++) {
@@ -872,7 +915,27 @@ export const resolvers = {
           );
           return;
         } catch (error) {
-          failures.push({ error, details: formatInstallFailure(error) });
+          let failure = error;
+          let details = formatInstallFailure(error);
+          const conflictingBinPath = await getOwnedConflictingBinPath({
+            error,
+            alias,
+            packageName,
+            globalModulesPath: installContext.globalModulesPath
+          });
+          if (conflictingBinPath) {
+            try {
+              await execAsync(
+                `npm install -g --force --no-bin-links ${alias}@npm:${packageName}@${version}`,
+                { env: installContext.env }
+              );
+              return;
+            } catch (retryError) {
+              failure = retryError;
+              details += `\nSafe no-bin retry after verified conflict at '${conflictingBinPath}': ${formatInstallFailure(retryError)}`;
+            }
+          }
+          failures.push({ error: failure, details });
           // Removing the shared alias is only safe while we hold its lock.
           // Without the lock this deletes the tree a concurrent installer just
           // wrote successfully, which is what turned a failed install of one
