@@ -1,0 +1,178 @@
+[0m[32mCheck[0m tests/builtin-browser.test.mjs
+[0m[32mCheck[0m tests/builtin-errors.test.mjs
+[0m[32mCheck[0m tests/builtin-nodejs.test.mjs
+[0m[32mCheck[0m tests/builtin-universal.test.mjs
+[0m[32mCheck[0m tests/command-stream.test.mjs
+[0m[32mCheck[0m tests/deno-support.test.mjs
+[0m[32mCheck[0m tests/filename.test.mjs
+[0m[32mCheck[0m tests/fs-promises.test.mjs
+[0m[32mCheck[0m tests/get-script-url.test.mjs
+[0m[32mCheck[0m tests/import.test.mjs
+[0m[32mCheck[0m tests/lodash.test.mjs
+[0m[32mCheck[0m tests/module-specifier.test.mjs
+[0m[32mCheck[0m tests/network-imports.test.mjs
+[0m[32mCheck[0m tests/relative-paths-browser.test.mjs
+[0m[32mCheck[0m tests/relative-paths.integration.test.mjs
+[0m[32mCheck[0m tests/relative-paths.test.mjs
+[0m[32mCheck[0m tests/resolvers.test.mjs
+[0m[32mCheck[0m tests/typescript.test.mjs
+[0m[32mCheck[0m tests/use.test.mjs
+[0m[38;5;245mrunning 1 test from ./tests/builtin-browser.test.mjs[0m
+[mjs module] Universal built-in modules in browser ...
+  Browser tests are skipped in Deno environment ... [0m[33mignored[0m [0m[38;5;245m(0ms)[0m
+[mjs module] Universal built-in modules in browser ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+[0m[38;5;245mrunning 1 test from ./tests/builtin-errors.test.mjs[0m
+[mjs module] Built-in module error handling ...
+  [mjs module] should return null for non-builtin modules from builtin resolver ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+  [mjs module] should throw error for unsupported builtin modules ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+  [mjs module] should handle modules not available in browser environment ...[0m[32mDownload[0m https://esm.sh/URL
+ [0m[32mok[0m [0m[38;5;245m(49ms)[0m
+  [mjs module] should only work with exact lowercase module names ... [0m[32mok[0m [0m[38;5;245m(284ms)[0m
+  [mjs module] should handle node: prefix removal correctly ... [0m[32mok[0m [0m[38;5;245m(28ms)[0m
+  [mjs module] should throw meaningful errors for import failures ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+  [mjs module] builtin resolver should handle empty/invalid module specifiers gracefully ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+  [mjs module] should handle modules with special characters in names ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+[mjs module] Built-in module error handling ... [0m[32mok[0m [0m[38;5;245m(425ms)[0m
+[0m[38;5;245mrunning 1 test from ./tests/builtin-nodejs.test.mjs[0m
+[mjs module] Node.js/Bun-only built-in modules ...
+  [mjs module] fs module should work ... [0m[32mok[0m [0m[38;5;245m(108ms)[0m
+  [mjs module] path module should work ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+  [mjs module] os module should work ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+  [mjs module] util module should work ... [0m[32mok[0m [0m[38;5;245m(4ms)[0m
+  [mjs module] events module should work ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+  [mjs module] stream module should work ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+  [mjs module] buffer module should work ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+  [mjs module] process module should work ... [0m[32mok[0m [0m[38;5;245m(5ms)[0m
+  [mjs module] child_process module should work ... [0m[32mok[0m [0m[38;5;245m(10ms)[0m
+  [mjs module] http module should work ... [0m[32mok[0m [0m[38;5;245m(19ms)[0m
+  [mjs module] https module should work ... [0m[32mok[0m [0m[38;5;245m(25ms)[0m
+  [mjs module] net module should work ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+  [mjs module] dns module should work ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+  [mjs module] zlib module should work ... [0m[32mok[0m [0m[38;5;245m(5ms)[0m
+  [mjs module] querystring module should work ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+  [mjs module] assert module should work ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+  [mjs module] all modules should work with node: prefix ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+[mjs module] Node.js/Bun-only built-in modules ... [0m[32mok[0m [0m[38;5;245m(290ms)[0m
+[0m[38;5;245mrunning 1 test from ./tests/builtin-universal.test.mjs[0m
+[mjs module] Universal built-in modules (work in all environments) ...
+  [mjs module] console module should work ... [0m[32mok[0m [0m[38;5;245m(68ms)[0m
+  [mjs module] crypto module should work ... [0m[32mok[0m [0m[38;5;245m(22ms)[0m
+  [mjs module] url module should work ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+  [mjs module] performance module should work ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+  [mjs module] modules should work with node: prefix ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+[mjs module] Universal built-in modules (work in all environments) ... [0m[32mok[0m [0m[38;5;245m(149ms)[0m
+[0m[38;5;245mrunning 1 test from ./tests/command-stream.test.mjs[0m
+[mjs module] command-stream module import ...
+  [mjs module] Direct ESM Import ...[0m[32mDownload[0m https://esm.sh/command-stream@latest
+[0m[32mDownload[0m https://esm.sh/command-stream@0.22.0
+[0m[32mDownload[0m https://esm.sh/command-stream@0.22.0/denonext/process-runner.mjs
+[0m[32mDownload[0m https://esm.sh/command-stream@0.22.0/denonext/src/$.ansi.mjs
+[0m[32mDownload[0m https://esm.sh/command-stream@0.22.0/denonext/src/$.process-context.mjs
+[0m[32mDownload[0m https://esm.sh/command-stream@0.22.0/denonext/src/$.quote.mjs
+[0m[32mDownload[0m https://esm.sh/command-stream@0.22.0/denonext/src/$.result.mjs
+[0m[32mDownload[0m https://esm.sh/command-stream@0.22.0/denonext/src/$.state.mjs
+[0m[32mDownload[0m https://esm.sh/command-stream@0.22.0/denonext/src/$.trace.mjs
+[0m[32mDownload[0m https://esm.sh/command-stream@0.22.0/denonext/src/$.utils.mjs
+[0m[32mDownload[0m https://esm.sh/command-stream@0.22.0/denonext/command-stream.mjs
+[0m[32mDownload[0m https://esm.sh/command-stream@0.22.0/denonext/src/$.shell.mjs
+[0m[32mDownload[0m https://esm.sh/command-stream@0.22.0/denonext/src/$.stream-utils.mjs
+[0m[32mDownload[0m https://esm.sh/command-stream@0.22.0/denonext/src/commands/index.mjs
+[0m[32mDownload[0m https://esm.sh/@resvg/resvg-js@^2.6.2?target=denonext
+[0m[32mDownload[0m https://esm.sh/gifenc@^1.0.3?target=denonext
+[0m[32mDownload[0m https://esm.sh/@xterm/headless@^6.0.0?target=denonext
+[0m[32mDownload[0m https://esm.sh/@resvg/resvg-js@2.6.2?target=denonext
+[0m[32mDownload[0m https://esm.sh/gifenc@1.0.3?target=denonext
+[0m[32mDownload[0m https://esm.sh/@xterm/headless@6.0.0?target=denonext
+[0m[32mDownload[0m https://esm.sh/@resvg/resvg-js-android-arm-eabi?target=denonext
+[0m[32mDownload[0m https://esm.sh/@resvg/resvg-js-android-arm64?target=denonext
+[0m[32mDownload[0m https://esm.sh/@resvg/resvg-js-darwin-arm64?target=denonext
+[0m[32mDownload[0m https://esm.sh/@resvg/resvg-js-darwin-universal?target=denonext
+[0m[32mDownload[0m https://esm.sh/@resvg/resvg-js-darwin-x64?target=denonext
+[0m[32mDownload[0m https://esm.sh/@resvg/resvg-js-freebsd-x64?target=denonext
+[0m[32mDownload[0m https://esm.sh/@resvg/resvg-js-linux-arm-gnueabihf?target=denonext
+[0m[32mDownload[0m https://esm.sh/@resvg/resvg-js-linux-arm64-gnu?target=denonext
+[0m[32mDownload[0m https://esm.sh/@resvg/resvg-js-linux-arm64-musl?target=denonext
+[0m[32mDownload[0m https://esm.sh/@resvg/resvg-js-linux-riscv64-gnu?target=denonext
+[0m[32mDownload[0m https://esm.sh/@resvg/resvg-js-linux-riscv64-musl?target=denonext
+[0m[32mDownload[0m https://esm.sh/@resvg/resvg-js-linux-s390x-gnu?target=denonext
+[0m[32mDownload[0m https://esm.sh/@resvg/resvg-js-linux-x64-gnu?target=denonext
+[0m[32mDownload[0m https://esm.sh/@resvg/resvg-js-linux-x64-musl?target=denonext
+[0m[32mDownload[0m https://esm.sh/@resvg/resvg-js-win32-arm64-msvc?target=denonext
+[0m[32mDownload[0m https://esm.sh/@resvg/resvg-js-win32-ia32-msvc?target=denonext
+[0m[32mDownload[0m https://esm.sh/@resvg/resvg-js-win32-x64-msvc?target=denonext
+[0m[32mDownload[0m https://esm.sh/@resvg/resvg-js@2.6.2/denonext/resvg-js.mjs
+[0m[32mDownload[0m https://esm.sh/gifenc@1.0.3/denonext/gifenc.mjs
+[0m[32mDownload[0m https://esm.sh/@xterm/headless@6.0.0/denonext/headless.mjs
+[0m[32mDownload[0m https://esm.sh/@resvg/resvg-js-android-arm-eabi@2.6.2?target=denonext
+[0m[32mDownload[0m https://esm.sh/@resvg/resvg-js-android-arm64@2.6.2?target=denonext
+[0m[32mDownload[0m https://esm.sh/@resvg/resvg-js-darwin-arm64@2.6.2?target=denonext
+[0m[32mDownload[0m https://esm.sh/@resvg/resvg-js-darwin-x64@2.6.2?target=denonext
+[0m[32mDownload[0m https://esm.sh/@resvg/resvg-js-freebsd-x64@1.0.0?target=denonext
+[0m[32mDownload[0m https://esm.sh/@resvg/resvg-js-linux-arm-gnueabihf@2.6.2?target=denonext
+[0m[32mDownload[0m https://esm.sh/@resvg/resvg-js-linux-arm64-gnu@2.6.2?target=denonext
+[0m[32mDownload[0m https://esm.sh/@resvg/resvg-js-linux-arm64-musl@2.6.2?target=denonext
+[0m[32mDownload[0m https://esm.sh/@resvg/resvg-js-linux-x64-gnu@2.6.2?target=denonext
+[0m[32mDownload[0m https://esm.sh/@resvg/resvg-js-linux-x64-musl@2.6.2?target=denonext
+[0m[32mDownload[0m https://esm.sh/@resvg/resvg-js-win32-arm64-msvc@2.6.2?target=denonext
+[0m[32mDownload[0m https://esm.sh/@resvg/resvg-js-win32-ia32-msvc@2.6.2?target=denonext
+[0m[32mDownload[0m https://esm.sh/@resvg/resvg-js-win32-x64-msvc@2.6.2?target=denonext
+ [0m[32mok[0m [0m[38;5;245m(9s)[0m
+  [mjs module] Dynamic ESM Import of CJS ... [0m[32mok[0m [0m[38;5;245m(69ms)[0m
+  [mjs module] Dynamic ESM Import of MJS ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+[mjs module] command-stream module import ... [0m[32mok[0m [0m[38;5;245m(9s)[0m
+[0m[38;5;245mrunning 1 test from ./tests/deno-support.test.mjs[0m
+[mjs module] Deno support ...
+  [mjs module] Deno resolver should resolve npm packages to esm.sh ... [0m[32mok[0m [0m[38;5;245m(4ms)[0m
+  [mjs module] Deno resolver should handle scoped packages ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+  [mjs module] Deno resolver should handle module paths ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+  [mjs module] Deno resolver should handle latest version ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+  [mjs module] makeUse should detect Deno runtime when Deno global is present ... [0m[32mok[0m [0m[38;5;245m(52ms)[0m
+  [mjs module] Deno resolver should work with complex package names ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+  [mjs module] Deno resolver should handle packages without versions ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+  [mjs module] makeUse with explicit deno resolver ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+[mjs module] Deno support ... [0m[32mok[0m [0m[38;5;245m(119ms)[0m
+[0m[38;5;245mrunning 3 tests from ./tests/filename.test.mjs[0m
+[mjs module] scriptPath detection in ESM (functional) ...
+  [mjs module] default pathResolver resolves modules relative to use.mjs ... [0m[32mok[0m [0m[38;5;245m(46ms)[0m
+  [mjs module] override scriptPath resolves relative to provided path ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+[mjs module] scriptPath detection in ESM (functional) ... [0m[32mok[0m [0m[38;5;245m(91ms)[0m
+[mjs module] scriptPath detection in ESM (createRequire fallback) ...
+  [mjs module] fallback default resolves modules relative to use.mjs ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+  [mjs module] fallback explicit scriptPath resolves relative to provided path ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+  [mjs module] fallback meta override changes pathResolver behavior in ESM ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+[mjs module] scriptPath detection in ESM (createRequire fallback) ... [0m[32mok[0m [0m[38;5;245m(11ms)[0m
+[mjs module] scriptPath detection in ESM (meta URL) ...
+  [mjs module] meta override resolves modules relative to provided meta URL (use.js) ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+[mjs module] scriptPath detection in ESM (meta URL) ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+[0m[38;5;245mrunning 1 test from ./tests/fs-promises.test.mjs[0m
+mjs module fs/promises support ...
+  mjs module fs/promises should return promise-based functions ... [0m[32mok[0m [0m[38;5;245m(114ms)[0m
+  mjs module fs/promises should work functionally ... [0m[32mok[0m [0m[38;5;245m(17ms)[0m
+  mjs module fs/promises should differ from regular fs ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+mjs module fs/promises support ... [0m[32mok[0m [0m[38;5;245m(167ms)[0m
+[0m[38;5;245mrunning 1 test from ./tests/get-script-url.test.mjs[0m
+[mjs module] import.meta.url workaround ...
+  [mjs module] scriptUrl matches import.meta.url ... [0m[32mok[0m [0m[38;5;245m(32ms)[0m
+  [mjs module] scriptUrl matches import.meta.url in eval ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+[mjs module] import.meta.url workaround ... [0m[32mok[0m [0m[38;5;245m(44ms)[0m
+[0m[38;5;245mrunning 1 test from ./tests/import.test.mjs[0m
+[mjs module] dynamic import support ...
+  [mjs module] supportsDynamicImport returns true in .mjs file ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+[mjs module] dynamic import support ... [0m[32mok[0m [0m[38;5;245m(5ms)[0m
+[0m[38;5;245mrunning 1 test from ./tests/lodash.test.mjs[0m
+[mjs module] 'lodash' imports tests ...
+  [mjs module] npm: lodash ... [0m[32mok[0m [0m[38;5;245m(93ms)[0m
+  [mjs module] npm: lodash@latest ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+  [mjs module] npm: lodash@ ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+  [mjs module] npm: lodash@4.17.21 ...[0m[32mDownload[0m https://esm.sh/lodash@4.17.21/denonext/lodash.mjs
+[0m[31merror:[0m Integrity check failed for remote specifier. The source code is invalid, as it does not match the expected hash in the lock file.
+
+  Specifier: https://esm.sh/lodash@4.17.21/denonext/lodash.mjs
+  Actual: dbfb35d4fcc605aaf0544bcc4505edb828aab79b7ab447df78743552cef8ceb4
+  Expected: 9d2a44e584d91008f61f974c6d0a32bf9afb1563761e60c366af0a293e8c759b
+
+This could be caused by:
+  * the lock file may be corrupt
+  * the source itself may be corrupt
+
+Investigate the lockfile; delete it to regenerate the lockfile or --reload to reload the source code from the server.

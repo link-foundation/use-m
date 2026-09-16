@@ -1,0 +1,749 @@
+(node:33265) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+PASS tests/npm-global-prefix.test.cjs (11.864 s)
+PASS tests/npm-global-prefix.test.mjs (9.577 s)
+PASS tests/load.test.mjs
+PASS tests/load.test.cjs
+PASS tests/builtin-nodejs.test.cjs
+PASS tests/builtin-nodejs.test.mjs
+PASS tests/fallback.test.cjs
+PASS tests/fallback.test.mjs
+PASS tests/resolvers.test.mjs (10.024 s)
+FAIL tests/builtin-browser.test.mjs
+  ● [mjs module] Universal built-in modules in browser › [mjs module] console module should work in browser
+
+    Could not find Chrome (ver. 139.0.7258.68). This can occur if either
+     1. you did not perform an installation before running the script (e.g. `npx puppeteer browsers install chrome`) or
+     2. your cache path is incorrectly configured (which is: /home/box/.cache/puppeteer).
+    For (2), check out our guide on configuring puppeteer at https://pptr.dev/guides/configuration.
+
+      54 |
+      55 |     // Launch browser
+    > 56 |     browser = await puppeteer.launch({
+         |               ^
+      57 |       headless: 'new',
+      58 |       args: [
+      59 |         '--no-sandbox',
+
+      at ChromeLauncher.resolveExecutablePath (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:486:17)
+      at ChromeLauncher.computeLaunchArguments (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/ChromeLauncher.ts:128:16)
+      at ChromeLauncher.launch (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:103:24)
+      at Object.<anonymous> (tests/builtin-browser.test.mjs:56:15)
+
+  ● [mjs module] Universal built-in modules in browser › [mjs module] crypto module should work in browser
+
+    Could not find Chrome (ver. 139.0.7258.68). This can occur if either
+     1. you did not perform an installation before running the script (e.g. `npx puppeteer browsers install chrome`) or
+     2. your cache path is incorrectly configured (which is: /home/box/.cache/puppeteer).
+    For (2), check out our guide on configuring puppeteer at https://pptr.dev/guides/configuration.
+
+      54 |
+      55 |     // Launch browser
+    > 56 |     browser = await puppeteer.launch({
+         |               ^
+      57 |       headless: 'new',
+      58 |       args: [
+      59 |         '--no-sandbox',
+
+      at ChromeLauncher.resolveExecutablePath (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:486:17)
+      at ChromeLauncher.computeLaunchArguments (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/ChromeLauncher.ts:128:16)
+      at ChromeLauncher.launch (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:103:24)
+      at Object.<anonymous> (tests/builtin-browser.test.mjs:56:15)
+
+  ● [mjs module] Universal built-in modules in browser › [mjs module] url module should work in browser
+
+    Could not find Chrome (ver. 139.0.7258.68). This can occur if either
+     1. you did not perform an installation before running the script (e.g. `npx puppeteer browsers install chrome`) or
+     2. your cache path is incorrectly configured (which is: /home/box/.cache/puppeteer).
+    For (2), check out our guide on configuring puppeteer at https://pptr.dev/guides/configuration.
+
+      54 |
+      55 |     // Launch browser
+    > 56 |     browser = await puppeteer.launch({
+         |               ^
+      57 |       headless: 'new',
+      58 |       args: [
+      59 |         '--no-sandbox',
+
+      at ChromeLauncher.resolveExecutablePath (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:486:17)
+      at ChromeLauncher.computeLaunchArguments (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/ChromeLauncher.ts:128:16)
+      at ChromeLauncher.launch (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:103:24)
+      at Object.<anonymous> (tests/builtin-browser.test.mjs:56:15)
+
+  ● [mjs module] Universal built-in modules in browser › [mjs module] performance module should work in browser
+
+    Could not find Chrome (ver. 139.0.7258.68). This can occur if either
+     1. you did not perform an installation before running the script (e.g. `npx puppeteer browsers install chrome`) or
+     2. your cache path is incorrectly configured (which is: /home/box/.cache/puppeteer).
+    For (2), check out our guide on configuring puppeteer at https://pptr.dev/guides/configuration.
+
+      54 |
+      55 |     // Launch browser
+    > 56 |     browser = await puppeteer.launch({
+         |               ^
+      57 |       headless: 'new',
+      58 |       args: [
+      59 |         '--no-sandbox',
+
+      at ChromeLauncher.resolveExecutablePath (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:486:17)
+      at ChromeLauncher.computeLaunchArguments (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/ChromeLauncher.ts:128:16)
+      at ChromeLauncher.launch (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:103:24)
+      at Object.<anonymous> (tests/builtin-browser.test.mjs:56:15)
+
+  ● [mjs module] Universal built-in modules in browser › [mjs module] fs module should fail in browser with correct error
+
+    Could not find Chrome (ver. 139.0.7258.68). This can occur if either
+     1. you did not perform an installation before running the script (e.g. `npx puppeteer browsers install chrome`) or
+     2. your cache path is incorrectly configured (which is: /home/box/.cache/puppeteer).
+    For (2), check out our guide on configuring puppeteer at https://pptr.dev/guides/configuration.
+
+      54 |
+      55 |     // Launch browser
+    > 56 |     browser = await puppeteer.launch({
+         |               ^
+      57 |       headless: 'new',
+      58 |       args: [
+      59 |         '--no-sandbox',
+
+      at ChromeLauncher.resolveExecutablePath (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:486:17)
+      at ChromeLauncher.computeLaunchArguments (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/ChromeLauncher.ts:128:16)
+      at ChromeLauncher.launch (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:103:24)
+      at Object.<anonymous> (tests/builtin-browser.test.mjs:56:15)
+
+  ● [mjs module] Universal built-in modules in browser › [mjs module] node: prefix should work with universal modules
+
+    Could not find Chrome (ver. 139.0.7258.68). This can occur if either
+     1. you did not perform an installation before running the script (e.g. `npx puppeteer browsers install chrome`) or
+     2. your cache path is incorrectly configured (which is: /home/box/.cache/puppeteer).
+    For (2), check out our guide on configuring puppeteer at https://pptr.dev/guides/configuration.
+
+      54 |
+      55 |     // Launch browser
+    > 56 |     browser = await puppeteer.launch({
+         |               ^
+      57 |       headless: 'new',
+      58 |       args: [
+      59 |         '--no-sandbox',
+
+      at ChromeLauncher.resolveExecutablePath (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:486:17)
+      at ChromeLauncher.computeLaunchArguments (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/ChromeLauncher.ts:128:16)
+      at ChromeLauncher.launch (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:103:24)
+      at Object.<anonymous> (tests/builtin-browser.test.mjs:56:15)
+
+  ● [mjs module] Universal built-in modules in browser › [mjs module] uppercase module names should fail (strict lowercase only)
+
+    Could not find Chrome (ver. 139.0.7258.68). This can occur if either
+     1. you did not perform an installation before running the script (e.g. `npx puppeteer browsers install chrome`) or
+     2. your cache path is incorrectly configured (which is: /home/box/.cache/puppeteer).
+    For (2), check out our guide on configuring puppeteer at https://pptr.dev/guides/configuration.
+
+      54 |
+      55 |     // Launch browser
+    > 56 |     browser = await puppeteer.launch({
+         |               ^
+      57 |       headless: 'new',
+      58 |       args: [
+      59 |         '--no-sandbox',
+
+      at ChromeLauncher.resolveExecutablePath (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:486:17)
+      at ChromeLauncher.computeLaunchArguments (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/ChromeLauncher.ts:128:16)
+      at ChromeLauncher.launch (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:103:24)
+      at Object.<anonymous> (tests/builtin-browser.test.mjs:56:15)
+
+  ● [mjs module] Universal built-in modules in browser › [mjs module] all browser tests should pass
+
+    Could not find Chrome (ver. 139.0.7258.68). This can occur if either
+     1. you did not perform an installation before running the script (e.g. `npx puppeteer browsers install chrome`) or
+     2. your cache path is incorrectly configured (which is: /home/box/.cache/puppeteer).
+    For (2), check out our guide on configuring puppeteer at https://pptr.dev/guides/configuration.
+
+      54 |
+      55 |     // Launch browser
+    > 56 |     browser = await puppeteer.launch({
+         |               ^
+      57 |       headless: 'new',
+      58 |       args: [
+      59 |         '--no-sandbox',
+
+      at ChromeLauncher.resolveExecutablePath (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:486:17)
+      at ChromeLauncher.computeLaunchArguments (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/ChromeLauncher.ts:128:16)
+      at ChromeLauncher.launch (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:103:24)
+      at Object.<anonymous> (tests/builtin-browser.test.mjs:56:15)
+
+FAIL tests/relative-paths-browser.test.mjs
+  ● [mjs module] Relative path resolution in browser › [mjs module] ./ path for JS file in same directory should work
+
+    Could not find Chrome (ver. 139.0.7258.68). This can occur if either
+     1. you did not perform an installation before running the script (e.g. `npx puppeteer browsers install chrome`) or
+     2. your cache path is incorrectly configured (which is: /home/box/.cache/puppeteer).
+    For (2), check out our guide on configuring puppeteer at https://pptr.dev/guides/configuration.
+
+      54 |
+      55 |     // Launch browser
+    > 56 |     browser = await puppeteer.launch({
+         |               ^
+      57 |       headless: 'new',
+      58 |       args: [
+      59 |         '--no-sandbox',
+
+      at ChromeLauncher.resolveExecutablePath (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:486:17)
+      at ChromeLauncher.computeLaunchArguments (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/ChromeLauncher.ts:128:16)
+      at ChromeLauncher.launch (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:103:24)
+      at Object.<anonymous> (tests/relative-paths-browser.test.mjs:56:15)
+
+  ● [mjs module] Relative path resolution in browser › [mjs module] ./ path for JSON file in same directory should work
+
+    Could not find Chrome (ver. 139.0.7258.68). This can occur if either
+     1. you did not perform an installation before running the script (e.g. `npx puppeteer browsers install chrome`) or
+     2. your cache path is incorrectly configured (which is: /home/box/.cache/puppeteer).
+    For (2), check out our guide on configuring puppeteer at https://pptr.dev/guides/configuration.
+
+      54 |
+      55 |     // Launch browser
+    > 56 |     browser = await puppeteer.launch({
+         |               ^
+      57 |       headless: 'new',
+      58 |       args: [
+      59 |         '--no-sandbox',
+
+      at ChromeLauncher.resolveExecutablePath (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:486:17)
+      at ChromeLauncher.computeLaunchArguments (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/ChromeLauncher.ts:128:16)
+      at ChromeLauncher.launch (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:103:24)
+      at Object.<anonymous> (tests/relative-paths-browser.test.mjs:56:15)
+
+  ● [mjs module] Relative path resolution in browser › [mjs module] ../../ path for JS file in parent directory should work
+
+    Could not find Chrome (ver. 139.0.7258.68). This can occur if either
+     1. you did not perform an installation before running the script (e.g. `npx puppeteer browsers install chrome`) or
+     2. your cache path is incorrectly configured (which is: /home/box/.cache/puppeteer).
+    For (2), check out our guide on configuring puppeteer at https://pptr.dev/guides/configuration.
+
+      54 |
+      55 |     // Launch browser
+    > 56 |     browser = await puppeteer.launch({
+         |               ^
+      57 |       headless: 'new',
+      58 |       args: [
+      59 |         '--no-sandbox',
+
+      at ChromeLauncher.resolveExecutablePath (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:486:17)
+      at ChromeLauncher.computeLaunchArguments (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/ChromeLauncher.ts:128:16)
+      at ChromeLauncher.launch (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:103:24)
+      at Object.<anonymous> (tests/relative-paths-browser.test.mjs:56:15)
+
+  ● [mjs module] Relative path resolution in browser › [mjs module] ./subfolder/ path for nested JS file should work
+
+    Could not find Chrome (ver. 139.0.7258.68). This can occur if either
+     1. you did not perform an installation before running the script (e.g. `npx puppeteer browsers install chrome`) or
+     2. your cache path is incorrectly configured (which is: /home/box/.cache/puppeteer).
+    For (2), check out our guide on configuring puppeteer at https://pptr.dev/guides/configuration.
+
+      54 |
+      55 |     // Launch browser
+    > 56 |     browser = await puppeteer.launch({
+         |               ^
+      57 |       headless: 'new',
+      58 |       args: [
+      59 |         '--no-sandbox',
+
+      at ChromeLauncher.resolveExecutablePath (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:486:17)
+      at ChromeLauncher.computeLaunchArguments (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/ChromeLauncher.ts:128:16)
+      at ChromeLauncher.launch (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:103:24)
+      at Object.<anonymous> (tests/relative-paths-browser.test.mjs:56:15)
+
+  ● [mjs module] Relative path resolution in browser › [mjs module] ./subfolder/ path for nested JSON file should work
+
+    Could not find Chrome (ver. 139.0.7258.68). This can occur if either
+     1. you did not perform an installation before running the script (e.g. `npx puppeteer browsers install chrome`) or
+     2. your cache path is incorrectly configured (which is: /home/box/.cache/puppeteer).
+    For (2), check out our guide on configuring puppeteer at https://pptr.dev/guides/configuration.
+
+      54 |
+      55 |     // Launch browser
+    > 56 |     browser = await puppeteer.launch({
+         |               ^
+      57 |       headless: 'new',
+      58 |       args: [
+      59 |         '--no-sandbox',
+
+      at ChromeLauncher.resolveExecutablePath (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:486:17)
+      at ChromeLauncher.computeLaunchArguments (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/ChromeLauncher.ts:128:16)
+      at ChromeLauncher.launch (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:103:24)
+      at Object.<anonymous> (tests/relative-paths-browser.test.mjs:56:15)
+
+  ● [mjs module] Relative path resolution in browser › [mjs module] mixed relative and npm imports should work
+
+    Could not find Chrome (ver. 139.0.7258.68). This can occur if either
+     1. you did not perform an installation before running the script (e.g. `npx puppeteer browsers install chrome`) or
+     2. your cache path is incorrectly configured (which is: /home/box/.cache/puppeteer).
+    For (2), check out our guide on configuring puppeteer at https://pptr.dev/guides/configuration.
+
+      54 |
+      55 |     // Launch browser
+    > 56 |     browser = await puppeteer.launch({
+         |               ^
+      57 |       headless: 'new',
+      58 |       args: [
+      59 |         '--no-sandbox',
+
+      at ChromeLauncher.resolveExecutablePath (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:486:17)
+      at ChromeLauncher.computeLaunchArguments (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/ChromeLauncher.ts:128:16)
+      at ChromeLauncher.launch (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:103:24)
+      at Object.<anonymous> (tests/relative-paths-browser.test.mjs:56:15)
+
+  ● [mjs module] Relative path resolution in browser › [mjs module] all relative path browser tests should pass
+
+    Could not find Chrome (ver. 139.0.7258.68). This can occur if either
+     1. you did not perform an installation before running the script (e.g. `npx puppeteer browsers install chrome`) or
+     2. your cache path is incorrectly configured (which is: /home/box/.cache/puppeteer).
+    For (2), check out our guide on configuring puppeteer at https://pptr.dev/guides/configuration.
+
+      54 |
+      55 |     // Launch browser
+    > 56 |     browser = await puppeteer.launch({
+         |               ^
+      57 |       headless: 'new',
+      58 |       args: [
+      59 |         '--no-sandbox',
+
+      at ChromeLauncher.resolveExecutablePath (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:486:17)
+      at ChromeLauncher.computeLaunchArguments (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/ChromeLauncher.ts:128:16)
+      at ChromeLauncher.launch (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:103:24)
+      at Object.<anonymous> (tests/relative-paths-browser.test.mjs:56:15)
+
+PASS tests/resolvers.test.cjs (8.94 s)
+PASS tests/release-workflow-policy.test.mjs
+PASS tests/use.test.cjs
+PASS tests/filename.test.mjs
+PASS tests/root-entries.test.mjs
+PASS tests/use.test.mjs
+PASS tests/filename.test.cjs
+PASS tests/esm-sh-polyfill-browser.test.mjs
+PASS tests/builtin-errors.test.mjs
+PASS tests/builtin-errors.test.cjs
+PASS tests/relative-paths.test.cjs
+PASS tests/relative-paths.test.mjs
+PASS tests/module-specifier.test.cjs
+PASS tests/module-specifier.test.mjs
+PASS tests/deno-support.test.cjs
+PASS tests/deno-support.test.mjs
+PASS tests/relative-paths.integration.test.mjs
+  ● Console
+
+    console.log
+      /tmp/use-m-main/tests
+
+      at Object.<anonymous> (tests/relative-paths.integration.test.mjs:29:15)
+
+    console.log
+      Testing relative paths from tests directory...
+      
+      1. Testing ./browser-server/test-helper.js
+         ✓ Message: Helper module loaded
+      
+      2. Testing ./browser-server/test-data.json
+         ✓ Value: 123
+         ✓ Test: data
+      
+      3. Testing ../src/use.mjs
+         ✓ use function exists: true
+      
+      4. Testing ./browser-server/subfolder/nested.js
+         ✓ Nested: true Level: subfolder
+      
+      5. Testing ./browser-server/subfolder/nested-data.json
+         ✓ Level: nested Depth: 1
+      
+      6. Testing ../package.json
+         ✓ Package name: use-m
+      
+      ✅ All direct tests passed!
+
+      at Object.<anonymous> (tests/relative-paths.integration.test.mjs:39:15)
+
+PASS tests/builtin-universal.test.cjs
+PASS tests/builtin-universal.test.mjs
+PASS tests/fs-promises.test.mjs
+PASS tests/loader.test.mjs
+PASS tests/script-sync.test.mjs
+PASS tests/lodash.test.mjs (5.233 s)
+PASS tests/get-script-url.test.cjs
+FAIL tests/network-imports.test.mjs
+  ● [mjs module] imports using --experimental-network-imports › [mjs module] Import using --experimental-network-imports for CJS file
+
+    Command failed: node --experimental-network-imports ./examples/network-imports/index.cjs
+    node: bad option: --experimental-network-imports
+
+
+
+  ● [mjs module] imports using --experimental-network-imports › [mjs module] Import using --experimental-network-imports for MJS file
+
+    Command failed: node --experimental-network-imports ./examples/network-imports/index.mjs
+    node: bad option: --experimental-network-imports
+
+
+
+PASS tests/lodash.test.cjs
+FAIL tests/network-imports.test.cjs
+  ● [cjs module] imports using --experimental-network-imports › [cjs module] Import using --experimental-network-imports for CJS file
+
+    Command failed: node --experimental-network-imports ./examples/network-imports/index.cjs
+    node: bad option: --experimental-network-imports
+
+
+
+  ● [cjs module] imports using --experimental-network-imports › [cjs module] Import using --experimental-network-imports for MJS file
+
+    Command failed: node --experimental-network-imports ./examples/network-imports/index.mjs
+    node: bad option: --experimental-network-imports
+
+
+
+PASS tests/get-script-url.test.mjs
+PASS tests/command-stream.test.cjs
+PASS tests/command-stream.test.mjs
+PASS tests/import.test.mjs
+PASS tests/import.test.cjs
+PASS tests/typescript.test.cjs
+PASS tests/typescript.test.mjs
+
+Summary of all failing tests
+FAIL tests/builtin-browser.test.mjs
+  ● [mjs module] Universal built-in modules in browser › [mjs module] console module should work in browser
+
+    Could not find Chrome (ver. 139.0.7258.68). This can occur if either
+     1. you did not perform an installation before running the script (e.g. `npx puppeteer browsers install chrome`) or
+     2. your cache path is incorrectly configured (which is: /home/box/.cache/puppeteer).
+    For (2), check out our guide on configuring puppeteer at https://pptr.dev/guides/configuration.
+
+      54 |
+      55 |     // Launch browser
+    > 56 |     browser = await puppeteer.launch({
+         |               ^
+      57 |       headless: 'new',
+      58 |       args: [
+      59 |         '--no-sandbox',
+
+      at ChromeLauncher.resolveExecutablePath (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:486:17)
+      at ChromeLauncher.computeLaunchArguments (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/ChromeLauncher.ts:128:16)
+      at ChromeLauncher.launch (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:103:24)
+      at Object.<anonymous> (tests/builtin-browser.test.mjs:56:15)
+
+  ● [mjs module] Universal built-in modules in browser › [mjs module] crypto module should work in browser
+
+    Could not find Chrome (ver. 139.0.7258.68). This can occur if either
+     1. you did not perform an installation before running the script (e.g. `npx puppeteer browsers install chrome`) or
+     2. your cache path is incorrectly configured (which is: /home/box/.cache/puppeteer).
+    For (2), check out our guide on configuring puppeteer at https://pptr.dev/guides/configuration.
+
+      54 |
+      55 |     // Launch browser
+    > 56 |     browser = await puppeteer.launch({
+         |               ^
+      57 |       headless: 'new',
+      58 |       args: [
+      59 |         '--no-sandbox',
+
+      at ChromeLauncher.resolveExecutablePath (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:486:17)
+      at ChromeLauncher.computeLaunchArguments (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/ChromeLauncher.ts:128:16)
+      at ChromeLauncher.launch (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:103:24)
+      at Object.<anonymous> (tests/builtin-browser.test.mjs:56:15)
+
+  ● [mjs module] Universal built-in modules in browser › [mjs module] url module should work in browser
+
+    Could not find Chrome (ver. 139.0.7258.68). This can occur if either
+     1. you did not perform an installation before running the script (e.g. `npx puppeteer browsers install chrome`) or
+     2. your cache path is incorrectly configured (which is: /home/box/.cache/puppeteer).
+    For (2), check out our guide on configuring puppeteer at https://pptr.dev/guides/configuration.
+
+      54 |
+      55 |     // Launch browser
+    > 56 |     browser = await puppeteer.launch({
+         |               ^
+      57 |       headless: 'new',
+      58 |       args: [
+      59 |         '--no-sandbox',
+
+      at ChromeLauncher.resolveExecutablePath (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:486:17)
+      at ChromeLauncher.computeLaunchArguments (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/ChromeLauncher.ts:128:16)
+      at ChromeLauncher.launch (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:103:24)
+      at Object.<anonymous> (tests/builtin-browser.test.mjs:56:15)
+
+  ● [mjs module] Universal built-in modules in browser › [mjs module] performance module should work in browser
+
+    Could not find Chrome (ver. 139.0.7258.68). This can occur if either
+     1. you did not perform an installation before running the script (e.g. `npx puppeteer browsers install chrome`) or
+     2. your cache path is incorrectly configured (which is: /home/box/.cache/puppeteer).
+    For (2), check out our guide on configuring puppeteer at https://pptr.dev/guides/configuration.
+
+      54 |
+      55 |     // Launch browser
+    > 56 |     browser = await puppeteer.launch({
+         |               ^
+      57 |       headless: 'new',
+      58 |       args: [
+      59 |         '--no-sandbox',
+
+      at ChromeLauncher.resolveExecutablePath (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:486:17)
+      at ChromeLauncher.computeLaunchArguments (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/ChromeLauncher.ts:128:16)
+      at ChromeLauncher.launch (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:103:24)
+      at Object.<anonymous> (tests/builtin-browser.test.mjs:56:15)
+
+  ● [mjs module] Universal built-in modules in browser › [mjs module] fs module should fail in browser with correct error
+
+    Could not find Chrome (ver. 139.0.7258.68). This can occur if either
+     1. you did not perform an installation before running the script (e.g. `npx puppeteer browsers install chrome`) or
+     2. your cache path is incorrectly configured (which is: /home/box/.cache/puppeteer).
+    For (2), check out our guide on configuring puppeteer at https://pptr.dev/guides/configuration.
+
+      54 |
+      55 |     // Launch browser
+    > 56 |     browser = await puppeteer.launch({
+         |               ^
+      57 |       headless: 'new',
+      58 |       args: [
+      59 |         '--no-sandbox',
+
+      at ChromeLauncher.resolveExecutablePath (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:486:17)
+      at ChromeLauncher.computeLaunchArguments (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/ChromeLauncher.ts:128:16)
+      at ChromeLauncher.launch (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:103:24)
+      at Object.<anonymous> (tests/builtin-browser.test.mjs:56:15)
+
+  ● [mjs module] Universal built-in modules in browser › [mjs module] node: prefix should work with universal modules
+
+    Could not find Chrome (ver. 139.0.7258.68). This can occur if either
+     1. you did not perform an installation before running the script (e.g. `npx puppeteer browsers install chrome`) or
+     2. your cache path is incorrectly configured (which is: /home/box/.cache/puppeteer).
+    For (2), check out our guide on configuring puppeteer at https://pptr.dev/guides/configuration.
+
+      54 |
+      55 |     // Launch browser
+    > 56 |     browser = await puppeteer.launch({
+         |               ^
+      57 |       headless: 'new',
+      58 |       args: [
+      59 |         '--no-sandbox',
+
+      at ChromeLauncher.resolveExecutablePath (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:486:17)
+      at ChromeLauncher.computeLaunchArguments (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/ChromeLauncher.ts:128:16)
+      at ChromeLauncher.launch (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:103:24)
+      at Object.<anonymous> (tests/builtin-browser.test.mjs:56:15)
+
+  ● [mjs module] Universal built-in modules in browser › [mjs module] uppercase module names should fail (strict lowercase only)
+
+    Could not find Chrome (ver. 139.0.7258.68). This can occur if either
+     1. you did not perform an installation before running the script (e.g. `npx puppeteer browsers install chrome`) or
+     2. your cache path is incorrectly configured (which is: /home/box/.cache/puppeteer).
+    For (2), check out our guide on configuring puppeteer at https://pptr.dev/guides/configuration.
+
+      54 |
+      55 |     // Launch browser
+    > 56 |     browser = await puppeteer.launch({
+         |               ^
+      57 |       headless: 'new',
+      58 |       args: [
+      59 |         '--no-sandbox',
+
+      at ChromeLauncher.resolveExecutablePath (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:486:17)
+      at ChromeLauncher.computeLaunchArguments (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/ChromeLauncher.ts:128:16)
+      at ChromeLauncher.launch (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:103:24)
+      at Object.<anonymous> (tests/builtin-browser.test.mjs:56:15)
+
+  ● [mjs module] Universal built-in modules in browser › [mjs module] all browser tests should pass
+
+    Could not find Chrome (ver. 139.0.7258.68). This can occur if either
+     1. you did not perform an installation before running the script (e.g. `npx puppeteer browsers install chrome`) or
+     2. your cache path is incorrectly configured (which is: /home/box/.cache/puppeteer).
+    For (2), check out our guide on configuring puppeteer at https://pptr.dev/guides/configuration.
+
+      54 |
+      55 |     // Launch browser
+    > 56 |     browser = await puppeteer.launch({
+         |               ^
+      57 |       headless: 'new',
+      58 |       args: [
+      59 |         '--no-sandbox',
+
+      at ChromeLauncher.resolveExecutablePath (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:486:17)
+      at ChromeLauncher.computeLaunchArguments (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/ChromeLauncher.ts:128:16)
+      at ChromeLauncher.launch (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:103:24)
+      at Object.<anonymous> (tests/builtin-browser.test.mjs:56:15)
+
+FAIL tests/relative-paths-browser.test.mjs
+  ● [mjs module] Relative path resolution in browser › [mjs module] ./ path for JS file in same directory should work
+
+    Could not find Chrome (ver. 139.0.7258.68). This can occur if either
+     1. you did not perform an installation before running the script (e.g. `npx puppeteer browsers install chrome`) or
+     2. your cache path is incorrectly configured (which is: /home/box/.cache/puppeteer).
+    For (2), check out our guide on configuring puppeteer at https://pptr.dev/guides/configuration.
+
+      54 |
+      55 |     // Launch browser
+    > 56 |     browser = await puppeteer.launch({
+         |               ^
+      57 |       headless: 'new',
+      58 |       args: [
+      59 |         '--no-sandbox',
+
+      at ChromeLauncher.resolveExecutablePath (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:486:17)
+      at ChromeLauncher.computeLaunchArguments (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/ChromeLauncher.ts:128:16)
+      at ChromeLauncher.launch (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:103:24)
+      at Object.<anonymous> (tests/relative-paths-browser.test.mjs:56:15)
+
+  ● [mjs module] Relative path resolution in browser › [mjs module] ./ path for JSON file in same directory should work
+
+    Could not find Chrome (ver. 139.0.7258.68). This can occur if either
+     1. you did not perform an installation before running the script (e.g. `npx puppeteer browsers install chrome`) or
+     2. your cache path is incorrectly configured (which is: /home/box/.cache/puppeteer).
+    For (2), check out our guide on configuring puppeteer at https://pptr.dev/guides/configuration.
+
+      54 |
+      55 |     // Launch browser
+    > 56 |     browser = await puppeteer.launch({
+         |               ^
+      57 |       headless: 'new',
+      58 |       args: [
+      59 |         '--no-sandbox',
+
+      at ChromeLauncher.resolveExecutablePath (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:486:17)
+      at ChromeLauncher.computeLaunchArguments (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/ChromeLauncher.ts:128:16)
+      at ChromeLauncher.launch (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:103:24)
+      at Object.<anonymous> (tests/relative-paths-browser.test.mjs:56:15)
+
+  ● [mjs module] Relative path resolution in browser › [mjs module] ../../ path for JS file in parent directory should work
+
+    Could not find Chrome (ver. 139.0.7258.68). This can occur if either
+     1. you did not perform an installation before running the script (e.g. `npx puppeteer browsers install chrome`) or
+     2. your cache path is incorrectly configured (which is: /home/box/.cache/puppeteer).
+    For (2), check out our guide on configuring puppeteer at https://pptr.dev/guides/configuration.
+
+      54 |
+      55 |     // Launch browser
+    > 56 |     browser = await puppeteer.launch({
+         |               ^
+      57 |       headless: 'new',
+      58 |       args: [
+      59 |         '--no-sandbox',
+
+      at ChromeLauncher.resolveExecutablePath (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:486:17)
+      at ChromeLauncher.computeLaunchArguments (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/ChromeLauncher.ts:128:16)
+      at ChromeLauncher.launch (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:103:24)
+      at Object.<anonymous> (tests/relative-paths-browser.test.mjs:56:15)
+
+  ● [mjs module] Relative path resolution in browser › [mjs module] ./subfolder/ path for nested JS file should work
+
+    Could not find Chrome (ver. 139.0.7258.68). This can occur if either
+     1. you did not perform an installation before running the script (e.g. `npx puppeteer browsers install chrome`) or
+     2. your cache path is incorrectly configured (which is: /home/box/.cache/puppeteer).
+    For (2), check out our guide on configuring puppeteer at https://pptr.dev/guides/configuration.
+
+      54 |
+      55 |     // Launch browser
+    > 56 |     browser = await puppeteer.launch({
+         |               ^
+      57 |       headless: 'new',
+      58 |       args: [
+      59 |         '--no-sandbox',
+
+      at ChromeLauncher.resolveExecutablePath (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:486:17)
+      at ChromeLauncher.computeLaunchArguments (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/ChromeLauncher.ts:128:16)
+      at ChromeLauncher.launch (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:103:24)
+      at Object.<anonymous> (tests/relative-paths-browser.test.mjs:56:15)
+
+  ● [mjs module] Relative path resolution in browser › [mjs module] ./subfolder/ path for nested JSON file should work
+
+    Could not find Chrome (ver. 139.0.7258.68). This can occur if either
+     1. you did not perform an installation before running the script (e.g. `npx puppeteer browsers install chrome`) or
+     2. your cache path is incorrectly configured (which is: /home/box/.cache/puppeteer).
+    For (2), check out our guide on configuring puppeteer at https://pptr.dev/guides/configuration.
+
+      54 |
+      55 |     // Launch browser
+    > 56 |     browser = await puppeteer.launch({
+         |               ^
+      57 |       headless: 'new',
+      58 |       args: [
+      59 |         '--no-sandbox',
+
+      at ChromeLauncher.resolveExecutablePath (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:486:17)
+      at ChromeLauncher.computeLaunchArguments (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/ChromeLauncher.ts:128:16)
+      at ChromeLauncher.launch (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:103:24)
+      at Object.<anonymous> (tests/relative-paths-browser.test.mjs:56:15)
+
+  ● [mjs module] Relative path resolution in browser › [mjs module] mixed relative and npm imports should work
+
+    Could not find Chrome (ver. 139.0.7258.68). This can occur if either
+     1. you did not perform an installation before running the script (e.g. `npx puppeteer browsers install chrome`) or
+     2. your cache path is incorrectly configured (which is: /home/box/.cache/puppeteer).
+    For (2), check out our guide on configuring puppeteer at https://pptr.dev/guides/configuration.
+
+      54 |
+      55 |     // Launch browser
+    > 56 |     browser = await puppeteer.launch({
+         |               ^
+      57 |       headless: 'new',
+      58 |       args: [
+      59 |         '--no-sandbox',
+
+      at ChromeLauncher.resolveExecutablePath (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:486:17)
+      at ChromeLauncher.computeLaunchArguments (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/ChromeLauncher.ts:128:16)
+      at ChromeLauncher.launch (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:103:24)
+      at Object.<anonymous> (tests/relative-paths-browser.test.mjs:56:15)
+
+  ● [mjs module] Relative path resolution in browser › [mjs module] all relative path browser tests should pass
+
+    Could not find Chrome (ver. 139.0.7258.68). This can occur if either
+     1. you did not perform an installation before running the script (e.g. `npx puppeteer browsers install chrome`) or
+     2. your cache path is incorrectly configured (which is: /home/box/.cache/puppeteer).
+    For (2), check out our guide on configuring puppeteer at https://pptr.dev/guides/configuration.
+
+      54 |
+      55 |     // Launch browser
+    > 56 |     browser = await puppeteer.launch({
+         |               ^
+      57 |       headless: 'new',
+      58 |       args: [
+      59 |         '--no-sandbox',
+
+      at ChromeLauncher.resolveExecutablePath (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:486:17)
+      at ChromeLauncher.computeLaunchArguments (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/ChromeLauncher.ts:128:16)
+      at ChromeLauncher.launch (../gh-issue-solver-1789545086651/node_modules/puppeteer-core/src/node/BrowserLauncher.ts:103:24)
+      at Object.<anonymous> (tests/relative-paths-browser.test.mjs:56:15)
+
+FAIL tests/network-imports.test.mjs
+  ● [mjs module] imports using --experimental-network-imports › [mjs module] Import using --experimental-network-imports for CJS file
+
+    Command failed: node --experimental-network-imports ./examples/network-imports/index.cjs
+    node: bad option: --experimental-network-imports
+
+
+
+  ● [mjs module] imports using --experimental-network-imports › [mjs module] Import using --experimental-network-imports for MJS file
+
+    Command failed: node --experimental-network-imports ./examples/network-imports/index.mjs
+    node: bad option: --experimental-network-imports
+
+
+
+FAIL tests/network-imports.test.cjs
+  ● [cjs module] imports using --experimental-network-imports › [cjs module] Import using --experimental-network-imports for CJS file
+
+    Command failed: node --experimental-network-imports ./examples/network-imports/index.cjs
+    node: bad option: --experimental-network-imports
+
+
+
+  ● [cjs module] imports using --experimental-network-imports › [cjs module] Import using --experimental-network-imports for MJS file
+
+    Command failed: node --experimental-network-imports ./examples/network-imports/index.mjs
+    node: bad option: --experimental-network-imports
+
+
+
+
+Test Suites: 4 failed, 41 passed, 45 total
+Tests:       19 failed, 340 passed, 359 total
+Snapshots:   0 total
+Time:        87.915 s
+Ran all test suites.
+exit=1

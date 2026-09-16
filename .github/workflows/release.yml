@@ -18,7 +18,7 @@ concurrency:
 
 jobs:
   test:
-    name: Test on ${{ matrix.runtime }} (${{ matrix.os }})
+    name: Test on ${{ matrix.runtime }} ${{ matrix.node-version }} (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 25
     strategy:
@@ -26,7 +26,21 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest]
         runtime: [node, bun, deno]
-        node-version: [20.x]
+        # Every Node.js line users still run: the supported built-in modules are
+        # read from the runtime instead of a table inside use-m, so what each
+        # Node.js version reports is part of the contract and gets tested.
+        node-version: [20.x, 22.x, 24.x]
+        exclude:
+          # Bun and Deno execute the tests with their own runtime and only need
+          # one Node.js to install dependencies with.
+          - runtime: bun
+            node-version: 22.x
+          - runtime: bun
+            node-version: 24.x
+          - runtime: deno
+            node-version: 22.x
+          - runtime: deno
+            node-version: 24.x
 
     steps:
       - name: Checkout code
@@ -54,7 +68,7 @@ jobs:
         run: npm ci --no-audit --no-fund
 
       - name: Audit production dependencies
-        if: matrix.runtime == 'node' && matrix.os == 'ubuntu-latest'
+        if: matrix.runtime == 'node' && matrix.os == 'ubuntu-latest' && matrix.node-version == '24.x'
         run: npm audit --omit=dev
 
       - name: Run Node.js tests

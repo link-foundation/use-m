@@ -1,0 +1,11 @@
+# Deno 2.9.6, commit 3895ecc (before the arity clamp), baseline = main:src/use.mjs
+DIFF  fs/promises: 'lchmod' changed: undefined -> function:<anonymous>/0
+DIFF  fs/promises: 'stat' changed: function:stat/2 -> function:stat/0
+DIFF  fs/promises: 'truncate' changed: function:truncate/2 -> function:truncate/0
+DIFF  fs/promises: 'watch' changed: function:bound watch/3 -> function:watch/0
+DIFF  node:fs/promises: 'lchmod' changed: undefined -> function:<anonymous>/0
+DIFF  node:fs/promises: 'stat' changed: function:stat/2 -> function:stat/0
+DIFF  node:fs/promises: 'truncate' changed: function:truncate/2 -> function:truncate/0
+DIFF  node:fs/promises: 'watch' changed: function:bound watch/3 -> function:watch/0
+
+Deno 2.9.6: 25 previously hardcoded built-ins compared (bare + node: prefixed), 8 difference(s).
