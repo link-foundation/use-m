@@ -47,6 +47,38 @@ describe(`${moduleName} fs/promises support`, () => {
     }
   });
 
+  test(`${moduleName} fs/promises should expose every function the runtime ships`, async () => {
+    // The promise API is rebuilt from the callback API on Bun and Deno, and the
+    // set of functions it covers is read from the runtime instead of a list in
+    // use-m (issue #50), so nothing the runtime ships may go missing.
+    const native = await import('node:fs/promises');
+    const fsPromises = await use('node:fs/promises');
+
+    const missing = Object.keys(native)
+      .filter((name) => name !== 'default' && typeof fsPromises[name] === 'undefined');
+
+    expect(missing).toEqual([]);
+  });
+
+  test(`${moduleName} fs/promises should forward arguments beyond the declared arity`, async () => {
+    const { mkdtemp, writeFile, readFile, rm } = await use('node:fs/promises');
+    const os = await use('node:os');
+    const path = await use('node:path');
+
+    const directory = await mkdtemp(path.join(os.tmpdir(), 'use-m-fs-promises-'));
+    const file = path.join(directory, 'encoding.txt');
+
+    try {
+      // `writeFile` declares 3 parameters; the signal option is a 4th argument
+      // in Node's API and has to reach the underlying implementation.
+      await writeFile(file, 'utf8 content', { encoding: 'utf8' });
+
+      expect(await readFile(file, { encoding: 'utf8' })).toBe('utf8 content');
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
   test(`${moduleName} fs/promises should differ from regular fs`, async () => {
     // Import regular fs using use-m
     const fs = await use('node:fs');

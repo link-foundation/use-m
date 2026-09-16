@@ -109,240 +109,122 @@ Please specify a package name, and an optional version (e.g.: 'lodash', 'lodash@
   return { packageName, version, modulePath };
 }
 
-// Built-in modules that we support across all environments
-// Always use lowercase names for consistency
-const supportedBuiltins = {
-  // Universal modules
+// Not plain callback APIs: the runtime's own promise versions are kept as is.
+const nonCallbackFileApis = new Set(['glob', 'watch']);
+
+// Wraps a promisified callback API in an async function declaring `arity`
+// parameters, so `.length` and `constructor.name` match Node's promise API.
+// The rest parameter forwards every argument regardless of declared count.
+const asyncFunctionsByArity = [
+  (call) => async (...args) => call(...args),
+  (call) => async (a, ...rest) => call(a, ...rest),
+  (call) => async (a, b, ...rest) => call(a, b, ...rest),
+  (call) => async (a, b, c, ...rest) => call(a, b, c, ...rest),
+  (call) => async (a, b, c, d, ...rest) => call(a, b, c, d, ...rest),
+  (call) => async (a, b, c, d, e, ...rest) => call(a, b, c, d, e, ...rest)
+];
+const toAsyncFunction = (call, arity, name) => {
+  const wrap = asyncFunctionsByArity[arity];
+  if (!wrap) {
+    return call;
+  }
+  const wrapped = wrap(call);
+  try {
+    Object.defineProperty(wrapped, 'name', { value: name });
+  } catch (error) {
+    // `name` is not configurable on every runtime; the wrapper still works.
+  }
+  return wrapped;
+};
+
+// Built-ins are discovered at runtime through `node:module` instead of being
+// enumerated here, so every built-in the host runtime knows about is loadable,
+// including ones added after this release (issue #50). Listed below are only
+// the modules needing more than the generic `import('node:<name>')` loader:
+// `browser` for environments without a `node:` namespace, `node` for a runtime
+// whose built-in differs from Node's. Anything left out uses the generic loader.
+const builtinOverrides = {
   'console': {
-    browser: () => ({ default: console, log: console.log, error: console.error, warn: console.warn, info: console.info }),
-    node: () => import('node:console').then(m => ({ default: m.Console, ...m }))
+    browser: () => ({ default: console, log: console.log, error: console.error, warn: console.warn, info: console.info })
   },
   'crypto': {
-    browser: () => ({ default: crypto, subtle: crypto.subtle }),
-    node: () => import('node:crypto').then(m => ({ default: m, ...m }))
+    browser: () => ({ default: crypto, subtle: crypto.subtle })
   },
   'url': {
-    browser: () => ({ default: URL, URL, URLSearchParams }),
-    node: () => import('node:url').then(m => ({ default: m, ...m }))
+    browser: () => ({ default: URL, URL, URLSearchParams })
   },
+  // 'performance' is not a built-in module name: use-m maps it onto the
+  // performance object, which lives in node:perf_hooks on the Node.js side.
   'performance': {
     browser: () => ({ default: performance, now: performance.now.bind(performance) }),
     node: () => import('node:perf_hooks').then(m => ({ default: m.performance, performance: m.performance, now: m.performance.now.bind(m.performance), ...m }))
   },
-
-  // Node.js/Bun only modules
-  'fs': {
-    browser: null, // Not available in browser
-    node: () => import('node:fs').then(m => ({ default: m, ...m }))
-  },
+  // Bun and Deno expose `node:fs/promises` functions whose arity and
+  // constructor differ from Node's, so the promise API is rebuilt from the
+  // callback API there. Which functions exist and how many arguments each one
+  // takes is read from the runtime itself, never listed here.
   'fs/promises': {
-    browser: null, // Not available in browser
     node: async () => {
-      const runtime = typeof Bun !== 'undefined' ? 'Bun' : typeof Deno !== 'undefined' ? 'Deno' : 'Node.js';
-      
-      // For Bun and Deno, use a different approach since their node:fs/promises may not be fully compatible
-      if (runtime === 'Bun' || runtime === 'Deno') {
-        try {
-          const fs = await import('node:fs');
-          const { promisify } = await import('node:util');
-          
-          // Create wrapper functions that match native fs/promises signatures
-          // These need to have the correct .length property and be async functions
-          const createAsyncWrapper = (promisifiedFn, expectedLength) => {
-            // Create an async function with the correct length
-            const wrapper = {
-              1: async (a) => promisifiedFn(a),
-              2: async (a, b) => promisifiedFn(a, b),
-              3: async (a, b, c) => promisifiedFn(a, b, c),
-              4: async (a, b, c, d) => promisifiedFn(a, b, c, d)
-            }[expectedLength];
-            
-            // Copy the name if possible
-            try {
-              Object.defineProperty(wrapper, 'name', { value: promisifiedFn.name });
-            } catch (e) {
-              // Ignore if name can't be set
-            }
-            
-            return wrapper || promisifiedFn;
-          };
-          
-          // Helper to safely promisify functions that may not exist
-          const safePromisify = (fn, expectedLength) => {
-            if (typeof fn !== 'function') {
-              return undefined;
-            }
-            return createAsyncWrapper(promisify(fn), expectedLength);
-          };
-          
-          const promisifiedFs = {
-            access: safePromisify(fs.access, 2),
-            appendFile: safePromisify(fs.appendFile, 3),
-            chmod: safePromisify(fs.chmod, 2),
-            chown: safePromisify(fs.chown, 3),
-            copyFile: safePromisify(fs.copyFile, 3),
-            lchmod: safePromisify(fs.lchmod, 2),
-            lchown: safePromisify(fs.lchown, 3),
-            link: safePromisify(fs.link, 2),
-            lstat: safePromisify(fs.lstat, 2),
-            mkdir: safePromisify(fs.mkdir, 2),
-            mkdtemp: safePromisify(fs.mkdtemp, 2),
-            open: safePromisify(fs.open, 3),
-            readdir: safePromisify(fs.readdir, 2),
-            readFile: safePromisify(fs.readFile, 2),
-            readlink: safePromisify(fs.readlink, 2),
-            realpath: safePromisify(fs.realpath, 2),
-            rename: safePromisify(fs.rename, 2),
-            rmdir: safePromisify(fs.rmdir, 2),
-            stat: safePromisify(fs.stat, 2),
-            symlink: safePromisify(fs.symlink, 3),
-            truncate: safePromisify(fs.truncate, 2),
-            unlink: safePromisify(fs.unlink, 1),
-            utimes: safePromisify(fs.utimes, 3),
-            writeFile: safePromisify(fs.writeFile, 3),
-            constants: fs.constants
-          };
-          
-          // Add newer functions if they exist
-          if (fs.rm) promisifiedFs.rm = safePromisify(fs.rm, 2);
-          if (fs.cp) promisifiedFs.cp = safePromisify(fs.cp, 3);
-          if (fs.lutimes) promisifiedFs.lutimes = safePromisify(fs.lutimes, 3);
-          if (fs.opendir) promisifiedFs.opendir = safePromisify(fs.opendir, 2);
-          if (fs.statfs) promisifiedFs.statfs = safePromisify(fs.statfs, 2);
-          if (fs.watch) promisifiedFs.watch = fs.watch.bind(fs); // watch is not callback-based
+      if (typeof Bun === 'undefined' && typeof Deno === 'undefined') {
+        return loadBuiltinModule('fs/promises');
+      }
+      const fs = await import('node:fs');
+      const { promisify } = await import('node:util');
+      const promises = {};
+      for (const [name, value] of Object.entries(await import('node:fs/promises'))) {
+        if (name === 'default') {
+          continue;
+        }
+        const callbackApi = fs[name];
+        const rebuildable = typeof value === 'function'
+          && typeof callbackApi === 'function'
+          && !nonCallbackFileApis.has(name);
+        promises[name] = rebuildable
+          ? toAsyncFunction(promisify(callbackApi), callbackApi.length - 1, name)
+          : value;
+      }
+      return { default: promises, ...promises };
+    }
+  },
+};
 
-          return { default: promisifiedFs, ...promisifiedFs };
-        } catch (error) {
-          throw new Error(`Failed to create fs/promises fallback for ${runtime}: ${error.message}`, { cause: error });
+// Built-ins with no browser implementation. `node:module` is itself unavailable
+// in a browser, so this is the one list that cannot be derived at runtime. It
+// only chooses between a clear "not available" error and the CDN resolvers, and
+// never limits what Node.js, Bun or Deno can load.
+const browserUnavailableBuiltins = new Set([
+  'assert', 'buffer', 'child_process', 'dns', 'dns/promises', 'events', 'fs',
+  'fs/promises', 'http', 'https', 'net', 'os', 'path', 'process', 'querystring',
+  'readline/promises', 'stream', 'stream/promises', 'timers/promises', 'util',
+  'zlib'
+]);
+
+// `module.isBuiltin()` is the authoritative check (Node.js >= 18.6, Bun, Deno);
+// older runtimes only expose `module.builtinModules`, and environments without
+// `node:module` at all have no built-ins. Resolved once and reused.
+let builtinCheck = null;
+const isBuiltinModule = async (moduleName) => {
+  if (!builtinCheck) {
+    builtinCheck = import('node:module').then(
+      (m) => {
+        if (typeof m.isBuiltin === 'function') {
+          return m.isBuiltin;
         }
-      }
-      
-      // For Node.js, use the native implementation
-      try {
-        const m = await import('node:fs/promises');
-        return { default: m, ...m };
-      } catch (error) {
-        throw new Error(`Failed to load fs/promises module: ${error.message}`, { cause: error });
-      }
-    }
-  },
-  'dns/promises': {
-    browser: null, // Not available in browser
-    node: async () => {
-      const m = await import('node:dns/promises');
-      return { default: m, ...m };
-    }
-  },
-  'stream/promises': {
-    browser: null, // Not available in browser
-    node: async () => {
-      const m = await import('node:stream/promises');
-      return { default: m, ...m };
-    }
-  },
-  'readline/promises': {
-    browser: null, // Not available in browser
-    node: async () => {
-      const m = await import('node:readline/promises');
-      return { default: m, ...m };
-    }
-  },
-  'timers/promises': {
-    browser: null, // Not available in browser
-    node: async () => {
-      const m = await import('node:timers/promises');
-      return { default: m, ...m };
-    }
-  },
-  'path': {
-    browser: null, // Not available in browser
-    node: () => import('node:path').then(m => ({ default: m, ...m }))
-  },
-  'os': {
-    browser: null, // Not available in browser
-    node: () => import('node:os').then(m => ({ default: m, ...m }))
-  },
-  'util': {
-    browser: null, // Not available in browser
-    node: () => import('node:util').then(m => ({ default: m, ...m }))
-  },
-  'events': {
-    browser: null, // Not available in browser
-    node: () => import('node:events').then(m => ({ default: m.EventEmitter, EventEmitter: m.EventEmitter, ...m }))
-  },
-  'stream': {
-    browser: null, // Not available in browser
-    node: () => import('node:stream').then(m => ({ default: m.Stream, Stream: m.Stream, ...m }))
-  },
-  'buffer': {
-    browser: null, // Not available in browser (would need polyfill)
-    node: () => import('node:buffer').then(m => ({ default: m, Buffer: m.Buffer, ...m }))
-  },
-  'process': {
-    browser: null, // Not available in browser
-    node: () => {
-      if (typeof Deno !== 'undefined') {
-        // Deno 2.x has a process global, use it if available
-        if (typeof process !== 'undefined') {
-          // In Deno, process is an EventEmitter and spreading doesn't work properly
-          // We need to explicitly copy the properties we need
-          const proc = {
-            default: process,
-            pid: process.pid,
-            platform: process.platform,
-            version: process.version,
-            versions: process.versions,
-            argv: process.argv,
-            env: process.env,
-            exit: process.exit,
-            cwd: process.cwd,
-            chdir: process.chdir,
-            // Add any other commonly used process properties
-            nextTick: process.nextTick,
-            stdout: process.stdout,
-            stderr: process.stderr,
-            stdin: process.stdin,
-          };
-          return proc;
-        }
-        // This shouldn't happen but provide a fallback
-        throw new Error(`Failed to resolve 'process' module in Deno environment.`);
-      }
-      return ({ default: process, ...process });
-    }
-  },
-  'child_process': {
-    browser: null,
-    node: () => import('node:child_process').then(m => ({ default: m, ...m }))
-  },
-  'http': {
-    browser: null,
-    node: () => import('node:http').then(m => ({ default: m, ...m }))
-  },
-  'https': {
-    browser: null,
-    node: () => import('node:https').then(m => ({ default: m, ...m }))
-  },
-  'net': {
-    browser: null,
-    node: () => import('node:net').then(m => ({ default: m, ...m }))
-  },
-  'dns': {
-    browser: null,
-    node: () => import('node:dns').then(m => ({ default: m, ...m }))
-  },
-  'zlib': {
-    browser: null,
-    node: () => import('node:zlib').then(m => ({ default: m, ...m }))
-  },
-  'querystring': {
-    browser: null,
-    node: () => import('node:querystring').then(m => ({ default: m, ...m }))
-  },
-  'assert': {
-    browser: null,
-    node: () => import('node:assert').then(m => ({ default: m.default || m, ...m }))
+        const builtins = new Set(m.builtinModules || []);
+        return (name) => builtins.has(name) || builtins.has(name.replace(/^node:/, ''));
+      },
+      () => () => false
+    );
   }
+  return (await builtinCheck)(moduleName);
+};
+
+// Generic loader for built-ins without an override. `...m` spreads after
+// `default`, so namespaces carrying their own default export keep it
+// (node:events -> EventEmitter, node:stream -> Stream, node:assert -> assert).
+const loadBuiltinModule = async (moduleName) => {
+  const m = await import(`node:${moduleName}`);
+  return { default: m, ...m };
 };
 
 const resolvers = {
@@ -350,42 +232,46 @@ const resolvers = {
     const { packageName, modulePath } = parseModuleSpecifier(moduleSpecifier);
 
     // Handle built-in modules with subpaths like 'node:fs/promises'
-    let moduleName;
-    if (packageName.startsWith('node:')) {
-      // For node: modules, include the path in the module name
-      moduleName = packageName.slice(5) + modulePath;
-    } else {
-      moduleName = packageName + modulePath;
-    }
+    const hasNodePrefix = packageName.startsWith('node:');
+    const moduleName = (hasNodePrefix ? packageName.slice(5) : packageName) + modulePath;
 
-    // Check if we support this built-in module
-    if (supportedBuiltins[moduleName]) {
-      const builtinConfig = supportedBuiltins[moduleName];
+    // Determine environment
+    const isBrowser = typeof window !== 'undefined';
+    const environment = isBrowser ? 'browser' : 'node';
 
-      if (!builtinConfig) {
-        throw new Error(`Built-in module '${moduleName}' is not supported.`);
-      }
-
-      // Determine environment
-      const isBrowser = typeof window !== 'undefined';
-      const environment = isBrowser ? 'browser' : 'node';
-
-      const moduleFactory = builtinConfig[environment];
-      if (!moduleFactory) {
-        throw new Error(`Built-in module '${moduleName}' is not available in ${environment} environment.`);
-      }
-
+    const moduleFactory = builtinOverrides[moduleName]?.[environment];
+    if (moduleFactory) {
       try {
         // Execute the factory function to get the module
-        const result = await moduleFactory();
-        return result;
+        return await moduleFactory();
       } catch (error) {
         throw new Error(`Failed to load built-in module '${moduleName}' in ${environment} environment.`, { cause: error });
       }
     }
 
-    // Not a supported built-in module
-    return null;
+    if (isBrowser) {
+      // No browser implementation: report the well-known Node.js-only built-ins
+      // explicitly and let every other specifier fall through to the resolvers
+      // that fetch packages from a CDN.
+      if (browserUnavailableBuiltins.has(moduleName)) {
+        throw new Error(`Built-in module '${moduleName}' is not available in ${environment} environment.`);
+      }
+      return null;
+    }
+
+    // Ask the runtime whether this is a built-in, matching how the runtime
+    // itself resolves the specifier: 'node:sqlite' and 'node:test' are built-in
+    // only with the prefix, so bare 'sqlite' or 'test' must stay npm packages.
+    if (!await isBuiltinModule(hasNodePrefix ? `node:${moduleName}` : moduleName)) {
+      // Not a built-in module
+      return null;
+    }
+
+    try {
+      return await loadBuiltinModule(moduleName);
+    } catch (error) {
+      throw new Error(`Failed to load built-in module '${moduleName}' in ${environment} environment.`, { cause: error });
+    }
   },
   relative: async (moduleSpecifier, pathResolver, callerContext) => {
     // Check if this is a relative path (supports any depth: ./, ../, ../../, etc.)

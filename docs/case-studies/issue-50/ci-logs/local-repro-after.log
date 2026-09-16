@@ -1,0 +1,9 @@
+source: file:///tmp/gh-issue-solver-1789534888961/src/use.mjs
+runtime reports 72 built-in modules
+claimed by the builtin resolver: 72
+handed off to npm/CDN resolvers:  0
+(node:60908) [DEP0125] DeprecationWarning: The _stream_wrap module is deprecated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:60908) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(node:60908) [DEP0025] DeprecationWarning: sys is deprecated. Use util instead.
+(node:60908) ExperimentalWarning: WASI is an experimental feature and might change at any time

@@ -1,0 +1,5 @@
+source: file:///tmp/main-use/src/use.mjs
+runtime reports 72 built-in modules
+claimed by the builtin resolver: 24
+handed off to npm/CDN resolvers:  48
+_http_agent, _http_client, _http_common, _http_incoming, _http_outgoing, _http_server, _stream_duplex, _stream_passthrough, _stream_readable, _stream_transform, _stream_wrap, _stream_writable, _tls_common, _tls_wrap, assert/strict, async_hooks, cluster, constants, dgram, diagnostics_channel, domain, http2, inspector, inspector/promises, module, path/posix, path/win32, perf_hooks, punycode, readline, repl, stream/consumers, stream/web, string_decoder, sys, timers, tls, trace_events, tty, util/types, v8, vm, wasi, worker_threads, node:sea, node:sqlite, node:test, node:test/reporters
