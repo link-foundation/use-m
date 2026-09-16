@@ -105,6 +105,29 @@ describe('release workflow policy', () => {
     expect(publishJob.includes('exit 1')).toBe(true)
   })
 
+  test('runs the Node.js test job on every Node.js line the library supports', () => {
+    const workflowText = readText(releaseWorkflowPath)
+    const jobs = jobBlocks(workflowText)
+    const testJob = jobs.get('test') || ''
+
+    // The set of built-in modules comes from the runtime instead of a table
+    // inside use-m, so each runtime's own answer is part of the contract and
+    // every Node.js line has to run the suite.
+    expect(testJob.includes('node-version: [20.x, 22.x, 24.x]')).toBe(true)
+
+    // Bun and Deno run the tests with their own runtime, so they are pinned to
+    // a single Node.js instead of multiplying the matrix.
+    for (const runtime of ['bun', 'deno']) {
+      for (const version of ['22.x', '24.x']) {
+        expect(testJob.includes(`- runtime: ${runtime}\n            node-version: ${version}`)).toBe(true)
+      }
+    }
+
+    // Bun and Deno themselves are always taken from their latest release line.
+    expect(workflowText.includes('bun-version: latest')).toBe(true)
+    expect(workflowText.includes('deno-version: v2.x')).toBe(true)
+  })
+
   test('keeps dependency install logs quiet while auditing shipped dependencies', () => {
     const workflowText = readText(releaseWorkflowPath)
 
