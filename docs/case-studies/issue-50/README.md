@@ -19,6 +19,7 @@ The fix asks the runtime instead. `module.isBuiltin()` decides whether a specifi
 - `ci-logs/local-repro-deno-base-3ca349ad.log`: local re-run of the failing CI command at the branch base commit, before any implementation change.
 - `ci-logs/local-repro-before.log`, `ci-logs/local-repro-after.log`: `experiments/builtin-coverage.mjs` run against `origin/main` and against this branch, showing built-in coverage going from 24/72 to 72/72.
 - `ci-logs/npm-test.log`, `ci-logs/bun-test.log`, `ci-logs/deno-test.log`: full local test runs after the fix.
+- `ci-logs/run-35059338927.log`, `ci-logs/run-35059338927.json`: the passing CI/CD run for this branch after the fix.
 - `runtime-evidence/builtin-detection-node.log`, `-bun.log`, `-deno.log`: what each runtime reports for `builtinModules.length` and `isBuiltin()` on the interesting specifiers.
 - `runtime-evidence/fs-promises-arity-probe.log`: callback vs promise arities and constructors of `node:fs` / `node:fs/promises` per runtime, the measurement behind the `fs/promises` override.
 - `runtime-evidence/generic-builtin-loader-*.log`: output of `experiments/generic-builtin-loader.mjs` on each runtime, showing the generic loader reproduces every previously hardcoded entry.
@@ -97,6 +98,7 @@ Two consequences drove the implementation:
 - `tests/fs-promises.test.mjs` additionally asserts that the rebuilt promise API exposes every function the runtime ships and forwards arguments past the declared arity.
 - `experiments/builtin-coverage.mjs` reports coverage against any copy of `src/use.mjs`, which is how the 24/72 and 72/72 numbers above were measured.
 - Full suites were run on Node.js v24.21.0, Bun 1.4.2 and Deno 2.9.6; Node.js reports 381 passed / 4 failed, Bun 381 passed / 4 failed and Deno 32 test files passed / 1 failed (200 steps passed, 2 failed). Every failure is the same pre-existing `--experimental-network-imports` case, which also fails on `origin/main` because Node.js 24 removed that flag. See `ci-logs/`.
+- GitHub Actions run [35059338927](https://github.com/link-foundation/use-m/actions/runs/35059338927) is green on all six jobs (Node.js, Bun and Deno on ubuntu-latest and macos-latest), reporting 385 passed / 385 total, which confirms the four local failures are the Node.js 24 flag removal and nothing else. Logs: `ci-logs/run-35059338927.log`, metadata: `ci-logs/run-35059338927.json`.
 
 ## Size Effect
 
