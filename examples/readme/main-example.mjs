@@ -8,7 +8,7 @@
 // Node, Bun, Deno, Browser (universal script)
 const { use } = eval(
   await (
-    await fetch('https://unpkg.com/use-m/use.js')
+    await fetch('https://unpkg.com/use-m/src/use.js')
   ).text()
 );
 

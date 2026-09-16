@@ -1,5 +1,5 @@
-const { use } = require('../use.cjs');
-const { describe, test } = require('../test-adapter.cjs');
+const { use } = require('../src/use.cjs');
+const { describe, test } = require('../src/test-adapter.cjs');
 const assert = require('node:assert');
 
 describe('Relative Path Resolution (CommonJS)', () => {
@@ -22,7 +22,7 @@ describe('Relative Path Resolution (CommonJS)', () => {
   });
 
   test('should import JS file from parent directory using ../', async () => {
-    const parentModule = await use('../use.mjs');
+    const parentModule = await use('../src/use.mjs');
     assert.strictEqual(typeof parentModule.use, 'function');
   });
 
@@ -64,7 +64,7 @@ describe('Relative Path Resolution (CommonJS)', () => {
     assert.ok(nested.nested);
 
     // Test loading the same file from different relative paths
-    const useFromParent = await use('../use.mjs');
+    const useFromParent = await use('../src/use.mjs');
     const packageFromParent = await use('../package.json');
 
     // Both should have proper exports
