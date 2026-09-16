@@ -23,6 +23,12 @@ The fix asks the runtime instead. `module.isBuiltin()` decides whether a specifi
 - `runtime-evidence/builtin-detection-node.log`, `-bun.log`, `-deno.log`: what each runtime reports for `builtinModules.length` and `isBuiltin()` on the interesting specifiers.
 - `runtime-evidence/fs-promises-arity-probe.log`: callback vs promise arities and constructors of `node:fs` / `node:fs/promises` per runtime, the measurement behind the `fs/promises` override.
 - `runtime-evidence/generic-builtin-loader-*.log`: output of `experiments/generic-builtin-loader.mjs` on each runtime, showing the generic loader reproduces every previously hardcoded entry.
+- `ci-logs/node-v18.20.8.log`, `node-v20.20.2.log`, `node-v22.23.2.log`, `node-v24.21.0.log`, `node-v26.8.2.log`: `experiments/verify-node-lts.sh` output per Node.js version — the backward-compatibility experiment plus the eleven built-in test files.
+- `ci-logs/node-v20-full-suite.log`, `ci-logs/node-v22-full-suite.log`, `ci-logs/node-full-suite.log`: the whole jest suite on Node.js 20.20.2, 22.23.2 and 24.21.0 after the fix.
+- `ci-logs/node-full-suite-main-baseline.log`: the same suite on `main` in the same environment, for comparison.
+- `ci-logs/bun-full-suite.log`, `ci-logs/deno-full-suite.log`: the whole suite under Bun 1.4.2 and Deno 2.9.6 after the fix.
+- `runtime-evidence/backward-compat-node.log`, `-bun.log`, `-deno.log`: `experiments/builtin-backward-compatibility.mjs` comparing `main`'s resolver with this branch's for all 25 previously hardcoded specifiers on each runtime.
+- `runtime-evidence/backward-compat-bun-before-clamp.log`, `-deno-before-clamp.log`: the same comparison before the `fs/promises` arity clamp, the measurement that exposed the `stat` and `truncate` regressions.
 
 ## Timeline
 
@@ -99,6 +105,78 @@ Two consequences drove the implementation:
 - `experiments/builtin-coverage.mjs` reports coverage against any copy of `src/use.mjs`, which is how the 24/72 and 72/72 numbers above were measured.
 - Full suites were run on Node.js v24.21.0, Bun 1.4.2 and Deno 2.9.6; Node.js reports 381 passed / 4 failed, Bun 381 passed / 4 failed and Deno 32 test files passed / 1 failed (200 steps passed, 2 failed). Every failure is the same pre-existing `--experimental-network-imports` case, which also fails on `origin/main` because Node.js 24 removed that flag. See `ci-logs/`.
 - GitHub Actions run [35059338927](https://github.com/link-foundation/use-m/actions/runs/35059338927) is green on all six jobs (Node.js, Bun and Deno on ubuntu-latest and macos-latest), reporting 385 passed / 385 total, which confirms the four local failures are the Node.js 24 flag removal and nothing else. Logs: `ci-logs/run-35059338927.log`, metadata: `ci-logs/run-35059338927.json`.
+
+## Backward Compatibility Review (2026-09-16)
+
+`konard` asked on PR 51 to double-check that backward compatibility is preserved, that the change does not affect the current LTS lines of Node.js, Bun and Deno, and that the test coverage is enough to guarantee it. This section records what was measured rather than what was expected.
+
+### How it was measured
+
+`experiments/builtin-backward-compatibility.mjs` imports `main`'s entry file and the branch's entry file into the same process and calls `resolvers.builtin()` on both for each of the 25 specifiers the old `supportedBuiltins` table served, bare and `node:`-prefixed. For every specifier it compares the key set of the returned object and a description — type, function name, declared arity — of every value, and prints one `DIFF` line per difference. It runs on whichever runtime starts it:
+
+```
+git show main:src/use.mjs > /tmp/use-baseline.mjs
+node experiments/builtin-backward-compatibility.mjs          # or bun run / deno run --allow-all
+```
+
+`experiments/verify-node-lts.sh` repeats that experiment and the eleven built-in test files under several Node.js binaries, writing one log per version into `ci-logs/`.
+
+### Node.js: no observable difference on any line
+
+| Node.js | differences vs `main` | built-in test files |
+| --- | --- | --- |
+| v18.20.8 | 0 | 11 suites, 161 tests passed |
+| v20.20.2 (Iron) | 0 | 11 suites, 161 tests passed |
+| v22.23.2 (Jod) | 0 | 11 suites, 161 tests passed |
+| v24.21.0 (Krypton) | 0 | 11 suites, 161 tests passed |
+| v26.8.2 (Current) | 0 | 11 suites, 161 tests passed |
+
+Zero is the expected result and the reason is structural: on Node.js every one of the 25 specifiers now goes through the generic loader, which returns `{ default: m, ...m }` — character for character what all 25 removed `node` factories did. `performance` is the single Node.js-side override left, and it maps onto `node:perf_hooks` exactly as before. v18.20.8 additionally exercises the `module.builtinModules` fallback path for runtimes that predate `module.isBuiltin()`.
+
+### Bun and Deno: `fs/promises` was the only module that moved
+
+Those two runtimes are the only ones with an override, and every difference the experiment reported is inside it: 4 lines on Bun and 8 on Deno, all of them `fs/promises`, in both the bare and the `node:`-prefixed form. Two of the Deno ones were genuine regressions introduced by the first dynamic draft (`3895ecc`), found by measurement and fixed by clamping the derived arity. The notation below is the experiment's own — `name/declared parameter count`:
+
+| runtime, export | `main` (hardcoded) | `3895ecc` (first draft) | after the fix | verdict |
+| --- | --- | --- | --- | --- |
+| Deno `stat` | `stat/2` | `stat/0` | `stat/1` | regression, fixed |
+| Deno `truncate` | `truncate/2` | `truncate/0` | `truncate/1` | regression, fixed |
+| Bun `lchmod` | `undefined` | `lchmod/2` | `lchmod/2` | addition |
+| Deno `lchmod` | `undefined` | `<anonymous>/0` | `<anonymous>/0` | addition |
+| Bun `watch` | `bound watch/3` | `watch/1` | `watch/1` | fix |
+| Deno `watch` | `bound watch/3` | `watch/0` | `watch/0` | fix |
+
+The regression's cause: the rebuild derives each wrapper's arity from the runtime's callback API (`fs.stat.length - 1`), and a callback API may declare fewer parameters than it accepts when the middle ones have defaults. `fs.stat.length` is 1 on Deno — and on Node.js — so the derived arity was 0, no wrapper matched, and the code fell back to the bare `promisify` result, which is a plain `Function` of length 0 rather than an `AsyncFunction`. The derived arity is now clamped into the range the wrappers cover, so a rebuilt entry is always an `AsyncFunction` declaring at least the path it operates on. The resulting `stat/1` and `truncate/1` match Node.js' own promise API, which the hardcoded `2` did not. Bun was never affected: it declares `fs.stat.length` as 3 — callback included — so the derived arity was 2 and a wrapper always matched. Node.js declares 1 like Deno, but never reaches the rebuild because its `node:fs/promises` is passed through untouched.
+
+The other two differences are not regressions. `lchmod` was absent from the hardcoded table, so `use('fs/promises').lchmod` used to be `undefined` and is now whatever the runtime ships — Bun's own promisified `lchmod`, and on Deno the runtime's own export, which stays as it is because Deno has no `fs.lchmod` callback API to rebuild from. `watch` was `fs.watch` bound to `fs` — a callback API with a different contract from the promise one — and is now the runtime's own promise watcher, as on Node.js; `tests/fs-promises.test.mjs` pins that.
+
+Evidence: `runtime-evidence/backward-compat-{node,bun,deno}.log` and `runtime-evidence/backward-compat-{bun,deno}-before-clamp.log`.
+
+### Test coverage added for the guarantee
+
+- `tests/builtin-backward-compatibility.test.mjs` / `.cjs` (34 tests each, 68 in total) state the contract of all 25 formerly hardcoded specifiers: the documented exports of each, bare and prefixed; that the builtin resolver claims every one of them instead of handing it to npm; that the resolved object carries every named export of the runtime's own module; that the runtime's own `default` survives the loader; the historical `events` → `EventEmitter`, `stream` → `Stream` and callable-`assert` defaults; the thirteen `process` properties the removed Deno branch copied by hand; `performance.now()`; that a rebuilt module still carries exactly the runtime module's exports at the top level and under `default`; and that bare and `node:`-prefixed specifiers resolve alike.
+- `tests/fs-promises.test.mjs` (9 tests) pins Node.js' arities for 20 functions, the `AsyncFunction` / name / arity contract of everything use-m rebuilds, `watch` being the promise watcher rather than `fs.watch`, and an end-to-end round trip — `mkdtemp`, `mkdir`, `writeFile`, `appendFile`, `readFile`, `copyFile`, `rename`, `readdir`, `truncate`, `stat`, `access`, `realpath`, `rm` — through the rebuilt wrappers.
+- The suites run on all three runtimes; the `.cjs` mirrors additionally cover the CommonJS entry file.
+
+### CI now covers the Node.js lines instead of one
+
+Which modules are built in is the runtime's answer now, so the runtime version is part of the contract, and the matrix tested only `20.x`. The test job runs `20.x`, `22.x` and `24.x`; Bun and Deno execute the suite with their own runtime (`bun-version: latest`, `deno-version: v2.x`) and stay pinned to one Node.js for `npm ci`, so the matrix grows by four jobs rather than twelve. `tests/release-workflow-policy.test.mjs` asserts that shape.
+
+That extension exposed an unrelated blocker: `--experimental-network-imports` was removed in Node.js 22, so `tests/network-imports.*` failed on the newer lines — and on `main` too, for the same reason, whenever the suite runs on a modern Node.js. Those tests now probe for the flag and skip only when Node.js itself rejects the option; any other failure still fails the test.
+
+### Full-suite results
+
+| runtime | result | log |
+| --- | --- | --- |
+| Node.js v20.20.2 | 49 suites, 458 tests passed | `ci-logs/node-v20-full-suite.log` |
+| Node.js v22.23.2 | 49 suites, 456 tests passed, 2 npm-registry timeouts | `ci-logs/node-v22-full-suite.log` |
+| Node.js v24.21.0 | 49 suites, 458 tests passed | `ci-logs/node-full-suite.log` |
+| Bun 1.4.2 | 458 tests passed, 0 failed | `ci-logs/bun-full-suite.log` |
+| Deno 2.9.6 | 34 test files passed, 241 steps, 0 failed | `ci-logs/deno-full-suite.log` |
+
+The two Node.js 22 failures are `tests/lodash.test.mjs` "npm: lodash" and `tests/use.test.cjs` "use.all", both of which exceeded the 5 s per-test limit while fetching from the npm registry. Re-running exactly those two files on the same binary passes (2 suites, 21 tests), and the appendix of that log records the re-run. Neither test touches built-in modules.
+
+For comparison, `ci-logs/node-full-suite-main-baseline.log` is the same suite on `main` in the same environment: 19 failures, all of them the browser suites (Chrome was not yet installed for Puppeteer at that point) and the four `--experimental-network-imports` tests that Node.js 24 can no longer run. Both causes are environmental, and both are gone in the branch runs above.
 
 ## Size Effect
 
