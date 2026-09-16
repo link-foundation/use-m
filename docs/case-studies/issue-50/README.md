@@ -20,6 +20,7 @@ The fix asks the runtime instead. `module.isBuiltin()` decides whether a specifi
 - `ci-logs/local-repro-before.log`, `ci-logs/local-repro-after.log`: `experiments/builtin-coverage.mjs` run against `origin/main` and against this branch, showing built-in coverage going from 24/72 to 72/72.
 - `ci-logs/npm-test.log`, `ci-logs/bun-test.log`, `ci-logs/deno-test.log`: full local test runs after the fix.
 - `ci-logs/run-35059338927.log`, `ci-logs/run-35059338927.json`: the passing CI/CD run for this branch after the fix.
+- `ci-logs/run-35074309628.log`, `ci-logs/run-35074309628.json`: the passing CI/CD run on the widened matrix — ten jobs across Ubuntu and macOS, Node.js 20/22/24, Bun and Deno.
 - `runtime-evidence/builtin-detection-node.log`, `-bun.log`, `-deno.log`: what each runtime reports for `builtinModules.length` and `isBuiltin()` on the interesting specifiers.
 - `runtime-evidence/fs-promises-arity-probe.log`: callback vs promise arities and constructors of `node:fs` / `node:fs/promises` per runtime, the measurement behind the `fs/promises` override.
 - `runtime-evidence/generic-builtin-loader-*.log`: output of `experiments/generic-builtin-loader.mjs` on each runtime, showing the generic loader reproduces every previously hardcoded entry.
@@ -177,6 +178,11 @@ That extension exposed an unrelated blocker: `--experimental-network-imports` wa
 The two Node.js 22 failures are `tests/lodash.test.mjs` "npm: lodash" and `tests/use.test.cjs` "use.all", both of which exceeded the 5 s per-test limit while fetching from the npm registry. Re-running exactly those two files on the same binary passes (2 suites, 21 tests), and the appendix of that log records the re-run. Neither test touches built-in modules.
 
 For comparison, `ci-logs/node-full-suite-main-baseline.log` is the same suite on `main` in the same environment: 19 failures, all of them the browser suites (Chrome was not yet installed for Puppeteer at that point) and the four `--experimental-network-imports` tests that Node.js 24 can no longer run. Both causes are environmental, and both are gone in the branch runs above.
+
+
+### CI run on the widened matrix
+
+Run [35074309628](https://github.com/link-foundation/use-m/actions/runs/35074309628) on commit `a09e0e6`: ten jobs, all green — Node.js 20.x, 22.x and 24.x on `ubuntu-latest` and `macos-latest` (458 tests each), Bun on both operating systems (458 pass, 0 fail) and Deno on both (34 files, 241 steps, 0 failed). Logs: `ci-logs/run-35074309628.log`.
 
 ## Size Effect
 
