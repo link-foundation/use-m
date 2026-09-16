@@ -115,20 +115,26 @@ const nonCallbackFileApis = new Set(['glob', 'watch']);
 // Wraps a promisified callback API in an async function declaring `arity`
 // parameters, so `.length` and `constructor.name` match Node's promise API.
 // The rest parameter forwards every argument regardless of declared count.
+// Index 0 declares one parameter: a promise API always takes at least the path
+// or handle it operates on.
 const asyncFunctionsByArity = [
-  (call) => async (...args) => call(...args),
   (call) => async (a, ...rest) => call(a, ...rest),
   (call) => async (a, b, ...rest) => call(a, b, ...rest),
   (call) => async (a, b, c, ...rest) => call(a, b, c, ...rest),
   (call) => async (a, b, c, d, ...rest) => call(a, b, c, d, ...rest),
   (call) => async (a, b, c, d, e, ...rest) => call(a, b, c, d, e, ...rest)
 ];
+const minimumFileApiArity = 1;
+const maximumFileApiArity = minimumFileApiArity + asyncFunctionsByArity.length - 1;
 const toAsyncFunction = (call, arity, name) => {
-  const wrap = asyncFunctionsByArity[arity];
-  if (!wrap) {
-    return call;
-  }
-  const wrapped = wrap(call);
+  // A callback API can declare fewer parameters than it accepts when the
+  // middle ones have defaults (`fs.stat.length` is 1 on Deno and on Node),
+  // which would derive an arity of 0. The derived arity is therefore clamped
+  // into the range the wrappers cover, so every rebuilt entry stays an
+  // AsyncFunction: out of range, the bare `promisify` result was used instead,
+  // and that is a plain Function of length 0.
+  const clamped = Math.min(Math.max(arity, minimumFileApiArity), maximumFileApiArity);
+  const wrapped = asyncFunctionsByArity[clamped - minimumFileApiArity](call);
   try {
     Object.defineProperty(wrapped, 'name', { value: name });
   } catch (error) {
