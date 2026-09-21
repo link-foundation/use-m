@@ -21,6 +21,7 @@ It may be useful for standalone scripts that do not require a `package.json`. Al
     - [Robust loading (resilient CDN bootstrap)](#robust-loading-resilient-cdn-bootstrap)
       - [Troubleshooting: `SyntaxError: Unexpected identifier 'found'`](#troubleshooting-syntaxerror-unexpected-identifier-found)
     - [Resilient package loading (shared fallback engine)](#resilient-package-loading-shared-fallback-engine)
+    - [Resilient npm latest-version resolution](#resilient-npm-latest-version-resolution)
     - [Interactive shell in Node.js environment](#interactive-shell-in-nodejs-environment)
     - [Browser](#browser)
     - [Deno](#deno)
@@ -43,7 +44,7 @@ It may be useful for standalone scripts that do not require a `package.json`. Al
 
 ## Key features
 
-- **Dynamic package loading**: In `node.js`, `use-m` loads and imports npm packages on-demand with **global installation** (using `npm i -g` with separate alias for each version), making them available across projects and reusable without needing to reinstall each time. Failed npm installs are retried three times with 1s/2s backoff and include captured npm output in the final error. If versioned aliases expose the same executable, `use-m` verifies that the conflicting symlink belongs to another alias of that package, then installs the new alias without replacing the existing executable. Unrelated global executables are never force-overwritten. If an interrupted install leaves a corrupt alias, `use-m` removes and reinstalls that alias once, then imports it through a cache-busted file URL so recovery works in the same process. Recursive alias cleanup has its own retry budget so transient filesystem races do not abort recovery. In case of a browser `use-m` loads npm packages directly from CDNs (by default `esm.sh` is used).
+- **Dynamic package loading**: In `node.js`, `use-m` loads and imports npm packages on-demand with **global installation** (using `npm i -g` with separate alias for each version), making them available across projects and reusable without needing to reinstall each time. Unpinned versions are resolved directly from the configured npm registry with transient-error retries and a five-minute memory/disk cache; npm CLI, stale-cache, and installed-package fallbacks keep CI usable during registry outages. Failed npm installs are retried three times with 1s/2s backoff and include captured npm output in the final error. If versioned aliases expose the same executable, `use-m` verifies that the conflicting symlink belongs to another alias of that package, then installs the new alias without replacing the existing executable. Unrelated global executables are never force-overwritten. If an interrupted install leaves a corrupt alias, `use-m` removes and reinstalls that alias once, then imports it through a cache-busted file URL so recovery works in the same process. Recursive alias cleanup has its own retry budget so transient filesystem races do not abort recovery. In case of a browser `use-m` loads npm packages directly from CDNs (by default `esm.sh` is used).
 - **Version-safe imports**: Allows multiple versions of the same library to coexist without conflicts, so you can specify any version for each import (usage) without affecting other scripts or other usages (imports) in the same script.
 - **No more `require`, `import`, or `package.json`**: With `use-m`, traditional module loading approaches like `require()`, `import` statements, and `package.json` dependencies become effectively obsolete. You can dynamically load any module at runtime without pre-declaring dependencies in separate file. This enables truly self-contained `.mjs` files that can effectively replace shell scripts.
 - **Built-in modules emulation**: Every built-in module the host runtime reports is loadable, in every environment (browser, Node.js, Bun, Deno). The supported set is read from the runtime through `node:module` rather than kept as a list inside `use-m`, so modules added by future Node.js, Bun or Deno releases work immediately; browser polyfills are provided for `console`, `crypto`, `url` and `performance`.
@@ -162,7 +163,7 @@ The resilience above is not limited to bootstrapping `use-m` itself — once you
 | --- | --- |
 | Browser / `http(s)` script | `esm.sh` → `jspm.dev` → `cdn.skypack.dev` |
 | Deno | `esm.sh` (deno target) → `jspm.dev` → `cdn.skypack.dev` |
-| Node.js (`npm i -g`), Bun | unchanged — single local resolver, no network fallback |
+| Node.js (`npm i -g`), Bun | single local resolver (Node's npm metadata lookup has its own retry/cache/fallback path) |
 
 If every mirror fails, `use()` throws one clear, aggregated error listing each attempt instead of the cryptic error from a single failing host:
 
@@ -210,6 +211,48 @@ const data = await loadWithFallback(
 ```
 
 A runnable, dependency-free demonstration lives in [`examples/load/shared-fallback-engine.mjs`](https://github.com/link-foundation/use-m/blob/main/examples/load/shared-fallback-engine.mjs).
+
+### Resilient npm latest-version resolution
+
+In Node.js, an unpinned import such as `use('lodash')` must discover what `latest` means before deciding whether its global alias can be reused. That lookup now follows this sequence:
+
+1. Read a fresh in-memory or disk cache entry (five-minute TTL by default).
+2. Fetch `<configured registry>/<package>/latest` directly, retrying transient network failures and HTTP 403, 408, 425, 429, and 5xx responses up to three times.
+3. Fall back once to `npm show <package> version`, preserving authentication, proxy, scoped-registry, and private-registry behavior from npm configuration.
+4. If the registry remains unavailable, use stale cached metadata, then the version already installed under the `latest` alias.
+5. If no safe fallback exists, throw an error that suggests pinning a known version.
+
+Successful metadata is cached under `$XDG_CACHE_HOME/use-m/registry` (or `~/.cache/use-m/registry`). Cache keys include both registry and package, writes are atomic, and credentials embedded in a registry URL are stripped from requests, cache records, and diagnostic messages. The exact version returned by the lookup is installed, so a moving `latest` tag cannot make the cache marker stale immediately.
+
+The resolver honors, in order, the `registry`/`npmRegistry` option, `npm_config_registry` or `NPM_CONFIG_REGISTRY`, `npm config get registry` (including `.npmrc`), and finally the public npm registry. Pinning a version, such as `use('lodash@4.17.21')`, skips metadata lookup entirely.
+
+Use `USE_M_DEBUG=1` for decisions and fallbacks, or `USE_M_DEBUG=2` for cache paths, registry attempts, and npm commands. Logging is off by default and is written to stderr.
+
+```bash
+USE_M_DEBUG=2 node ./script.mjs
+```
+
+The same behavior can be configured per `makeUse()` instance:
+
+```javascript
+import { makeUse } from 'use-m';
+
+const use = await makeUse({
+  registry: 'https://registry.npmjs.org/',
+  registryMaxAttempts: 3,
+  registryRetryDelayMs: 250,       // exponential: 250 ms, then 500 ms
+  registryRequestTimeoutMs: 10_000,
+  registryCliFallback: true,
+  latestVersionCache: true,
+  latestVersionCacheTtlMs: 5 * 60_000,
+  // latestVersionCacheDirectory: '/var/cache/use-m/registry',
+  debug: 2,
+});
+
+const lodash = await use('lodash');
+```
+
+Advanced tests and embedded runtimes may inject `fetch` and `debugLogger`. Setting `registryRequestTimeoutMs` to `0` disables the request timeout; setting `latestVersionCache` or `registryCliFallback` to `false` disables that layer. Existing npm-install controls (`installMaxAttempts`, `installRetryDelayMs`, and the `installLock*` options) remain unchanged.
 
 ### Interactive shell in Node.js environment
 
