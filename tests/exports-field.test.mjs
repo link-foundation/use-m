@@ -1,5 +1,5 @@
-import { use } from '../use.mjs';
-import { describe, test, expect } from '../test-adapter.mjs';
+import { use } from '../src/use.mjs';
+import { describe, test, expect } from '../src/test-adapter.mjs';
 
 // Mock jest object for Deno compatibility
 const jest = typeof Deno !== 'undefined' ? { setTimeout: () => {} } : (await import('@jest/globals')).jest;
