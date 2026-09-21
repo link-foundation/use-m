@@ -210,6 +210,15 @@ for (const [format, api] of implementations) {
       await expect(api.baseUse(
         'data:text/javascript,export default 43; export const __esModule = true'
       )).resolves.toBe(43);
+      // Bun rewrites this data-URL module to a default-only compatibility
+      // shape, so only runtimes that expose both ESM exports can assert it.
+      if (typeof Bun === 'undefined') {
+        const explicitModuleExports = await api.baseUse(
+          "data:text/javascript,const marker = 44; export default 43; export { marker as 'module.exports' }"
+        );
+        expect(explicitModuleExports.default).toBe(43);
+        expect(explicitModuleExports['module.exports']).toBe(44);
+      }
       await expect(api.baseUse('file:///definitely/missing/use-m-contract.mjs')).rejects.toThrow(
         'Failed to import module from'
       );
