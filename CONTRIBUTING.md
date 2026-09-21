@@ -70,24 +70,37 @@ deno test --allow-net --allow-env --allow-run --allow-read --allow-write --allow
 
 ```
 /home/user/use-m/
-├── use.mjs             # ES Module version (main implementation)
-├── use.cjs             # CommonJS version
-├── use.js              # Universal version (browser/eval)
-├── cli.mjs             # CLI tool
-├── loader.js           # Node.js module loader hooks
-├── test-adapter.mjs    # Cross-runtime test framework adapter
-├── test-adapter.cjs    # CommonJS version of test adapter
-├── tests/              # Test suite (34 test files)
-├── examples/           # Usage examples (15 examples)
-├── .github/workflows/  # CI/CD configuration
-└── docs/               # Documentation files
+├── src/                    # All shipped source code (single source of truth)
+│   ├── use.mjs             # ES Module version (main implementation)
+│   ├── use.cjs             # CommonJS version
+│   ├── use.js              # Universal version (browser/eval)
+│   ├── load.mjs            # Robust CDN bootstrap (loadUseM + loadWithFallback)
+│   ├── load.cjs            # CommonJS variant of load.mjs
+│   ├── cli.mjs             # CLI tool
+│   ├── loader.js           # Node.js module loader hooks
+│   ├── test-adapter.mjs    # Cross-runtime test framework adapter
+│   └── test-adapter.cjs    # CommonJS version of test adapter
+├── use.js                  # AUTO-GENERATED root mirror of src/use.js (CDN URL compat)
+├── use.cjs                 # AUTO-GENERATED root mirror of src/use.cjs (CDN URL compat)
+├── use.mjs                 # AUTO-GENERATED root mirror of src/use.mjs (CDN URL compat)
+├── scripts/                # Maintenance scripts
+│   └── sync-root-entries.mjs  # Regenerates the root use.* mirrors from src/
+├── tests/                  # Test suite
+├── examples/               # Usage examples
+├── experiments/            # Throwaway scripts for verifying assumptions
+├── .github/workflows/      # CI/CD configuration
+└── docs/                   # Documentation files
 ```
 
 ### Key Files
 
-- **use.mjs**: Primary implementation file. Changes here should be synchronized to use.cjs
-- **use.cjs**: CommonJS variant of use.mjs
-- **tests/**: Each test file has both .mjs and .cjs versions
+- **src/use.mjs**: Primary implementation file. Changes here should be synchronized to `src/use.cjs`
+- **src/use.cjs**: CommonJS variant of `src/use.mjs`
+- **src/use.js**: Universal eval-loadable build kept in sync with `src/use.mjs`/`src/use.cjs` (the `tests/script-sync.test.mjs` check enforces this for the npm resolver)
+- **src/load.mjs / src/load.cjs**: Robust bootstrap loader and shared `loadWithFallback` engine reused by `src/loader.js` and per-package CDN fallback chains in `src/use.{mjs,cjs}`
+- **use.js / use.cjs / use.mjs** (repo root): AUTO-GENERATED full mirrors of `src/use.*`. They exist only so the historical CDN bootstrap URLs (e.g. `https://unpkg.com/use-m/use.js`) keep resolving — unpkg/jsdelivr serve raw files and ignore package.json `exports`. **Never edit them by hand**; run `npm run sync:entries` after changing any `src/use.*` file. `tests/root-entries.test.mjs` enforces that they stay in sync. See [#60](https://github.com/link-foundation/use-m/issues/60)
+- **scripts/sync-root-entries.mjs**: Regenerates the root `use.*` mirrors from `src/` (invoked by `npm run sync:entries`)
+- **tests/**: Each test file has both `.mjs` and `.cjs` versions
 - **examples/**: Real-world usage examples
 
 ## Making Changes
@@ -119,7 +132,8 @@ deno test --allow-net --allow-env --allow-run --allow-read --allow-write --allow
 
 ### Important Notes
 
-- **Dual-file updates**: Changes to `use.mjs` typically require corresponding updates to `use.cjs`
+- **Dual-file updates**: Changes to `src/use.mjs` typically require corresponding updates to `src/use.cjs` (and frequently `src/use.js` for the npm resolver block — `tests/script-sync.test.mjs` enforces this)
+- **Regenerate root mirrors**: After editing any `src/use.*` file, run `npm run sync:entries` and commit the regenerated root `use.js` / `use.cjs` / `use.mjs`. `tests/root-entries.test.mjs` fails if they drift from `src/`
 - **Cross-runtime compatibility**: Ensure changes work on Node.js, Bun, and Deno
 - **Examples**: Update examples if you change public APIs
 
@@ -143,7 +157,7 @@ npm test -- --coverage
 
 ### Writing Tests
 
-- Use the cross-runtime test adapter: `import { describe, test, expect } from '../test-adapter.mjs'`
+- Use the cross-runtime test adapter: `import { describe, test, expect } from '../src/test-adapter.mjs'`
 - Create both `.mjs` and `.cjs` versions of new tests
 - Test both success and error paths
 - Include edge cases
@@ -151,8 +165,8 @@ npm test -- --coverage
 Example test structure:
 
 ```javascript
-import { describe, test, expect } from '../test-adapter.mjs';
-import { use } from '../use.mjs';
+import { describe, test, expect } from '../src/test-adapter.mjs';
+import { use } from '../src/use.mjs';
 
 describe('Feature name', () => {
   test('should do something specific', async () => {

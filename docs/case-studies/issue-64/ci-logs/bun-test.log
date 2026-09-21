@@ -1,0 +1,453 @@
+bun test v1.3.14 (0d9b296a)
+
+tests/resolvers.test.cjs:
+(pass) [cjs module] resolvers tests > [cjs module] npm resolver resolves package path [174.52ms]
+(pass) [cjs module] resolvers tests > [cjs module] npm resolver resolves scoped package path for @octokit/core@6.1.5 [126.39ms]
+(pass) [cjs module] resolvers tests > [cjs module] npm resolver resolves package path with version [2217.67ms]
+(pass) [cjs module] resolvers tests > [cjs module] npm resolver resolves yargs/helpers [113.10ms]
+(pass) [cjs module] resolvers tests > [cjs module] npm resolver resolves yargs@18.0.0/helpers [112.07ms]
+(pass) [cjs module] resolvers tests > [cjs module] npm resolver resolves yargs@latest/helpers [580.32ms]
+(pass) [cjs module] resolvers tests > [cjs module] skypack resolver resolves URL [0.40ms]
+(pass) [cjs module] resolvers tests > [cjs module] skypack resolver resolves subpath [0.06ms]
+(pass) [cjs module] resolvers tests > [cjs module] jsdelivr resolver resolves URL [0.19ms]
+(pass) [cjs module] resolvers tests > [cjs module] jsdelivr resolver resolves subpath [0.07ms]
+(pass) [cjs module] resolvers tests > [cjs module] unpkg resolver resolves URL [0.08ms]
+(pass) [cjs module] resolvers tests > [cjs module] unpkg resolver resolves subpath [0.04ms]
+(pass) [cjs module] resolvers tests > [cjs module] esm resolver resolves URL [0.04ms]
+(pass) [cjs module] resolvers tests > [cjs module] esm resolver resolves subpath [0.05ms]
+(pass) [cjs module] resolvers tests > [cjs module] jspm resolver resolves URL [0.06ms]
+(pass) [cjs module] resolvers tests > [cjs module] jspm resolver resolves subpath [0.07ms]
+(pass) [cjs module] resolvers tests > [cjs module] bun resolver resolves package path [10.41ms]
+(pass) [cjs module] resolvers tests > [cjs module] bun resolver resolves yargs/helpers [8.01ms]
+(pass) [cjs module] resolvers tests > [cjs module] bun resolver resolves yargs@latest/helpers [60.87ms]
+
+tests/script-sync.test.mjs:
+(pass) [mjs module] distributed script synchronization > [mjs module] npm resolver stays synchronized across mjs, cjs, and universal builds [1.02ms]
+
+tests/lodash.test.mjs:
+(pass) [mjs module] 'lodash' imports tests > [mjs module] npm: lodash [66.76ms]
+(pass) [mjs module] 'lodash' imports tests > [mjs module] npm: lodash@latest [46.07ms]
+(pass) [mjs module] 'lodash' imports tests > [mjs module] npm: lodash@ [44.06ms]
+(pass) [mjs module] 'lodash' imports tests > [mjs module] npm: lodash@4.17.21 [20.92ms]
+(pass) [mjs module] 'lodash' imports tests > [mjs module] npm: lodash@4.17.21/add [10.52ms]
+(pass) [mjs module] 'lodash' imports tests > [mjs module] npm: lodash@4.17.21/add.js [9.20ms]
+(pass) [mjs module] 'lodash' imports tests > [mjs module] npm: lodash@4.17.21/not-found.js [8.61ms]
+
+tests/network-imports.test.mjs:
+(pass) [mjs module] imports using --experimental-network-imports > [mjs module] Import using --experimental-network-imports for CJS file [228.24ms]
+(pass) [mjs module] imports using --experimental-network-imports > [mjs module] Import using --experimental-network-imports for MJS file [241.17ms]
+
+tests/deno-support.test.cjs:
+(pass) [cjs module] Deno support > [cjs module] Deno resolver should resolve npm packages to esm.sh [0.20ms]
+(pass) [cjs module] Deno support > [cjs module] Deno resolver should handle scoped packages [0.06ms]
+(pass) [cjs module] Deno support > [cjs module] Deno resolver should handle module paths [0.06ms]
+(pass) [cjs module] Deno support > [cjs module] Deno resolver should handle latest version [0.05ms]
+(pass) [cjs module] Deno support > [cjs module] makeUse should detect Deno runtime when Deno global is present [0.69ms]
+(pass) [cjs module] Deno support > [cjs module] Deno resolver should work with complex package names [0.06ms]
+(pass) [cjs module] Deno support > [cjs module] Deno resolver should handle packages without versions [0.04ms]
+(pass) [cjs module] Deno support > [cjs module] makeUse with explicit deno resolver [0.08ms]
+
+tests/relative-paths.test.mjs:
+(pass) Relative Path Resolution > should import JS file from same directory using ./ [1.78ms]
+(pass) Relative Path Resolution > should import JSON file from same directory using ./ [0.32ms]
+(pass) Relative Path Resolution > should import JS file from parent directory using ../ [0.09ms]
+(pass) Relative Path Resolution > should import from subdirectory using ./subfolder/ [0.38ms]
+(pass) Relative Path Resolution > should import JSON from subdirectory [0.16ms]
+(pass) Relative Path Resolution > should handle complex relative paths (../) [0.15ms]
+(pass) Relative Path Resolution > should work with mixed relative and npm imports [6.59ms]
+(pass) Relative Path Resolution > should maintain correct context for nested relative imports [0.50ms]
+
+tests/import.test.cjs:
+(pass) [cjs module] dynamic import support > [cjs module] supportsDynamicImport returns true in .cjs file [0.35ms]
+
+tests/builtin-universal.test.cjs:
+(pass) [cjs module] Universal built-in modules (work in all environments) > [cjs module] console module should work [2.37ms]
+(pass) [cjs module] Universal built-in modules (work in all environments) > [cjs module] crypto module should work [1.82ms]
+(pass) [cjs module] Universal built-in modules (work in all environments) > [cjs module] url module should work [0.37ms]
+(pass) [cjs module] Universal built-in modules (work in all environments) > [cjs module] performance module should work [0.60ms]
+(pass) [cjs module] Universal built-in modules (work in all environments) > [cjs module] modules should work with node: prefix [0.16ms]
+
+tests/lodash.test.cjs:
+(pass) [cjs module] 'lodash' imports tests > [cjs module] npm: lodash [47.97ms]
+(pass) [cjs module] 'lodash' imports tests > [cjs module] npm: lodash@latest [45.98ms]
+(pass) [cjs module] 'lodash' imports tests > [cjs module] npm: lodash@ [48.39ms]
+(pass) [cjs module] 'lodash' imports tests > [cjs module] npm: lodash@4.17.21 [8.50ms]
+(pass) [cjs module] 'lodash' imports tests > [cjs module] npm: lodash@4.17.21/add [8.08ms]
+(pass) [cjs module] 'lodash' imports tests > [cjs module] npm: lodash@4.17.21/add.js [9.22ms]
+(pass) [cjs module] 'lodash' imports tests > [cjs module] npm: lodash@4.17.21/not-found.js [7.92ms]
+
+tests/command-stream.test.mjs:
+(pass) [mjs module] command-stream module import > [mjs module] Direct ESM Import [59.49ms]
+(pass) [mjs module] command-stream module import > [mjs module] Dynamic ESM Import of CJS [50.74ms]
+(pass) [mjs module] command-stream module import > [mjs module] Dynamic ESM Import of MJS [48.77ms]
+
+tests/use.test.mjs:
+(pass) [mjs module] 'use' import strategies > [mjs module] Direct ESM Import lodash@4.17.21 [7.69ms]
+(pass) [mjs module] 'use' import strategies > [mjs module] Dynamic ESM Import of CSJ [7.09ms]
+(pass) [mjs module] 'use' import strategies > [mjs module] Dynamic ESM Import of MJS [7.92ms]
+(pass) [mjs module] 'use' import strategies > [mjs module] Universal (then style) [0.10ms]
+(pass) [mjs module] 'use' import strategies > [mjs module] Universal (then style, use inside) [0.03ms]
+(pass) [mjs module] 'use' import strategies > [mjs module] Universal (eval style)
+(pass) [mjs module] 'use' import strategies > [mjs module] Universal (single then style) [0.01ms]
+(pass) [mjs module] 'use' import strategies > [mjs module] use.all with require [20.43ms]
+(pass) [mjs module] 'use' import strategies > [mjs module] use.all [10.64ms]
+(pass) [mjs module] 'use' import strategies > [mjs module] use.all (script) [0.10ms]
+(pass) [mjs module] 'use' import strategies > [mjs module] Universal (script) @octokit/core@6.1.5 [0.01ms]
+(pass) [mjs module] 'use' import strategies > [mjs module] Universal (script) @octokit/core@5 [0.01ms]
+(pass) [mjs module] 'use' import strategies > [mjs module] Universal (script) @octokit/core (latest) [0.01ms]
+(pass) [mjs module] 'use' import strategies > [mjs module] @octokit/core (latest) [67.63ms]
+
+tests/use.test.cjs:
+(pass) [cjs module] 'use' import strategies > [cjs module] Direct CJS Require [16.05ms]
+(pass) [cjs module] 'use' import strategies > [cjs module] Dynamic Import with await import() of CJS [10.22ms]
+(pass) [cjs module] 'use' import strategies > [cjs module] Dynamic Import with await import() of MJS [7.92ms]
+(pass) [cjs module] 'use' import strategies > [cjs module] Universal (then style) [0.08ms]
+(pass) [cjs module] 'use' import strategies > [cjs module] Universal (then style, use inside) [0.01ms]
+(pass) [cjs module] 'use' import strategies > [cjs module] Universal (eval style)
+(pass) [cjs module] 'use' import strategies > [cjs module] Universal (single then style) [0.01ms]
+(pass) [cjs module] 'use' import strategies > [cjs module] use.all [9.68ms]
+(pass) [cjs module] 'use' import strategies > [cjs module] use.all with dynamic import [12.56ms]
+(pass) [cjs module] 'use' import strategies > [cjs module] use.all (script) [0.08ms]
+(pass) [cjs module] 'use' import strategies > [cjs module] Universal (script) @octokit/core@6.1.5 [0.02ms]
+(pass) [cjs module] 'use' import strategies > [cjs module] Universal (script) @octokit/core@5 [0.01ms]
+(pass) [cjs module] 'use' import strategies > [cjs module] Universal (script) @octokit/core (latest) [0.01ms]
+(pass) [cjs module] 'use' import strategies > [cjs module] @octokit/core (latest) [69.02ms]
+
+tests/get-script-url.test.mjs:
+(pass) [mjs module] import.meta.url workaround > [mjs module] scriptUrl matches import.meta.url [0.41ms]
+(pass) [mjs module] import.meta.url workaround > [mjs module] scriptUrl matches import.meta.url in eval [0.23ms]
+
+tests/fallback.test.mjs:
+(pass) [mjs module] loadWithFallback (shared engine) > [mjs module] returns the first source's result without trying later ones [0.73ms]
+(pass) [mjs module] loadWithFallback (shared engine) > [mjs module] falls back to a later source when earlier ones fail [0.28ms]
+(pass) [mjs module] loadWithFallback (shared engine) > [mjs module] retries a flaky source before succeeding [0.18ms]
+(pass) [mjs module] loadWithFallback (shared engine) > [mjs module] throws ONE aggregated error listing every attempt [0.32ms]
+(pass) [mjs module] loadWithFallback (shared engine) > [mjs module] rejects empty or non-array sources [0.11ms]
+(pass) [mjs module] loadWithFallback (shared engine) > [mjs module] rejects a missing load function [0.06ms]
+(pass) [mjs module] makeUse per-package CDN fallback > [mjs module] falls back to the next mirror when one import fails [0.59ms]
+(pass) [mjs module] makeUse per-package CDN fallback > [mjs module] throws a clear aggregated error when every mirror fails [0.42ms]
+(pass) [mjs module] makeUse per-package CDN fallback > [mjs module] a single explicit resolver imports directly with its raw error (no aggregation) [0.29ms]
+(pass) [mjs module] makeUse per-package CDN fallback > [mjs module] a single-entry specifierResolvers chain also imports directly [0.27ms]
+(pass) [mjs module] makeUse per-package CDN fallback > [mjs module] exposes the default mirror chains [0.03ms]
+
+tests/typescript.test.mjs:
+(pass) [mjs module] typescript > [mjs module] use typescript [298.17ms]
+
+tests/import.test.mjs:
+(pass) [mjs module] dynamic import support > [mjs module] supportsDynamicImport returns true in .mjs file [0.20ms]
+
+tests/filename.test.cjs:
+(pass) [cjs module] scriptPath detection in CJS (functional) > [cjs module] default pathResolver resolves modules relative to this test file [3.42ms]
+(pass) [cjs module] scriptPath detection in CJS (functional) > [cjs module] override scriptPath does not change pathResolver behavior [0.42ms]
+(pass) [cjs module] scriptPath detection in CJS (fallback) > [cjs module] fallback default resolves modules relative to this test file [0.15ms]
+(pass) [cjs module] scriptPath detection in CJS (fallback) > [cjs module] fallback override scriptPath does not change pathResolver behavior [0.10ms]
+(pass) [cjs module] scriptPath detection in CJS (fallback) > [cjs module] fallback meta override does not change pathResolver behavior [0.13ms]
+(pass) [cjs module] scriptPath detection in CJS (meta URL) > [cjs module] meta override with use.js URL resolves relative to use.js [0.13ms]
+
+tests/module-specifier.test.cjs:
+(pass) [cjs module] parseModuleSpecifier > [cjs module] parses package with name and version [0.05ms]
+(pass) [cjs module] parseModuleSpecifier > [cjs module] parses scoped package with name and version [0.02ms]
+(pass) [cjs module] parseModuleSpecifier > [cjs module] parses package with name, version, and inner path [0.02ms]
+(pass) [cjs module] parseModuleSpecifier > [cjs module] parses package with name, version, and inner path with latest [0.02ms]
+(pass) [cjs module] parseModuleSpecifier > [cjs module] parses scoped package with name, version, and inner path [0.01ms]
+(pass) [cjs module] parseModuleSpecifier > [cjs module] parses package with name only [0.02ms]
+(pass) [cjs module] parseModuleSpecifier > [cjs module] parses scoped package with name only [0.01ms]
+(pass) [cjs module] parseModuleSpecifier > [cjs module] parses yargs@17.7.2/helpers [0.02ms]
+(pass) [cjs module] parseModuleSpecifier > [cjs module] parses yargs@latest/helpers [0.02ms]
+(pass) [cjs module] parseModuleSpecifier > [cjs module] parses yargs/helpers [0.01ms]
+(pass) [cjs module] parseModuleSpecifier > [cjs module] throws error for invalid package identifier [0.05ms]
+
+tests/load.test.cjs:
+(pass) [cjs module] looksLikeUseModule > [cjs module] accepts the real shipped use.js [9.39ms]
+(pass) [cjs module] looksLikeUseModule > [cjs module] accepts a long module-like body [0.12ms]
+(pass) [cjs module] looksLikeUseModule > [cjs module] rejects common CDN plain-text error bodies [0.08ms]
+(pass) [cjs module] looksLikeUseModule > [cjs module] rejects HTML error pages [0.02ms]
+(pass) [cjs module] looksLikeUseModule > [cjs module] rejects empty, whitespace, short, and non-string input [0.03ms]
+(pass) [cjs module] DEFAULT_SOURCES > [cjs module] lists unpkg, jsDelivr and esm.sh in priority order [0.03ms]
+(pass) [cjs module] loadUseM > [cjs module] resolves the use object from the first working source [1.36ms]
+(pass) [cjs module] loadUseM > [cjs module] evaluates the real shipped use.js into a working module [1.35ms]
+(pass) [cjs module] loadUseM > [cjs module] falls back to a later mirror when earlier ones fail [0.49ms]
+(pass) [cjs module] loadUseM > [cjs module] retries a flaky source before succeeding [0.20ms]
+(pass) [cjs module] loadUseM > [cjs module] throws a clear aggregated error (not SyntaxError) when every source fails [0.41ms]
+(pass) [cjs module] loadUseM > [cjs module] surfaces the HTTP status for non-ok responses [0.20ms]
+(pass) [cjs module] loadUseM > [cjs module] rejects when the evaluated module lacks a use function [0.19ms]
+(pass) [cjs module] loadUseM > [cjs module] does not let eval errors from a malformed body escape [0.24ms]
+(pass) [cjs module] loadUseM > [cjs module] reports a clear error when fetch is unavailable [0.11ms]
+(pass) [cjs module] loadUseM > [cjs module] honors a custom evaluate hook [0.20ms]
+(pass) [cjs module] loadUseM > [cjs module] times out a hanging request and reports it [52.99ms]
+
+tests/relative-paths.integration.test.mjs:
+/tmp/gh-issue-solver-1782076987861/tests
+Testing relative paths from tests directory...
+
+1. Testing ./browser-server/test-helper.js
+   ✓ Message: Helper module loaded
+
+2. Testing ./browser-server/test-data.json
+   ✓ Value: 123
+   ✓ Test: data
+
+3. Testing ../src/use.mjs
+   ✓ use function exists: true
+
+4. Testing ./browser-server/subfolder/nested.js
+   ✓ Nested: true Level: subfolder
+
+5. Testing ./browser-server/subfolder/nested-data.json
+   ✓ Level: nested Depth: 1
+
+6. Testing ../package.json
+   ✓ Package name: use-m
+
+✅ All direct tests passed!
+
+(pass) [mjs module] Relative Path Resolution (Integration) > [mjs module] relative paths should work when run directly with Node.js [35.86ms]
+
+tests/module-specifier.test.mjs:
+(pass) [mjs module] parseModuleSpecifier > [mjs module] parses package with name and version [0.11ms]
+(pass) [mjs module] parseModuleSpecifier > [mjs module] parses scoped package with name and version [0.02ms]
+(pass) [mjs module] parseModuleSpecifier > [mjs module] parses package with name, version, and inner path [0.02ms]
+(pass) [mjs module] parseModuleSpecifier > [mjs module] parses package with name, version, and inner path with latest [0.02ms]
+(pass) [mjs module] parseModuleSpecifier > [mjs module] parses scoped package with name, version, and inner path [0.02ms]
+(pass) [mjs module] parseModuleSpecifier > [mjs module] parses package with name only [0.01ms]
+(pass) [mjs module] parseModuleSpecifier > [mjs module] parses scoped package with name only [0.02ms]
+(pass) [mjs module] parseModuleSpecifier > [mjs module] parses yargs@17.7.2/helpers [0.01ms]
+(pass) [mjs module] parseModuleSpecifier > [mjs module] parses yargs@latest/helpers [0.02ms]
+(pass) [mjs module] parseModuleSpecifier > [mjs module] parses yargs/helpers [0.01ms]
+(pass) [mjs module] parseModuleSpecifier > [mjs module] throws error for invalid package identifier [0.07ms]
+
+tests/filename.test.mjs:
+(pass) [mjs module] scriptPath detection in ESM (functional) > [mjs module] default pathResolver resolves modules relative to use.mjs [0.52ms]
+(pass) [mjs module] scriptPath detection in ESM (functional) > [mjs module] override scriptPath resolves relative to provided path [0.30ms]
+(pass) [mjs module] scriptPath detection in ESM (createRequire fallback) > [mjs module] fallback default resolves modules relative to use.mjs [0.29ms]
+(pass) [mjs module] scriptPath detection in ESM (createRequire fallback) > [mjs module] fallback explicit scriptPath resolves relative to provided path [0.15ms]
+(pass) [mjs module] scriptPath detection in ESM (createRequire fallback) > [mjs module] fallback meta override changes pathResolver behavior in ESM [0.26ms]
+(pass) [mjs module] scriptPath detection in ESM (meta URL) > [mjs module] meta override resolves modules relative to provided meta URL (use.js) [0.20ms]
+
+tests/typescript.test.cjs:
+(pass) [cjs module] typescript > [cjs module] use typescript [58.87ms]
+
+tests/root-entries.test.mjs:
+(pass) [mjs module] root entry mirrors > [mjs module] mirrors exactly src/use.js, src/use.cjs and src/use.mjs [0.04ms]
+(pass) [mjs module] root entry mirrors > [mjs module] use.js exists at the package root [0.11ms]
+(pass) [mjs module] root entry mirrors > [mjs module] root use.js is in sync with src/use.js [0.57ms]
+(pass) [mjs module] root entry mirrors > [mjs module] root use.js contains the full src/use.js body [0.42ms]
+(pass) [mjs module] root entry mirrors > [mjs module] use.cjs exists at the package root [0.02ms]
+(pass) [mjs module] root entry mirrors > [mjs module] root use.cjs is in sync with src/use.cjs [0.25ms]
+(pass) [mjs module] root entry mirrors > [mjs module] root use.cjs contains the full src/use.cjs body [0.18ms]
+(pass) [mjs module] root entry mirrors > [mjs module] use.mjs exists at the package root
+(pass) [mjs module] root entry mirrors > [mjs module] root use.mjs is in sync with src/use.mjs [0.24ms]
+(pass) [mjs module] root entry mirrors > [mjs module] root use.mjs contains the full src/use.mjs body [0.45ms]
+(pass) [mjs module] root entry mirrors > [mjs module] root use.js eval()s to a working use function [1.50ms]
+(pass) [mjs module] root entry mirrors > [mjs module] the 404 "Not found" body is not a valid module body [0.38ms]
+(pass) [mjs module] root entry mirrors > [mjs module] root use.mjs imports to a working use function [2.88ms]
+(pass) [mjs module] root entry mirrors > [mjs module] package.json ships the root mirrors and keeps src canonical [0.56ms]
+
+tests/builtin-nodejs.test.mjs:
+(pass) [mjs module] Node.js/Bun-only built-in modules > [mjs module] fs module should work [0.47ms]
+(pass) [mjs module] Node.js/Bun-only built-in modules > [mjs module] path module should work [0.27ms]
+(pass) [mjs module] Node.js/Bun-only built-in modules > [mjs module] os module should work [0.41ms]
+(pass) [mjs module] Node.js/Bun-only built-in modules > [mjs module] util module should work [2.02ms]
+(pass) [mjs module] Node.js/Bun-only built-in modules > [mjs module] events module should work [0.53ms]
+(pass) [mjs module] Node.js/Bun-only built-in modules > [mjs module] stream module should work [0.26ms]
+(pass) [mjs module] Node.js/Bun-only built-in modules > [mjs module] buffer module should work [0.27ms]
+(pass) [mjs module] Node.js/Bun-only built-in modules > [mjs module] process module should work [0.80ms]
+(pass) [mjs module] Node.js/Bun-only built-in modules > [mjs module] child_process module should work [0.16ms]
+(pass) [mjs module] Node.js/Bun-only built-in modules > [mjs module] http module should work [5.26ms]
+(pass) [mjs module] Node.js/Bun-only built-in modules > [mjs module] https module should work [0.62ms]
+(pass) [mjs module] Node.js/Bun-only built-in modules > [mjs module] net module should work [1.84ms]
+(pass) [mjs module] Node.js/Bun-only built-in modules > [mjs module] dns module should work [1.10ms]
+(pass) [mjs module] Node.js/Bun-only built-in modules > [mjs module] zlib module should work [1.98ms]
+(pass) [mjs module] Node.js/Bun-only built-in modules > [mjs module] querystring module should work [1.26ms]
+(pass) [mjs module] Node.js/Bun-only built-in modules > [mjs module] assert module should work [0.62ms]
+(pass) [mjs module] Node.js/Bun-only built-in modules > [mjs module] all modules should work with node: prefix [0.29ms]
+
+tests/builtin-errors.test.cjs:
+(pass) [cjs module] Built-in module error handling > [cjs module] should return null for non-builtin modules from builtin resolver [0.24ms]
+(pass) [cjs module] Built-in module error handling > [cjs module] should throw error for unsupported builtin modules [0.09ms]
+(pass) [cjs module] Built-in module error handling > [cjs module] should handle modules not available in browser environment [0.30ms]
+(pass) [cjs module] Built-in module error handling > [cjs module] should only work with exact lowercase module names [70.35ms]
+(pass) [cjs module] Built-in module error handling > [cjs module] should handle node: prefix removal correctly [0.54ms]
+(pass) [cjs module] Built-in module error handling > [cjs module] should throw meaningful errors for import failures [0.15ms]
+(pass) [cjs module] Built-in module error handling > [cjs module] builtin resolver should handle empty/invalid module specifiers gracefully [0.11ms]
+(pass) [cjs module] Built-in module error handling > [cjs module] should handle modules with special characters in names [0.08ms]
+
+tests/npm-global-prefix.test.mjs:
+(pass) [mjs module] npm global prefix handling > [mjs module] redirects installs to use-m cache when npm global root is not writable [0.22ms]
+(pass) [mjs module] npm global prefix handling > [mjs module] keeps the configured npm root when it is writable [0.07ms]
+(pass) [mjs module] npm global prefix handling > [mjs module] respects an explicit npm_config_prefix override [0.08ms]
+
+tests/command-stream.test.cjs:
+(pass) [cjs module] command-stream module import > [cjs module] Direct CJS Require [45.71ms]
+(pass) [cjs module] command-stream module import > [cjs module] Dynamic Import with await import() of CJS [43.00ms]
+(pass) [cjs module] command-stream module import > [cjs module] Dynamic Import with await import() of MJS [46.26ms]
+
+tests/builtin-errors.test.mjs:
+(pass) [mjs module] Built-in module error handling > [mjs module] should return null for non-builtin modules from builtin resolver [0.22ms]
+(pass) [mjs module] Built-in module error handling > [mjs module] should throw error for unsupported builtin modules [0.13ms]
+(pass) [mjs module] Built-in module error handling > [mjs module] should handle modules not available in browser environment [0.27ms]
+(pass) [mjs module] Built-in module error handling > [mjs module] should only work with exact lowercase module names [72.51ms]
+(pass) [mjs module] Built-in module error handling > [mjs module] should handle node: prefix removal correctly [0.72ms]
+(pass) [mjs module] Built-in module error handling > [mjs module] should throw meaningful errors for import failures [0.15ms]
+(pass) [mjs module] Built-in module error handling > [mjs module] builtin resolver should handle empty/invalid module specifiers gracefully [0.13ms]
+(pass) [mjs module] Built-in module error handling > [mjs module] should handle modules with special characters in names [0.10ms]
+
+tests/get-script-url.test.cjs:
+(pass) [cjs module] __filename workaround > [cjs module] scriptUrl matches __filename as URL [0.26ms]
+(pass) [cjs module] __filename workaround > [cjs module] scriptUrl matches __filename as URL in eval [0.14ms]
+
+tests/esm-sh-polyfill-browser.test.mjs:
+(pass) [mjs module] esm.sh browser polyfill handling > [mjs module] process and filename browser shims still use CDN resolver [1.69ms]
+
+tests/builtin-browser.test.mjs:
+(pass) [mjs module] Universal built-in modules in browser > [mjs module] console module should work in browser [2.08ms]
+(pass) [mjs module] Universal built-in modules in browser > [mjs module] crypto module should work in browser [2.06ms]
+(pass) [mjs module] Universal built-in modules in browser > [mjs module] url module should work in browser [4.85ms]
+(pass) [mjs module] Universal built-in modules in browser > [mjs module] performance module should work in browser [1.88ms]
+(pass) [mjs module] Universal built-in modules in browser > [mjs module] fs module should fail in browser with correct error [1.06ms]
+(pass) [mjs module] Universal built-in modules in browser > [mjs module] node: prefix should work with universal modules [0.73ms]
+(pass) [mjs module] Universal built-in modules in browser > [mjs module] uppercase module names should fail (strict lowercase only) [0.79ms]
+(pass) [mjs module] Universal built-in modules in browser > [mjs module] all browser tests should pass [0.65ms]
+
+tests/load.test.mjs:
+(pass) [mjs module] looksLikeUseModule > [mjs module] accepts the real shipped use.js [0.77ms]
+(pass) [mjs module] looksLikeUseModule > [mjs module] accepts a long module-like body [0.07ms]
+(pass) [mjs module] looksLikeUseModule > [mjs module] rejects common CDN plain-text error bodies [0.66ms]
+(pass) [mjs module] looksLikeUseModule > [mjs module] rejects HTML error pages [0.23ms]
+(pass) [mjs module] looksLikeUseModule > [mjs module] rejects empty, whitespace, short, and non-string input [0.06ms]
+(pass) [mjs module] DEFAULT_SOURCES > [mjs module] lists unpkg, jsDelivr and esm.sh in priority order [0.04ms]
+(pass) [mjs module] loadUseM > [mjs module] resolves the use object from the first working source [1.15ms]
+(pass) [mjs module] loadUseM > [mjs module] evaluates the real shipped use.js into a working module [1.61ms]
+(pass) [mjs module] loadUseM > [mjs module] falls back to a later mirror when earlier ones fail [0.47ms]
+(pass) [mjs module] loadUseM > [mjs module] retries a flaky source before succeeding [0.27ms]
+(pass) [mjs module] loadUseM > [mjs module] throws a clear aggregated error (not SyntaxError) when every source fails [0.53ms]
+(pass) [mjs module] loadUseM > [mjs module] surfaces the HTTP status for non-ok responses [0.16ms]
+(pass) [mjs module] loadUseM > [mjs module] rejects when the evaluated module lacks a use function [0.18ms]
+(pass) [mjs module] loadUseM > [mjs module] does not let eval errors from a malformed body escape [0.23ms]
+(pass) [mjs module] loadUseM > [mjs module] reports a clear error when fetch is unavailable [0.39ms]
+(pass) [mjs module] loadUseM > [mjs module] honors a custom evaluate hook [0.16ms]
+(pass) [mjs module] loadUseM > [mjs module] times out a hanging request and reports it [52.62ms]
+
+tests/relative-paths.test.cjs:
+(pass) Relative Path Resolution (CommonJS) > should import JS file from same directory using ./ [0.51ms]
+(pass) Relative Path Resolution (CommonJS) > should import JSON file from same directory using ./ [0.23ms]
+(pass) Relative Path Resolution (CommonJS) > should import JS file from parent directory using ../ [0.12ms]
+(pass) Relative Path Resolution (CommonJS) > should import from subdirectory using ./subfolder/ [0.10ms]
+(pass) Relative Path Resolution (CommonJS) > should import JSON from subdirectory [0.11ms]
+(pass) Relative Path Resolution (CommonJS) > should handle complex relative paths (../) [0.13ms]
+(pass) Relative Path Resolution (CommonJS) > should work with mixed relative and npm imports [8.87ms]
+(pass) Relative Path Resolution (CommonJS) > should maintain correct context for nested relative imports [0.90ms]
+
+tests/fallback.test.cjs:
+(pass) [cjs module] loadWithFallback (shared engine) > [cjs module] returns the first source's result without trying later ones [0.26ms]
+(pass) [cjs module] loadWithFallback (shared engine) > [cjs module] falls back to a later source when earlier ones fail [0.18ms]
+(pass) [cjs module] loadWithFallback (shared engine) > [cjs module] retries a flaky source before succeeding [0.57ms]
+(pass) [cjs module] loadWithFallback (shared engine) > [cjs module] throws ONE aggregated error listing every attempt [0.31ms]
+(pass) [cjs module] loadWithFallback (shared engine) > [cjs module] rejects empty or non-array sources [0.14ms]
+(pass) [cjs module] loadWithFallback (shared engine) > [cjs module] rejects a missing load function [0.08ms]
+(pass) [cjs module] makeUse per-package CDN fallback > [cjs module] falls back to the next mirror when one import fails [0.50ms]
+(pass) [cjs module] makeUse per-package CDN fallback > [cjs module] throws a clear aggregated error when every mirror fails [0.32ms]
+(pass) [cjs module] makeUse per-package CDN fallback > [cjs module] a single explicit resolver imports directly with its raw error (no aggregation) [0.15ms]
+(pass) [cjs module] makeUse per-package CDN fallback > [cjs module] a single-entry specifierResolvers chain also imports directly [0.09ms]
+(pass) [cjs module] makeUse per-package CDN fallback > [cjs module] exposes the default mirror chains [0.02ms]
+
+tests/release-workflow-policy.test.mjs:
+(pass) release workflow policy > uses npm package metadata that matches registry and trusted publishing expectations [0.27ms]
+(pass) release workflow policy > keeps CI and publishing in the trusted-publisher release workflow [0.16ms]
+(pass) release workflow policy > publishes with npm trusted publishing instead of token auth [0.21ms]
+(pass) release workflow policy > runs tests before publishing and preserves main-branch release runs [0.37ms]
+(pass) release workflow policy > fails release runs when the package, tag, and GitHub release already exist [0.11ms]
+(pass) release workflow policy > keeps dependency install logs quiet while auditing shipped dependencies [0.05ms]
+(pass) release workflow policy > uses current action versions and explicit job timeouts [0.21ms]
+(pass) release workflow policy > retries Deno network-import tests without hiding persistent failures [0.05ms]
+
+tests/fs-promises.test.mjs:
+(pass) mjs module fs/promises support > mjs module fs/promises should return promise-based functions [1.11ms]
+(pass) mjs module fs/promises support > mjs module fs/promises should work functionally [6.77ms]
+(pass) mjs module fs/promises support > mjs module fs/promises should differ from regular fs [0.75ms]
+
+tests/builtin-universal.test.mjs:
+(pass) [mjs module] Universal built-in modules (work in all environments) > [mjs module] console module should work [0.36ms]
+(pass) [mjs module] Universal built-in modules (work in all environments) > [mjs module] crypto module should work [0.15ms]
+(pass) [mjs module] Universal built-in modules (work in all environments) > [mjs module] url module should work [0.14ms]
+(pass) [mjs module] Universal built-in modules (work in all environments) > [mjs module] performance module should work [0.15ms]
+(pass) [mjs module] Universal built-in modules (work in all environments) > [mjs module] modules should work with node: prefix [0.07ms]
+
+tests/deno-support.test.mjs:
+(pass) [mjs module] Deno support > [mjs module] Deno resolver should resolve npm packages to esm.sh [0.26ms]
+(pass) [mjs module] Deno support > [mjs module] Deno resolver should handle scoped packages [0.06ms]
+(pass) [mjs module] Deno support > [mjs module] Deno resolver should handle module paths [0.05ms]
+(pass) [mjs module] Deno support > [mjs module] Deno resolver should handle latest version [0.06ms]
+(pass) [mjs module] Deno support > [mjs module] makeUse should detect Deno runtime when Deno global is present [0.34ms]
+(pass) [mjs module] Deno support > [mjs module] Deno resolver should work with complex package names [0.06ms]
+(pass) [mjs module] Deno support > [mjs module] Deno resolver should handle packages without versions [0.04ms]
+(pass) [mjs module] Deno support > [mjs module] makeUse with explicit deno resolver [0.08ms]
+
+tests/loader.test.mjs:
+(pass) [mjs module] loader resolve hook > [mjs module] returns the default resolver's result when it succeeds [0.38ms]
+(pass) [mjs module] loader resolve hook > [mjs module] falls back to the npm resolver when the default resolver throws [137.25ms]
+(pass) [mjs module] loader resolve hook > [mjs module] surfaces a clear aggregated error when BOTH resolvers fail [450.48ms]
+
+tests/builtin-nodejs.test.cjs:
+(pass) [cjs module] Node.js/Bun-only built-in modules > [cjs module] fs module should work [0.49ms]
+(pass) [cjs module] Node.js/Bun-only built-in modules > [cjs module] path module should work [0.60ms]
+(pass) [cjs module] Node.js/Bun-only built-in modules > [cjs module] os module should work [0.40ms]
+(pass) [cjs module] Node.js/Bun-only built-in modules > [cjs module] util module should work [0.41ms]
+(pass) [cjs module] Node.js/Bun-only built-in modules > [cjs module] events module should work [0.32ms]
+(pass) [cjs module] Node.js/Bun-only built-in modules > [cjs module] stream module should work [0.18ms]
+(pass) [cjs module] Node.js/Bun-only built-in modules > [cjs module] buffer module should work [0.18ms]
+(pass) [cjs module] Node.js/Bun-only built-in modules > [cjs module] process module should work [0.20ms]
+(pass) [cjs module] Node.js/Bun-only built-in modules > [cjs module] child_process module should work [0.12ms]
+(pass) [cjs module] Node.js/Bun-only built-in modules > [cjs module] http module should work [0.10ms]
+(pass) [cjs module] Node.js/Bun-only built-in modules > [cjs module] https module should work [0.09ms]
+(pass) [cjs module] Node.js/Bun-only built-in modules > [cjs module] net module should work [0.11ms]
+(pass) [cjs module] Node.js/Bun-only built-in modules > [cjs module] dns module should work [0.11ms]
+(pass) [cjs module] Node.js/Bun-only built-in modules > [cjs module] zlib module should work [0.12ms]
+(pass) [cjs module] Node.js/Bun-only built-in modules > [cjs module] querystring module should work [0.18ms]
+(pass) [cjs module] Node.js/Bun-only built-in modules > [cjs module] assert module should work [0.29ms]
+(pass) [cjs module] Node.js/Bun-only built-in modules > [cjs module] all modules should work with node: prefix [0.23ms]
+
+tests/npm-global-prefix.test.cjs:
+(pass) [cjs module] npm global prefix handling > [cjs module] redirects installs to use-m cache when npm global root is not writable [0.32ms]
+(pass) [cjs module] npm global prefix handling > [cjs module] keeps the configured npm root when it is writable [0.09ms]
+(pass) [cjs module] npm global prefix handling > [cjs module] respects an explicit npm_config_prefix override [0.11ms]
+
+tests/relative-paths-browser.test.mjs:
+(pass) [mjs module] Relative path resolution in browser > [mjs module] ./ path for JS file in same directory should work [1.38ms]
+(pass) [mjs module] Relative path resolution in browser > [mjs module] ./ path for JSON file in same directory should work [1.00ms]
+(pass) [mjs module] Relative path resolution in browser > [mjs module] ../../ path for JS file in parent directory should work [0.66ms]
+(pass) [mjs module] Relative path resolution in browser > [mjs module] ./subfolder/ path for nested JS file should work [0.77ms]
+(pass) [mjs module] Relative path resolution in browser > [mjs module] ./subfolder/ path for nested JSON file should work [0.72ms]
+(pass) [mjs module] Relative path resolution in browser > [mjs module] mixed relative and npm imports should work [0.83ms]
+(pass) [mjs module] Relative path resolution in browser > [mjs module] all relative path browser tests should pass [3.21ms]
+
+tests/network-imports.test.cjs:
+(pass) [cjs module] imports using --experimental-network-imports > [cjs module] Import using --experimental-network-imports for CJS file [260.58ms]
+(pass) [cjs module] imports using --experimental-network-imports > [cjs module] Import using --experimental-network-imports for MJS file [197.28ms]
+
+tests/resolvers.test.mjs:
+(pass) [mjs module] resolvers tests > [mjs module] npm resolver resolves package path [125.58ms]
+(pass) [mjs module] resolvers tests > [mjs module] npm resolver resolves scoped package path for @octokit/core@6.1.5 [124.87ms]
+(pass) [mjs module] resolvers tests > [mjs module] npm resolver resolves package path with version [2178.59ms]
+(pass) [mjs module] resolvers tests > [mjs module] npm resolver resolves yargs/helpers [119.84ms]
+(pass) [mjs module] resolvers tests > [mjs module] npm resolver resolves yargs@18.0.0/helpers [122.71ms]
+(pass) [mjs module] resolvers tests > [mjs module] npm resolver resolves yargs@latest/helpers [578.06ms]
+(pass) [mjs module] resolvers tests > [mjs module] skypack resolver resolves URL [0.32ms]
+(pass) [mjs module] resolvers tests > [mjs module] skypack resolver resolves subpath [0.12ms]
+(pass) [mjs module] resolvers tests > [mjs module] jsdelivr resolver resolves URL [0.21ms]
+(pass) [mjs module] resolvers tests > [mjs module] jsdelivr resolver resolves subpath [0.07ms]
+(pass) [mjs module] resolvers tests > [mjs module] unpkg resolver resolves URL [0.09ms]
+(pass) [mjs module] resolvers tests > [mjs module] unpkg resolver resolves subpath [0.05ms]
+(pass) [mjs module] resolvers tests > [mjs module] esm resolver resolves URL [0.05ms]
+(pass) [mjs module] resolvers tests > [mjs module] esm resolver resolves subpath [0.07ms]
+(pass) [mjs module] resolvers tests > [mjs module] jspm resolver resolves URL [0.05ms]
+(pass) [mjs module] resolvers tests > [mjs module] jspm resolver resolves subpath [0.04ms]
+(pass) [mjs module] resolvers tests > [mjs module] bun resolver resolves package path [8.41ms]
+(pass) [mjs module] resolvers tests > [mjs module] bun resolver resolves scoped package path for @octokit/core@6.1.5 [8.82ms]
+(pass) [mjs module] resolvers tests > [mjs module] bun resolver resolves yargs/helpers [7.76ms]
+(pass) [mjs module] resolvers tests > [mjs module] bun resolver resolves yargs@latest/helpers [48.10ms]
+
+ 333 pass
+ 0 fail
+ 732 expect() calls
+Ran 333 tests across 45 files. [17.09s]

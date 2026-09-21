@@ -1,0 +1,31 @@
+# v22.23.2 (/tmp/nodes/node-v22.23.2-linux-x64/bin/node)
+
+## experiments/builtin-backward-compatibility.mjs
+
+Node.js v22.23.2: 25 previously hardcoded built-ins compared (bare + node: prefixed), 0 difference(s).
+experiment exit=0
+
+## jest tests/builtin-backward-compatibility.test.mjs tests/builtin-backward-compatibility.test.cjs tests/builtin-nodejs.test.mjs tests/builtin-nodejs.test.cjs tests/builtin-universal.test.mjs tests/builtin-universal.test.cjs tests/builtin-errors.test.mjs tests/builtin-errors.test.cjs tests/dynamic-builtins.test.mjs tests/dynamic-builtins.test.cjs tests/fs-promises.test.mjs
+(node:41494) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+PASS tests/builtin-errors.test.cjs
+PASS tests/builtin-errors.test.mjs
+(node:41494) [DEP0125] DeprecationWarning: The _stream_wrap module is deprecated.
+(node:41494) [DEP0025] DeprecationWarning: sys is deprecated. Use util instead.
+(node:41494) ExperimentalWarning: WASI is an experimental feature and might change at any time
+PASS tests/dynamic-builtins.test.mjs
+PASS tests/builtin-backward-compatibility.test.cjs
+PASS tests/fs-promises.test.mjs
+PASS tests/builtin-backward-compatibility.test.mjs
+PASS tests/builtin-nodejs.test.mjs
+PASS tests/builtin-nodejs.test.cjs
+PASS tests/dynamic-builtins.test.cjs
+PASS tests/builtin-universal.test.mjs
+PASS tests/builtin-universal.test.cjs
+
+Test Suites: 11 passed, 11 total
+Tests:       161 passed, 161 total
+Snapshots:   0 total
+Time:        5.194 s, estimated 7 s
+Ran all test suites matching /tests\/builtin-backward-compatibility.test.mjs|tests\/builtin-backward-compatibility.test.cjs|tests\/builtin-nodejs.test.mjs|tests\/builtin-nodejs.test.cjs|tests\/builtin-universal.test.mjs|tests\/builtin-universal.test.cjs|tests\/builtin-errors.test.mjs|tests\/builtin-errors.test.cjs|tests\/dynamic-builtins.test.mjs|tests\/dynamic-builtins.test.cjs|tests\/fs-promises.test.mjs/i.
+jest exit=0

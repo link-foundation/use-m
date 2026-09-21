@@ -7,7 +7,7 @@ console.log();
 
 async function traceUsePath() {
   // Import use-m components
-  const useModule = await import('../../use.mjs');
+  const useModule = await import('../../src/use.mjs');
   const { use, baseUse, resolvers, parseModuleSpecifier } = useModule;
   
   console.log('--- Step 1: Parse module specifier ---');

@@ -1,0 +1,20 @@
+
+> use-m@8.13.8 test
+> NODE_OPTIONS="--experimental-vm-modules" jest tests/release-workflow-policy.test.mjs --runInBand
+
+(node:628505) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+PASS tests/release-workflow-policy.test.mjs
+  release workflow policy
+    ✓ uses npm package metadata that matches registry and trusted publishing expectations (2 ms)
+    ✓ keeps CI and publishing in the trusted-publisher release workflow (1 ms)
+    ✓ publishes with npm trusted publishing instead of token auth (4 ms)
+    ✓ runs tests before publishing and preserves main-branch release runs (1 ms)
+    ✓ uses current action versions and explicit job timeouts (1 ms)
+    ✓ retries Deno network-import tests without hiding persistent failures (1 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       6 passed, 6 total
+Snapshots:   0 total
+Time:        0.18 s, estimated 1 s
+Ran all test suites matching /tests\/release-workflow-policy.test.mjs/i.

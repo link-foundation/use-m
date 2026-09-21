@@ -6,7 +6,7 @@ console.log('Runtime:', typeof Bun !== 'undefined' ? 'Bun' : 'Node.js');
 console.log();
 
 async function testModuleToString() {
-  const { use } = eval(await readFile('../../use.js', 'utf8'));
+  const { use } = eval(await readFile('../../src/use.js', 'utf8'));
   const module = await use('command-stream');
   
   console.log('Module info:');

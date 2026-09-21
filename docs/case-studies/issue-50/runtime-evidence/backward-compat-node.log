@@ -1,0 +1,3 @@
+# Node.js v24.21.0, branch HEAD, baseline = main:src/use.mjs
+
+Node.js v24.21.0: 25 previously hardcoded built-ins compared (bare + node: prefixed), 0 difference(s).
