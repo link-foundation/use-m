@@ -1530,6 +1530,9 @@ export const baseUse = async (modulePath) => {
         'length', 'name', 'prototype', 'constructor',
         'toString', 'valueOf', 'hasOwnProperty', 'isPrototypeOf', 'propertyIsEnumerable'
       ]);
+      if (module.default === module['module.exports']) {
+        metadataKeys.add('module.exports');
+      }
 
       const nonMetadataKeys = keys.filter(key => !metadataKeys.has(key));
 
