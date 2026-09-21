@@ -904,20 +904,31 @@ describe(`${moduleName} npm global prefix handling`, () => {
               import: './dist/features/*.mjs'
             },
             default: './fallback/features/*.js'
-          }
+          },
+          './array-fallback': [
+            { types: './types/array-fallback.d.ts' },
+            { node: { import: './dist/array-fallback.mjs' } }
+          ]
         }
       }),
       source: 'export const root = true;\n'
     });
     const exportedPath = path.join(packageDirectory, 'dist', 'features', 'alpha.mjs');
+    const arrayFallbackPath = path.join(packageDirectory, 'dist', 'array-fallback.mjs');
     await mkdir(path.dirname(exportedPath), { recursive: true });
     await writeFile(exportedPath, 'export const feature = "alpha";\n');
+    await writeFile(arrayFallbackPath, 'export const fallback = true;\n');
 
     await expect(resolvers.npm(
       'fixture-pkg@1.0.0/features/alpha',
-      resolveOnly(path.join(packageDirectory, 'index.js'), exportedPath),
+      resolveOnly(path.join(packageDirectory, 'index.js'), exportedPath, arrayFallbackPath),
       { env: fixture.baseEnv, installRetryDelayMs: 0 }
     )).resolves.toBe(exportedPath);
+    await expect(resolvers.npm(
+      'fixture-pkg@1.0.0/array-fallback',
+      resolveOnly(path.join(packageDirectory, 'index.js'), exportedPath, arrayFallbackPath),
+      { env: fixture.baseEnv, installRetryDelayMs: 0 }
+    )).resolves.toBe(arrayFallbackPath);
   });
 
   test(`${moduleName} does not bypass package exports for private subpaths`, async () => {
