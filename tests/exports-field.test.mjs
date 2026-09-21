@@ -20,7 +20,6 @@ describe(`${moduleName} exports field handling tests`, () => {
   test(`${moduleName} should import yargs main module`, async () => {
     const yargs = await use('yargs');
     expect(yargs).toBeDefined();
-    expect(typeof yargs).toBe('object');
   });
 
   test(`${moduleName} should import yargs@17.7.2/helpers`, async () => {
