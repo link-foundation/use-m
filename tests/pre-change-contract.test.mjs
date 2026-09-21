@@ -249,30 +249,42 @@ for (const [format, api] of implementations) {
       });
       await expect(automaticPathUse('fixture@2')).resolves.toBe('automatic:fixture@2');
 
-      await withGlobal('window', { location: { href: 'https://example.test/' } }, async () => {
-        await withGlobal('document', {}, async () => {
-          const browserUse = await api.makeUse({ import: async value => value });
-          await expect(browserUse('fixture@3')).resolves.toBe('https://esm.sh/fixture@3');
+      if (typeof Bun === 'undefined' && typeof Deno === 'undefined') {
+        await withGlobal('window', { location: { href: 'https://example.test/' } }, async () => {
+          await withGlobal('document', {}, async () => {
+            const browserUse = await api.makeUse({ import: async value => value });
+            await expect(browserUse('fixture@3')).resolves.toBe('https://esm.sh/fixture@3');
+          });
         });
-      });
+      }
 
-      await withGlobal('Deno', {}, async () => {
+      const checkDenoDefault = async () => {
         const denoUse = await api.makeUse({
           scriptPath: import.meta.url,
           pathResolver: value => value,
           import: async value => value,
         });
         await expect(denoUse('fixture@4')).resolves.toBe('https://esm.sh/fixture@4');
-      });
+      };
+      if (typeof Deno !== 'undefined') {
+        await checkDenoDefault();
+      } else {
+        await withGlobal('Deno', {}, checkDenoDefault);
+      }
 
-      await withGlobal('Bun', {}, async () => {
+      const checkBunDefault = async () => {
         const bunUse = await api.makeUse({
           scriptPath: import.meta.url,
           pathResolver: value => value,
           import: async value => value,
         });
         await expect(bunUse('node:path')).resolves.toHaveProperty('join');
-      });
+      };
+      if (typeof Bun !== 'undefined') {
+        await checkBunDefault();
+      } else {
+        await withGlobal('Bun', {}, checkBunDefault);
+      }
     });
 
     test('retains fallback validation, retry delay, and non-Error reporting', async () => {

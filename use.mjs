@@ -617,7 +617,6 @@ export const resolvers = {
           debug(2, `registry attempt ${attempt}/${registryMaxAttempts} for ${packageName} at ${endpoint}`);
           if (registryRequestTimeoutMs > 0) {
             timeout = setTimeout(() => controller.abort(), registryRequestTimeoutMs);
-            timeout.unref?.();
           }
           const registryResponse = await registryFetch(endpoint, {
             headers: { accept: 'application/json' },
