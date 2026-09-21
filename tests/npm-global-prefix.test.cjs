@@ -1,10 +1,10 @@
-const { chmod, mkdir, mkdtemp, readFile, readlink, rm, symlink, writeFile } = require('node:fs/promises');
+const { chmod, mkdir, mkdtemp, readFile, readlink, rm, symlink, utimes, writeFile } = require('node:fs/promises');
 const { execFile } = require('node:child_process');
 const { tmpdir } = require('node:os');
 const path = require('node:path');
 const { promisify } = require('node:util');
 const { describe, test, expect, afterEach } = require('../src/test-adapter.cjs');
-const { resolvers } = require('../src/use.cjs');
+const { makeUse, resolvers } = require('../src/use.cjs');
 
 const moduleName = `[${__filename.split('.').pop()} module]`;
 const resolve = require.resolve;
@@ -44,6 +44,8 @@ if (logFile) {
 }
 
 if (args[0] === 'root' && args[1] === '-g') {
+  if (process.env.USE_M_FAKE_NPM_EMPTY_ROOT === '1') process.exit(0);
+  if (prefix && process.env.USE_M_FAKE_NPM_PREFIX_ROOT_FAILURE === '1') process.exit(1);
   console.log(root);
   process.exit(0);
 }
@@ -366,12 +368,14 @@ describe(`${moduleName} npm global prefix handling`, () => {
     };
 
     const packagePath = await resolvers.npm('fixture-pkg@1.0.0', resolve, { env });
+    const reusedPackagePath = await resolvers.npm('fixture-pkg@1.0.0', resolve, { env });
     const expectedPrefix = path.join(fixture.cache, 'use-m', 'npm-global');
     const expectedRoot = path.join(expectedPrefix, 'lib', 'node_modules');
     const npmCalls = await readNpmLog(fixture.logFile);
     const installCall = npmCalls.find(call => call.args[0] === 'install');
 
     expect(packagePath).toContain(path.join(expectedRoot, 'fixture-pkg-v-1.0.0'));
+    expect(reusedPackagePath).toBe(packagePath);
     expect(installCall.prefix).toBe(expectedPrefix);
     expect(installCall.root).toBe(expectedRoot);
   });
@@ -648,4 +652,237 @@ describe(`${moduleName} npm global prefix handling`, () => {
       expect(result.source).toContain('installed = true');
     }
   }, 60000);
+
+  test(`${moduleName} adopts a complete unmarked alias without reinstalling it`, async () => {
+    if (typeof Deno !== 'undefined' || typeof Bun !== 'undefined') {
+      return;
+    }
+
+    const fixture = await createFakeNpm();
+    const packageDirectory = await corruptAlias(fixture, {
+      packageJson: JSON.stringify({
+        name: 'fixture-pkg',
+        version: '1.0.0',
+        type: 'module',
+        main: 'index.js'
+      }),
+      source: 'module.exports = { adopted: true };\n'
+    });
+    const packagePath = await resolvers.npm(
+      'fixture-pkg@1.0.0',
+      resolve,
+      { env: fixture.baseEnv, installRetryDelayMs: 0 }
+    );
+    const npmCalls = await readNpmLog(fixture.logFile);
+    const markerPath = path.join(
+      fixture.defaultRoot,
+      '.use-m',
+      'fixture-pkg-v-1.0.0.installed.json'
+    );
+
+    expect(packagePath).toBe(path.join(packageDirectory, 'index.js'));
+    expect(npmCalls.filter(call => call.args[0] === 'install')).toHaveLength(0);
+    expect(JSON.parse(await readFile(markerPath, 'utf8'))).toMatchObject({
+      version: '1.0.0',
+      requestedVersion: '1.0.0',
+      adopted: true
+    });
+  });
+
+  test(`${moduleName} replaces an unmarked alias that cannot be resolved`, async () => {
+    if (typeof Deno !== 'undefined' || typeof Bun !== 'undefined') {
+      return;
+    }
+
+    const fixture = await createFakeNpm();
+    await corruptAlias(fixture, {
+      packageJson: '{"name":"fixture-pkg","version":"1.0.0",',
+      source: 'module.exports = { stale: true };\n'
+    });
+    const packagePath = await resolvers.npm(
+      'fixture-pkg@1.0.0',
+      resolve,
+      { env: fixture.baseEnv, installRetryDelayMs: 0 }
+    );
+    const npmCalls = await readNpmLog(fixture.logFile);
+
+    expect(npmCalls.filter(call => call.args[0] === 'install')).toHaveLength(1);
+    expect(await readFile(packagePath, 'utf8')).toContain('installed = true');
+  });
+
+  test(`${moduleName} preserves unlocked installs and lock-deadline fallback`, async () => {
+    if (typeof Deno !== 'undefined' || typeof Bun !== 'undefined') {
+      return;
+    }
+
+    const unlockedFixture = await createFakeNpm();
+    await resolvers.npm('fixture-pkg@1.0.0', resolve, {
+      env: unlockedFixture.baseEnv,
+      installLock: false,
+      installRetryDelayMs: 0
+    });
+
+    const blockedFixture = await createFakeNpm();
+    const lockPath = path.join(
+      blockedFixture.defaultRoot,
+      '.use-m',
+      'fixture-pkg-v-1.0.0.lock'
+    );
+    await mkdir(lockPath, { recursive: true });
+    await resolvers.npm('fixture-pkg@1.0.0', resolve, {
+      env: blockedFixture.baseEnv,
+      installLockTimeoutMs: 0,
+      installLockPollMs: 0,
+      installRetryDelayMs: 0
+    });
+
+    const unlockedCalls = await readNpmLog(unlockedFixture.logFile);
+    const blockedCalls = await readNpmLog(blockedFixture.logFile);
+    expect(unlockedCalls.filter(call => call.args[0] === 'install')).toHaveLength(1);
+    expect(blockedCalls.filter(call => call.args[0] === 'install')).toHaveLength(1);
+  });
+
+  test(`${moduleName} reports npm-root and unwritable-prefix failures precisely`, async () => {
+    if (typeof Deno !== 'undefined' || typeof Bun !== 'undefined') {
+      return;
+    }
+
+    await expect(resolvers.npm('fixture-pkg@1.0.0')).rejects.toThrow(
+      'Failed to get the current resolver'
+    );
+
+    const emptyRootFixture = await createFakeNpm();
+    await expect(resolvers.npm('fixture-pkg@1.0.0', resolve, {
+      env: { ...emptyRootFixture.baseEnv, USE_M_FAKE_NPM_EMPTY_ROOT: '1' }
+    })).rejects.toThrow('npm root -g returned an empty global root');
+
+    const configuredFixture = await createFakeNpm();
+    await expect(resolvers.npm('fixture-pkg@1.0.0', resolve, {
+      env: { ...configuredFixture.baseEnv, npm_config_prefix: '/sys/use-m-test-prefix' }
+    })).rejects.toThrow('will not override the configured npm prefix');
+
+    const rootFailureFixture = await createFakeNpm();
+    await expect(resolvers.npm('fixture-pkg@1.0.0', resolve, {
+      env: {
+        ...rootFailureFixture.baseEnv,
+        USE_M_FAKE_NPM_DEFAULT_ROOT: '/sys/use-m-test-root/lib/node_modules',
+        USE_M_FAKE_NPM_PREFIX_ROOT_FAILURE: '1'
+      }
+    })).rejects.toThrow('Failed to resolve use-m npm cache root');
+
+    const mkdirFailureFixture = await createFakeNpm();
+    await expect(resolvers.npm('fixture-pkg@1.0.0', resolve, {
+      env: {
+        ...mkdirFailureFixture.baseEnv,
+        USE_M_FAKE_NPM_DEFAULT_ROOT: '/sys/use-m-test-root/lib/node_modules',
+        XDG_CACHE_HOME: '/sys/use-m-test-cache'
+      }
+    })).rejects.toThrow('Failed to create use-m npm cache root');
+  });
+
+  test(`${moduleName} tolerates unavailable state storage and steals stale locks`, async () => {
+    if (typeof Deno !== 'undefined' || typeof Bun !== 'undefined') {
+      return;
+    }
+
+    const stateFixture = await createFakeNpm();
+    await writeFile(path.join(stateFixture.defaultRoot, '.use-m'), 'not a directory');
+    const statePath = await resolvers.npm('fixture-pkg@1.0.0', resolve, {
+      env: stateFixture.baseEnv,
+      installRetryDelayMs: 0
+    });
+    expect(await readFile(statePath, 'utf8')).toContain('installed = true');
+
+    const retryFixture = await createFakeNpm();
+    const retryPath = await resolvers.npm('fixture-pkg@1.0.0', resolve, {
+      env: { ...retryFixture.baseEnv, USE_M_FAKE_NPM_INSTALL_FAILURES: '1' },
+      installRetryDelayMs: 1
+    });
+    expect(await readFile(retryPath, 'utf8')).toContain('installAttempt = 2');
+
+    const staleFixture = await createFakeNpm();
+    const staleLockPath = path.join(
+      staleFixture.defaultRoot,
+      '.use-m',
+      'fixture-pkg-v-1.0.0.lock'
+    );
+    await mkdir(staleLockPath, { recursive: true });
+    const staleTimestamp = new Date(Date.now() - 60_000);
+    await utimes(staleLockPath, staleTimestamp, staleTimestamp);
+    const stalePath = await resolvers.npm('fixture-pkg@1.0.0', resolve, {
+      env: staleFixture.baseEnv,
+      installLockStaleMs: 1,
+      installLockPollMs: 0,
+      installRetryDelayMs: 0
+    });
+    expect(await readFile(stalePath, 'utf8')).toContain('installed = true');
+  });
+
+  test(`${moduleName} repairs a recoverable import failure through makeUse`, async () => {
+    if (typeof Deno !== 'undefined' || typeof Bun !== 'undefined') {
+      return;
+    }
+
+    const fixture = await createFakeNpm();
+    const importedPaths = [];
+    const use = await makeUse({
+      env: fixture.baseEnv,
+      pathResolver: resolve,
+      specifierResolver: 'npm',
+      installRetryDelayMs: 0,
+      import: async modulePath => {
+        importedPaths.push(modulePath);
+        if (importedPaths.length === 1) {
+          throw new Error(`Failed to import module from '${modulePath}'.`, {
+            cause: new SyntaxError('truncated module')
+          });
+        }
+        return modulePath;
+      }
+    });
+
+    const repairedPath = await use('fixture-pkg@1.0.0');
+    const npmCalls = await readNpmLog(fixture.logFile);
+    expect(importedPaths).toHaveLength(2);
+    expect(repairedPath).toContain('use-m-retry=');
+    expect(npmCalls.filter(call => call.args[0] === 'install')).toHaveLength(2);
+  });
+
+  test(`${moduleName} preserves legacy package-exports resolution branches`, async () => {
+    if (typeof Deno !== 'undefined' || typeof Bun !== 'undefined') {
+      return;
+    }
+
+    for (const exportsField of [
+      './entry.js',
+      { '.': './entry.js' },
+      { '.': { default: './entry.js' } }
+    ]) {
+      const fixture = await createFakeNpm();
+      const packageDirectory = await corruptAlias(fixture, {
+        packageJson: JSON.stringify({
+          name: 'fixture-pkg',
+          version: '1.0.0',
+          type: 'module',
+          exports: exportsField
+        })
+      });
+      const entryPath = path.join(packageDirectory, 'entry.js');
+      await writeFile(entryPath, 'module.exports = { throughExports: true };\n');
+      const exportsResolver = async candidate => {
+        if (candidate === entryPath) return candidate;
+        const error = new Error(`Cannot find ${candidate}`);
+        error.code = 'MODULE_NOT_FOUND';
+        throw error;
+      };
+
+      await expect(resolvers.npm(
+        'fixture-pkg@1.0.0',
+        exportsResolver,
+        { env: fixture.baseEnv, installRetryDelayMs: 0 }
+      )).resolves.toBe(entryPath);
+      const npmCalls = await readNpmLog(fixture.logFile);
+      expect(npmCalls.filter(call => call.args[0] === 'install')).toHaveLength(0);
+    }
+  });
 });
