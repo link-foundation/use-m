@@ -5,10 +5,14 @@ import { describe, test, expect } from '../src/test-adapter.mjs';
 const jest = typeof Deno !== 'undefined' ? { setTimeout: () => {} } : (await import('@jest/globals')).jest;
 
 const moduleName = `[${import.meta.url.split('.').pop()} module]`;
+const describeLocalPackageExports = typeof Deno !== 'undefined' ? describe.skip : describe;
 
 jest.setTimeout(60000);
 
-describe(`${moduleName} exports field handling tests`, () => {
+// Deno resolves package names through remote CDN mirrors, so it never executes
+// the local npm/Bun package-export resolver exercised by this integration suite.
+// Deno's resolver behavior has separate coverage in deno-support.test.mjs.
+describeLocalPackageExports(`${moduleName} exports field handling tests`, () => {
   // Test for issue #47: Cannot import sub-paths like 'yargs/helpers'
   test(`${moduleName} should import yargs/helpers using exports field`, async () => {
     const helpers = await use('yargs/helpers');
