@@ -6,7 +6,7 @@
 
 <body>
   <script>
-    fetch('https://unpkg.com/use-m/use.js')
+    fetch('https://unpkg.com/use-m/src/use.js')
       .then(async useJs => {
         const { use } = eval(await useJs.text());
         const ts = await use('typescript');

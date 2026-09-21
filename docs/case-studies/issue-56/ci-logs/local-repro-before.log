@@ -1,0 +1,104 @@
+
+> use-m@8.13.8 test
+> NODE_OPTIONS="--experimental-vm-modules" jest tests/release-workflow-policy.test.mjs --runInBand
+
+(node:554377) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+FAIL tests/release-workflow-policy.test.mjs
+  release workflow policy
+    ✕ uses npm package metadata that matches registry and trusted publishing expectations (4 ms)
+    ✕ keeps CI and publishing in the trusted-publisher release workflow (2 ms)
+    ✕ publishes with npm trusted publishing instead of token auth
+    ✕ runs tests before publishing and preserves main-branch release runs
+    ✕ uses current action versions and explicit job timeouts (1 ms)
+
+  ● release workflow policy › uses npm package metadata that matches registry and trusted publishing expectations
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "git+https://github.com/link-foundation/use-m.git"
+    Received: "https://github.com/link-foundation/use-m.git"
+
+      50 |
+      51 |     expect(packageJson.license).toBe('Unlicense');
+    > 52 |     expect(packageJson.repository.url).toBe('git+https://github.com/link-foundation/use-m.git');
+         |                                        ^
+      53 |     expect(packageJson.bin.use).toBe('cli.mjs');
+      54 |   });
+      55 |
+
+      at Object.<anonymous> (tests/release-workflow-policy.test.mjs:52:40)
+
+  ● release workflow policy › keeps CI and publishing in the trusted-publisher release workflow
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 2
+
+      Array [
+    -   "release.yml",
+    +   "deploy.yml",
+    +   "test.yml",
+      ]
+
+      55 |
+      56 |   test('keeps CI and publishing in the trusted-publisher release workflow', () => {
+    > 57 |     expect(workflowFiles()).toEqual(['release.yml']);
+         |                             ^
+      58 |     expect(fs.existsSync(releaseWorkflowPath)).toBe(true);
+      59 |   });
+      60 |
+
+      at Object.<anonymous> (tests/release-workflow-policy.test.mjs:57:29)
+
+  ● release workflow policy › publishes with npm trusted publishing instead of token auth
+
+    ENOENT: no such file or directory, open '/tmp/gh-issue-solver-1781268984161/.github/workflows/release.yml'
+
+       9 |
+      10 | function readText(filePath) {
+    > 11 |   return fs.readFileSync(filePath, 'utf8').replace(/\r\n/g, '\n');
+         |             ^
+      12 | }
+      13 |
+      14 | function workflowFiles() {
+
+      at readText (tests/release-workflow-policy.test.mjs:11:13)
+      at Object.<anonymous> (tests/release-workflow-policy.test.mjs:62:26)
+
+  ● release workflow policy › runs tests before publishing and preserves main-branch release runs
+
+    ENOENT: no such file or directory, open '/tmp/gh-issue-solver-1781268984161/.github/workflows/release.yml'
+
+       9 |
+      10 | function readText(filePath) {
+    > 11 |   return fs.readFileSync(filePath, 'utf8').replace(/\r\n/g, '\n');
+         |             ^
+      12 | }
+      13 |
+      14 | function workflowFiles() {
+
+      at readText (tests/release-workflow-policy.test.mjs:11:13)
+      at Object.<anonymous> (tests/release-workflow-policy.test.mjs:71:26)
+
+  ● release workflow policy › uses current action versions and explicit job timeouts
+
+    ENOENT: no such file or directory, open '/tmp/gh-issue-solver-1781268984161/.github/workflows/release.yml'
+
+       9 |
+      10 | function readText(filePath) {
+    > 11 |   return fs.readFileSync(filePath, 'utf8').replace(/\r\n/g, '\n');
+         |             ^
+      12 | }
+      13 |
+      14 | function workflowFiles() {
+
+      at readText (tests/release-workflow-policy.test.mjs:11:13)
+      at Object.<anonymous> (tests/release-workflow-policy.test.mjs:84:26)
+
+Test Suites: 1 failed, 1 total
+Tests:       5 failed, 5 total
+Snapshots:   0 total
+Time:        0.198 s
+Ran all test suites matching /tests\/release-workflow-policy.test.mjs/i.

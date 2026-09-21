@@ -1,0 +1,27 @@
+runtime: Node.js
+PASS events               default === EventEmitter
+PASS stream               default === Stream
+PASS buffer               Buffer is a function
+PASS assert               default is callable assert
+PASS console              console.log present
+PASS crypto               randomUUID present
+PASS url                  URL present
+PASS process              default === process global
+PASS fs                   readFileSync present
+PASS fs/promises          readFile arity 2
+PASS path                 join present
+PASS util                 promisify present
+PASS perf_hooks           performance.now present
+PASS timers/promises      setTimeout present
+PASS dns/promises         lookup present
+PASS stream/promises      pipeline present
+PASS readline/promises    createInterface present
+PASS tty                  isatty present
+PASS cluster              default object
+PASS string_decoder       StringDecoder present
+PASS worker_threads       isMainThread present
+PASS vm                   runInNewContext present
+PASS zlib                 gzipSync present
+PASS querystring          parse present
+
+all generic loads behave as the hardcoded factories did

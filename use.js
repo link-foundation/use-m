@@ -1,10 +1,22 @@
+// AUTO-GENERATED — do not edit. This is a root-level mirror of src/use.js,
+// published so the historical CDN URL https://unpkg.com/use-m/use.js keeps
+// resolving (unpkg/jsdelivr ignore package.json "exports"). The canonical
+// source is src/use.js; edit it and run `npm run sync:entries`. See
+// https://github.com/link-foundation/use-m/issues/60.
 const extractCallerContext = (stack) => {
+  // Helper to check if a path is a use-m file
+  const isUseMFile = (path) => {
+    return path.endsWith('/use.mjs') ||
+           path.endsWith('/use.cjs') ||
+           path.endsWith('/use.js');
+  };
+
   // In browser environment, use the current document URL as fallback
   if (typeof window !== 'undefined' && window.location) {
     // For inline scripts in HTML, use the document's URL
     // This will be the fallback if we can't extract from stack
     const documentUrl = window.location.href;
-    
+
     // Try to extract from stack first, but we'll fallback to document URL
     if (!stack) return documentUrl;
   } else if (!stack) {
@@ -12,20 +24,20 @@ const extractCallerContext = (stack) => {
   }
 
   const lines = stack.split('\n');
-  // Look for the first file that isn't use.mjs - skip the first few frames
+  // Look for the first file that isn't use.mjs/use.cjs/use.js - skip the first few frames
   // to get past our internal function calls
   for (const line of lines) {
-    // Skip the first few frames which are internal to use.mjs
+    // Skip the first few frames which are internal to use-m
     if (line.includes('extractCallerContext') ||
       line.includes('_use') ||
       line.includes('makeUse') ||
-      line.includes('<anonymous>') && line.includes('/use.mjs')) {
+      (line.includes('<anonymous>') && (line.includes('/use.mjs') || line.includes('/use.cjs') || line.includes('/use.js')))) {
       continue;
     }
 
     // Try to match http(s):// URLs for browser environments
     let match = line.match(/https?:\/\/[^\s)]+/);
-    if (match && !match[0].endsWith('/use.mjs') && !match[0].endsWith('/use.js')) {
+    if (match && !isUseMFile(match[0])) {
       // Remove line:column numbers if present
       const url = match[0].replace(/:\d+:\d+$/, '');
       return url;
@@ -33,7 +45,7 @@ const extractCallerContext = (stack) => {
 
     // Try to match file:// URLs
     match = line.match(/file:\/\/[^\s)]+/);
-    if (match && !match[0].endsWith('/use.mjs')) {
+    if (match && !isUseMFile(match[0])) {
       // Remove line:column numbers if present
       const url = match[0].replace(/:\d+:\d+$/, '');
       return url;
@@ -59,20 +71,20 @@ const extractCallerContext = (stack) => {
 
     // For Node/Deno, try to match absolute paths (improved to handle more cases)
     match = line.match(/at\s+(?:Object\.<anonymous>\s+)?(?:async\s+)?[(]?(\/[^\s:)]+\.(?:m?js|json))(?::\d+:\d+)?\)?/);
-    if (match && !match[1].endsWith('/use.mjs') && !match[1].includes('node_modules')) {
+    if (match && !isUseMFile(match[1]) && !match[1].includes('node_modules')) {
       return 'file://' + match[1];
     }
 
     // Alternative pattern for Jest and other environments
     match = line.match(/at\s+[^(]*\(([^)]+\.(?:m?js|json)):\d+:\d+\)/);
-    if (match && !match[1].endsWith('/use.mjs') && !match[1].includes('node_modules')) {
+    if (match && !isUseMFile(match[1]) && !match[1].includes('node_modules')) {
       return 'file://' + (match[1].startsWith('/') ? match[1] : '/' + match[1]);
     }
   }
   return null;
 };
 
-export const parseModuleSpecifier = (moduleSpecifier) => {
+const parseModuleSpecifier = (moduleSpecifier) => {
   if (!moduleSpecifier || typeof moduleSpecifier !== 'string' || moduleSpecifier.length <= 0) {
     throw new Error(
       `Name for a package to be imported is not provided.
@@ -97,286 +109,175 @@ Please specify a package name, and an optional version (e.g.: 'lodash', 'lodash@
   return { packageName, version, modulePath };
 }
 
-// Built-in modules that we support across all environments
-// Always use lowercase names for consistency
-const supportedBuiltins = {
-  // Universal modules
+// Not plain callback APIs: the runtime's own promise versions are kept as is.
+const nonCallbackFileApis = new Set(['glob', 'watch']);
+
+// Wraps a promisified callback API in an async function declaring `arity`
+// parameters, so `.length` and `constructor.name` match Node's promise API.
+// The rest parameter forwards every argument regardless of declared count.
+// Index 0 declares one parameter: a promise API always takes at least the path
+// or handle it operates on.
+const asyncFunctionsByArity = [
+  (call) => async (a, ...rest) => call(a, ...rest),
+  (call) => async (a, b, ...rest) => call(a, b, ...rest),
+  (call) => async (a, b, c, ...rest) => call(a, b, c, ...rest),
+  (call) => async (a, b, c, d, ...rest) => call(a, b, c, d, ...rest),
+  (call) => async (a, b, c, d, e, ...rest) => call(a, b, c, d, e, ...rest)
+];
+const minimumFileApiArity = 1;
+const maximumFileApiArity = minimumFileApiArity + asyncFunctionsByArity.length - 1;
+const toAsyncFunction = (call, arity, name) => {
+  // A callback API can declare fewer parameters than it accepts when the
+  // middle ones have defaults (`fs.stat.length` is 1 on Deno and on Node),
+  // which would derive an arity of 0. The derived arity is therefore clamped
+  // into the range the wrappers cover, so every rebuilt entry stays an
+  // AsyncFunction: out of range, the bare `promisify` result was used instead,
+  // and that is a plain Function of length 0.
+  const clamped = Math.min(Math.max(arity, minimumFileApiArity), maximumFileApiArity);
+  const wrapped = asyncFunctionsByArity[clamped - minimumFileApiArity](call);
+  try {
+    Object.defineProperty(wrapped, 'name', { value: name });
+  } catch (error) {
+    // `name` is not configurable on every runtime; the wrapper still works.
+  }
+  return wrapped;
+};
+
+// Built-ins are discovered at runtime through `node:module` instead of being
+// enumerated here, so every built-in the host runtime knows about is loadable,
+// including ones added after this release (issue #50). Listed below are only
+// the modules needing more than the generic `import('node:<name>')` loader:
+// `browser` for environments without a `node:` namespace, `node` for a runtime
+// whose built-in differs from Node's. Anything left out uses the generic loader.
+const builtinOverrides = {
   'console': {
-    browser: () => ({ default: console, log: console.log, error: console.error, warn: console.warn, info: console.info }),
-    node: () => import('node:console').then(m => ({ default: m.Console, ...m }))
+    browser: () => ({ default: console, log: console.log, error: console.error, warn: console.warn, info: console.info })
   },
   'crypto': {
-    browser: () => ({ default: crypto, subtle: crypto.subtle }),
-    node: () => import('node:crypto').then(m => ({ default: m, ...m }))
+    browser: () => ({ default: crypto, subtle: crypto.subtle })
   },
   'url': {
-    browser: () => ({ default: URL, URL, URLSearchParams }),
-    node: () => import('node:url').then(m => ({ default: m, ...m }))
+    browser: () => ({ default: URL, URL, URLSearchParams })
   },
+  // 'performance' is not a built-in module name: use-m maps it onto the
+  // performance object, which lives in node:perf_hooks on the Node.js side.
   'performance': {
     browser: () => ({ default: performance, now: performance.now.bind(performance) }),
     node: () => import('node:perf_hooks').then(m => ({ default: m.performance, performance: m.performance, now: m.performance.now.bind(m.performance), ...m }))
   },
-
-  // Node.js/Bun only modules
-  'fs': {
-    browser: null, // Not available in browser
-    node: () => import('node:fs').then(m => ({ default: m, ...m }))
-  },
+  // Bun and Deno expose `node:fs/promises` functions whose arity and
+  // constructor differ from Node's, so the promise API is rebuilt from the
+  // callback API there. Which functions exist and how many arguments each one
+  // takes is read from the runtime itself, never listed here.
   'fs/promises': {
-    browser: null, // Not available in browser
     node: async () => {
-      const runtime = typeof Bun !== 'undefined' ? 'Bun' : typeof Deno !== 'undefined' ? 'Deno' : 'Node.js';
-      
-      // For Bun and Deno, use a different approach since their node:fs/promises may not be fully compatible
-      if (runtime === 'Bun' || runtime === 'Deno') {
-        console.log(`[${runtime}] Using promisify fallback for fs/promises compatibility`);
-        try {
-          const fs = await import('node:fs');
-          const { promisify } = await import('node:util');
-          
-          // Create wrapper functions that match native fs/promises signatures
-          // These need to have the correct .length property and be async functions
-          const createAsyncWrapper = (promisifiedFn, expectedLength) => {
-            // Create an async function with the correct length
-            const wrapper = {
-              1: async (a) => promisifiedFn(a),
-              2: async (a, b) => promisifiedFn(a, b),
-              3: async (a, b, c) => promisifiedFn(a, b, c),
-              4: async (a, b, c, d) => promisifiedFn(a, b, c, d)
-            }[expectedLength];
-            
-            // Copy the name if possible
-            try {
-              Object.defineProperty(wrapper, 'name', { value: promisifiedFn.name });
-            } catch (e) {
-              // Ignore if name can't be set
-            }
-            
-            return wrapper || promisifiedFn;
-          };
-          
-          // Helper to safely promisify functions that may not exist
-          const safePromisify = (fn, expectedLength) => {
-            if (typeof fn !== 'function') {
-              return undefined;
-            }
-            return createAsyncWrapper(promisify(fn), expectedLength);
-          };
-          
-          const promisifiedFs = {
-            access: safePromisify(fs.access, 2),
-            appendFile: safePromisify(fs.appendFile, 3),
-            chmod: safePromisify(fs.chmod, 2),
-            chown: safePromisify(fs.chown, 3),
-            copyFile: safePromisify(fs.copyFile, 3),
-            lchmod: safePromisify(fs.lchmod, 2),
-            lchown: safePromisify(fs.lchown, 3),
-            link: safePromisify(fs.link, 2),
-            lstat: safePromisify(fs.lstat, 2),
-            mkdir: safePromisify(fs.mkdir, 2),
-            mkdtemp: safePromisify(fs.mkdtemp, 2),
-            open: safePromisify(fs.open, 3),
-            readdir: safePromisify(fs.readdir, 2),
-            readFile: safePromisify(fs.readFile, 2),
-            readlink: safePromisify(fs.readlink, 2),
-            realpath: safePromisify(fs.realpath, 2),
-            rename: safePromisify(fs.rename, 2),
-            rmdir: safePromisify(fs.rmdir, 2),
-            stat: safePromisify(fs.stat, 2),
-            symlink: safePromisify(fs.symlink, 3),
-            truncate: safePromisify(fs.truncate, 2),
-            unlink: safePromisify(fs.unlink, 1),
-            utimes: safePromisify(fs.utimes, 3),
-            writeFile: safePromisify(fs.writeFile, 3),
-            constants: fs.constants
-          };
-          
-          // Add newer functions if they exist
-          if (fs.rm) promisifiedFs.rm = safePromisify(fs.rm, 2);
-          if (fs.cp) promisifiedFs.cp = safePromisify(fs.cp, 3);
-          if (fs.lutimes) promisifiedFs.lutimes = safePromisify(fs.lutimes, 3);
-          if (fs.opendir) promisifiedFs.opendir = safePromisify(fs.opendir, 2);
-          if (fs.statfs) promisifiedFs.statfs = safePromisify(fs.statfs, 2);
-          if (fs.watch) promisifiedFs.watch = fs.watch.bind(fs); // watch is not callback-based
-          
-          console.log(`[${runtime}] Fallback mkdir.length:`, promisifiedFs.mkdir?.length);
-          console.log(`[${runtime}] Fallback mkdir.constructor.name:`, promisifiedFs.mkdir?.constructor.name);
-          return { default: promisifiedFs, ...promisifiedFs };
-        } catch (error) {
-          throw new Error(`Failed to create fs/promises fallback for ${runtime}: ${error.message}`, { cause: error });
+      if (typeof Bun === 'undefined' && typeof Deno === 'undefined') {
+        return loadBuiltinModule('fs/promises');
+      }
+      const fs = await import('node:fs');
+      const { promisify } = await import('node:util');
+      const promises = {};
+      for (const [name, value] of Object.entries(await import('node:fs/promises'))) {
+        if (name === 'default') {
+          continue;
         }
+        const callbackApi = fs[name];
+        const rebuildable = typeof value === 'function'
+          && typeof callbackApi === 'function'
+          && !nonCallbackFileApis.has(name);
+        promises[name] = rebuildable
+          ? toAsyncFunction(promisify(callbackApi), callbackApi.length - 1, name)
+          : value;
       }
-      
-      // For Node.js, use the native implementation
-      try {
-        const m = await import('node:fs/promises');
-        return { default: m, ...m };
-      } catch (error) {
-        throw new Error(`Failed to load fs/promises module: ${error.message}`, { cause: error });
-      }
+      return { default: promises, ...promises };
     }
   },
-  'dns/promises': {
-    browser: null, // Not available in browser
-    node: async () => {
-      const m = await import('node:dns/promises');
-      return { default: m, ...m };
-    }
-  },
-  'stream/promises': {
-    browser: null, // Not available in browser
-    node: async () => {
-      const m = await import('node:stream/promises');
-      return { default: m, ...m };
-    }
-  },
-  'readline/promises': {
-    browser: null, // Not available in browser
-    node: async () => {
-      const m = await import('node:readline/promises');
-      return { default: m, ...m };
-    }
-  },
-  'timers/promises': {
-    browser: null, // Not available in browser
-    node: async () => {
-      const m = await import('node:timers/promises');
-      return { default: m, ...m };
-    }
-  },
-  'path': {
-    browser: null, // Not available in browser
-    node: () => import('node:path').then(m => ({ default: m, ...m }))
-  },
-  'os': {
-    browser: null, // Not available in browser
-    node: () => import('node:os').then(m => ({ default: m, ...m }))
-  },
-  'util': {
-    browser: null, // Not available in browser
-    node: () => import('node:util').then(m => ({ default: m, ...m }))
-  },
-  'events': {
-    browser: null, // Not available in browser
-    node: () => import('node:events').then(m => ({ default: m.EventEmitter, EventEmitter: m.EventEmitter, ...m }))
-  },
-  'stream': {
-    browser: null, // Not available in browser
-    node: () => import('node:stream').then(m => ({ default: m.Stream, Stream: m.Stream, ...m }))
-  },
-  'buffer': {
-    browser: null, // Not available in browser (would need polyfill)
-    node: () => import('node:buffer').then(m => ({ default: m, Buffer: m.Buffer, ...m }))
-  },
-  'process': {
-    browser: null, // Not available in browser
-    node: () => {
-      if (typeof Deno !== 'undefined') {
-        // Deno 2.x has a process global, use it if available
-        if (typeof process !== 'undefined') {
-          // In Deno, process is an EventEmitter and spreading doesn't work properly
-          // We need to explicitly copy the properties we need
-          const proc = {
-            default: process,
-            pid: process.pid,
-            platform: process.platform,
-            version: process.version,
-            versions: process.versions,
-            argv: process.argv,
-            env: process.env,
-            exit: process.exit,
-            cwd: process.cwd,
-            chdir: process.chdir,
-            // Add any other commonly used process properties
-            nextTick: process.nextTick,
-            stdout: process.stdout,
-            stderr: process.stderr,
-            stdin: process.stdin,
-          };
-          return proc;
-        }
-        // This shouldn't happen but provide a fallback
-        throw new Error(`Failed to resolve 'process' module in Deno environment.`);
-      }
-      return ({ default: process, ...process });
-    }
-  },
-  'child_process': {
-    browser: null,
-    node: () => import('node:child_process').then(m => ({ default: m, ...m }))
-  },
-  'http': {
-    browser: null,
-    node: () => import('node:http').then(m => ({ default: m, ...m }))
-  },
-  'https': {
-    browser: null,
-    node: () => import('node:https').then(m => ({ default: m, ...m }))
-  },
-  'net': {
-    browser: null,
-    node: () => import('node:net').then(m => ({ default: m, ...m }))
-  },
-  'dns': {
-    browser: null,
-    node: () => import('node:dns').then(m => ({ default: m, ...m }))
-  },
-  'zlib': {
-    browser: null,
-    node: () => import('node:zlib').then(m => ({ default: m, ...m }))
-  },
-  'querystring': {
-    browser: null,
-    node: () => import('node:querystring').then(m => ({ default: m, ...m }))
-  },
-  'assert': {
-    browser: null,
-    node: () => import('node:assert').then(m => ({ default: m.default || m, ...m }))
-  }
 };
 
-export const resolvers = {
+// Built-ins with no browser implementation. `node:module` is itself unavailable
+// in a browser, so this is the one list that cannot be derived at runtime. It
+// only chooses between a clear "not available" error and the CDN resolvers, and
+// never limits what Node.js, Bun or Deno can load.
+const browserUnavailableBuiltins = new Set([
+  'assert', 'buffer', 'child_process', 'dns', 'dns/promises', 'events', 'fs',
+  'fs/promises', 'http', 'https', 'net', 'os', 'path', 'process', 'querystring',
+  'readline/promises', 'stream', 'stream/promises', 'timers/promises', 'util',
+  'zlib'
+]);
+
+// `module.isBuiltin()` is the authoritative check (Node.js >= 18.6, Bun, Deno);
+// older runtimes only expose `module.builtinModules`, and environments without
+// `node:module` at all have no built-ins. Resolved once and reused.
+let builtinCheck = null;
+const isBuiltinModule = async (moduleName) => {
+  if (!builtinCheck) {
+    builtinCheck = import('node:module').then(
+      (m) => {
+        if (typeof m.isBuiltin === 'function') {
+          return m.isBuiltin;
+        }
+        const builtins = new Set(m.builtinModules || []);
+        return (name) => builtins.has(name) || builtins.has(name.replace(/^node:/, ''));
+      },
+      () => () => false
+    );
+  }
+  return (await builtinCheck)(moduleName);
+};
+
+// Generic loader for built-ins without an override. `...m` spreads after
+// `default`, so namespaces carrying their own default export keep it
+// (node:events -> EventEmitter, node:stream -> Stream, node:assert -> assert).
+const loadBuiltinModule = async (moduleName) => {
+  const m = await import(`node:${moduleName}`);
+  return { default: m, ...m };
+};
+
+const resolvers = {
   builtin: async (moduleSpecifier, pathResolver) => {
     const { packageName, modulePath } = parseModuleSpecifier(moduleSpecifier);
 
     // Handle built-in modules with subpaths like 'node:fs/promises'
-    let moduleName;
-    if (packageName.startsWith('node:')) {
-      // For node: modules, include the path in the module name
-      moduleName = packageName.slice(5) + modulePath;
-    } else {
-      moduleName = packageName + modulePath;
-    }
+    const hasNodePrefix = packageName.startsWith('node:');
+    const moduleName = (hasNodePrefix ? packageName.slice(5) : packageName) + modulePath;
 
-    // Check if we support this built-in module
-    if (supportedBuiltins[moduleName]) {
-      const builtinConfig = supportedBuiltins[moduleName];
+    // Determine environment
+    const isBrowser = typeof window !== 'undefined';
+    const environment = isBrowser ? 'browser' : 'node';
 
-      if (!builtinConfig) {
-        throw new Error(`Built-in module '${moduleName}' is not supported.`);
-      }
-
-      // Determine environment
-      const isBrowser = typeof window !== 'undefined';
-      const environment = isBrowser ? 'browser' : 'node';
-
-      const moduleFactory = builtinConfig[environment];
-      if (!moduleFactory) {
-        throw new Error(`Built-in module '${moduleName}' is not available in ${environment} environment.`);
-      }
-
+    const moduleFactory = builtinOverrides[moduleName]?.[environment];
+    if (moduleFactory) {
       try {
         // Execute the factory function to get the module
-        const result = await moduleFactory();
-        return result;
+        return await moduleFactory();
       } catch (error) {
         throw new Error(`Failed to load built-in module '${moduleName}' in ${environment} environment.`, { cause: error });
       }
     }
 
-    // Not a supported built-in module
-    return null;
+    if (isBrowser) {
+      // No browser implementation: report the well-known Node.js-only built-ins
+      // explicitly and let every other specifier fall through to the resolvers
+      // that fetch packages from a CDN.
+      if (browserUnavailableBuiltins.has(moduleName)) {
+        throw new Error(`Built-in module '${moduleName}' is not available in ${environment} environment.`);
+      }
+      return null;
+    }
+
+    // Ask the runtime whether this is a built-in, matching how the runtime
+    // itself resolves the specifier: 'node:sqlite' and 'node:test' are built-in
+    // only with the prefix, so bare 'sqlite' or 'test' must stay npm packages.
+    if (!await isBuiltinModule(hasNodePrefix ? `node:${moduleName}` : moduleName)) {
+      // Not a built-in module
+      return null;
+    }
+
+    try {
+      return await loadBuiltinModule(moduleName);
+    } catch (error) {
+      throw new Error(`Failed to load built-in module '${moduleName}' in ${environment} environment.`, { cause: error });
+    }
   },
   relative: async (moduleSpecifier, pathResolver, callerContext) => {
     // Check if this is a relative path (supports any depth: ./, ../, ../../, etc.)
@@ -438,12 +339,71 @@ export const resolvers = {
     
     return baseUse(resolvedPath);
   },
-  npm: async (moduleSpecifier, pathResolver) => {
+  npm: async (moduleSpecifier, pathResolver, options = {}) => {
     const path = await import('node:path');
     const { exec } = await import('node:child_process');
+    const { createHash } = await import('node:crypto');
     const { promisify } = await import('node:util');
-    const { stat, readFile } = await import('node:fs/promises');
+    const { access, mkdir, readFile, readlink, rename, rm, rmdir, stat, unlink, utimes, writeFile } = await import('node:fs/promises');
+    const { constants: fsConstants } = await import('node:fs');
+    const os = await import('node:os');
     const execAsync = promisify(exec);
+    const npmEnvSource = options?.env || process.env;
+    const baseNpmEnv = { ...npmEnvSource };
+    const installMaxAttempts = Number.isInteger(options?.installMaxAttempts) && options.installMaxAttempts > 0
+      ? options.installMaxAttempts
+      : 3;
+    const installRetryDelayMs = typeof options?.installRetryDelayMs === 'number' && options.installRetryDelayMs >= 0
+      ? options.installRetryDelayMs
+      : 1000;
+    const registryMaxAttempts = Number.isInteger(options?.registryMaxAttempts) && options.registryMaxAttempts > 0
+      ? options.registryMaxAttempts
+      : 3;
+    // Timings of the cross-process install lock (see `acquireInstallLock`).
+    const durationOption = (value, fallback) =>
+      typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : fallback;
+    const registryRetryDelayMs = durationOption(options?.registryRetryDelayMs, 250);
+    const registryRequestTimeoutMs = durationOption(options?.registryRequestTimeoutMs, 10000);
+    const latestVersionCacheTtlMs = durationOption(options?.latestVersionCacheTtlMs, 300000);
+    // How often the lock owner refreshes the lock's mtime.
+    const installLockHeartbeatMs = durationOption(options?.installLockHeartbeatMs, 1000);
+    // How long a lock may go unrefreshed before a waiter treats it as abandoned.
+    const installLockStaleMs = durationOption(options?.installLockStaleMs, 30000);
+    // How long a waiter sleeps between acquisition attempts.
+    const installLockPollMs = durationOption(options?.installLockPollMs, 100);
+    // How long a waiter waits before giving up and installing unlocked.
+    const installLockTimeoutMs = durationOption(options?.installLockTimeoutMs, 300000);
+    // Escape hatch: `installLock: false` restores the pre-8.15.0 unlocked installs.
+    const installLockEnabled = options?.installLock !== false;
+    const latestVersionCacheEnabled = options?.latestVersionCache !== false;
+    const registryCliFallbackEnabled = options?.registryCliFallback !== false;
+    const registryFetch = typeof options?.fetch === 'function'
+      ? options.fetch
+      : typeof globalThis.fetch === 'function'
+        ? globalThis.fetch.bind(globalThis)
+        : null;
+
+    const debugSetting = options?.debug ?? baseNpmEnv.USE_M_DEBUG;
+    const debugLevel = debugSetting === true || debugSetting === 'true'
+      ? 1
+      : debugSetting === 'verbose'
+        ? 2
+        : Number.isFinite(Number(debugSetting))
+          ? Math.max(0, Math.min(2, Number(debugSetting)))
+          : 0;
+    const debugLogger = typeof options?.debugLogger === 'function'
+      ? options.debugLogger
+      : console.error;
+    const debug = (level, message) => {
+      if (debugLevel < level) return;
+      try {
+        debugLogger(`[use-m] ${message}`);
+      } catch {
+        // Diagnostics must never change resolver behavior.
+      }
+    };
+
+    const sleep = (milliseconds) => new Promise(resolve => setTimeout(resolve, milliseconds));
 
     if (!pathResolver) {
       throw new Error('Failed to get the current resolver.');
@@ -473,75 +433,42 @@ export const resolvers = {
       }
     };
 
-    const resolveExportsTarget = (exportsEntry) => {
-      // Helper function to resolve the target from an exports entry
-      // Handles both string values and conditional exports objects
-      if (typeof exportsEntry === 'string') {
-        return exportsEntry;
-      }
-      if (exportsEntry && typeof exportsEntry === 'object') {
-        // Check common condition keys in order of preference
-        return exportsEntry.import || exportsEntry.default || exportsEntry.require || exportsEntry.module || exportsEntry.browser || null;
-      }
-      return null;
-    };
-
-    const tryResolveModule = async (modulePath, packageRootPath = null, subPath = null) => {
+    const tryResolveModule = async (packagePath) => {
       try {
-        return await pathResolver(modulePath);
+        return await pathResolver(packagePath);
       } catch (error) {
         if (error.code !== 'MODULE_NOT_FOUND') {
-          throw error;
+          throw new Error(`Failed to resolve module '${packagePath}'`, { cause: error });
         }
 
         // Attempt to resolve paths like 'yargs@18.0.0/helpers' to 'yargs-v-18.0.0/helpers/helpers.mjs'
-        if (await directoryExists(modulePath)) {
-          const directoryName = path.basename(modulePath);
-          const resolvedPath = await tryResolveModule(path.join(modulePath, directoryName), packageRootPath, subPath);
+        if (await directoryExists(packagePath)) {
+          const directoryName = path.basename(packagePath);
+          const resolvedPath = await tryResolveModule(path.join(packagePath, directoryName));
           if (resolvedPath) {
             return resolvedPath;
           }
 
-          // Attempt to resolve using package.json exports field
-          // Read package.json from the package root, not from the subpath directory
-          const packageJsonPath = packageRootPath
-            ? path.join(packageRootPath, 'package.json')
-            : path.join(modulePath, 'package.json');
-
+          // Attempt to resolve paths like 'octokit/core@latest' to 'octokit-core-v-latest/dist-src/index.js' (as it written in package.json)
+          const packageJsonPath = path.join(packagePath, 'package.json');
           if (await fileExists(packageJsonPath)) {
             const packageJson = await readFile(packageJsonPath, 'utf8');
             const parsed = JSON.parse(packageJson);
             const exp = parsed.exports;
             if (exp) {
               let target = null;
-
-              // If we have a subPath, try to find it in exports first
-              if (subPath) {
-                // Try with leading dot (e.g., "./helpers")
-                const dottedSubPath = `.${subPath}`;
-                if (exp[dottedSubPath]) {
-                  target = resolveExportsTarget(exp[dottedSubPath]);
-                }
-                // Also try without leading dot as fallback
-                if (!target && exp[subPath]) {
-                  target = resolveExportsTarget(exp[subPath]);
+              if (typeof exp === 'string') {
+                target = exp;
+              } else {
+                const root = exp['.'] ?? exp;
+                if (typeof root === 'string') {
+                  target = root;
+                } else if (root && typeof root === 'object') {
+                  target = root.import || root.default || root.require || root.module || root.browser || null;
                 }
               }
-
-              // If no subPath match found, fall back to root "." export
-              if (!target) {
-                if (typeof exp === 'string') {
-                  target = exp;
-                } else {
-                  const root = exp['.'] ?? exp;
-                  target = resolveExportsTarget(root);
-                }
-              }
-
               if (typeof target === 'string') {
-                // Resolve the target path relative to the package root
-                const rootPath = packageRootPath || modulePath;
-                const updatedPath = path.join(rootPath, target);
+                const updatedPath = path.join(packagePath, target);
                 return await tryResolveModule(updatedPath);
               }
             }
@@ -554,9 +481,219 @@ export const resolvers = {
       }
     };
 
-    const getLatestVersion = async (packageName) => {
-      const { stdout: version } = await execAsync(`npm show ${packageName} version`);
-      return version.trim();
+    const defaultRegistry = 'https://registry.npmjs.org/';
+
+    const normalizeRegistry = (value) => {
+      const registry = new URL(value || defaultRegistry);
+      if (registry.protocol !== 'http:' && registry.protocol !== 'https:') {
+        throw new Error(`Unsupported npm registry protocol '${registry.protocol}'.`);
+      }
+      // Fetch rejects URLs containing credentials, and neither cache files nor
+      // debug output should ever persist an npm token embedded in the URL. npm
+      // itself still receives the unmodified option through npm_config_registry.
+      registry.username = '';
+      registry.password = '';
+      registry.search = '';
+      registry.hash = '';
+      if (!registry.pathname.endsWith('/')) {
+        registry.pathname += '/';
+      }
+      return registry.href;
+    };
+
+    const getRegistry = async (env) => {
+      const explicitRegistry = options?.registry ?? options?.npmRegistry;
+      if (explicitRegistry) {
+        env.npm_config_registry = String(explicitRegistry);
+        return normalizeRegistry(explicitRegistry);
+      }
+      const environmentRegistry = env.npm_config_registry || env.NPM_CONFIG_REGISTRY;
+      if (environmentRegistry) {
+        return normalizeRegistry(environmentRegistry);
+      }
+      try {
+        debug(2, 'reading registry from npm config');
+        const { stdout } = await execAsync('npm config get registry', { env });
+        const configuredRegistry = stdout.trim();
+        if (configuredRegistry && configuredRegistry !== 'undefined' && configuredRegistry !== 'null') {
+          return normalizeRegistry(configuredRegistry);
+        }
+      } catch (error) {
+        debug(1, `npm config registry lookup failed; using the public registry (${error?.message || error})`);
+      }
+      return defaultRegistry;
+    };
+
+    const getLatestVersionCacheDirectory = (env) => {
+      if (!latestVersionCacheEnabled) return null;
+      if (typeof options?.latestVersionCacheDirectory === 'string') {
+        return path.resolve(options.latestVersionCacheDirectory);
+      }
+      const home = env.HOME || env.USERPROFILE || os.homedir();
+      if (!home) return null;
+      const cacheHome = env.XDG_CACHE_HOME || path.join(home, '.cache');
+      return path.join(cacheHome, 'use-m', 'registry');
+    };
+
+    const getLatestVersionCachePath = (cacheDirectory, registry, packageName) => {
+      const digest = createHash('sha256')
+        .update(JSON.stringify([registry, packageName]))
+        .digest('hex');
+      return path.join(cacheDirectory, `${digest}.json`);
+    };
+
+    const isValidLatestVersionEntry = (entry, registry, packageName) =>
+      entry &&
+      entry.registry === registry &&
+      entry.packageName === packageName &&
+      typeof entry.version === 'string' &&
+      entry.version.trim() !== '' &&
+      typeof entry.fetchedAt === 'number' &&
+      Number.isFinite(entry.fetchedAt);
+
+    const readLatestVersionCache = async (registry, packageName, env) => {
+      if (!latestVersionCacheEnabled) return null;
+      const cacheKey = JSON.stringify([registry, packageName]);
+      let cached = npmLatestVersionMemoryCache.get(cacheKey) || null;
+      const cacheDirectory = getLatestVersionCacheDirectory(env);
+      if (cacheDirectory) {
+        const cachePath = getLatestVersionCachePath(cacheDirectory, registry, packageName);
+        try {
+          const diskEntry = JSON.parse(await readFile(cachePath, 'utf8'));
+          if (isValidLatestVersionEntry(diskEntry, registry, packageName)
+            && (!cached || diskEntry.fetchedAt > cached.fetchedAt)) {
+            cached = diskEntry;
+            npmLatestVersionMemoryCache.set(cacheKey, diskEntry);
+          }
+        } catch {
+          // A missing, partial or old cache file is simply a cache miss.
+        }
+      }
+      if (!cached) return null;
+      const age = Math.max(0, Date.now() - cached.fetchedAt);
+      const fresh = age <= latestVersionCacheTtlMs;
+      debug(2, `${fresh ? 'fresh' : 'stale'} latest-version cache hit for ${packageName} (${cached.version})`);
+      return { ...cached, fresh };
+    };
+
+    const writeLatestVersionCache = async (registry, packageName, version, env) => {
+      if (!latestVersionCacheEnabled) return;
+      const entry = { registry, packageName, version, fetchedAt: Date.now() };
+      const cacheKey = JSON.stringify([registry, packageName]);
+      npmLatestVersionMemoryCache.set(cacheKey, entry);
+      const cacheDirectory = getLatestVersionCacheDirectory(env);
+      if (!cacheDirectory) return;
+      const cachePath = getLatestVersionCachePath(cacheDirectory, registry, packageName);
+      const temporaryPath = `${cachePath}.${process.pid}.${Date.now()}.${Math.random().toString(16).slice(2)}.tmp`;
+      try {
+        await mkdir(cacheDirectory, { recursive: true });
+        await writeFile(temporaryPath, `${JSON.stringify(entry)}\n`);
+        await rename(temporaryPath, cachePath);
+        debug(2, `cached latest version for ${packageName} at ${cachePath}`);
+      } catch (error) {
+        debug(1, `could not persist latest-version cache for ${packageName} (${error?.message || error})`);
+        await unlink(temporaryPath).catch(() => {});
+      }
+    };
+
+    const getRegistryEndpoint = (registry, packageName) =>
+      new URL(`${encodeURIComponent(packageName)}/latest`, registry).href;
+
+    const isTransientRegistryFailure = (error) => {
+      const status = error?.status;
+      return status === 403 || status === 408 || status === 425 || status === 429 || status >= 500;
+    };
+
+    const fetchLatestVersion = async (registry, packageName) => {
+      if (!registryFetch) {
+        throw new Error('This runtime does not provide fetch.');
+      }
+      const endpoint = getRegistryEndpoint(registry, packageName);
+      let lastError;
+      for (let attempt = 1; attempt <= registryMaxAttempts; attempt++) {
+        let timeout = null;
+        const controller = new AbortController();
+        try {
+          debug(2, `registry attempt ${attempt}/${registryMaxAttempts} for ${packageName} at ${endpoint}`);
+          if (registryRequestTimeoutMs > 0) {
+            timeout = setTimeout(() => controller.abort(), registryRequestTimeoutMs);
+          }
+          const registryResponse = await registryFetch(endpoint, {
+            headers: { accept: 'application/json' },
+            signal: controller.signal,
+          });
+          if (!registryResponse?.ok) {
+            const error = new Error(
+              `npm registry returned ${registryResponse?.status || 'an unknown status'} ${registryResponse?.statusText || ''}`.trim()
+            );
+            error.status = registryResponse?.status;
+            throw error;
+          }
+          const metadata = await registryResponse.json();
+          if (typeof metadata?.version !== 'string' || metadata.version.trim() === '') {
+            throw new Error('npm registry metadata did not contain a version.');
+          }
+          return metadata.version.trim();
+        } catch (error) {
+          lastError = error;
+          const retryable = error?.name === 'AbortError' || error?.status === undefined || isTransientRegistryFailure(error);
+          if (!retryable || attempt === registryMaxAttempts) break;
+          const delay = registryRetryDelayMs * (2 ** (attempt - 1));
+          debug(1, `registry attempt ${attempt}/${registryMaxAttempts} failed for ${packageName}; retrying in ${delay}ms (${error?.message || error})`);
+          if (delay > 0) await sleep(delay);
+        } finally {
+          if (timeout) clearTimeout(timeout);
+        }
+      }
+      throw lastError;
+    };
+
+    const getLatestVersion = async (packageName, env, installedPackagePath) => {
+      const registry = await getRegistry(env);
+      const cached = await readLatestVersionCache(registry, packageName, env);
+      if (cached?.fresh) return cached.version;
+
+      const failures = [];
+      try {
+        const version = await fetchLatestVersion(registry, packageName);
+        await writeLatestVersionCache(registry, packageName, version, env);
+        return version;
+      } catch (error) {
+        failures.push(error);
+        debug(1, `direct registry lookup failed for ${packageName}; trying npm CLI (${error?.message || error})`);
+      }
+
+      if (registryCliFallbackEnabled) {
+        try {
+          const { stdout } = await execAsync(`npm show ${packageName} version`, { env });
+          const version = stdout.trim();
+          if (!version) throw new Error('npm show returned an empty version.');
+          await writeLatestVersionCache(registry, packageName, version, env);
+          return version;
+        } catch (error) {
+          failures.push(error);
+          debug(1, `npm CLI latest-version lookup failed for ${packageName} (${error?.message || error})`);
+        }
+      }
+
+      if (cached) {
+        debug(1, `using stale cached latest version ${cached.version} for ${packageName}`);
+        return cached.version;
+      }
+      const installedVersion = installedPackagePath
+        ? await getInstalledPackageVersion(installedPackagePath)
+        : null;
+      if (installedVersion) {
+        debug(1, `using installed version ${installedVersion} for unavailable latest metadata of ${packageName}`);
+        return installedVersion;
+      }
+
+      const cause = failures[failures.length - 1];
+      throw new Error(
+        `Failed to determine the latest version of '${packageName}' from '${registry}'. ` +
+        `Pin a known version, for example '${packageName}@1.2.3', or retry when the registry is available.`,
+        { cause }
+      );
     };
 
     const getInstalledPackageVersion = async (packagePath) => {
@@ -570,36 +707,491 @@ export const resolvers = {
       }
     };
 
-    const ensurePackageInstalled = async ({ packageName, version }) => {
-      const alias = `${packageName.replace('@', '').replace('/', '-')}-v-${version}`;
-      const { stdout: globalModulesPath } = await execAsync('npm root -g');
-      const packagePath = path.join(globalModulesPath.trim(), alias);
-      if (version !== 'latest' && await directoryExists(packagePath)) {
-        return packagePath;
+    const getConfiguredNpmPrefix = (env) => env.npm_config_prefix || env.NPM_CONFIG_PREFIX || '';
+
+    const getNpmGlobalRoot = async (env) => {
+      debug(2, 'running npm root -g');
+      const { stdout: globalModulesPath } = await execAsync('npm root -g', { env });
+      const trimmedPath = globalModulesPath.trim();
+      if (!trimmedPath) {
+        throw new Error('npm root -g returned an empty global root.');
       }
-      if (version === 'latest') {
-        const latestVersion = await getLatestVersion(packageName);
-        const installedVersion = await getInstalledPackageVersion(packagePath);
-        if (installedVersion === latestVersion) {
-          return packagePath;
+      debug(2, `npm global root is ${trimmedPath}`);
+      return trimmedPath;
+    };
+
+    const isWritableDirectoryPath = async (directoryPath) => {
+      let currentPath = directoryPath;
+      while (currentPath && currentPath !== path.dirname(currentPath)) {
+        try {
+          const stats = await stat(currentPath);
+          if (!stats.isDirectory()) {
+            return false;
+          }
+          await access(currentPath, fsConstants.W_OK);
+          return true;
+        } catch (error) {
+          if (error.code === 'ENOENT') {
+            currentPath = path.dirname(currentPath);
+            continue;
+          }
+          return false;
         }
       }
       try {
-        await execAsync(`npm install -g ${alias}@npm:${packageName}@${version}`, { stdio: 'ignore' });
-      } catch (error) {
-        throw new Error(`Failed to install ${packageName}@${version} globally.`, { cause: error });
+        await access(currentPath, fsConstants.W_OK);
+        return true;
+      } catch {
+        return false;
       }
-      return packagePath;
+    };
+
+    const getUseMCachePrefix = (env) => {
+      const home = env.HOME || env.USERPROFILE || os.homedir();
+      if (!home) {
+        return null;
+      }
+      const cacheHome = env.XDG_CACHE_HOME || path.join(home, '.cache');
+      return path.join(cacheHome, 'use-m', 'npm-global');
+    };
+
+    const withNpmPrefix = (env, prefix) => {
+      const nextEnv = { ...env, npm_config_prefix: prefix };
+      const pathKey = Object.keys(nextEnv).find(key => key.toLowerCase() === 'path') || 'PATH';
+      const binPath = path.join(prefix, 'bin');
+      nextEnv[pathKey] = nextEnv[pathKey]
+        ? `${binPath}${path.delimiter}${nextEnv[pathKey]}`
+        : binPath;
+      return nextEnv;
+    };
+
+    const getWritableInstallContext = async (globalModulesPath, env) => {
+      if (await isWritableDirectoryPath(globalModulesPath)) {
+        return { env, globalModulesPath };
+      }
+
+      const configuredPrefix = getConfiguredNpmPrefix(env);
+      if (configuredPrefix) {
+        throw new Error(
+          `The configured npm global root '${globalModulesPath}' is not writable. ` +
+          `use-m will not override the configured npm prefix '${configuredPrefix}'. ` +
+          `Set npm_config_prefix to a writable directory or make the configured prefix writable.`
+        );
+      }
+
+      const fallbackPrefix = getUseMCachePrefix(env);
+      if (!fallbackPrefix) {
+        throw new Error(
+          `The npm global root '${globalModulesPath}' is not writable, and use-m could not determine a home directory for its npm cache prefix. ` +
+          `Set npm_config_prefix to a writable directory before using npm-backed use-m imports.`
+        );
+      }
+
+      const fallbackEnv = withNpmPrefix(env, fallbackPrefix);
+      debug(1, `npm global root is not writable; using the use-m prefix ${fallbackPrefix}`);
+      let fallbackGlobalModulesPath;
+      try {
+        fallbackGlobalModulesPath = await getNpmGlobalRoot(fallbackEnv);
+      } catch (error) {
+        throw new Error(`Failed to resolve use-m npm cache root with prefix '${fallbackPrefix}'.`, { cause: error });
+      }
+
+      try {
+        await mkdir(fallbackGlobalModulesPath, { recursive: true });
+      } catch (error) {
+        throw new Error(`Failed to create use-m npm cache root '${fallbackGlobalModulesPath}'.`, { cause: error });
+      }
+
+      if (!await isWritableDirectoryPath(fallbackGlobalModulesPath)) {
+        throw new Error(
+          `The npm global root '${globalModulesPath}' is not writable, and the use-m npm cache root '${fallbackGlobalModulesPath}' is not writable. ` +
+          `Set npm_config_prefix to a writable directory before using npm-backed use-m imports.`
+        );
+      }
+
+      return { env: fallbackEnv, globalModulesPath: fallbackGlobalModulesPath };
+    };
+
+    // use-m's own bookkeeping inside the npm global root: one lock directory and
+    // one completion marker per alias. The directory name starts with a dot so
+    // npm skips it while reading the global tree, the same way it skips `.bin`
+    // and `.package-lock.json`.
+    const getStatePath = (globalModulesPath, fileName) =>
+      path.join(globalModulesPath, '.use-m', fileName);
+    const getInstallLockPath = (globalModulesPath, alias) =>
+      getStatePath(globalModulesPath, `${alias}.lock`);
+    const getInstallMarkerPath = (globalModulesPath, alias) =>
+      getStatePath(globalModulesPath, `${alias}.installed.json`);
+
+    const readInstallMarker = async (markerPath) => {
+      try {
+        return JSON.parse(await readFile(markerPath, 'utf8'));
+      } catch {
+        return null;
+      }
+    };
+
+    // The marker is written only after `npm install` returned, so — unlike
+    // package.json, which npm extracts first — its presence means extraction
+    // finished. Writing it is best effort: a read-only global root only loses
+    // the fast path, it must not fail the import.
+    const writeInstallMarker = async (markerPath, marker) => {
+      const temporaryPath = `${markerPath}.${process.pid}.tmp`;
+      try {
+        await mkdir(path.dirname(markerPath), { recursive: true });
+        await writeFile(temporaryPath, `${JSON.stringify(marker)}\n`);
+        await rename(temporaryPath, markerPath);
+      } catch {
+        await unlink(temporaryPath).catch(() => {});
+      }
+    };
+
+    // Called before the alias tree changes, so no concurrent reader can trust a
+    // marker that describes the tree we are about to replace.
+    const removeInstallMarker = async (markerPath) => {
+      await unlink(markerPath).catch(() => {});
+    };
+
+    // `adopt: true` may only be used while holding the alias lock. Without a
+    // marker the only evidence available is the tree itself, and every such
+    // check is true long before extraction finishes: a directory exists as soon
+    // as npm creates it, and package.json carries the final version from the
+    // first extracted file onwards. That check-then-act window is how a
+    // concurrent caller used to import a half-written tree (issue #70), so
+    // outside the lock an unmarked alias counts as not installed and the caller
+    // re-checks under the lock instead.
+    const isPackageInstalled = async (packagePath, version, latestVersion, markerPath, { adopt = false } = {}) => {
+      if (!await directoryExists(packagePath)) {
+        return false;
+      }
+      const marker = await readInstallMarker(markerPath);
+      if (marker) {
+        return version === 'latest' ? marker.version === latestVersion : true;
+      }
+      if (!adopt) {
+        return false;
+      }
+      const installedVersion = await getInstalledPackageVersion(packagePath);
+      if (version === 'latest' && installedVersion !== latestVersion) {
+        return false;
+      }
+      // An alias installed by an older use-m (or by hand) carries no marker.
+      // Adopt it instead of reinstalling, but only once it resolves — a tree
+      // left behind by an interrupted install must not be adopted.
+      let resolved = null;
+      try {
+        resolved = await tryResolveModule(packagePath);
+      } catch {
+        resolved = null;
+      }
+      if (!resolved) {
+        return false;
+      }
+      await writeInstallMarker(markerPath, {
+        alias: path.basename(packagePath),
+        version: installedVersion,
+        requestedVersion: version,
+        adopted: true
+      });
+      return true;
+    };
+
+    const removePackageAlias = async (packagePath, reason) => {
+      try {
+        await rm(packagePath, {
+          recursive: true,
+          force: true,
+          maxRetries: 5,
+          retryDelay: 100
+        });
+      } catch (error) {
+        throw new Error(`Failed to remove ${reason} npm alias '${packagePath}'.`, { cause: error });
+      }
+    };
+
+    // A cross-process advisory lock over one alias directory. npm takes no lock
+    // on the global prefix, so two `npm install -g <alias>` runs delete and
+    // re-extract each other's trees; separate processes sharing one prefix (a CI
+    // step, a daemon, containers on one volume) need a lock that outlives a
+    // single process. `mkdir` is atomic on every filesystem, which is why the
+    // lock is a directory rather than a file — the strategy proper-lockfile
+    // uses. It is deliberately self-healing: the owner refreshes the mtime, a
+    // lock left behind by a crashed owner is stolen once it goes stale, and
+    // anything unexpected (an unwritable root, a peer that never finishes)
+    // degrades to the previous unlocked behavior instead of hanging.
+    const acquireInstallLock = async (lockPath) => {
+      const unlocked = { acquired: false, release: async () => {} };
+      if (!installLockEnabled) {
+        return unlocked;
+      }
+      try {
+        await mkdir(path.dirname(lockPath), { recursive: true });
+      } catch {
+        return unlocked;
+      }
+      const startedAt = Date.now();
+      for (;;) {
+        try {
+          await mkdir(lockPath);
+        } catch (error) {
+          if (error?.code !== 'EEXIST') {
+            return unlocked;
+          }
+          const stats = await stat(lockPath).catch(() => null);
+          const expired = Date.now() - startedAt > installLockTimeoutMs;
+          if (!stats) {
+            // The owner released it between our mkdir and stat, so retry at
+            // once — but still honor the deadline, so a peer that keeps
+            // recreating the lock cannot spin us forever.
+            if (expired) {
+              return unlocked;
+            }
+            continue;
+          }
+          if (Date.now() - stats.mtimeMs > installLockStaleMs
+            && await rmdir(lockPath).then(() => true, () => false)) {
+            continue;
+          }
+          if (expired) {
+            return unlocked;
+          }
+          await sleep(installLockPollMs);
+          continue;
+        }
+        // Keep the mtime fresh so waiters do not mistake a slow install (a cold
+        // `npm install -g` can take minutes) for a crashed owner.
+        const heartbeat = installLockHeartbeatMs > 0
+          ? setInterval(() => {
+            const stamp = new Date();
+            Promise.resolve(utimes(lockPath, stamp, stamp)).catch(() => {});
+          }, installLockHeartbeatMs)
+          : null;
+        heartbeat?.unref?.();
+        let released = false;
+        return {
+          acquired: true,
+          release: async () => {
+            if (released) {
+              return;
+            }
+            released = true;
+            if (heartbeat) {
+              clearInterval(heartbeat);
+            }
+            await rmdir(lockPath).catch(() => {});
+          }
+        };
+      }
+    };
+
+    const withInstallLock = async (lockPath, run) => {
+      const lock = await acquireInstallLock(lockPath);
+      try {
+        return await run(lock.acquired);
+      } finally {
+        await lock.release();
+      }
+    };
+
+    const formatInstallFailure = (error) => {
+      const output = [error?.stderr, error?.stdout]
+        .filter(value => typeof value === 'string' && value.trim())
+        .join('\n')
+        .trim();
+      return output || error?.message || String(error);
+    };
+
+    const getInstallErrorText = (error) => [
+      error?.stderr,
+      error?.stdout,
+      error?.message,
+      error?.cause?.stderr,
+      error?.cause?.stdout,
+      error?.cause?.message
+    ].filter(value => typeof value === 'string' && value.trim()).join('\n');
+
+    const getOwnedConflictingBinPath = async ({ error, alias, packageName, globalModulesPath }) => {
+      const errorText = getInstallErrorText(error);
+      const pathMatch = errorText.match(/(?:^|\n)npm error path ([^\r\n]+)/);
+      if (!/\bEEXIST\b/.test(errorText) || !pathMatch) {
+        return null;
+      }
+
+      const binPath = pathMatch[1].trim();
+      try {
+        const linkTarget = await readlink(binPath);
+        const resolvedTarget = path.resolve(path.dirname(binPath), linkTarget);
+        const relativeTarget = path.relative(globalModulesPath, resolvedTarget);
+        if (!relativeTarget
+          || path.isAbsolute(relativeTarget)
+          || relativeTarget === '..'
+          || relativeTarget.startsWith(`..${path.sep}`)) {
+          return null;
+        }
+
+        const [ownerAlias] = relativeTarget.split(path.sep);
+        const aliasPrefix = `${packageName.replace('@', '').replace('/', '-')}-v-`;
+        if (ownerAlias === alias || !ownerAlias.startsWith(aliasPrefix)) {
+          return null;
+        }
+
+        const ownerPackageJson = JSON.parse(
+          await readFile(path.join(globalModulesPath, ownerAlias, 'package.json'), 'utf8')
+        );
+        return ownerPackageJson.name === packageName ? binPath : null;
+      } catch {
+        return null;
+      }
+    };
+
+    const installPackage = async ({ alias, packageName, version, packagePath, installContext, exclusive }) => {
+      const failures = [];
+      for (let attempt = 1; attempt <= installMaxAttempts; attempt++) {
+        try {
+          debug(1, `installing ${packageName}@${version} (attempt ${attempt}/${installMaxAttempts})`);
+          await execAsync(
+            `npm install -g ${alias}@npm:${packageName}@${version}`,
+            { env: installContext.env }
+          );
+          debug(1, `installed ${packageName}@${version} as ${alias}`);
+          return;
+        } catch (error) {
+          let failure = error;
+          let details = formatInstallFailure(error);
+          const conflictingBinPath = await getOwnedConflictingBinPath({
+            error,
+            alias,
+            packageName,
+            globalModulesPath: installContext.globalModulesPath
+          });
+          if (conflictingBinPath) {
+            try {
+              await execAsync(
+                `npm install -g --force --no-bin-links ${alias}@npm:${packageName}@${version}`,
+                { env: installContext.env }
+              );
+              return;
+            } catch (retryError) {
+              failure = retryError;
+              details += `\nSafe no-bin retry after verified conflict at '${conflictingBinPath}': ${formatInstallFailure(retryError)}`;
+            }
+          }
+          failures.push({ error: failure, details });
+          // Removing the shared alias is only safe while we hold its lock.
+          // Without the lock this deletes the tree a concurrent installer just
+          // wrote successfully, which is what turned a failed install of one
+          // caller into an ERR_MODULE_NOT_FOUND of another (issue #70).
+          if (exclusive) {
+            await removePackageAlias(packagePath, 'incomplete');
+          }
+          if (attempt < installMaxAttempts && installRetryDelayMs > 0) {
+            debug(1, `npm install attempt ${attempt}/${installMaxAttempts} failed; retrying (${details})`);
+            await sleep(installRetryDelayMs * attempt);
+          }
+        }
+      }
+
+      const attempts = failures
+        .map(({ details }, index) => `  - ${index + 1}/${installMaxAttempts}: ${details}`)
+        .join('\n');
+      const cause = failures[failures.length - 1]?.error;
+      throw new Error(
+        `Failed to install ${packageName}@${version} globally into '${installContext.globalModulesPath}' after ${installMaxAttempts} attempts.\n` +
+        `Attempts:\n${attempts}`,
+        { cause }
+      );
+    };
+
+    const resolveInstalledPackagePath = async ({ packageName, version, alias, repair }) => {
+      const globalModulesPath = await getNpmGlobalRoot(baseNpmEnv);
+      const packagePath = path.join(globalModulesPath, alias);
+      const latestVersion = version === 'latest'
+        ? await getLatestVersion(packageName, baseNpmEnv, packagePath)
+        : null;
+      if (!repair && await isPackageInstalled(
+        packagePath,
+        version,
+        latestVersion,
+        getInstallMarkerPath(globalModulesPath, alias)
+      )) {
+        debug(1, `reusing installed alias ${alias} from ${globalModulesPath}`);
+        return packagePath;
+      }
+
+      const installContext = await getWritableInstallContext(globalModulesPath, baseNpmEnv);
+      const installPath = path.join(installContext.globalModulesPath, alias);
+      const markerPath = getInstallMarkerPath(installContext.globalModulesPath, alias);
+      if (!repair
+        && installContext.globalModulesPath !== globalModulesPath
+        && await isPackageInstalled(installPath, version, latestVersion, markerPath)) {
+        debug(1, `reusing cached npm alias ${alias} from ${installContext.globalModulesPath}`);
+        return installPath;
+      }
+
+      return withInstallLock(getInstallLockPath(installContext.globalModulesPath, alias), async (exclusive) => {
+        // Re-check while holding the lock: a peer we queued behind may have
+        // installed the alias already, and an unmarked alias can only be
+        // adopted here, where nothing else is writing to it.
+        if (!repair && await isPackageInstalled(installPath, version, latestVersion, markerPath, { adopt: true })) {
+          debug(1, `adopted existing npm alias ${alias} from ${installContext.globalModulesPath}`);
+          return installPath;
+        }
+        await removeInstallMarker(markerPath);
+        if (repair && await directoryExists(installPath)) {
+          await removePackageAlias(installPath, 'corrupt');
+        }
+        // Install the exact version returned by metadata lookup. Otherwise the
+        // `latest` tag could move between lookup and install, leaving the cache
+        // marker immediately stale and triggering a reinstall on every call.
+        const versionToInstall = version === 'latest' ? latestVersion : version;
+        await installPackage({ alias, packageName, version: versionToInstall, packagePath: installPath, installContext, exclusive });
+        await writeInstallMarker(markerPath, {
+          alias,
+          version: await getInstalledPackageVersion(installPath),
+          requestedVersion: version
+        });
+        return installPath;
+      });
+    };
+
+    // Collapse the concurrent callers of one alias inside this process: identical
+    // requests share a single install, and an install and a repair of the same
+    // alias are serialized instead of overlapping. Without this every `use()` in
+    // a cold top-level-await wave starts its own `npm install -g` (issue #70).
+    const ensurePackageInstalled = async ({ packageName, version }, { repair = false } = {}) => {
+      const alias = `${packageName.replace('@', '').replace('/', '-')}-v-${version}`;
+      const aliasKey = `${getNpmEnvId(npmEnvSource)} ${alias}`;
+      const requestKey = repair ? `${aliasKey} repair` : aliasKey;
+      return dedupeNpmInstall(
+        requestKey,
+        aliasKey,
+        () => resolveInstalledPackagePath({ packageName, version, alias, repair })
+      );
     };
 
     const { packageName, version, modulePath } = parseModuleSpecifier(moduleSpecifier);
-    const packagePath = await ensurePackageInstalled({ packageName, version });
-    const packageModulePath = modulePath ? path.join(packagePath, modulePath) : packagePath;
-    const resolvedPath = await tryResolveModule(packageModulePath, packagePath, modulePath);
-    if (!resolvedPath) {
-      throw new Error(`Failed to resolve the path to '${moduleSpecifier}' from '${packageModulePath}'.`);
+    const resolvePackageModule = async (packagePath) => {
+      const packageModulePath = modulePath ? path.join(packagePath, modulePath) : packagePath;
+      const resolvedPath = await tryResolveModule(packageModulePath);
+      if (!resolvedPath) {
+        throw new Error(`Failed to resolve the path to '${moduleSpecifier}' from '${packageModulePath}'.`);
+      }
+      return resolvedPath;
+    };
+
+    let packagePath = await ensurePackageInstalled(
+      { packageName, version },
+      { repair: Boolean(options?.repair) }
+    );
+    try {
+      return await resolvePackageModule(packagePath);
+    } catch (error) {
+      if (options?.repair || modulePath) {
+        throw error;
+      }
+      packagePath = await ensurePackageInstalled({ packageName, version }, { repair: true });
+      return resolvePackageModule(packagePath);
     }
-    return resolvedPath;
   },
   bun: async (moduleSpecifier, pathResolver) => {
     const path = await import('node:path');
@@ -636,74 +1228,40 @@ export const resolvers = {
       }
     };
 
-    const resolveExportsTarget = (exportsEntry) => {
-      // Helper function to resolve the target from an exports entry
-      // Handles both string values and conditional exports objects
-      if (typeof exportsEntry === 'string') {
-        return exportsEntry;
-      }
-      if (exportsEntry && typeof exportsEntry === 'object') {
-        // Check common condition keys in order of preference
-        return exportsEntry.import || exportsEntry.default || exportsEntry.require || exportsEntry.module || exportsEntry.browser || null;
-      }
-      return null;
-    };
-
-    const tryResolveModule = async (modulePath, packageRootPath = null, subPath = null) => {
+    const tryResolveModule = async (packagePath) => {
       try {
-        return await pathResolver(modulePath);
+        return await pathResolver(packagePath);
       } catch (error) {
         if (error.code !== 'MODULE_NOT_FOUND') {
-          throw error;
+          throw new Error(`Failed to resolve module '${packagePath}'`, { cause: error });
         }
 
-        if (await directoryExists(modulePath)) {
-          const directoryName = path.basename(modulePath);
-          const resolvedPath = await tryResolveModule(path.join(modulePath, directoryName), packageRootPath, subPath);
+        if (await directoryExists(packagePath)) {
+          const directoryName = path.basename(packagePath);
+          const resolvedPath = await tryResolveModule(path.join(packagePath, directoryName));
           if (resolvedPath) {
             return resolvedPath;
           }
 
-          // Attempt to resolve using package.json exports field
-          // Read package.json from the package root, not from the subpath directory
-          const packageJsonPath = packageRootPath
-            ? path.join(packageRootPath, 'package.json')
-            : path.join(modulePath, 'package.json');
-
+          const packageJsonPath = path.join(packagePath, 'package.json');
           if (await fileExists(packageJsonPath)) {
             const packageJson = await readFile(packageJsonPath, 'utf8');
             const parsed = JSON.parse(packageJson);
             const exp = parsed.exports;
             if (exp) {
               let target = null;
-
-              // If we have a subPath, try to find it in exports first
-              if (subPath) {
-                // Try with leading dot (e.g., "./helpers")
-                const dottedSubPath = `.${subPath}`;
-                if (exp[dottedSubPath]) {
-                  target = resolveExportsTarget(exp[dottedSubPath]);
-                }
-                // Also try without leading dot as fallback
-                if (!target && exp[subPath]) {
-                  target = resolveExportsTarget(exp[subPath]);
+              if (typeof exp === 'string') {
+                target = exp;
+              } else {
+                const root = exp['.'] ?? exp;
+                if (typeof root === 'string') {
+                  target = root;
+                } else if (root && typeof root === 'object') {
+                  target = root.import || root.default || root.require || root.module || root.browser || null;
                 }
               }
-
-              // If no subPath match found, fall back to root "." export
-              if (!target) {
-                if (typeof exp === 'string') {
-                  target = exp;
-                } else {
-                  const root = exp['.'] ?? exp;
-                  target = resolveExportsTarget(root);
-                }
-              }
-
               if (typeof target === 'string') {
-                // Resolve the target path relative to the package root
-                const rootPath = packageRootPath || modulePath;
-                const updatedPath = path.join(rootPath, target);
+                const updatedPath = path.join(packagePath, target);
                 return await tryResolveModule(updatedPath);
               }
             }
@@ -726,10 +1284,11 @@ export const resolvers = {
       } catch (error) {
         // In CI or fresh environments, the global directory might not exist
         // Try to get the default Bun install path
-        const home = process.env.HOME || process.env.USERPROFILE;
-        if (home) {
+        try {
+          const os = await import('node:os');
+          const home = os.homedir();
           binDir = path.join(home, '.bun', 'bin');
-        } else {
+        } catch (osError) {
           throw new Error('Unable to determine Bun global directory.', { cause: error });
         }
       }
@@ -754,7 +1313,7 @@ export const resolvers = {
     const { packageName, version, modulePath } = parseModuleSpecifier(moduleSpecifier);
     const packagePath = await ensurePackageInstalled({ packageName, version });
     const packageModulePath = modulePath ? path.join(packagePath, modulePath) : packagePath;
-    const resolvedPath = await tryResolveModule(packageModulePath, packagePath, modulePath);
+    const resolvedPath = await tryResolveModule(packageModulePath);
     if (!resolvedPath) {
       throw new Error(`Failed to resolve the path to '${moduleSpecifier}' from '${packageModulePath}'.`);
     }
@@ -805,7 +1364,143 @@ export const resolvers = {
   },
 }
 
-export const baseUse = async (modulePath) => {
+// Ordered chains of universal-ESM CDN resolvers tried for network/CDN loading.
+// Each entry is a key into `resolvers`; the chains list *distinct* CDN hosts so a
+// single CDN outage no longer breaks `use()` — when the first host fails we fall
+// back to the next. The primary entry preserves the previous default per runtime.
+const networkResolverChain = ['esm', 'jspm', 'skypack']
+const denoResolverChain = ['deno', 'jspm', 'skypack']
+
+// npm installs for the same alias must not overlap. `npm install -g` takes no
+// lock on the global prefix, so two runs writing the same alias directory delete
+// and re-extract each other's trees — the loser fails with ENOTEMPTY, and, worse,
+// a caller that saw no error at all can import a half-written tree. Node
+// evaluates sibling top-level-await subgraphs concurrently, so a project whose
+// modules all open with `await use('some-package')` starts exactly that wave on
+// every cold run (issue #70). These maps collapse the wave inside one process;
+// the alias lock in the npm resolver covers separate processes.
+const npmInstallsInFlight = new Map()
+const npmInstallQueues = new Map()
+const npmLatestVersionMemoryCache = new Map()
+const npmEnvIds = new WeakMap()
+let npmEnvId = 0
+
+// A stable id per npm environment object. Calls that share an environment (the
+// usual `process.env`) share coordination keys, while calls given explicitly
+// different environments — different npm prefixes, hence different install
+// directories — never collapse into each other.
+const getNpmEnvId = (env) => {
+  if (!env || typeof env !== 'object') {
+    return 'env-default'
+  }
+  let id = npmEnvIds.get(env)
+  if (id === undefined) {
+    id = `env-${++npmEnvId}`
+    npmEnvIds.set(env, id)
+  }
+  return id
+}
+
+// Serialize every install of one alias in this process, so an install and a
+// repair of the same directory can never run at the same time.
+const queueNpmInstall = (aliasKey, run) => {
+  const previous = npmInstallQueues.get(aliasKey) || Promise.resolve()
+  const result = previous.then(run, run)
+  const tail = result.then(() => {}, () => {})
+  npmInstallQueues.set(aliasKey, tail)
+  tail.then(() => {
+    if (npmInstallQueues.get(aliasKey) === tail) {
+      npmInstallQueues.delete(aliasKey)
+    }
+  })
+  return result
+}
+
+// Single flight: identical concurrent requests share one install. The entry is
+// evicted once it settles, so a genuine failure stays retryable.
+const dedupeNpmInstall = (requestKey, aliasKey, run) => {
+  const pending = npmInstallsInFlight.get(requestKey)
+  if (pending) {
+    return pending
+  }
+  const promise = queueNpmInstall(aliasKey, run)
+  npmInstallsInFlight.set(requestKey, promise)
+  const forget = () => {
+    if (npmInstallsInFlight.get(requestKey) === promise) {
+      npmInstallsInFlight.delete(requestKey)
+    }
+  }
+  promise.then(forget, forget)
+  return promise
+}
+
+let npmImportRecoveryId = 0
+
+const isRecoverableNpmImportError = (error, modulePath) => {
+  if (error?.message !== `Failed to import module from '${modulePath}'.`) {
+    return false
+  }
+  const cause = error.cause
+  return cause?.name === 'SyntaxError' ||
+    cause?.code === 'ERR_INVALID_PACKAGE_CONFIG' ||
+    cause?.code === 'ERR_MODULE_NOT_FOUND'
+}
+
+const cacheBustNpmModulePath = async (modulePath) => {
+  const { pathToFileURL } = await import('node:url')
+  const moduleUrl = pathToFileURL(modulePath)
+  moduleUrl.searchParams.set('use-m-retry', String(++npmImportRecoveryId))
+  return moduleUrl.href
+}
+
+// Normalize a resolver reference (a resolver function, or a key into `resolvers`)
+// into a resolver function.
+const toResolverFunction = (resolver) =>
+  typeof resolver === 'function' ? resolver : resolvers[resolver]
+
+// Generic, mechanism-agnostic "try sources in order until one works" engine.
+// Tries each `source` in order (optionally retrying each `maxAttemptsPerSource`
+// times with linear backoff) and returns the first successful `load(source,
+// attempt)` result. If every attempt fails it throws ONE clear, aggregated error
+// listing every attempt — never just the cryptic last failure (issue #58).
+//
+// This is the shared core reused by both resilient per-package CDN imports (see
+// `makeUse` below) and the use-m bootstrap loader (`loadUseM` in load.mjs /
+// load.cjs), so retry/fallback behaves identically everywhere it is used.
+const loadWithFallback = async (sources, load, options = {}) => {
+  const {
+    maxAttemptsPerSource = 1,
+    retryDelayMs = 0,
+    describeSource = (source) => String(source),
+    label = 'load from any source',
+    hint = '',
+  } = options
+  if (!Array.isArray(sources) || sources.length === 0) {
+    throw new Error(`Failed to ${label}: no sources were provided.`)
+  }
+  if (typeof load !== 'function') {
+    throw new Error(`Failed to ${label}: a load function is required.`)
+  }
+  const failures = []
+  for (const source of sources) {
+    for (let attempt = 1; attempt <= maxAttemptsPerSource; attempt++) {
+      try {
+        return await load(source, attempt)
+      } catch (error) {
+        const reason = error && error.message ? error.message : String(error)
+        failures.push(`${describeSource(source)} (attempt ${attempt}/${maxAttemptsPerSource}): ${reason}`)
+        if (attempt < maxAttemptsPerSource && retryDelayMs > 0) {
+          await new Promise((resolve) => setTimeout(resolve, retryDelayMs * attempt))
+        }
+      }
+    }
+  }
+  throw new Error(
+    `Failed to ${label}.${hint ? ' ' + hint : ''}\nAttempts:\n  - ` + failures.join('\n  - ')
+  )
+}
+
+const baseUse = async (modulePath) => {
   // Dynamically import the module
   try {
     const module = await import(modulePath);
@@ -826,6 +1521,9 @@ export const baseUse = async (modulePath) => {
         'length', 'name', 'prototype', 'constructor',
         'toString', 'valueOf', 'hasOwnProperty', 'isPrototypeOf', 'propertyIsEnumerable'
       ]);
+      if (module.default === module['module.exports']) {
+        metadataKeys.add('module.exports');
+      }
 
       const nonMetadataKeys = keys.filter(key => !metadataKeys.has(key));
 
@@ -842,17 +1540,30 @@ export const baseUse = async (modulePath) => {
   }
 }
 
-export const makeUse = async (options) => {
+const getScriptUrl = async () => {
+  const error = new Error();
+  const stack = error.stack || '';
+  const regex = /at[^:\\/]+(file:\/\/)?(?<path>(\/|(?<=\W)\w:)[^):]+):\d+:\d+/;
+  const match = stack.match(regex);
+  if (!match?.groups?.path) {
+    return null;
+  }
+  const { pathToFileURL } = await import('node:url');
+  return pathToFileURL(match.groups.path).href;
+}
+
+const makeUse = async (options) => {
   let scriptPath = options?.scriptPath;
-  if (!scriptPath && typeof global !== 'undefined' && typeof global['__filename'] !== 'undefined') {
+  const hasBrowserGlobals = typeof window !== 'undefined' && typeof document !== 'undefined';
+  if (!scriptPath && !hasBrowserGlobals && typeof global !== 'undefined' && typeof global['__filename'] !== 'undefined') {
     scriptPath = global['__filename'];
   }
   const metaUrl = options?.meta?.url;
   if (!scriptPath && metaUrl) {
     scriptPath = metaUrl;
   }
-  if (!scriptPath) {
-    scriptPath = import.meta.url;
+  if (!scriptPath && typeof window === 'undefined' && typeof require === 'undefined') {
+    scriptPath = await getScriptUrl();
   }
   let protocol;
   if (scriptPath) {
@@ -865,16 +1576,31 @@ export const makeUse = async (options) => {
       }
     }
   }
-  let specifierResolver = options?.specifierResolver;
-  if (typeof specifierResolver !== 'function') {
-    if (typeof window !== 'undefined' || (protocol && (protocol === 'http:' || protocol === 'https:'))) {
-      specifierResolver = resolvers[specifierResolver || 'esm'];
-    } else if (typeof Deno !== 'undefined') {
-      specifierResolver = resolvers[specifierResolver || 'deno'];
-    } else if (typeof Bun !== 'undefined') {
-      specifierResolver = resolvers[specifierResolver || 'bun'];
+  // Build the ordered chain of specifier resolvers to try. A single-entry chain
+  // means "no fallback": an explicit user choice (function or name) and the local
+  // npm/bun runtimes import exactly as before. The browser/HTTP and Deno network
+  // defaults use a multi-host chain so a CDN outage falls back instead of failing.
+  // `import` is an injectable low-level importer (defaults to baseUse) used for
+  // dependency injection in tests and advanced setups.
+  const importModule = typeof options?.import === 'function' ? options.import : baseUse;
+  let resolverChain;
+  if (Array.isArray(options?.specifierResolvers) && options.specifierResolvers.length > 0) {
+    resolverChain = options.specifierResolvers;
+  } else if (typeof options?.specifierResolver === 'function' || options?.specifierResolver) {
+    resolverChain = [options.specifierResolver];
+  } else {
+    const isDenoRuntime = typeof Deno !== 'undefined';
+    const isBunRuntime = typeof Bun !== 'undefined';
+    const isBrowserRuntime = !isDenoRuntime && !isBunRuntime && hasBrowserGlobals;
+    const isNodeRuntime = !isDenoRuntime && !isBunRuntime && !isBrowserRuntime && typeof process !== 'undefined' && Boolean(process.versions?.node);
+    if (isBrowserRuntime || (protocol && (protocol === 'http:' || protocol === 'https:'))) {
+      resolverChain = networkResolverChain;
+    } else if (isDenoRuntime) {
+      resolverChain = denoResolverChain;
+    } else if (isBunRuntime) {
+      resolverChain = ['bun'];
     } else {
-      specifierResolver = resolvers[specifierResolver || 'npm'];
+      resolverChain = ['npm'];
     }
   }
   let pathResolver = options?.pathResolver;
@@ -918,14 +1644,44 @@ export const makeUse = async (options) => {
       return relativeModule;
     }
 
-    // If not a built-in or relative module, use the configured resolver
-    const modulePath = await specifierResolver(moduleSpecifier, pathResolver);
-    return baseUse(modulePath);
+    // If not a built-in or relative module, resolve + import via the configured
+    // resolver chain. A single-entry chain imports directly (preserving the
+    // original behavior and error); a multi-entry chain falls back across CDN
+    // mirrors via the shared loadWithFallback engine.
+    if (resolverChain.length === 1) {
+      const resolver = resolverChain[0];
+      const resolverFunction = toResolverFunction(resolver);
+      const modulePath = await resolverFunction(moduleSpecifier, pathResolver, options);
+      try {
+        return await importModule(modulePath);
+      } catch (error) {
+        if (resolver !== 'npm' || !isRecoverableNpmImportError(error, modulePath)) {
+          throw error;
+        }
+        const repairedModulePath = await resolverFunction(
+          moduleSpecifier,
+          pathResolver,
+          { ...(options || {}), repair: true }
+        );
+        return importModule(await cacheBustNpmModulePath(repairedModulePath));
+      }
+    }
+    return loadWithFallback(
+      resolverChain,
+      async (resolver) => {
+        const modulePath = await toResolverFunction(resolver)(moduleSpecifier, pathResolver);
+        return importModule(modulePath);
+      },
+      {
+        label: `import '${moduleSpecifier}' from any CDN mirror`,
+        describeSource: (resolver) => (typeof resolver === 'function' ? 'custom resolver' : String(resolver)),
+      }
+    );
   };
 }
 
-let __use = null;
-const _use = async (moduleSpecifier) => {
+let __usePromise = null;
+const use = async (moduleSpecifier) => {
   const stack = new Error().stack;
 
   // For Bun, we need to capture the stack trace before any other calls
@@ -947,15 +1703,27 @@ const _use = async (moduleSpecifier) => {
   // Capture the caller context here, before entering makeUse
   const callerContext = bunCallerContext || extractCallerContext(stack);
 
-  if (!__use) {
-    __use = await makeUse();
+  if (!__usePromise) {
+    __usePromise = makeUse();
   }
-  return __use(moduleSpecifier, callerContext);
+  const useInstance = await __usePromise;
+  return useInstance(moduleSpecifier, callerContext);
 }
-_use.all = async (...moduleSpecifiers) => {
-  if (!__use) {
-    __use = await makeUse();
+use.all = async (...moduleSpecifiers) => {
+  if (!__usePromise) {
+    __usePromise = makeUse();
   }
-  return Promise.all(moduleSpecifiers.map(__use));
+  const useInstance = await __usePromise;
+  return Promise.all(moduleSpecifiers.map(useInstance));
 }
-export const use = _use;
+
+makeUse.parseModuleSpecifier = parseModuleSpecifier;
+makeUse.resolvers = resolvers;
+makeUse.makeUse = makeUse;
+makeUse.baseUse = baseUse;
+makeUse.loadWithFallback = loadWithFallback;
+makeUse.networkResolverChain = networkResolverChain;
+makeUse.denoResolverChain = denoResolverChain;
+makeUse.use = use;
+
+makeUse

@@ -1,0 +1,133 @@
+bun test v1.4.2 (744846f84)
+
+tests/network-imports.test.mjs:
+1076 |   if (!isURLInstance(fileURLOrPath))
+1077 |     return fileURLOrPath;
+1078 |   return Bun.fileURLToPath(fileURLOrPath);
+1079 | }
+1080 | var { Error, TypeError } = globalThis;
+1081 |   let err = new Error(message);
+                   ^
+error: Command failed: node --experimental-network-imports ./examples/network-imports/index.cjs
+node: bad option: --experimental-network-imports
+
+   code: 9,
+ killed: false,
+ signal: null,
+    cmd: "node --experimental-network-imports ./examples/network-imports/index.cjs",
+ stdout: "",
+ stderr: "node: bad option: --experimental-network-imports\n",
+
+      at genericNodeError (node:child_process:1081:13)
+      at exitHandler (node:child_process:115:28)
+      at emit (node:events:103:22)
+      at #maybeClose (node:child_process:827:16)
+      at #handleOnExit (node:child_process:570:72)
+(fail) [mjs module] imports using --experimental-network-imports > [mjs module] Import using --experimental-network-imports for CJS file [14.13ms]
+1076 |   if (!isURLInstance(fileURLOrPath))
+1077 |     return fileURLOrPath;
+1078 |   return Bun.fileURLToPath(fileURLOrPath);
+1079 | }
+1080 | var { Error, TypeError } = globalThis;
+1081 |   let err = new Error(message);
+                   ^
+error: Command failed: node --experimental-network-imports ./examples/network-imports/index.mjs
+node: bad option: --experimental-network-imports
+
+   code: 9,
+ killed: false,
+ signal: null,
+    cmd: "node --experimental-network-imports ./examples/network-imports/index.mjs",
+ stdout: "",
+ stderr: "node: bad option: --experimental-network-imports\n",
+
+      at genericNodeError (node:child_process:1081:13)
+      at exitHandler (node:child_process:115:28)
+      at emit (node:events:103:22)
+      at #maybeClose (node:child_process:827:16)
+      at #handleOnExit (node:child_process:570:72)
+(fail) [mjs module] imports using --experimental-network-imports > [mjs module] Import using --experimental-network-imports for MJS file [12.54ms]
+
+tests/relative-paths.integration.test.mjs:
+/tmp/gh-issue-solver-1789534888961/tests
+Testing relative paths from tests directory...
+
+1. Testing ./browser-server/test-helper.js
+   ✓ Message: Helper module loaded
+
+2. Testing ./browser-server/test-data.json
+   ✓ Value: 123
+   ✓ Test: data
+
+3. Testing ../src/use.mjs
+   ✓ use function exists: true
+
+4. Testing ./browser-server/subfolder/nested.js
+   ✓ Nested: true Level: subfolder
+
+5. Testing ./browser-server/subfolder/nested-data.json
+   ✓ Level: nested Depth: 1
+
+6. Testing ../package.json
+   ✓ Package name: use-m
+
+✅ All direct tests passed!
+
+(node:55774) [DEP0125] DeprecationWarning: The _stream_wrap module is deprecated.
+(Use `bun --trace-warnings ...` to show where the warning was created)
+(node:55774) [DEP0192] DeprecationWarning: The _tls_common module is deprecated. Use `node:tls` instead.
+(node:55774) [DEP0192] DeprecationWarning: The _tls_wrap module is deprecated. Use `node:tls` instead.
+
+tests/network-imports.test.cjs:
+1076 |   if (!isURLInstance(fileURLOrPath))
+1077 |     return fileURLOrPath;
+1078 |   return Bun.fileURLToPath(fileURLOrPath);
+1079 | }
+1080 | var { Error, TypeError } = globalThis;
+1081 |   let err = new Error(message);
+                   ^
+error: Command failed: node --experimental-network-imports ./examples/network-imports/index.cjs
+node: bad option: --experimental-network-imports
+
+   code: 9,
+ killed: false,
+ signal: null,
+    cmd: "node --experimental-network-imports ./examples/network-imports/index.cjs",
+ stdout: "",
+ stderr: "node: bad option: --experimental-network-imports\n",
+
+      at genericNodeError (node:child_process:1081:13)
+      at exitHandler (node:child_process:115:28)
+      at emit (node:events:103:22)
+      at #maybeClose (node:child_process:827:16)
+      at #handleOnExit (node:child_process:570:72)
+(fail) [cjs module] imports using --experimental-network-imports > [cjs module] Import using --experimental-network-imports for CJS file [17.99ms]
+1076 |   if (!isURLInstance(fileURLOrPath))
+1077 |     return fileURLOrPath;
+1078 |   return Bun.fileURLToPath(fileURLOrPath);
+1079 | }
+1080 | var { Error, TypeError } = globalThis;
+1081 |   let err = new Error(message);
+                   ^
+error: Command failed: node --experimental-network-imports ./examples/network-imports/index.mjs
+node: bad option: --experimental-network-imports
+
+   code: 9,
+ killed: false,
+ signal: null,
+    cmd: "node --experimental-network-imports ./examples/network-imports/index.mjs",
+ stdout: "",
+ stderr: "node: bad option: --experimental-network-imports\n",
+
+      at genericNodeError (node:child_process:1081:13)
+      at exitHandler (node:child_process:115:28)
+      at emit (node:events:103:22)
+      at #maybeClose (node:child_process:827:16)
+      at #handleOnExit (node:child_process:570:72)
+(fail) [cjs module] imports using --experimental-network-imports > [cjs module] Import using --experimental-network-imports for MJS file [30.36ms]
+
+ 381 pass
+ 4 fail
+ 783 expect() calls
+Ran 385 tests across 47 files. [28.66s]
+BUN_EXIT=1
