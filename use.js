@@ -342,6 +342,7 @@ const resolvers = {
   npm: async (moduleSpecifier, pathResolver, options = {}) => {
     const path = await import('node:path');
     const { exec } = await import('node:child_process');
+    const { createHash } = await import('node:crypto');
     const { promisify } = await import('node:util');
     const { access, mkdir, readFile, readlink, rename, rm, rmdir, stat, unlink, utimes, writeFile } = await import('node:fs/promises');
     const { constants: fsConstants } = await import('node:fs');
@@ -355,9 +356,15 @@ const resolvers = {
     const installRetryDelayMs = typeof options?.installRetryDelayMs === 'number' && options.installRetryDelayMs >= 0
       ? options.installRetryDelayMs
       : 1000;
+    const registryMaxAttempts = Number.isInteger(options?.registryMaxAttempts) && options.registryMaxAttempts > 0
+      ? options.registryMaxAttempts
+      : 3;
     // Timings of the cross-process install lock (see `acquireInstallLock`).
     const durationOption = (value, fallback) =>
       typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : fallback;
+    const registryRetryDelayMs = durationOption(options?.registryRetryDelayMs, 250);
+    const registryRequestTimeoutMs = durationOption(options?.registryRequestTimeoutMs, 10000);
+    const latestVersionCacheTtlMs = durationOption(options?.latestVersionCacheTtlMs, 300000);
     // How often the lock owner refreshes the lock's mtime.
     const installLockHeartbeatMs = durationOption(options?.installLockHeartbeatMs, 1000);
     // How long a lock may go unrefreshed before a waiter treats it as abandoned.
@@ -368,6 +375,33 @@ const resolvers = {
     const installLockTimeoutMs = durationOption(options?.installLockTimeoutMs, 300000);
     // Escape hatch: `installLock: false` restores the pre-8.15.0 unlocked installs.
     const installLockEnabled = options?.installLock !== false;
+    const latestVersionCacheEnabled = options?.latestVersionCache !== false;
+    const registryCliFallbackEnabled = options?.registryCliFallback !== false;
+    const registryFetch = typeof options?.fetch === 'function'
+      ? options.fetch
+      : typeof globalThis.fetch === 'function'
+        ? globalThis.fetch.bind(globalThis)
+        : null;
+
+    const debugSetting = options?.debug ?? baseNpmEnv.USE_M_DEBUG;
+    const debugLevel = debugSetting === true || debugSetting === 'true'
+      ? 1
+      : debugSetting === 'verbose'
+        ? 2
+        : Number.isFinite(Number(debugSetting))
+          ? Math.max(0, Math.min(2, Number(debugSetting)))
+          : 0;
+    const debugLogger = typeof options?.debugLogger === 'function'
+      ? options.debugLogger
+      : console.error;
+    const debug = (level, message) => {
+      if (debugLevel < level) return;
+      try {
+        debugLogger(`[use-m] ${message}`);
+      } catch {
+        // Diagnostics must never change resolver behavior.
+      }
+    };
 
     const sleep = (milliseconds) => new Promise(resolve => setTimeout(resolve, milliseconds));
 
@@ -447,9 +481,220 @@ const resolvers = {
       }
     };
 
-    const getLatestVersion = async (packageName, env) => {
-      const { stdout: version } = await execAsync(`npm show ${packageName} version`, { env });
-      return version.trim();
+    const defaultRegistry = 'https://registry.npmjs.org/';
+
+    const normalizeRegistry = (value) => {
+      const registry = new URL(value || defaultRegistry);
+      if (registry.protocol !== 'http:' && registry.protocol !== 'https:') {
+        throw new Error(`Unsupported npm registry protocol '${registry.protocol}'.`);
+      }
+      // Fetch rejects URLs containing credentials, and neither cache files nor
+      // debug output should ever persist an npm token embedded in the URL. npm
+      // itself still receives the unmodified option through npm_config_registry.
+      registry.username = '';
+      registry.password = '';
+      registry.search = '';
+      registry.hash = '';
+      if (!registry.pathname.endsWith('/')) {
+        registry.pathname += '/';
+      }
+      return registry.href;
+    };
+
+    const getRegistry = async (env) => {
+      const explicitRegistry = options?.registry ?? options?.npmRegistry;
+      if (explicitRegistry) {
+        env.npm_config_registry = String(explicitRegistry);
+        return normalizeRegistry(explicitRegistry);
+      }
+      const environmentRegistry = env.npm_config_registry || env.NPM_CONFIG_REGISTRY;
+      if (environmentRegistry) {
+        return normalizeRegistry(environmentRegistry);
+      }
+      try {
+        debug(2, 'reading registry from npm config');
+        const { stdout } = await execAsync('npm config get registry', { env });
+        const configuredRegistry = stdout.trim();
+        if (configuredRegistry && configuredRegistry !== 'undefined' && configuredRegistry !== 'null') {
+          return normalizeRegistry(configuredRegistry);
+        }
+      } catch (error) {
+        debug(1, `npm config registry lookup failed; using the public registry (${error?.message || error})`);
+      }
+      return defaultRegistry;
+    };
+
+    const getLatestVersionCacheDirectory = (env) => {
+      if (!latestVersionCacheEnabled) return null;
+      if (typeof options?.latestVersionCacheDirectory === 'string') {
+        return path.resolve(options.latestVersionCacheDirectory);
+      }
+      const home = env.HOME || env.USERPROFILE || os.homedir();
+      if (!home) return null;
+      const cacheHome = env.XDG_CACHE_HOME || path.join(home, '.cache');
+      return path.join(cacheHome, 'use-m', 'registry');
+    };
+
+    const getLatestVersionCachePath = (cacheDirectory, registry, packageName) => {
+      const digest = createHash('sha256')
+        .update(JSON.stringify([registry, packageName]))
+        .digest('hex');
+      return path.join(cacheDirectory, `${digest}.json`);
+    };
+
+    const isValidLatestVersionEntry = (entry, registry, packageName) =>
+      entry &&
+      entry.registry === registry &&
+      entry.packageName === packageName &&
+      typeof entry.version === 'string' &&
+      entry.version.trim() !== '' &&
+      typeof entry.fetchedAt === 'number' &&
+      Number.isFinite(entry.fetchedAt);
+
+    const readLatestVersionCache = async (registry, packageName, env) => {
+      if (!latestVersionCacheEnabled) return null;
+      const cacheKey = JSON.stringify([registry, packageName]);
+      let cached = npmLatestVersionMemoryCache.get(cacheKey) || null;
+      const cacheDirectory = getLatestVersionCacheDirectory(env);
+      if (cacheDirectory) {
+        const cachePath = getLatestVersionCachePath(cacheDirectory, registry, packageName);
+        try {
+          const diskEntry = JSON.parse(await readFile(cachePath, 'utf8'));
+          if (isValidLatestVersionEntry(diskEntry, registry, packageName)
+            && (!cached || diskEntry.fetchedAt > cached.fetchedAt)) {
+            cached = diskEntry;
+            npmLatestVersionMemoryCache.set(cacheKey, diskEntry);
+          }
+        } catch {
+          // A missing, partial or old cache file is simply a cache miss.
+        }
+      }
+      if (!cached) return null;
+      const age = Math.max(0, Date.now() - cached.fetchedAt);
+      const fresh = age <= latestVersionCacheTtlMs;
+      debug(2, `${fresh ? 'fresh' : 'stale'} latest-version cache hit for ${packageName} (${cached.version})`);
+      return { ...cached, fresh };
+    };
+
+    const writeLatestVersionCache = async (registry, packageName, version, env) => {
+      if (!latestVersionCacheEnabled) return;
+      const entry = { registry, packageName, version, fetchedAt: Date.now() };
+      const cacheKey = JSON.stringify([registry, packageName]);
+      npmLatestVersionMemoryCache.set(cacheKey, entry);
+      const cacheDirectory = getLatestVersionCacheDirectory(env);
+      if (!cacheDirectory) return;
+      const cachePath = getLatestVersionCachePath(cacheDirectory, registry, packageName);
+      const temporaryPath = `${cachePath}.${process.pid}.${Date.now()}.${Math.random().toString(16).slice(2)}.tmp`;
+      try {
+        await mkdir(cacheDirectory, { recursive: true });
+        await writeFile(temporaryPath, `${JSON.stringify(entry)}\n`);
+        await rename(temporaryPath, cachePath);
+        debug(2, `cached latest version for ${packageName} at ${cachePath}`);
+      } catch (error) {
+        debug(1, `could not persist latest-version cache for ${packageName} (${error?.message || error})`);
+        await unlink(temporaryPath).catch(() => {});
+      }
+    };
+
+    const getRegistryEndpoint = (registry, packageName) =>
+      new URL(`${encodeURIComponent(packageName)}/latest`, registry).href;
+
+    const isTransientRegistryFailure = (error) => {
+      const status = error?.status;
+      return status === 403 || status === 408 || status === 425 || status === 429 || status >= 500;
+    };
+
+    const fetchLatestVersion = async (registry, packageName) => {
+      if (!registryFetch) {
+        throw new Error('This runtime does not provide fetch.');
+      }
+      const endpoint = getRegistryEndpoint(registry, packageName);
+      let lastError;
+      for (let attempt = 1; attempt <= registryMaxAttempts; attempt++) {
+        let timeout = null;
+        const controller = new AbortController();
+        try {
+          debug(2, `registry attempt ${attempt}/${registryMaxAttempts} for ${packageName} at ${endpoint}`);
+          if (registryRequestTimeoutMs > 0) {
+            timeout = setTimeout(() => controller.abort(), registryRequestTimeoutMs);
+            timeout.unref?.();
+          }
+          const registryResponse = await registryFetch(endpoint, {
+            headers: { accept: 'application/json' },
+            signal: controller.signal,
+          });
+          if (!registryResponse?.ok) {
+            const error = new Error(
+              `npm registry returned ${registryResponse?.status || 'an unknown status'} ${registryResponse?.statusText || ''}`.trim()
+            );
+            error.status = registryResponse?.status;
+            throw error;
+          }
+          const metadata = await registryResponse.json();
+          if (typeof metadata?.version !== 'string' || metadata.version.trim() === '') {
+            throw new Error('npm registry metadata did not contain a version.');
+          }
+          return metadata.version.trim();
+        } catch (error) {
+          lastError = error;
+          const retryable = error?.name === 'AbortError' || error?.status === undefined || isTransientRegistryFailure(error);
+          if (!retryable || attempt === registryMaxAttempts) break;
+          const delay = registryRetryDelayMs * (2 ** (attempt - 1));
+          debug(1, `registry attempt ${attempt}/${registryMaxAttempts} failed for ${packageName}; retrying in ${delay}ms (${error?.message || error})`);
+          if (delay > 0) await sleep(delay);
+        } finally {
+          if (timeout) clearTimeout(timeout);
+        }
+      }
+      throw lastError;
+    };
+
+    const getLatestVersion = async (packageName, env, installedPackagePath) => {
+      const registry = await getRegistry(env);
+      const cached = await readLatestVersionCache(registry, packageName, env);
+      if (cached?.fresh) return cached.version;
+
+      const failures = [];
+      try {
+        const version = await fetchLatestVersion(registry, packageName);
+        await writeLatestVersionCache(registry, packageName, version, env);
+        return version;
+      } catch (error) {
+        failures.push(error);
+        debug(1, `direct registry lookup failed for ${packageName}; trying npm CLI (${error?.message || error})`);
+      }
+
+      if (registryCliFallbackEnabled) {
+        try {
+          const { stdout } = await execAsync(`npm show ${packageName} version`, { env });
+          const version = stdout.trim();
+          if (!version) throw new Error('npm show returned an empty version.');
+          await writeLatestVersionCache(registry, packageName, version, env);
+          return version;
+        } catch (error) {
+          failures.push(error);
+          debug(1, `npm CLI latest-version lookup failed for ${packageName} (${error?.message || error})`);
+        }
+      }
+
+      if (cached) {
+        debug(1, `using stale cached latest version ${cached.version} for ${packageName}`);
+        return cached.version;
+      }
+      const installedVersion = installedPackagePath
+        ? await getInstalledPackageVersion(installedPackagePath)
+        : null;
+      if (installedVersion) {
+        debug(1, `using installed version ${installedVersion} for unavailable latest metadata of ${packageName}`);
+        return installedVersion;
+      }
+
+      const cause = failures[failures.length - 1];
+      throw new Error(
+        `Failed to determine the latest version of '${packageName}' from '${registry}'. ` +
+        `Pin a known version, for example '${packageName}@1.2.3', or retry when the registry is available.`,
+        { cause }
+      );
     };
 
     const getInstalledPackageVersion = async (packagePath) => {
@@ -466,11 +711,13 @@ const resolvers = {
     const getConfiguredNpmPrefix = (env) => env.npm_config_prefix || env.NPM_CONFIG_PREFIX || '';
 
     const getNpmGlobalRoot = async (env) => {
+      debug(2, 'running npm root -g');
       const { stdout: globalModulesPath } = await execAsync('npm root -g', { env });
       const trimmedPath = globalModulesPath.trim();
       if (!trimmedPath) {
         throw new Error('npm root -g returned an empty global root.');
       }
+      debug(2, `npm global root is ${trimmedPath}`);
       return trimmedPath;
     };
 
@@ -542,6 +789,7 @@ const resolvers = {
       }
 
       const fallbackEnv = withNpmPrefix(env, fallbackPrefix);
+      debug(1, `npm global root is not writable; using the use-m prefix ${fallbackPrefix}`);
       let fallbackGlobalModulesPath;
       try {
         fallbackGlobalModulesPath = await getNpmGlobalRoot(fallbackEnv);
@@ -801,10 +1049,12 @@ const resolvers = {
       const failures = [];
       for (let attempt = 1; attempt <= installMaxAttempts; attempt++) {
         try {
+          debug(1, `installing ${packageName}@${version} (attempt ${attempt}/${installMaxAttempts})`);
           await execAsync(
             `npm install -g ${alias}@npm:${packageName}@${version}`,
             { env: installContext.env }
           );
+          debug(1, `installed ${packageName}@${version} as ${alias}`);
           return;
         } catch (error) {
           let failure = error;
@@ -836,6 +1086,7 @@ const resolvers = {
             await removePackageAlias(packagePath, 'incomplete');
           }
           if (attempt < installMaxAttempts && installRetryDelayMs > 0) {
+            debug(1, `npm install attempt ${attempt}/${installMaxAttempts} failed; retrying (${details})`);
             await sleep(installRetryDelayMs * attempt);
           }
         }
@@ -853,15 +1104,18 @@ const resolvers = {
     };
 
     const resolveInstalledPackagePath = async ({ packageName, version, alias, repair }) => {
-      const latestVersion = version === 'latest' ? await getLatestVersion(packageName, baseNpmEnv) : null;
       const globalModulesPath = await getNpmGlobalRoot(baseNpmEnv);
       const packagePath = path.join(globalModulesPath, alias);
+      const latestVersion = version === 'latest'
+        ? await getLatestVersion(packageName, baseNpmEnv, packagePath)
+        : null;
       if (!repair && await isPackageInstalled(
         packagePath,
         version,
         latestVersion,
         getInstallMarkerPath(globalModulesPath, alias)
       )) {
+        debug(1, `reusing installed alias ${alias} from ${globalModulesPath}`);
         return packagePath;
       }
 
@@ -871,6 +1125,7 @@ const resolvers = {
       if (!repair
         && installContext.globalModulesPath !== globalModulesPath
         && await isPackageInstalled(installPath, version, latestVersion, markerPath)) {
+        debug(1, `reusing cached npm alias ${alias} from ${installContext.globalModulesPath}`);
         return installPath;
       }
 
@@ -879,13 +1134,18 @@ const resolvers = {
         // installed the alias already, and an unmarked alias can only be
         // adopted here, where nothing else is writing to it.
         if (!repair && await isPackageInstalled(installPath, version, latestVersion, markerPath, { adopt: true })) {
+          debug(1, `adopted existing npm alias ${alias} from ${installContext.globalModulesPath}`);
           return installPath;
         }
         await removeInstallMarker(markerPath);
         if (repair && await directoryExists(installPath)) {
           await removePackageAlias(installPath, 'corrupt');
         }
-        await installPackage({ alias, packageName, version, packagePath: installPath, installContext, exclusive });
+        // Install the exact version returned by metadata lookup. Otherwise the
+        // `latest` tag could move between lookup and install, leaving the cache
+        // marker immediately stale and triggering a reinstall on every call.
+        const versionToInstall = version === 'latest' ? latestVersion : version;
+        await installPackage({ alias, packageName, version: versionToInstall, packagePath: installPath, installContext, exclusive });
         await writeInstallMarker(markerPath, {
           alias,
           version: await getInstalledPackageVersion(installPath),
@@ -1122,6 +1382,7 @@ const denoResolverChain = ['deno', 'jspm', 'skypack']
 // the alias lock in the npm resolver covers separate processes.
 const npmInstallsInFlight = new Map()
 const npmInstallQueues = new Map()
+const npmLatestVersionMemoryCache = new Map()
 const npmEnvIds = new WeakMap()
 let npmEnvId = 0
 

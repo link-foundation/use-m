@@ -295,7 +295,17 @@ describe(`${moduleName} npm global prefix handling`, () => {
       USE_M_FAKE_NPM_BIN_NAME: 'fixture-cli'
     };
     const binPath = path.resolve(fixture.defaultRoot, '..', '..', 'bin', 'fixture-cli');
-    const latestPath = await resolvers.npm('fixture-pkg', resolve, { env, installRetryDelayMs: 0 });
+    const latestPath = await resolvers.npm('fixture-pkg', resolve, {
+      env,
+      fetch: async () => ({
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        json: async () => ({ version: env.USE_M_FAKE_NPM_LATEST_VERSION }),
+      }),
+      installRetryDelayMs: 0,
+      registry: 'https://registry.example.test/',
+    });
     const originalBinTarget = await readlink(binPath);
     const pinnedPath = await resolvers.npm('fixture-pkg@1.0.0', resolve, { env, installRetryDelayMs: 0 });
     const npmCalls = await readNpmLog(fixture.logFile);
