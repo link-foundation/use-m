@@ -1512,7 +1512,7 @@ const baseUse = async (modulePath) => {
 
       // Check if default is the main export and other keys are just function/module metadata
       const metadataKeys = new Set([
-        'default', '__esModule', 'Symbol(Symbol.toStringTag)',
+        'default', 'module.exports', '__esModule', 'Symbol(Symbol.toStringTag)',
         'length', 'name', 'prototype', 'constructor',
         'toString', 'valueOf', 'hasOwnProperty', 'isPrototypeOf', 'propertyIsEnumerable'
       ]);
