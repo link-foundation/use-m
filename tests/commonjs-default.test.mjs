@@ -14,15 +14,22 @@ const inspectLoadedFixture = (loaded) => ({
   attachedResult: typeof loaded?.attached === 'function' ? loaded.attached() : null
 })
 
-const loadFixture = async () => {
+const loadFixture = async (implementation = 'mjs') => {
   // Jest's VM-module importer omits Node's synthetic `module.exports` marker.
   // A fresh Node process exercises the native loader shape that regressed.
   if (typeof Deno === 'undefined' && typeof Bun === 'undefined') {
-    return JSON.parse(execFileSync(process.execPath, [probePath], { encoding: 'utf8' }))
+    return JSON.parse(execFileSync(process.execPath, [probePath, implementation], { encoding: 'utf8' }))
   }
 
   const load = await makeUse({ specifierResolver: () => fixtureUrl })
   return inspectLoadedFixture(await load('callable-commonjs-fixture'))
+}
+
+const expectCallableFixture = (loaded) => {
+  expect(loaded.type).toBe('function')
+  expect(loaded.result).toBe('called')
+  expect(loaded.attachedType).toBe('function')
+  expect(loaded.attachedResult).toBe('attached')
 }
 
 describe(`${moduleName} callable CommonJS default`, () => {
@@ -31,11 +38,12 @@ describe(`${moduleName} callable CommonJS default`, () => {
     // exposes the attached property as a real named export instead.
     if (typeof Bun !== 'undefined') return
 
-    const loaded = await loadFixture()
+    expectCallableFixture(await loadFixture())
+  })
 
-    expect(loaded.type).toBe('function')
-    expect(loaded.result).toBe('called')
-    expect(loaded.attachedType).toBe('function')
-    expect(loaded.attachedResult).toBe('attached')
+  test(`${moduleName} unwraps the same shape in the universal build`, async () => {
+    if (typeof Deno !== 'undefined' || typeof Bun !== 'undefined') return
+
+    expectCallableFixture(await loadFixture('universal'))
   })
 })

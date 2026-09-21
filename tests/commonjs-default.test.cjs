@@ -19,7 +19,7 @@ const loadFixture = async () => {
   // Jest's VM-module importer omits Node's synthetic `module.exports` marker.
   // A fresh Node process exercises the native loader shape that regressed.
   if (typeof Deno === 'undefined' && typeof Bun === 'undefined') {
-    return JSON.parse(execFileSync(process.execPath, [probePath], { encoding: 'utf8' }))
+    return JSON.parse(execFileSync(process.execPath, [probePath, 'cjs'], { encoding: 'utf8' }))
   }
 
   const load = await makeUse({ specifierResolver: () => fixtureUrl })
