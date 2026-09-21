@@ -1,62 +1,50 @@
 # Root Cause Analysis for Issue #47
 
 ## Problem
-Cannot import sub-paths like 'yargs/helpers' - use-m fails to resolve the path.
 
-## Error Message
-```
-Error: Failed to resolve the path to 'yargs/helpers' from '/home/hive/.nvm/versions/node/v20.19.5/lib/node_modules/yargs-v-latest/helpers'.
-```
+`use('yargs/helpers')` failed even though yargs publicly exports that subpath.
 
-## Root Cause
+## Root cause
 
-### What Should Happen
-When importing `yargs/helpers`:
-1. Parse the module specifier into: packageName='yargs', version='latest', modulePath='/helpers'
-2. Install package as `yargs-v-latest`
-3. Read `yargs-v-latest/package.json`
-4. Look up `./helpers` in the `exports` field
-5. Resolve to the mapped file: `./helpers/helpers.mjs`
-6. Import from `/node_modules/yargs-v-latest/helpers/helpers.mjs`
+The npm and Bun resolvers appended the requested subpath to the installed
+package directory and tried to resolve that physical path directly. Package
+subpaths are logical names, however, and must first be matched against the
+installed package's root `package.json` `exports` map.
 
-### What Actually Happens
-1. ✓ Parse correctly: packageName='yargs', version='latest', modulePath='/helpers'
-2. ✓ Install package as `yargs-v-latest`
-3. ✓ Construct path: `packageModulePath = /node_modules/yargs-v-latest/helpers`
-4. ✗ **BUG**: `tryResolveModule` tries to resolve the directory `/helpers` directly
-5. ✗ When that fails, it reads package.json but only checks for the root "." export
-6. ✗ It never checks if there's a sub-path export for "./helpers"
-7. ✗ Returns null, causing the error
+For yargs, the relevant mapping is equivalent to:
 
-### Code Location
-File: `use.mjs`, lines 476-522 (npm resolver) and lines 606-650 (bun resolver)
-
-The `tryResolveModule` function:
-- Only handles the root export (`exp['.']`)
-- Does NOT handle sub-path exports like `exp['./helpers']`
-
-### The Fix Needed
-In the `tryResolveModule` function, when we have a modulePath (like '/helpers'):
-1. Check if the exports field has a matching sub-path entry
-2. If found, resolve to the mapped file
-3. Otherwise, fall back to current behavior
-
-### Example from yargs/package.json
 ```json
 {
   "exports": {
-    "./package.json": "./package.json",
-    "./helpers": "./helpers/helpers.mjs",  // ← This needs to be checked!
-    "./browser": {
-      "types": "./browser.d.ts",
-      "import": "./browser.mjs"
-    },
     ".": "./index.mjs",
-    "./yargs": "./index.mjs"
+    "./helpers": "./helpers/helpers.mjs"
   }
 }
 ```
 
-When importing `yargs/helpers`:
-- Current code: Only checks `exports["."]` → doesn't find "./helpers"
-- Fixed code: Should check `exports["./helpers"]` → finds "./helpers/helpers.mjs"
+The old resolver treated `yargs/helpers` as an on-disk directory. It could only
+work accidentally when a package happened to have a compatible physical layout,
+and it failed when the public name mapped somewhere else. Resolving physical
+paths first also let callers load private files that an `exports` map did not
+expose.
+
+## Required behavior
+
+For an installed package with an `exports` field, the local resolvers must:
+
+1. Read `package.json` from the package root.
+2. Convert the requested path to an export key (`.` or `./subpath`).
+3. Match exact keys before wildcard patterns.
+4. Select nested `node`/`import` conditions and supported array fallbacks.
+5. Substitute wildcard captures into the selected target.
+6. Require a relative target that remains inside the package root.
+7. Reject missing, `null`, or otherwise unexported subpaths instead of falling
+   through to a physical private file.
+8. Preserve legacy physical resolution only for packages without `exports`.
+
+## Verification
+
+The deterministic npm and fake-Bun tests cover exact mappings whose requested
+directory does not exist, wildcard and nested conditional mappings, array
+fallbacks, and package encapsulation. The real-package integration test covers
+latest and pinned yargs versions and verifies that `hideBin` works.
