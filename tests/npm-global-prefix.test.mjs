@@ -1,4 +1,4 @@
-import { chmod, mkdir, mkdtemp, readFile, readlink, rm, symlink, utimes, writeFile } from 'node:fs/promises';
+import { chmod, mkdir, mkdtemp, readFile, readlink, realpath, rm, symlink, utimes, writeFile } from 'node:fs/promises';
 import { execFile } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -17,7 +17,7 @@ afterEach(async () => {
 });
 
 const createFakeNpm = async () => {
-  const root = await mkdtemp(path.join(tmpdir(), 'use-m-npm-prefix-'));
+  const root = await realpath(await mkdtemp(path.join(tmpdir(), 'use-m-npm-prefix-')));
   temporaryDirectories.push(root);
 
   const binDirectory = path.join(root, 'bin');

@@ -1,4 +1,4 @@
-import { chmod, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { chmod, mkdir, mkdtemp, readFile, readdir, realpath, rm, writeFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -24,7 +24,7 @@ const response = (status, body = {}) => ({
 });
 
 const createFixture = async () => {
-  const root = await mkdtemp(path.join(tmpdir(), 'use-m-registry-resilience-'));
+  const root = await realpath(await mkdtemp(path.join(tmpdir(), 'use-m-registry-resilience-')));
   temporaryDirectories.push(root);
   const binDirectory = path.join(root, 'bin');
   const globalModulesPath = path.join(root, 'global', 'lib', 'node_modules');
