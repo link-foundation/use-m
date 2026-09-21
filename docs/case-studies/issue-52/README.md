@@ -1,8 +1,24 @@
 # Case Study: Issue #52 — `npm show` fails with 403 Forbidden in CI when loading `@latest` packages
 
-> **Status:** investigation complete, no fix code yet.
-> **PR:** [#53](https://github.com/link-foundation/use-m/pull/53) (DRAFT) — proposals only, awaiting solution selection.
-> **Per maintainer instruction on the issue thread:** *"We should not code until solution is selected."* This document is the deliverable that lets the maintainer pick.
+> **Status:** implemented and covered by regression tests.
+> **PR:** [#53](https://github.com/link-foundation/use-m/pull/53) — combines the cache, retry, direct-fetch, fallback, configuration, and debug proposals selected by the maintainer.
+> **History:** the investigation and alternatives below were written before implementation. A later PR comment selected the combined solution and requested backward compatibility plus comprehensive tests.
+
+---
+
+## 0. Resolution implemented
+
+The final implementation composes S2, S3, S4, and S5 rather than choosing only one defensive layer:
+
+* `@latest` metadata is fetched directly from the configured registry's `/<encoded package>/latest` endpoint, avoiding the npm CLI startup and failure surface on the normal path.
+* Transient network errors and HTTP 403, 408, 425, 429, and 5xx responses are retried three times with exponential backoff and a per-request timeout.
+* Successful metadata is cached in memory and atomically on disk for five minutes. Cache identity includes registry plus package, and stale metadata remains available only as an outage fallback.
+* The npm CLI remains a compatibility fallback, so `.npmrc`, private registries, scoped registries, authentication, and proxy settings keep working.
+* If live direct and CLI lookups both fail, `use-m` falls back to stale metadata and then to a complete already-installed `latest` alias. With no safe fallback, the error recommends pinning a known version.
+* `USE_M_DEBUG=1` logs decisions; `USE_M_DEBUG=2` adds attempts, paths, and command-level tracing. Logging remains completely off by default, and registry credentials are excluded from direct request URLs, cache files, and diagnostics.
+* Pinned package behavior is unchanged and performs no metadata request. npm install retry, repair, alias locking, writable-prefix fallback, and binary-conflict handling remain intact.
+
+The pre-change characterization suite raised line coverage of `src/use.mjs` and `src/use.cjs` from approximately 68% to 89% before implementation. The dedicated registry suite runs every new behavior against both formats, including retry classification, timeout, cache disabling and TTL, cross-format disk reuse, stale/installed fallbacks, registry precedence, npm CLI fallback, pinning, debug gating, credential redaction, and exact-version installation.
 
 ---
 
@@ -192,9 +208,9 @@ This explains why we observe 403 even though the same package responds 200 to a 
 
 ---
 
-## 6. Proposed solutions (R2) — pick one or compose
+## 6. Proposed solutions (R2) — historical selection record
 
-Each proposal is independently shippable and addresses a different layer. They compose: S2 + S3 together would defuse both the 403 and the ENOTEMPTY symptoms simultaneously. S5 is the one we recommend committing **regardless** of which functional fix is chosen, because it costs almost nothing and unblocks future investigation (R5).
+Each proposal was independently shippable and addressed a different layer. The maintainer selected the combined approach; S2, S3, S4, and S5 are implemented in PR #53, while pinning from S1 remains the deterministic escape hatch.
 
 ### S1 — *Downstream-only* (do nothing in `use-m`, document the workaround)
 
@@ -313,9 +329,9 @@ These sources support RC-B's framing: *the registry will sometimes 403 us throug
 
 ---
 
-## 8. Issues to file in other repos (R6) — proposed text
+## 8. Other-repository follow-up (R6)
 
-We'll file **after** the maintainer picks A/B/C, so the linked fix is real. Drafts kept here for review:
+The evidence points to a transient upstream registry/edge response, while the actionable reliability defect was local: one transient response could abort `use-m`. The combined local fix removes that single point of failure. No new external issue is necessary; the saved downstream reports and existing npm/runner reports remain linked as evidence.
 
 ### 8.1 `npm/cli` (informational, no expectation of fix)
 
@@ -331,19 +347,18 @@ Per the hive-mind case study, neither template currently uses `await use('<pkg>@
 
 ### 8.4 `link-foundation/use-m` — internal follow-ups
 
-* Bump the existing PR #40 (file-based cache) and PR #36 (in-memory cache) into the chosen design (only if option B or C is selected).
-* New issue: *"Add `USE_M_DEBUG` verbose mode"* — this is part of S5 and R5; we can either land it in this same PR or split it out, maintainer's call.
+PR #53 supersedes the partial cache approaches in PRs #36 and #40 and includes `USE_M_DEBUG` in the same tested implementation.
 
 ---
 
 ## 9. Status / next step
 
 * R1 ✅ — three-layer root cause documented (§5).
-* R2 ✅ — five candidate solutions documented with trade-offs (§6).
+* R2 ✅ — five candidate solutions documented with trade-offs (§6), followed by maintainer selection of the combined approach.
 * R3 ✅ — logs and sources committed under this directory.
 * R4 ✅ — timeline + this document.
-* R5 ⏳ — S5 (verbose mode) is recommended to ship in this PR regardless of A/B/C selection. Awaiting maintainer go-ahead before adding code.
-* R6 ⏳ — drafts above; will file after A/B/C decision.
+* R5 ✅ — `USE_M_DEBUG=1` and trace-level `USE_M_DEBUG=2` implemented with default-off, credential-safe diagnostics.
+* R6 ✅ — downstream and upstream evidence reviewed; no new external issue is required for the local resilience fix.
 * R7 ✅ — §7.
 
-**Awaiting maintainer decision on §6 (option A, B, or C).** Once chosen, a follow-up commit to PR #53 will implement it.
+**Implementation complete.** The remaining work is release/CI verification for PR #53.
