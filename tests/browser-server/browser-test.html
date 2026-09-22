@@ -49,7 +49,7 @@
 
     <script type="module">
         // Import use-m
-        import { use } from '../../src/use.mjs';
+        import { use, makeUse } from '../../src/use.mjs';
 
         const results = document.getElementById('results');
         let passed = 0;
@@ -207,10 +207,18 @@
 
                 // Test 7: Uppercase module names should fail
                 try {
-                    await use('URL');
+                    // Use a deterministic local failure instead of reaching the
+                    // default CDN chain. If URL were (incorrectly) accepted as
+                    // a built-in, this resolver would never be called.
+                    const useWithoutNetwork = await makeUse({
+                        specifierResolver: async () => {
+                            throw new Error('non-built-in resolver reached');
+                        }
+                    });
+                    await useWithoutNetwork('URL');
                     addResult('uppercase URL should fail', false, new Error('Uppercase module names should not work'));
                 } catch (error) {
-                    // This should fail because it's not a builtin and will try to install from npm
+                    // This should fail because built-in names are case-sensitive.
                     addResult('uppercase URL should fail (strict lowercase only)', true);
                 }
 
