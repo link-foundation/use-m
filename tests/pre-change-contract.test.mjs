@@ -345,15 +345,22 @@ describe('Bun resolver pre-change public contract', () => {
           exportsAlias
         );
         const exportsEntry = path.join(exportsDirectory, 'entry.js');
-        await mkdir(exportsDirectory, { recursive: true });
+        const exportsSubpathEntry = path.join(exportsDirectory, 'dist', 'feature.js');
+        const privateEntry = path.join(exportsDirectory, 'private.js');
+        await mkdir(path.dirname(exportsSubpathEntry), { recursive: true });
         await writeFile(path.join(exportsDirectory, 'package.json'), JSON.stringify({
           name: exportsPackageName,
           version: '1.0.0',
-          exports: { '.': { import: './entry.js' } },
+          exports: {
+            '.': { import: './entry.js' },
+            './feature': { node: { import: './dist/feature.js' } },
+          },
         }));
         await writeFile(exportsEntry, 'export const throughExports = true;\n');
+        await writeFile(exportsSubpathEntry, 'export const throughSubpathExports = true;\n');
+        await writeFile(privateEntry, 'export const privateValue = true;\n');
         const exportsResolver = async candidate => {
-          if (candidate === exportsEntry) return candidate;
+          if ([exportsEntry, exportsSubpathEntry, privateEntry].includes(candidate)) return candidate;
           const error = new Error(`Cannot find ${candidate}`);
           error.code = 'MODULE_NOT_FOUND';
           throw error;
@@ -362,6 +369,14 @@ describe('Bun resolver pre-change public contract', () => {
           `${exportsPackageName}@1.0.0`,
           exportsResolver
         )).resolves.toBe(exportsEntry);
+        await expect(api.resolvers.bun(
+          `${exportsPackageName}@1.0.0/feature`,
+          exportsResolver
+        )).resolves.toBe(exportsSubpathEntry);
+        await expect(api.resolvers.bun(
+          `${exportsPackageName}@1.0.0/private.js`,
+          exportsResolver
+        )).rejects.toThrow("Package subpath './private.js' is not exported");
 
         const unresolvedName = `unresolved-${format.toLowerCase()}`;
         const unresolvedDirectory = path.join(

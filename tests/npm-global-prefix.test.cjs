@@ -168,6 +168,13 @@ const corruptAlias = async (fixture, { packageJson, source }) => {
   return packageDirectory;
 };
 
+const resolveOnly = (...resolvablePaths) => async candidate => {
+  if (resolvablePaths.includes(candidate)) return candidate;
+  const error = new Error(`Cannot find ${candidate}`);
+  error.code = 'MODULE_NOT_FOUND';
+  throw error;
+};
+
 const useFixturePackageInFreshProcess = async (fixture) => {
   const useModulePath = path.resolve(__dirname, '../src/use.cjs');
   const packageEntryPath = path.join(fixture.defaultRoot, 'fixture-pkg-v-1.0.0', 'index.js');
@@ -856,6 +863,104 @@ describe(`${moduleName} npm global prefix handling`, () => {
     expect(importedPaths).toHaveLength(2);
     expect(repairedPath).toContain('use-m-retry=');
     expect(npmCalls.filter(call => call.args[0] === 'install')).toHaveLength(2);
+  });
+
+  test(`${moduleName} resolves exact package subpath exports outside the requested directory`, async () => {
+    if (typeof Deno !== 'undefined' || typeof Bun !== 'undefined') {
+      return;
+    }
+
+    const fixture = await createFakeNpm();
+    const packageDirectory = await corruptAlias(fixture, {
+      packageJson: JSON.stringify({
+        name: 'fixture-pkg',
+        version: '1.0.0',
+        type: 'module',
+        exports: {
+          '.': './index.js',
+          './feature': './dist/public-feature.cjs'
+        }
+      }),
+      source: 'module.exports = { root: true };\n'
+    });
+    const exportedPath = path.join(packageDirectory, 'dist', 'public-feature.cjs');
+    await mkdir(path.dirname(exportedPath), { recursive: true });
+    await writeFile(exportedPath, 'module.exports = { feature: true };\n');
+
+    await expect(resolvers.npm(
+      'fixture-pkg@1.0.0/feature',
+      resolveOnly(path.join(packageDirectory, 'index.js'), exportedPath),
+      { env: fixture.baseEnv, installRetryDelayMs: 0 }
+    )).resolves.toBe(exportedPath);
+  });
+
+  test(`${moduleName} resolves conditional and wildcard package subpath exports`, async () => {
+    if (typeof Deno !== 'undefined' || typeof Bun !== 'undefined') {
+      return;
+    }
+
+    const fixture = await createFakeNpm();
+    const packageDirectory = await corruptAlias(fixture, {
+      packageJson: JSON.stringify({
+        name: 'fixture-pkg',
+        version: '1.0.0',
+        exports: {
+          '.': './index.js',
+          './features/*': {
+            types: './types/features/*.d.ts',
+            node: {
+              import: './dist/features/*.cjs'
+            },
+            default: './fallback/features/*.js'
+          },
+          './array-fallback': [
+            { types: './types/array-fallback.d.ts' },
+            { node: { import: './dist/array-fallback.cjs' } }
+          ]
+        }
+      }),
+      source: 'module.exports = { root: true };\n'
+    });
+    const exportedPath = path.join(packageDirectory, 'dist', 'features', 'alpha.cjs');
+    const arrayFallbackPath = path.join(packageDirectory, 'dist', 'array-fallback.cjs');
+    await mkdir(path.dirname(exportedPath), { recursive: true });
+    await writeFile(exportedPath, 'module.exports = { feature: "alpha" };\n');
+    await writeFile(arrayFallbackPath, 'module.exports = { fallback: true };\n');
+
+    await expect(resolvers.npm(
+      'fixture-pkg@1.0.0/features/alpha',
+      resolveOnly(path.join(packageDirectory, 'index.js'), exportedPath, arrayFallbackPath),
+      { env: fixture.baseEnv, installRetryDelayMs: 0 }
+    )).resolves.toBe(exportedPath);
+    await expect(resolvers.npm(
+      'fixture-pkg@1.0.0/array-fallback',
+      resolveOnly(path.join(packageDirectory, 'index.js'), exportedPath, arrayFallbackPath),
+      { env: fixture.baseEnv, installRetryDelayMs: 0 }
+    )).resolves.toBe(arrayFallbackPath);
+  });
+
+  test(`${moduleName} does not bypass package exports for private subpaths`, async () => {
+    if (typeof Deno !== 'undefined' || typeof Bun !== 'undefined') {
+      return;
+    }
+
+    const fixture = await createFakeNpm();
+    const packageDirectory = await corruptAlias(fixture, {
+      packageJson: JSON.stringify({
+        name: 'fixture-pkg',
+        version: '1.0.0',
+        exports: { '.': './index.js' }
+      }),
+      source: 'module.exports = { root: true };\n'
+    });
+    const privatePath = path.join(packageDirectory, 'private.cjs');
+    await writeFile(privatePath, 'module.exports = { privateValue: true };\n');
+
+    await expect(resolvers.npm(
+      'fixture-pkg@1.0.0/private.cjs',
+      resolveOnly(path.join(packageDirectory, 'index.js'), privatePath),
+      { env: fixture.baseEnv, installRetryDelayMs: 0 }
+    )).rejects.toThrow("Package subpath './private.cjs' is not exported");
   });
 
   test(`${moduleName} preserves legacy package-exports resolution branches`, async () => {

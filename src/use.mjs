@@ -104,6 +104,107 @@ Please specify a package name, and an optional version (e.g.: 'lodash', 'lodash@
   return { packageName, version, modulePath };
 }
 
+const unresolvedPackageExport = Symbol('unresolvedPackageExport');
+const primaryPackageExportConditions = new Set(['node', 'import', 'default']);
+const legacyPackageExportConditions = new Set(['node', 'require', 'module', 'browser', 'default']);
+
+const selectPackageExportTarget = (value, patternMatch, conditions) => {
+  if (value === null) {
+    return null;
+  }
+  if (typeof value === 'string') {
+    return patternMatch === null ? value : value.replaceAll('*', patternMatch);
+  }
+  if (Array.isArray(value)) {
+    for (const candidate of value) {
+      const selected = selectPackageExportTarget(candidate, patternMatch, conditions);
+      if (selected !== unresolvedPackageExport) {
+        return selected;
+      }
+    }
+    return unresolvedPackageExport;
+  }
+  if (value && typeof value === 'object') {
+    for (const [condition, candidate] of Object.entries(value)) {
+      if (condition !== 'default' && !conditions.has(condition)) {
+        continue;
+      }
+      const selected = selectPackageExportTarget(candidate, patternMatch, conditions);
+      if (selected !== unresolvedPackageExport) {
+        return selected;
+      }
+    }
+  }
+  return unresolvedPackageExport;
+};
+
+const matchPackageExport = (exportsField, packageSubpath) => {
+  if (packageSubpath === '.') {
+    if (typeof exportsField === 'string' || Array.isArray(exportsField) || exportsField === null) {
+      return { matched: true, patternMatch: null, value: exportsField };
+    }
+    if (exportsField && typeof exportsField === 'object') {
+      if (Object.prototype.hasOwnProperty.call(exportsField, '.')) {
+        return { matched: true, patternMatch: null, value: exportsField['.'] };
+      }
+      if (Object.keys(exportsField).every(key => !key.startsWith('.'))) {
+        return { matched: true, patternMatch: null, value: exportsField };
+      }
+    }
+    return { matched: false };
+  }
+
+  if (!exportsField || typeof exportsField !== 'object' || Array.isArray(exportsField)) {
+    return { matched: false };
+  }
+  if (Object.prototype.hasOwnProperty.call(exportsField, packageSubpath)) {
+    return { matched: true, patternMatch: null, value: exportsField[packageSubpath] };
+  }
+
+  let bestMatch = null;
+  for (const [key, value] of Object.entries(exportsField)) {
+    const wildcardIndex = key.indexOf('*');
+    if (!key.startsWith('./') || wildcardIndex === -1) {
+      continue;
+    }
+    const prefix = key.slice(0, wildcardIndex);
+    const suffix = key.slice(wildcardIndex + 1);
+    if (!packageSubpath.startsWith(prefix)
+      || !packageSubpath.endsWith(suffix)
+      || packageSubpath.length < prefix.length + suffix.length) {
+      continue;
+    }
+    if (!bestMatch
+      || prefix.length > bestMatch.prefixLength
+      || (prefix.length === bestMatch.prefixLength && key.length > bestMatch.keyLength)) {
+      bestMatch = {
+        keyLength: key.length,
+        patternMatch: packageSubpath.slice(prefix.length, packageSubpath.length - suffix.length),
+        prefixLength: prefix.length,
+        value,
+      };
+    }
+  }
+  return bestMatch
+    ? { matched: true, patternMatch: bestMatch.patternMatch, value: bestMatch.value }
+    : { matched: false };
+};
+
+const resolvePackageExportTarget = (exportsField, packageSubpath) => {
+  const match = matchPackageExport(exportsField, packageSubpath);
+  if (!match.matched) {
+    return unresolvedPackageExport;
+  }
+  const selected = selectPackageExportTarget(
+    match.value,
+    match.patternMatch,
+    primaryPackageExportConditions
+  );
+  return selected !== unresolvedPackageExport
+    ? selected
+    : selectPackageExportTarget(match.value, match.patternMatch, legacyPackageExportConditions);
+};
+
 // Not plain callback APIs: the runtime's own promise versions are kept as is.
 const nonCallbackFileApis = new Set(['glob', 'watch']);
 
@@ -449,21 +550,10 @@ export const resolvers = {
           if (await fileExists(packageJsonPath)) {
             const packageJson = await readFile(packageJsonPath, 'utf8');
             const parsed = JSON.parse(packageJson);
-            const exp = parsed.exports;
-            if (exp) {
-              let target = null;
-              if (typeof exp === 'string') {
-                target = exp;
-              } else {
-                const root = exp['.'] ?? exp;
-                if (typeof root === 'string') {
-                  target = root;
-                } else if (root && typeof root === 'object') {
-                  target = root.import || root.default || root.require || root.module || root.browser || null;
-                }
-              }
-              if (typeof target === 'string') {
-                const updatedPath = path.join(packagePath, target);
+            if (Object.prototype.hasOwnProperty.call(parsed, 'exports')) {
+              const target = resolvePackageExportTarget(parsed.exports, '.');
+              if (typeof target === 'string' && target.startsWith('./')) {
+                const updatedPath = path.resolve(packagePath, target);
                 return await tryResolveModule(updatedPath);
               }
             }
@@ -1166,6 +1256,33 @@ export const resolvers = {
 
     const { packageName, version, modulePath } = parseModuleSpecifier(moduleSpecifier);
     const resolvePackageModule = async (packagePath) => {
+      const packageJsonPath = path.join(packagePath, 'package.json');
+      if (await fileExists(packageJsonPath)) {
+        const parsed = JSON.parse(await readFile(packageJsonPath, 'utf8'));
+        if (Object.prototype.hasOwnProperty.call(parsed, 'exports')) {
+          const packageSubpath = modulePath ? `.${modulePath}` : '.';
+          const target = resolvePackageExportTarget(parsed.exports, packageSubpath);
+          if (target === unresolvedPackageExport || target === null) {
+            throw new Error(`Package subpath '${packageSubpath}' is not exported by '${packageJsonPath}'.`);
+          }
+          if (typeof target !== 'string' || !target.startsWith('./')) {
+            throw new Error(`Invalid package exports target '${target}' for '${packageSubpath}' in '${packageJsonPath}'.`);
+          }
+          const packageExportPath = path.resolve(packagePath, target);
+          const relativeExportPath = path.relative(packagePath, packageExportPath);
+          if (path.isAbsolute(relativeExportPath)
+            || relativeExportPath === '..'
+            || relativeExportPath.startsWith(`..${path.sep}`)) {
+            throw new Error(`Package exports target '${target}' for '${packageSubpath}' escapes '${packagePath}'.`);
+          }
+          const resolvedExportPath = await tryResolveModule(packageExportPath);
+          if (!resolvedExportPath) {
+            throw new Error(`Failed to resolve package export '${packageSubpath}' from '${packageExportPath}'.`);
+          }
+          return resolvedExportPath;
+        }
+      }
+
       const packageModulePath = modulePath ? path.join(packagePath, modulePath) : packagePath;
       const resolvedPath = await tryResolveModule(packageModulePath);
       if (!resolvedPath) {
@@ -1242,21 +1359,10 @@ export const resolvers = {
           if (await fileExists(packageJsonPath)) {
             const packageJson = await readFile(packageJsonPath, 'utf8');
             const parsed = JSON.parse(packageJson);
-            const exp = parsed.exports;
-            if (exp) {
-              let target = null;
-              if (typeof exp === 'string') {
-                target = exp;
-              } else {
-                const root = exp['.'] ?? exp;
-                if (typeof root === 'string') {
-                  target = root;
-                } else if (root && typeof root === 'object') {
-                  target = root.import || root.default || root.require || root.module || root.browser || null;
-                }
-              }
-              if (typeof target === 'string') {
-                const updatedPath = path.join(packagePath, target);
+            if (Object.prototype.hasOwnProperty.call(parsed, 'exports')) {
+              const target = resolvePackageExportTarget(parsed.exports, '.');
+              if (typeof target === 'string' && target.startsWith('./')) {
+                const updatedPath = path.resolve(packagePath, target);
                 return await tryResolveModule(updatedPath);
               }
             }
@@ -1307,6 +1413,33 @@ export const resolvers = {
 
     const { packageName, version, modulePath } = parseModuleSpecifier(moduleSpecifier);
     const packagePath = await ensurePackageInstalled({ packageName, version });
+    const packageJsonPath = path.join(packagePath, 'package.json');
+    if (await fileExists(packageJsonPath)) {
+      const parsed = JSON.parse(await readFile(packageJsonPath, 'utf8'));
+      if (Object.prototype.hasOwnProperty.call(parsed, 'exports')) {
+        const packageSubpath = modulePath ? `.${modulePath}` : '.';
+        const target = resolvePackageExportTarget(parsed.exports, packageSubpath);
+        if (target === unresolvedPackageExport || target === null) {
+          throw new Error(`Package subpath '${packageSubpath}' is not exported by '${packageJsonPath}'.`);
+        }
+        if (typeof target !== 'string' || !target.startsWith('./')) {
+          throw new Error(`Invalid package exports target '${target}' for '${packageSubpath}' in '${packageJsonPath}'.`);
+        }
+        const packageExportPath = path.resolve(packagePath, target);
+        const relativeExportPath = path.relative(packagePath, packageExportPath);
+        if (path.isAbsolute(relativeExportPath)
+          || relativeExportPath === '..'
+          || relativeExportPath.startsWith(`..${path.sep}`)) {
+          throw new Error(`Package exports target '${target}' for '${packageSubpath}' escapes '${packagePath}'.`);
+        }
+        const resolvedExportPath = await tryResolveModule(packageExportPath);
+        if (!resolvedExportPath) {
+          throw new Error(`Failed to resolve package export '${packageSubpath}' from '${packageExportPath}'.`);
+        }
+        return resolvedExportPath;
+      }
+    }
+
     const packageModulePath = modulePath ? path.join(packagePath, modulePath) : packagePath;
     const resolvedPath = await tryResolveModule(packageModulePath);
     if (!resolvedPath) {
