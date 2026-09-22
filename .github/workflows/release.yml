@@ -86,6 +86,7 @@ jobs:
 
       - name: Run Deno tests
         if: matrix.runtime == 'deno'
+        shell: bash
         run: |
           for attempt in 1 2 3; do
             deno test --allow-net --allow-env --allow-run --allow-read --allow-write --allow-sys && exit 0

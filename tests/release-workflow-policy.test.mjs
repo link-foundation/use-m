@@ -168,6 +168,11 @@ describe('release workflow policy', () => {
   test('retries Deno network-import tests without hiding persistent failures', () => {
     const workflowText = readText(releaseWorkflowPath)
 
+    expect(
+      workflowText.includes(
+        "- name: Run Deno tests\n        if: matrix.runtime == 'deno'\n        shell: bash\n        run: |"
+      )
+    ).toBe(true)
     expect(workflowText.includes('for attempt in 1 2 3; do')).toBe(true)
     expect(workflowText.includes('Deno tests failed on attempt ${attempt}/3')).toBe(true)
     expect(workflowText.includes('if [ "$attempt" = "3" ]; then')).toBe(true)
