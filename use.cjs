@@ -1,14 +1,22 @@
-// AUTO-GENERATED — do not edit. This is a root-level mirror of src/use.cjs,
-// published so the historical CDN URL https://unpkg.com/use-m/use.cjs keeps
-// resolving (unpkg/jsdelivr ignore package.json "exports"). The canonical
-// source is src/use.cjs; edit it and run `npm run sync:entries`. See
-// https://github.com/link-foundation/use-m/issues/60.
+// AUTO-GENERATED — do not edit use.cjs directly.
+// This readable, single-file distribution bundle is built deterministically
+// from the smaller source fragments in src/use/. Run `npm run build` after
+// editing those fragments. The root file remains available for historical
+// CDN URLs such as https://unpkg.com/use-m/use.cjs.
+// Source fragment: caller context, specifier parsing, and built-in helpers.
+// Generated bundles concatenate this file; do not import it directly.
+
 const extractCallerContext = (stack) => {
   // Helper to check if a path is a use-m file
   const isUseMFile = (path) => {
-    return path.endsWith('/use.mjs') ||
-           path.endsWith('/use.cjs') ||
-           path.endsWith('/use.js');
+    // Stack-frame URLs still include their :line:column suffix here. Browser
+    // module URLs may also carry a cache-busting query or fragment.
+    const normalizedPath = path
+      .replace(/:\d+:\d+$/, '')
+      .replace(/[?#].*$/, '');
+    return normalizedPath.endsWith('/use.mjs') ||
+           normalizedPath.endsWith('/use.cjs') ||
+           normalizedPath.endsWith('/use.js');
   };
 
   // In browser environment, use the current document URL as fallback
@@ -83,7 +91,6 @@ const extractCallerContext = (stack) => {
   }
   return null;
 };
-
 const parseModuleSpecifier = (moduleSpecifier) => {
   if (!moduleSpecifier || typeof moduleSpecifier !== 'string' || moduleSpecifier.length <= 0) {
     throw new Error(
@@ -334,6 +341,9 @@ const loadBuiltinModule = async (moduleName) => {
   return { default: m, ...m };
 };
 
+// Source fragment: built-in, npm, Bun, Deno, and CDN resolvers.
+// Generated bundles concatenate this file; do not import it directly.
+
 const resolvers = {
   builtin: async (moduleSpecifier, pathResolver) => {
     const { packageName, modulePath } = parseModuleSpecifier(moduleSpecifier);
@@ -437,7 +447,7 @@ const resolvers = {
         return baseUse(resolvedPath);
       }
     }
-    
+
     return baseUse(resolvedPath);
   },
   npm: async (moduleSpecifier, pathResolver, options = {}) => {
@@ -1250,8 +1260,8 @@ const resolvers = {
     // a cold top-level-await wave starts its own `npm install -g` (issue #70).
     const ensurePackageInstalled = async ({ packageName, version }, { repair = false } = {}) => {
       const alias = `${packageName.replace('@', '').replace('/', '-')}-v-${version}`;
-      const aliasKey = `${getNpmEnvId(npmEnvSource)} ${alias}`;
-      const requestKey = repair ? `${aliasKey} repair` : aliasKey;
+      const aliasKey = `${getNpmEnvId(npmEnvSource)}\0${alias}`;
+      const requestKey = repair ? `${aliasKey}\0repair` : aliasKey;
       return dedupeNpmInstall(
         requestKey,
         aliasKey,
@@ -1497,6 +1507,9 @@ const resolvers = {
   },
 }
 
+// Source fragment: resolver chains and concurrent npm install coordination.
+// Generated bundles concatenate this file; do not import it directly.
+
 // Ordered chains of universal-ESM CDN resolvers tried for network/CDN loading.
 // Each entry is a key into `resolvers`; the chains list *distinct* CDN hosts so a
 // single CDN outage no longer breaks `use()` — when the first host fails we fall
@@ -1591,6 +1604,9 @@ const cacheBustNpmModulePath = async (modulePath) => {
 const toResolverFunction = (resolver) =>
   typeof resolver === 'function' ? resolver : resolvers[resolver]
 
+// Source fragment: fallback loading and the public use()/makeUse() runtime.
+// Generated bundles concatenate this file; do not import it directly.
+
 // Generic, mechanism-agnostic "try sources in order until one works" engine.
 // Tries each `source` in order (optionally retrying each `maxAttemptsPerSource`
 // times with linear backoff) and returns the first successful `load(source,
@@ -1645,7 +1661,10 @@ const loadWithFallback = async (sources, load, options = {}) => {
 const baseUse = async (modulePath) => {
   // Dynamically import the module
   try {
-    const module = await import(modulePath);
+    const isJsonModule = /\.json(?:[?#].*)?$/i.test(modulePath);
+    const module = isJsonModule
+      ? await import(modulePath, { with: { type: 'json' } })
+      : await import(modulePath);
 
     // More robust default export handling for cross-environment compatibility
     const keys = Object.keys(module);
@@ -1692,6 +1711,7 @@ const makeUse = async (options) => {
   if (!scriptPath && metaUrl) {
     scriptPath = metaUrl;
   }
+
   let protocol;
   if (scriptPath) {
     try {

@@ -71,6 +71,11 @@ jobs:
         if: matrix.runtime == 'node' && matrix.os == 'ubuntu-latest' && matrix.node-version == '24.x'
         run: npm audit --omit=dev
 
+      - name: Verify missing fetch through the shebang
+        if: matrix.runtime == 'node'
+        shell: bash
+        run: ./experiments/test-polyfill-no-fetch.mjs
+
       - name: Run Node.js tests
         if: matrix.runtime == 'node'
         run: npm test -- --runInBand

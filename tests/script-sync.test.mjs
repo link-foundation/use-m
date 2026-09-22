@@ -14,7 +14,10 @@ const extractSection = (source, fileName, startMarker, endMarker) => {
 
 describe(`${moduleName} distributed script synchronization`, () => {
   test(`${moduleName} npm recovery stays synchronized across mjs, cjs, and universal builds`, async () => {
-    const files = ['src/use.mjs', 'src/use.cjs', 'src/use.js'];
+    // The readable root distributions are generated from one set of fragments.
+    // Keep this targeted assertion as a regression guard for the recovery logic
+    // that historically drifted between the three hand-maintained builds.
+    const files = ['use.mjs', 'use.cjs', 'use.js'];
     const sectionMarkers = [
       ['  npm: async (moduleSpecifier, pathResolver', '\n  bun: async'],
       ['// npm installs for the same alias must not overlap', '\n// Normalize a resolver reference'],

@@ -1,17 +1,25 @@
 {
   "name": "use-m",
-  "version": "8.16.3",
+  "version": "8.16.4",
   "description": "use-m: dynamically import any JavaScript module",
   "type": "module",
-  "main": "src/use.cjs",
+  "main": "use.cjs",
   "exports": {
     ".": {
-      "import": "./src/use.mjs",
-      "require": "./src/use.cjs"
+      "import": "./use.mjs",
+      "require": "./use.cjs"
     },
-    "./use.cjs": "./src/use.cjs",
-    "./use.mjs": "./src/use.mjs",
-    "./fetch-polyfill.js": "./fetch-polyfill.js",
+    "./use.cjs": "./use.cjs",
+    "./use.mjs": "./use.mjs",
+    "./fetch-polyfill": {
+      "import": "./fetch-polyfill.js",
+      "require": "./fetch-polyfill.cjs"
+    },
+    "./fetch-polyfill.js": {
+      "import": "./fetch-polyfill.js",
+      "require": "./fetch-polyfill.cjs"
+    },
+    "./fetch-polyfill.cjs": "./fetch-polyfill.cjs",
     "./load": {
       "import": "./src/load.mjs",
       "require": "./src/load.cjs"
@@ -23,9 +31,11 @@
     "use": "src/cli.mjs"
   },
   "scripts": {
-    "test": "NODE_OPTIONS=\"--experimental-vm-modules\" jest",
+    "build": "node scripts/build-use-bundles.mjs",
+    "prepack": "npm run build",
+    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js",
     "test:examples": "./examples/test-examples.mjs",
-    "sync:entries": "node scripts/sync-root-entries.mjs"
+    "sync:entries": "npm run build"
   },
   "repository": {
     "type": "git",
@@ -65,9 +75,13 @@
     "use.cjs",
     "use.js",
     "fetch-polyfill.js",
+    "fetch-polyfill.cjs",
     "src/use.mjs",
     "src/use.cjs",
     "src/use.js",
+    "src/use",
+    "src/fetch-polyfill.mjs",
+    "src/fetch-polyfill.cjs",
     "src/cli.mjs",
     "src/loader.js",
     "src/load.mjs",
@@ -82,8 +96,12 @@
     "babel-jest": "^29.7.0",
     "browser-commander": "^0.8.1",
     "command-stream": "^0.0.5",
+    "esbuild": "^0.25.12",
     "express": "^5.1.0",
     "jest": "^29.7.0",
     "puppeteer": "^24.16.2"
+  },
+  "dependencies": {
+    "undici": "^6.28.1"
   }
 }
