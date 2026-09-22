@@ -1,7 +1,7 @@
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
-const { use } = eval(await fetch('https://unpkg.com/use-m/use.js').then(u => u.text()));
+const { use } = eval(await fetch('https://unpkg.com/use-m/src/use.js').then(u => u.text()));
 
 // Load environment variables from .env
 const { config } = await use('dotenv@16.1.4');

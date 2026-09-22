@@ -1,5 +1,5 @@
-import { use } from '../use.mjs';
-import { describe, test, expect } from '../test-adapter.mjs';
+import { use } from '../src/use.mjs';
+import { describe, test, expect } from '../src/test-adapter.mjs';
 const moduleName = `[${import.meta.url.split('.').pop()} module]`;
 
 describe(`${moduleName} Node.js/Bun-only built-in modules`, () => {

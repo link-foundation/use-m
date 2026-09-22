@@ -1,0 +1,223 @@
+name: CI/CD
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  test:
+    name: Test on ${{ matrix.runtime }} ${{ matrix.node-version }} (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        runtime: [node, bun, deno]
+        # Every Node.js line users still run: the supported built-in modules are
+        # read from the runtime instead of a table inside use-m, so what each
+        # Node.js version reports is part of the contract and gets tested.
+        node-version: [20.x, 22.x, 24.x]
+        exclude:
+          # Bun and Deno execute the tests with their own runtime and only need
+          # one Node.js to install dependencies with.
+          - runtime: bun
+            node-version: 22.x
+          - runtime: bun
+            node-version: 24.x
+          - runtime: deno
+            node-version: 22.x
+          - runtime: deno
+            node-version: 24.x
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+
+      - name: Setup Bun
+        if: matrix.runtime == 'bun'
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Setup Deno
+        if: matrix.runtime == 'deno'
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Audit production dependencies
+        if: matrix.runtime == 'node' && matrix.os == 'ubuntu-latest' && matrix.node-version == '24.x'
+        run: npm audit --omit=dev
+
+      - name: Run Node.js tests
+        if: matrix.runtime == 'node'
+        run: npm test -- --runInBand
+
+      - name: Run Bun tests
+        if: matrix.runtime == 'bun'
+        run: bun test
+
+      - name: Run Deno tests
+        if: matrix.runtime == 'deno'
+        run: |
+          for attempt in 1 2 3; do
+            deno test --allow-net --allow-env --allow-run --allow-read --allow-write --allow-sys && exit 0
+            status=$?
+
+            if [ "$attempt" = "3" ]; then
+              exit "$status"
+            fi
+
+            echo "Deno tests failed on attempt ${attempt}/3; retrying after a short delay."
+            sleep $((attempt * 15))
+          done
+
+  publish:
+    name: Publish to npm
+    needs: [test]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && needs.test.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js for release
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.x
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Read package metadata
+        id: package
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          NAME=$(node -p "require('./package.json').name")
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "name=${NAME}" >> "$GITHUB_OUTPUT"
+          echo "tag=v${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Package: ${NAME}@${VERSION}"
+
+      - name: Check npm version
+        id: npm-version
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PACKAGE_NAME: ${{ steps.package.outputs.name }}
+          PACKAGE_VERSION: ${{ steps.package.outputs.version }}
+          TAG: ${{ steps.package.outputs.tag }}
+        run: |
+          if npm view "${PACKAGE_NAME}@${PACKAGE_VERSION}" version >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "${PACKAGE_NAME}@${PACKAGE_VERSION} already exists on npm."
+
+            tag_exists=false
+            release_exists=false
+
+            if git rev-parse "$TAG" >/dev/null 2>&1; then
+              tag_exists=true
+            fi
+
+            if gh release view "$TAG" >/dev/null 2>&1; then
+              release_exists=true
+            fi
+
+            echo "tag_exists=${tag_exists}" >> "$GITHUB_OUTPUT"
+            echo "release_exists=${release_exists}" >> "$GITHUB_OUTPUT"
+
+            if [ "$tag_exists" = "true" ] && [ "$release_exists" = "true" ]; then
+              echo "::error::${PACKAGE_NAME}@${PACKAGE_VERSION}, git tag ${TAG}, and GitHub release ${TAG} already exist. Update package.json to the next unpublished version before merging to main."
+              exit 1
+            fi
+
+            echo "release metadata is incomplete; skipping npm publish and repairing tag/release."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "tag_exists=false" >> "$GITHUB_OUTPUT"
+            echo "release_exists=false" >> "$GITHUB_OUTPUT"
+            echo "${PACKAGE_NAME}@${PACKAGE_VERSION} is not on npm; publishing after tests."
+          fi
+
+      - name: Update npm for trusted publishing
+        if: steps.npm-version.outputs.exists == 'false'
+        run: |
+          npm install -g npm@^11.5.1
+          node --version
+          npm --version
+
+      - name: Publish to npm
+        if: steps.npm-version.outputs.exists == 'false'
+        run: npm publish --access public --provenance
+
+      - name: Verify npm publication
+        if: steps.npm-version.outputs.exists == 'false'
+        run: |
+          for attempt in 1 2 3 4 5 6 7 8 9 10; do
+            PUBLISHED_VERSION=$(npm view "${{ steps.package.outputs.name }}@${{ steps.package.outputs.version }}" version 2>/dev/null || true)
+            if [ "$PUBLISHED_VERSION" = "${{ steps.package.outputs.version }}" ]; then
+              echo "Verified npm package ${{ steps.package.outputs.name }}@${PUBLISHED_VERSION}"
+              exit 0
+            fi
+            echo "npm registry has not returned the new version yet (attempt ${attempt}/10)."
+            sleep 10
+          done
+          echo "Failed to verify ${{ steps.package.outputs.name }}@${{ steps.package.outputs.version }} on npm."
+          exit 1
+
+      - name: Create git tag
+        run: |
+          TAG="${{ steps.package.outputs.tag }}"
+          git config user.email "action@github.com"
+          git config user.name "GitHub Action"
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists."
+          else
+            git tag -a "$TAG" -m "Release $TAG"
+            git push origin "$TAG"
+          fi
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${{ steps.package.outputs.tag }}"
+          VERSION="${{ steps.package.outputs.version }}"
+          NAME="${{ steps.package.outputs.name }}"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "GitHub release $TAG already exists."
+          else
+            gh release create "$TAG" \
+              --title "$TAG" \
+              --notes "npm: https://www.npmjs.com/package/${NAME}/v/${VERSION}"
+          fi

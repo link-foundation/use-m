@@ -1,0 +1,12 @@
+deno 2.9.6
+builtinModules count: 68
+isBuiltin available: function
+  fs -> true
+  node:fs -> true
+  sqlite -> true
+  node:sqlite -> true
+  test -> false
+  node:test -> true
+  sea -> false
+  node:sea -> false
+  lodash -> false

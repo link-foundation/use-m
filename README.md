@@ -18,6 +18,10 @@ It may be useful for standalone scripts that do not require a `package.json`. Al
   - [Key features](#key-features)
   - [Usage](#usage)
     - [Universal](#universal)
+    - [Robust loading (resilient CDN bootstrap)](#robust-loading-resilient-cdn-bootstrap)
+      - [Troubleshooting: `SyntaxError: Unexpected identifier 'found'`](#troubleshooting-syntaxerror-unexpected-identifier-found)
+    - [Resilient package loading (shared fallback engine)](#resilient-package-loading-shared-fallback-engine)
+    - [Resilient npm latest-version resolution](#resilient-npm-latest-version-resolution)
     - [Interactive shell in Node.js environment](#interactive-shell-in-nodejs-environment)
     - [Browser](#browser)
     - [Deno](#deno)
@@ -32,6 +36,7 @@ It may be useful for standalone scripts that do not require a `package.json`. Al
       - [Installation](#installation)
       - [CommonJS](#commonjs)
       - [ES Modules](#es-modules)
+  - [Security Considerations](#security-considerations)
   - [Examples](#examples)
   - [Questions and issues](#questions-and-issues)
   - [Contributing](#contributing)
@@ -39,10 +44,10 @@ It may be useful for standalone scripts that do not require a `package.json`. Al
 
 ## Key features
 
-- **Dynamic package loading**: In `node.js`, `use-m` loads and imports npm packages on-demand with **global installation** (using `npm i -g` with separate alias for each version), making them available across projects and reusable without needing to reinstall each time. In case of a browser `use-m` loads npm packages directly from CDNs (by default `esm.sh` is used).
+- **Dynamic package loading**: In `node.js`, `use-m` loads and imports npm packages on-demand with **global installation** (using `npm i -g` with separate alias for each version), making them available across projects and reusable without needing to reinstall each time. Unpinned versions are resolved directly from the configured npm registry with transient-error retries and a five-minute memory/disk cache; npm CLI, stale-cache, and installed-package fallbacks keep CI usable during registry outages. Failed npm installs are retried three times with 1s/2s backoff and include captured npm output in the final error. If versioned aliases expose the same executable, `use-m` verifies that the conflicting symlink belongs to another alias of that package, then installs the new alias without replacing the existing executable. Unrelated global executables are never force-overwritten. If an interrupted install leaves a corrupt alias, `use-m` removes and reinstalls that alias once, then imports it through a cache-busted file URL so recovery works in the same process. Recursive alias cleanup has its own retry budget so transient filesystem races do not abort recovery. In case of a browser `use-m` loads npm packages directly from CDNs (by default `esm.sh` is used).
 - **Version-safe imports**: Allows multiple versions of the same library to coexist without conflicts, so you can specify any version for each import (usage) without affecting other scripts or other usages (imports) in the same script.
 - **No more `require`, `import`, or `package.json`**: With `use-m`, traditional module loading approaches like `require()`, `import` statements, and `package.json` dependencies become effectively obsolete. You can dynamically load any module at runtime without pre-declaring dependencies in separate file. This enables truly self-contained `.mjs` files that can effectively replace shell scripts.
-- **Built-in modules emulation**: Provides emulation for Node.js built-in modules across all environments (browser, Node.js, Bun, Deno), ensuring consistent behavior regardless of the runtime.
+- **Built-in modules emulation**: Every built-in module the host runtime reports is loadable, in every environment (browser, Node.js, Bun, Deno). The supported set is read from the runtime through `node:module` rather than kept as a list inside `use-m`, so modules added by future Node.js, Bun or Deno releases work immediately; browser polyfills are provided for `console`, `crypto`, `url` and `performance`.
 - **Relative path resolution**: Supports `./ ` and `../` paths for loading local JavaScript and JSON files relative to the executing file, working seamlessly even in browser environments.
 
 ## Usage
@@ -52,7 +57,7 @@ It may be useful for standalone scripts that do not require a `package.json`. Al
 Works in CommonJS, ES Modules and browser, and interactive environments.
 
 ```javascript
-fetch('https://unpkg.com/use-m/use.js')
+fetch('https://unpkg.com/use-m/src/use.js')
   .then(async useJs => {
     const { use } = eval(await useJs.text());
     const _ = await use('lodash@4.17.21');
@@ -60,7 +65,194 @@ fetch('https://unpkg.com/use-m/use.js')
   });
 ```
 
-Universal execution comes at cost of `eval` usage, that is considered potential security threat. In case of this library only single file is evaled, it short, unminified and has no dependencies, so you can check [the contents](https://unpkg.com/use-m/use.js) yourself. Once you have `use` function instance no more `eval` function will be executed by this library. If you don't want to use `eval` you can use `await import()` in browser or in `node.js`. In `node.js` you can also just install the package from `npm` as usual.
+Universal execution comes at cost of `eval` usage, that is considered potential security threat. In case of this library only single file is evaled, it short, unminified and has no dependencies, so you can check [the contents](https://unpkg.com/use-m/src/use.js) yourself. Once you have `use` function instance no more `eval` function will be executed by this library. If you don't want to use `eval` you can use `await import()` in browser or in `node.js`. In `node.js` you can also just install the package from `npm` as usual.
+
+### Robust loading (resilient CDN bootstrap)
+
+The minimal one-liner above is convenient, but it trusts the CDN to always return the module source. When a CDN hiccups and responds with an error body — for example the plain text `Internal Server Error` or an HTML error page — `eval()` tries to parse that text as JavaScript and throws a cryptic, misleading error:
+
+```
+SyntaxError: Unexpected identifier 'Server'
+```
+
+The error points at the `eval` line with no hint that the real cause is a transient network/CDN failure (see [#58](https://github.com/link-foundation/use-m/issues/58)). For long-running scripts, CI jobs, or anything you want to be resilient, use a loader that validates each response before `eval()`, retries, and falls back across multiple CDN mirrors.
+
+**Option 1 — the packaged helper (`use-m/load`).** When `use-m` is installed, import the loader that ships with the package:
+
+```javascript
+import { loadUseM } from 'use-m/load';        // ES Modules
+// const { loadUseM } = require('use-m/load'); // CommonJS
+
+const { use } = await loadUseM();
+const _ = await use('lodash@4.17.21');
+console.log(`_.add(1, 2) = ${_.add(1, 2)}`);
+```
+
+`loadUseM()` validates the HTTP status and the response body before evaluating it, retries each source, falls back across `unpkg` → `jsDelivr` → `esm.sh`, and — when every mirror fails — throws a clear error listing every attempt instead of a `SyntaxError`. It accepts options to customize the behavior:
+
+```javascript
+const { use } = await loadUseM({
+  sources: ['https://unpkg.com/use-m/src/use.js', 'https://cdn.jsdelivr.net/npm/use-m/src/use.js'],
+  maxAttemptsPerSource: 3,  // attempts per mirror before moving on
+  retryDelayMs: 250,        // linear backoff between attempts
+  timeoutMs: 10000,         // per-attempt timeout (0 disables)
+});
+```
+
+**Option 2 — self-contained snippet (no install).** For standalone scripts that fetch `use-m` directly, drop in this dependency-free loader. It does the same validation and mirror fallback inline:
+
+```javascript
+async function loadUse(sources = [
+  'https://unpkg.com/use-m/src/use.js',
+  'https://cdn.jsdelivr.net/npm/use-m/src/use.js',
+  'https://esm.sh/use-m/src/use.js',
+]) {
+  const failures = [];
+  for (const url of sources) {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`HTTP ${response.status} ${response.statusText || ''}`.trim());
+      const source = await response.text();
+      // Guard against CDN error bodies (HTML pages, "Internal Server Error", …)
+      // that eval() would choke on. The real module is large and references `use`.
+      if (source.length < 256 || source.trimStart().startsWith('<') || !source.includes('use')) {
+        throw new Error(`unexpected response body: "${source.slice(0, 80).replace(/\s+/g, ' ').trim()}"`);
+      }
+      const exported = eval(source);
+      if (!exported || typeof exported.use !== 'function') throw new Error('module did not export a `use` function');
+      return exported.use;
+    } catch (error) {
+      failures.push(`${url}: ${error.message}`);
+    }
+  }
+  throw new Error('Failed to load use-m from every CDN mirror:\n  - ' + failures.join('\n  - '));
+}
+
+const use = await loadUse();
+const _ = await use('lodash@4.17.21');
+console.log(`_.add(1, 2) = ${_.add(1, 2)}`);
+```
+
+Runnable versions of both options live in [`examples/load`](https://github.com/link-foundation/use-m/tree/main/examples/load).
+
+#### Troubleshooting: `SyntaxError: Unexpected identifier 'found'`
+
+If a project that bootstraps `use-m` from a CDN suddenly started failing with:
+
+```
+SyntaxError: Unexpected identifier 'found'
+```
+
+it hit a packaging regression in `use-m@8.14.0`: the entry files moved under `src/`, so the bare URL `https://unpkg.com/use-m/use.js` began returning `404` with the plain-text body `Not found: /use-m@8.14.0/use.js`. A bootstrap that `eval()`s the response without checking the HTTP status evaluates that text as JavaScript and throws the misleading error above (see [#60](https://github.com/link-foundation/use-m/issues/60)).
+
+This is fixed in **`use-m@8.14.1`**: the bare URLs (`https://unpkg.com/use-m/use.js`, `.cjs`, `.mjs`) resolve again via root-level mirrors of `src/`, so no consumer change is required once that version is installed. To fix an affected project:
+
+- **Recommended — pick up the patched release.** Nothing to change in your code; just ensure your CDN URL resolves to `8.14.1` or later. If you pin an exact version, bump it (e.g. `https://unpkg.com/use-m@8.14.1/use.js`).
+- **One-line workaround (works on every version, including `8.14.0`).** Point the URL at the `src/` path — the reliable fix on every CDN host:
+  - `https://unpkg.com/use-m/use.js` → `https://unpkg.com/use-m/src/use.js`
+  - `https://cdn.jsdelivr.net/npm/use-m/use.js` → `https://cdn.jsdelivr.net/npm/use-m/src/use.js`
+
+  (CDNs serve raw files and ignore package.json `exports`. On `8.14.0` the bare `/use.js` returns `404` on unpkg; jsDelivr may instead return a **stale older** copy for the *unversioned* URL, which silently gives you outdated code — so prefer the explicit `/src/` path to be sure you get the current build.)
+- **Make it future-proof.** Replace the naive `eval(await (await fetch(url)).text())` with a loader that checks `response.ok`, rejects non-JavaScript bodies, and falls back across mirrors — either the packaged [`use-m/load`](#robust-loading-resilient-cdn-bootstrap) helper or the self-contained snippet above. With those two guards, a future 404/redirect can never again be silently `eval()`'d into a cryptic `SyntaxError`.
+
+### Resilient package loading (shared fallback engine)
+
+The resilience above is not limited to bootstrapping `use-m` itself — once you have a `use` function, the **packages you load are resilient too**. When `use()` fetches a package over the network (in the browser, in Deno, or from an `http(s)` entry point) it now tries a chain of independent CDN hosts and falls back automatically, so a single CDN outage no longer breaks `use()`:
+
+| Runtime / entry point | Mirror chain tried in order |
+| --- | --- |
+| Browser / `http(s)` script | `esm.sh` → `jspm.dev` → `cdn.skypack.dev` |
+| Deno | `esm.sh` (deno target) → `jspm.dev` → `cdn.skypack.dev` |
+| Node.js (`npm i -g`), Bun | single local resolver (Node's npm metadata lookup has its own retry/cache/fallback path) |
+
+If every mirror fails, `use()` throws one clear, aggregated error listing each attempt instead of the cryptic error from a single failing host:
+
+```
+Failed to import 'left-pad@1.3.0' from any CDN mirror.
+Attempts:
+  - esm (attempt 1/1): <reason>
+  - jspm (attempt 1/1): <reason>
+  - skypack (attempt 1/1): <reason>
+```
+
+You can override the chain (or inject a custom resolver) per `use` instance:
+
+```javascript
+import { makeUse } from 'use-m';        // ES Modules
+// const { makeUse } = require('use-m'); // CommonJS
+
+const use = await makeUse({
+  // Try these resolvers in order, falling back on failure. Entries are resolver
+  // names (built-ins: 'esm', 'jspm', 'skypack', 'jsdelivr', 'unpkg', 'deno', …)
+  // or your own `(specifier, pathResolver) => url` functions.
+  specifierResolvers: ['esm', 'jspm', 'skypack'],
+});
+```
+
+**One mechanism, reused everywhere.** Both the `use-m/load` bootstrap and per-package loading are powered by the same generic `loadWithFallback` engine — "try each source in order, optionally retry, and fail with one aggregated error." It is exported so you can reuse it for your own resilient loading:
+
+```javascript
+import { loadWithFallback } from 'use-m';
+
+const data = await loadWithFallback(
+  ['https://primary.example/api', 'https://backup.example/api'],
+  async (url) => {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    return response.json();
+  },
+  {
+    maxAttemptsPerSource: 3,  // attempts per source before moving on
+    retryDelayMs: 250,        // linear backoff between attempts (0 disables)
+    label: 'fetch config from any endpoint',
+    hint: 'Check your network connection and try again.',
+  },
+);
+```
+
+A runnable, dependency-free demonstration lives in [`examples/load/shared-fallback-engine.mjs`](https://github.com/link-foundation/use-m/blob/main/examples/load/shared-fallback-engine.mjs).
+
+### Resilient npm latest-version resolution
+
+In Node.js, an unpinned import such as `use('lodash')` must discover what `latest` means before deciding whether its global alias can be reused. That lookup now follows this sequence:
+
+1. Read a fresh in-memory or disk cache entry (five-minute TTL by default).
+2. Fetch `<configured registry>/<package>/latest` directly, retrying transient network failures and HTTP 403, 408, 425, 429, and 5xx responses up to three times.
+3. Fall back once to `npm show <package> version`, preserving authentication, proxy, scoped-registry, and private-registry behavior from npm configuration.
+4. If the registry remains unavailable, use stale cached metadata, then the version already installed under the `latest` alias.
+5. If no safe fallback exists, throw an error that suggests pinning a known version.
+
+Successful metadata is cached under `$XDG_CACHE_HOME/use-m/registry` (or `~/.cache/use-m/registry`). Cache keys include both registry and package, writes are atomic, and credentials embedded in a registry URL are stripped from requests, cache records, and diagnostic messages. The exact version returned by the lookup is installed, so a moving `latest` tag cannot make the cache marker stale immediately.
+
+The resolver honors, in order, the `registry`/`npmRegistry` option, `npm_config_registry` or `NPM_CONFIG_REGISTRY`, `npm config get registry` (including `.npmrc`), and finally the public npm registry. Pinning a version, such as `use('lodash@4.17.21')`, skips metadata lookup entirely.
+
+Use `USE_M_DEBUG=1` for decisions and fallbacks, or `USE_M_DEBUG=2` for cache paths, registry attempts, and npm commands. Logging is off by default and is written to stderr.
+
+```bash
+USE_M_DEBUG=2 node ./script.mjs
+```
+
+The same behavior can be configured per `makeUse()` instance:
+
+```javascript
+import { makeUse } from 'use-m';
+
+const use = await makeUse({
+  registry: 'https://registry.npmjs.org/',
+  registryMaxAttempts: 3,
+  registryRetryDelayMs: 250,       // exponential: 250 ms, then 500 ms
+  registryRequestTimeoutMs: 10_000,
+  registryCliFallback: true,
+  latestVersionCache: true,
+  latestVersionCacheTtlMs: 5 * 60_000,
+  // latestVersionCacheDirectory: '/var/cache/use-m/registry',
+  debug: 2,
+});
+
+const lodash = await use('lodash');
+```
+
+Advanced tests and embedded runtimes may inject `fetch` and `debugLogger`. Setting `registryRequestTimeoutMs` to `0` disables the request timeout; setting `latestVersionCache` or `registryCliFallback` to `false` disables that layer. Existing npm-install controls (`installMaxAttempts`, `installRetryDelayMs`, and the `installLock*` options) remain unchanged.
 
 ### Interactive shell in Node.js environment
 
@@ -69,8 +261,10 @@ Universal execution comes at cost of `eval` usage, that is considered potential 
    Single line version:
 
    ```javascript
-   const { use } = eval(await (await fetch('https://unpkg.com/use-m/use.js')).text());
+   const { use } = eval(await (await fetch('https://unpkg.com/use-m/src/use.js')).text());
    ```
+
+   > This minimal form is fine for an interactive REPL. For scripts that should survive a flaky CDN, prefer the resilient loader from [Robust loading](#robust-loading-resilient-cdn-bootstrap) — otherwise a CDN error body makes `eval()` throw a cryptic `SyntaxError` ([#58](https://github.com/link-foundation/use-m/issues/58)).
 
    <img width="778" height="420" alt="Screenshot 2025-07-25 at 2 21 28 AM" src="https://github.com/user-attachments/assets/f37692dc-0c2e-4279-8f71-1cde37176c1f" />
 
@@ -80,7 +274,7 @@ Universal execution comes at cost of `eval` usage, that is considered potential 
    const { use } = eval(
      await (
        await fetch(
-         'https://unpkg.com/use-m/use.js'
+         'https://unpkg.com/use-m/src/use.js'
        )
      ).text()
    );
@@ -161,7 +355,7 @@ It is possible to use `--experimental-network-imports` to enable the same style 
 
 1. Create file named `example.mjs`:
    ```javascript
-   const { use } = await import('https://unpkg.com/use-m/use.mjs');
+   const { use } = await import('https://unpkg.com/use-m/src/use.mjs');
    const _ = await use('lodash@4.17.21');
    console.log(`_.add(1, 2) = ${_.add(1, 2)}`);
    ```
@@ -183,7 +377,7 @@ If you need to use `use-m` without adding it to a project locally, you can load 
 
    ```javascript
    const { use } = eval(
-     await fetch('https://unpkg.com/use-m/use.js').then(u => u.text())
+     await fetch('https://unpkg.com/use-m/src/use.js').then(u => u.text())
    );
    
    const { $ } = await use('command-stream');
@@ -218,7 +412,7 @@ Bun provides a built-in `$` shell API that works seamlessly with `use-m`:
     #!/usr/bin/env bun
 
    const { use } = eval(
-     await fetch('https://unpkg.com/use-m/use.js').then(u => u.text())
+     await fetch('https://unpkg.com/use-m/src/use.js').then(u => u.text())
    );
    
    const _ = await use('lodash');
@@ -252,7 +446,7 @@ Bun provides a built-in `$` shell API that works seamlessly with `use-m`:
    #!/usr/bin/env zx --verbose
    
    const { use } = eval(
-     await fetch('https://unpkg.com/use-m/use.js').then(u => u.text())
+     await fetch('https://unpkg.com/use-m/src/use.js').then(u => u.text())
    );
     
    const _ = await use('lodash@latest');
@@ -285,7 +479,7 @@ Bun provides a built-in `$` shell API that works seamlessly with `use-m`:
    #!/usr/bin/env node
 
    const { use } = eval(
-     await fetch('https://unpkg.com/use-m/use.js').then(u => u.text())
+     await fetch('https://unpkg.com/use-m/src/use.js').then(u => u.text())
    ); 
    
    const _ = await use('lodash');
@@ -367,6 +561,67 @@ const _ = await use('lodash@4.17.21');
 console.log(`_.add(1, 2) = ${_.add(1, 2)}`);
 ```
 
+## Security Considerations
+
+### Arbitrary Code Execution
+
+**Important**: When using `use-m` with npm/bun resolvers in Node.js or Bun environments, packages are installed globally using `npm install -g` or `bun add -g`. This means:
+
+- **Install scripts are executed**: npm packages can run arbitrary code during installation via install scripts
+- **Trust required**: Only use packages from trusted sources
+- **Malicious packages**: A compromised or malicious package could execute harmful code on your system
+
+### Best Practices
+
+1. **Pin versions**: Always specify exact versions instead of using `latest`:
+   ```javascript
+   // Good - specific version
+   const _ = await use('lodash@4.17.21');
+
+   // Risky - could download new, potentially compromised version
+   const _ = await use('lodash@latest');
+   ```
+
+2. **Trust your dependencies**: Only import packages from trusted maintainers and npm organizations
+
+3. **Use CDN resolver in untrusted environments**: For browser or Deno environments, packages are loaded from CDNs without running install scripts:
+   ```javascript
+   // Browser - loads from CDN, no install scripts
+   const { use } = await import("https://unpkg.com/use-m/src/use.mjs");
+   const _ = await use('lodash@4.17.21');
+   ```
+
+4. **Review package contents**: Check package source code before using, especially for critical applications
+
+5. **Use in development/scripts**: `use-m` is ideal for development scripts, exploratory coding, and rapid prototyping where convenience outweighs strict security requirements
+
+### CDN Security
+
+When using CDN resolvers (browser, Deno), be aware that:
+
+- **CDN compromise**: If a CDN is compromised, malicious code could be served
+- **No integrity checking**: By default, there's no Subresource Integrity (SRI) verification
+- **Network dependency**: Your application depends on CDN availability
+
+### Eval Security
+
+Some examples use `eval()` for convenience in interactive shells and browsers. Be aware:
+
+- `eval()` executes arbitrary code
+- Only use with trusted sources
+- The `use-m` library code is short, unminified, and has no dependencies - you can [review it yourself](https://unpkg.com/use-m/src/use.js)
+- For production code, prefer standard imports without `eval()`
+
+### Recommendations by Use Case
+
+| Use Case | Recommendation | Security Level |
+|----------|---------------|----------------|
+| Development scripts | ✅ Safe to use | Medium |
+| Rapid prototyping | ✅ Safe to use | Medium |
+| Interactive shell/REPL | ✅ Safe to use | Medium |
+| Production applications | ⚠️ Use with caution | Low-Medium |
+| Security-critical apps | ❌ Not recommended | Low |
+
 ## Examples
 
 You can check out [usage examples source code](https://github.com/link-foundation/use-m/tree/main/examples). You can also explore our [tests](https://github.com/link-foundation/use-m/tree/main/tests) to get even more examples.
@@ -377,7 +632,13 @@ If you have any questions or issues, [please write us on GitHub](https://github.
 
 ## Contributing
 
-We welcome contributions! To contribute please [open Pull Request](https://github.com/link-foundation/use-m/pulls) with any suggested changes.
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines on:
+- Setting up the development environment
+- Running tests across different runtimes
+- Code style and standards
+- Submitting pull requests
+
+For quick contributions, feel free to [open a Pull Request](https://github.com/link-foundation/use-m/pulls) with your suggested changes.
 
 ## License
 
