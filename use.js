@@ -561,7 +561,7 @@ const resolvers = {
         const stats = await stat(filePath);
         return stats.isFile();
       } catch (error) {
-        if (error.code !== 'ENOENT') {
+        if (error.code !== 'ENOENT' && error.code !== 'ENOTDIR') {
           throw error;
         }
         return false;
@@ -573,7 +573,7 @@ const resolvers = {
         const stats = await stat(directoryPath);
         return stats.isDirectory();
       } catch (error) {
-        if (error.code !== 'ENOENT') {
+        if (error.code !== 'ENOENT' && error.code !== 'ENOTDIR') {
           throw error;
         }
         return false;
