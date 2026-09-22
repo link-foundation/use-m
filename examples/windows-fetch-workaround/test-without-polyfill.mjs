@@ -15,7 +15,7 @@ if (typeof fetch === 'undefined') {
   console.error('\n❌ ERROR: fetch is not defined!');
   console.error('\nThis is the issue described in #45.');
   console.error('To fix this, use the fetch polyfill:');
-  console.error('  await import("use-m/fetch-polyfill.js");');
+  console.error('  await import("use-m/fetch-polyfill");');
   console.error('\nOr see: examples/windows-fetch-workaround/test-with-polyfill.mjs');
   process.exit(1);
 }

@@ -1,7 +1,6 @@
 // Using local import for development/testing.
-// In production, use: import("https://unpkg.com/use-m/src/use.mjs")
-// (after the release that ships the src/ layout; before that, pin to a
-// published version+path that exists, e.g. use-m@8.13.8/use.mjs).
+// In production, use: import("https://unpkg.com/use-m/use.mjs")
+// Pin an exact published version when reproducibility matters.
 import("../../src/use.mjs")
   .then(async ({ use }) => {
     const _ = await use("lodash@4.17.21");

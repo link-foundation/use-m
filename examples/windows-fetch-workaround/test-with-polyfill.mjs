@@ -13,18 +13,15 @@ console.log('Platform:', process.platform);
 console.log('Node version:', process.version);
 console.log('Fetch available initially:', typeof fetch !== 'undefined');
 
-// Import fetch polyfill to ensure fetch is available
-// This handles the Windows Git Bash issue where fetch isn't in global scope
+// Installed-package equivalent: await import('use-m/fetch-polyfill')
 await import('../../fetch-polyfill.js');
 
 console.log('Fetch available after polyfill:', typeof fetch !== 'undefined');
 
 // Now load use-m as usual
-const { use } = eval(
-  await (
-    await fetch('https://unpkg.com/use-m/use.js')
-  ).text()
-);
+const response = await fetch('https://unpkg.com/use-m/use.js');
+if (!response.ok) throw new Error(`Failed to load use-m: HTTP ${response.status}`);
+const { use } = eval(await response.text());
 
 console.log('\n✅ Successfully loaded use-m');
 
