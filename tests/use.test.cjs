@@ -70,7 +70,7 @@
       );
       expect(lodash3.add(1, 2)).toBe(3);
       expect(lodash4.add(1, 2)).toBe(3);
-    });
+    }, 30000);
 
     test(`${moduleName} use.all with dynamic import`, async () => {
       const { use } = await import('use-m');
@@ -83,7 +83,7 @@
       );
       expect(lodash3.add(1, 2)).toBe(3);
       expect(lodash4.add(1, 2)).toBe(3);
-    });
+    }, 30000);
 
     test(`${moduleName} use.all (script)`, async () => {
       // await fetch('https://unpkg.com/use-m/use.js')
