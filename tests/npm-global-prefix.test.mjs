@@ -139,6 +139,7 @@ console.error('Unsupported fake npm command:', args.join(' '));
 process.exit(1);
 `);
   await chmod(npmPath, 0o755);
+  await writeFile(`${npmPath}.cmd`, '@echo off\r\nnode "%~dp0npm" %*\r\n');
 
   const { npm_config_prefix, NPM_CONFIG_PREFIX, ...cleanProcessEnv } = process.env;
   const baseEnv = {

@@ -92,6 +92,7 @@ console.error('Unsupported fixture npm command:', args.join(' '));
 process.exit(1);
 `);
   await chmod(npmPath, 0o755);
+  await writeFile(`${npmPath}.cmd`, '@echo off\r\nnode "%~dp0npm" %*\r\n');
 
   const env = {
     ...process.env,

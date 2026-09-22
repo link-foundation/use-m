@@ -6,6 +6,38 @@
 // Source fragment: caller context, specifier parsing, and built-in helpers.
 // Generated bundles concatenate this file; do not import it directly.
 
+const nativeWindowsPathToFileUrl = (filePath) => {
+  if (typeof filePath !== 'string') return filePath;
+
+  const drivePath = filePath.match(/^([A-Za-z]):[\\/](.*)$/s);
+  if (drivePath) {
+    const pathname = drivePath[2]
+      .split(/[\\/]/)
+      .map(segment => encodeURIComponent(segment))
+      .join('/');
+    return `file:///${drivePath[1].toUpperCase()}:/${pathname}`;
+  }
+
+  const uncPath = filePath.match(/^\\\\([^\\/]+)[\\/](.*)$/s);
+  if (uncPath) {
+    const pathname = uncPath[2]
+      .split(/[\\/]/)
+      .map(segment => encodeURIComponent(segment))
+      .join('/');
+    return `file://${uncPath[1]}/${pathname}`;
+  }
+
+  return filePath;
+};
+
+const absolutePathToFileUrl = (filePath) => {
+  const windowsUrl = nativeWindowsPathToFileUrl(filePath);
+  if (windowsUrl !== filePath) return windowsUrl;
+  return typeof filePath === 'string' && filePath.startsWith('/')
+    ? `file://${filePath}`
+    : filePath;
+};
+
 const extractCallerContext = (stack) => {
   // Helper to check if a path is a use-m file
   const isUseMFile = (path) => {
@@ -13,7 +45,8 @@ const extractCallerContext = (stack) => {
     // module URLs may also carry a cache-busting query or fragment.
     const normalizedPath = path
       .replace(/:\d+:\d+$/, '')
-      .replace(/[?#].*$/, '');
+      .replace(/[?#].*$/, '')
+      .replaceAll('\\', '/');
     return normalizedPath.endsWith('/use.mjs') ||
            normalizedPath.endsWith('/use.cjs') ||
            normalizedPath.endsWith('/use.js');
@@ -71,22 +104,29 @@ const extractCallerContext = (stack) => {
       if (match && match[1]) {
         const testPath = match[1];
         // Convert to file:// URL format if it's an absolute path
-        if (testPath.startsWith('/')) {
-          return `file://${testPath}`;
+        if (testPath.startsWith('/') || /^[A-Za-z]:[\\/]/.test(testPath) || testPath.startsWith('\\\\')) {
+          return absolutePathToFileUrl(testPath);
         }
       }
+    }
+
+    // Native Windows stack frames use drive-letter or UNC paths. Passing a
+    // drive-letter path directly to import() is interpreted as a URL scheme.
+    match = line.match(/(?:\(|\s)((?:[A-Za-z]:[\\/]|\\\\)[^)\n]+?\.(?:m?js|json)):\d+:\d+\)?/);
+    if (match && !isUseMFile(match[1]) && !match[1].includes('node_modules')) {
+      return absolutePathToFileUrl(match[1]);
     }
 
     // For Node/Deno, try to match absolute paths (improved to handle more cases)
     match = line.match(/at\s+(?:Object\.<anonymous>\s+)?(?:async\s+)?[(]?(\/[^\s:)]+\.(?:m?js|json))(?::\d+:\d+)?\)?/);
     if (match && !isUseMFile(match[1]) && !match[1].includes('node_modules')) {
-      return 'file://' + match[1];
+      return absolutePathToFileUrl(match[1]);
     }
 
     // Alternative pattern for Jest and other environments
     match = line.match(/at\s+[^(]*\(([^)]+\.(?:m?js|json)):\d+:\d+\)/);
     if (match && !isUseMFile(match[1]) && !match[1].includes('node_modules')) {
-      return 'file://' + (match[1].startsWith('/') ? match[1] : '/' + match[1]);
+      return absolutePathToFileUrl(match[1]);
     }
   }
   return null;
@@ -403,14 +443,10 @@ const resolvers = {
     // If we have a caller URL, resolve relative to it
     if (callerUrl && (callerUrl.startsWith('file://') || callerUrl.startsWith('http://') || callerUrl.startsWith('https://'))) {
       try {
-        // Try URL-based resolution for both file:// and http(s):// URLs
+        // Keep URL-based resolution as a URL on every runtime. A pathname such
+        // as /C:/... is not a valid native Windows path and breaks Bun imports.
         const url = new URL(moduleSpecifier, callerUrl);
-        // For Bun, return pathname instead of full URL
-        if (typeof Bun !== 'undefined' && callerUrl.startsWith('file://')) {
-          resolvedPath = url.pathname;
-        } else {
-          resolvedPath = url.href;
-        }
+        resolvedPath = url.href;
       } catch (error) {
         // Fallback for non-URL basePath (only for file:// URLs)
         if (callerUrl.startsWith('file://')) {
@@ -1661,10 +1697,11 @@ const loadWithFallback = async (sources, load, options = {}) => {
 const baseUse = async (modulePath) => {
   // Dynamically import the module
   try {
+    const importSpecifier = nativeWindowsPathToFileUrl(modulePath);
     const isJsonModule = /\.json(?:[?#].*)?$/i.test(modulePath);
     const module = isJsonModule
-      ? await import(modulePath, { with: { type: 'json' } })
-      : await import(modulePath);
+      ? await import(importSpecifier, { with: { type: 'json' } })
+      : await import(importSpecifier);
 
     // More robust default export handling for cross-environment compatibility
     const keys = Object.keys(module);
@@ -1712,6 +1749,7 @@ const makeUse = async (options) => {
     scriptPath = metaUrl;
   }
 
+  scriptPath = nativeWindowsPathToFileUrl(scriptPath);
   let protocol;
   if (scriptPath) {
     try {
@@ -1836,11 +1874,12 @@ const use = async (moduleSpecifier) => {
   if (typeof Bun !== 'undefined') {
     if (stack) {
       const lines = stack.split('\n');
-      // Look for any .mjs file that's not use.mjs
+      // Look for any .mjs file that's not use.mjs. Bun stack traces can use
+      // either POSIX paths or native Windows drive-letter/UNC paths.
       for (const line of lines) {
-        const match = line.match(/[(]?(\/[^\s:)]+\.m?js)/);
-        if (match && !match[1].endsWith('/use.mjs')) {
-          bunCallerContext = 'file://' + match[1];
+        const match = line.match(/[(]?((?:\/|[A-Za-z]:[\\/]|\\\\)[^)\n]+?\.m?js)(?::\d+:\d+)?\)?/);
+        if (match && !match[1].replaceAll('\\', '/').endsWith('/use.mjs')) {
+          bunCallerContext = absolutePathToFileUrl(match[1]);
           break;
         }
       }

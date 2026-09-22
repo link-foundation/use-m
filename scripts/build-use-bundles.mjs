@@ -85,7 +85,9 @@ export async function readUseSource() {
   const fragments = await Promise.all(
     USE_SOURCE_FRAGMENTS.map(relativePath => readFile(path.join(repoRoot, relativePath), 'utf8'))
   )
-  return fragments.map(fragment => fragment.trimEnd()).join('\n\n')
+  return fragments
+    .map(fragment => fragment.replace(/\r\n?/g, '\n').trimEnd())
+    .join('\n\n')
 }
 
 export async function renderReadableBundle(basename, source = undefined) {

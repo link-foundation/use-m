@@ -55,10 +55,11 @@ const loadWithFallback = async (sources, load, options = {}) => {
 const baseUse = async (modulePath) => {
   // Dynamically import the module
   try {
+    const importSpecifier = nativeWindowsPathToFileUrl(modulePath);
     const isJsonModule = /\.json(?:[?#].*)?$/i.test(modulePath);
     const module = isJsonModule
-      ? await import(modulePath, { with: { type: 'json' } })
-      : await import(modulePath);
+      ? await import(importSpecifier, { with: { type: 'json' } })
+      : await import(importSpecifier);
 
     // More robust default export handling for cross-environment compatibility
     const keys = Object.keys(module);
@@ -106,6 +107,7 @@ const makeUse = async (options) => {
     scriptPath = metaUrl;
   }
   // @use-m-default-script-path
+  scriptPath = nativeWindowsPathToFileUrl(scriptPath);
   let protocol;
   if (scriptPath) {
     try {
@@ -230,11 +232,12 @@ const use = async (moduleSpecifier) => {
   if (typeof Bun !== 'undefined') {
     if (stack) {
       const lines = stack.split('\n');
-      // Look for any .mjs file that's not use.mjs
+      // Look for any .mjs file that's not use.mjs. Bun stack traces can use
+      // either POSIX paths or native Windows drive-letter/UNC paths.
       for (const line of lines) {
-        const match = line.match(/[(]?(\/[^\s:)]+\.m?js)/);
-        if (match && !match[1].endsWith('/use.mjs')) {
-          bunCallerContext = 'file://' + match[1];
+        const match = line.match(/[(]?((?:\/|[A-Za-z]:[\\/]|\\\\)[^)\n]+?\.m?js)(?::\d+:\d+)?\)?/);
+        if (match && !match[1].replaceAll('\\', '/').endsWith('/use.mjs')) {
+          bunCallerContext = absolutePathToFileUrl(match[1]);
           break;
         }
       }

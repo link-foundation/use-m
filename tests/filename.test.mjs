@@ -43,6 +43,31 @@ describe(`${moduleName} scriptPath detection in ESM (functional)`, () => {
     const expected = join(dirname(explicitPath), '..', 'package.json');
     expect(resolved).toBe(expected);
   });
+
+  test(`${moduleName} treats a native Windows scriptPath as a local file`, async () => {
+    let capturedResolver;
+    const windowsScriptPath = typeof process !== 'undefined' && process.platform === 'win32'
+      ? currentFilePath
+      : 'C:\\project folder\\tests\\caller.mjs';
+    const useFn = await makeUse({
+      scriptPath: windowsScriptPath,
+      specifierResolver: (specifier, pathResolver) => {
+        capturedResolver = pathResolver;
+        return currentFileUrl;
+      },
+    });
+    await useFn('anything');
+
+    if (typeof process !== 'undefined' && process.platform === 'win32') {
+      expect(capturedResolver('../package.json')).toBe(
+        join(dirname(windowsScriptPath), '..', 'package.json')
+      );
+    } else {
+      // On a non-Windows host the synthetic drive does not exist, but reaching
+      // createRequire() proves it was recognized as a file rather than a c: URL.
+      expect(() => capturedResolver('../package.json')).toThrow();
+    }
+  });
 });
 
 // Tests when global require is undefined (force createRequire fallback)
@@ -106,4 +131,4 @@ describe(`${moduleName} scriptPath detection in ESM (meta URL)`, () => {
     const expected = fileURLToPath(metaUrl);
     expect(resolved).toBe(expected);
   });
-}); 
+});

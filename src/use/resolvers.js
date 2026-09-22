@@ -60,14 +60,10 @@ const resolvers = {
     // If we have a caller URL, resolve relative to it
     if (callerUrl && (callerUrl.startsWith('file://') || callerUrl.startsWith('http://') || callerUrl.startsWith('https://'))) {
       try {
-        // Try URL-based resolution for both file:// and http(s):// URLs
+        // Keep URL-based resolution as a URL on every runtime. A pathname such
+        // as /C:/... is not a valid native Windows path and breaks Bun imports.
         const url = new URL(moduleSpecifier, callerUrl);
-        // For Bun, return pathname instead of full URL
-        if (typeof Bun !== 'undefined' && callerUrl.startsWith('file://')) {
-          resolvedPath = url.pathname;
-        } else {
-          resolvedPath = url.href;
-        }
+        resolvedPath = url.href;
       } catch (error) {
         // Fallback for non-URL basePath (only for file:// URLs)
         if (callerUrl.startsWith('file://')) {

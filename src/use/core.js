@@ -1,6 +1,38 @@
 // Source fragment: caller context, specifier parsing, and built-in helpers.
 // Generated bundles concatenate this file; do not import it directly.
 
+const nativeWindowsPathToFileUrl = (filePath) => {
+  if (typeof filePath !== 'string') return filePath;
+
+  const drivePath = filePath.match(/^([A-Za-z]):[\\/](.*)$/s);
+  if (drivePath) {
+    const pathname = drivePath[2]
+      .split(/[\\/]/)
+      .map(segment => encodeURIComponent(segment))
+      .join('/');
+    return `file:///${drivePath[1].toUpperCase()}:/${pathname}`;
+  }
+
+  const uncPath = filePath.match(/^\\\\([^\\/]+)[\\/](.*)$/s);
+  if (uncPath) {
+    const pathname = uncPath[2]
+      .split(/[\\/]/)
+      .map(segment => encodeURIComponent(segment))
+      .join('/');
+    return `file://${uncPath[1]}/${pathname}`;
+  }
+
+  return filePath;
+};
+
+const absolutePathToFileUrl = (filePath) => {
+  const windowsUrl = nativeWindowsPathToFileUrl(filePath);
+  if (windowsUrl !== filePath) return windowsUrl;
+  return typeof filePath === 'string' && filePath.startsWith('/')
+    ? `file://${filePath}`
+    : filePath;
+};
+
 const extractCallerContext = (stack) => {
   // Helper to check if a path is a use-m file
   const isUseMFile = (path) => {
@@ -8,7 +40,8 @@ const extractCallerContext = (stack) => {
     // module URLs may also carry a cache-busting query or fragment.
     const normalizedPath = path
       .replace(/:\d+:\d+$/, '')
-      .replace(/[?#].*$/, '');
+      .replace(/[?#].*$/, '')
+      .replaceAll('\\', '/');
     return normalizedPath.endsWith('/use.mjs') ||
            normalizedPath.endsWith('/use.cjs') ||
            normalizedPath.endsWith('/use.js');
@@ -66,22 +99,29 @@ const extractCallerContext = (stack) => {
       if (match && match[1]) {
         const testPath = match[1];
         // Convert to file:// URL format if it's an absolute path
-        if (testPath.startsWith('/')) {
-          return `file://${testPath}`;
+        if (testPath.startsWith('/') || /^[A-Za-z]:[\\/]/.test(testPath) || testPath.startsWith('\\\\')) {
+          return absolutePathToFileUrl(testPath);
         }
       }
+    }
+
+    // Native Windows stack frames use drive-letter or UNC paths. Passing a
+    // drive-letter path directly to import() is interpreted as a URL scheme.
+    match = line.match(/(?:\(|\s)((?:[A-Za-z]:[\\/]|\\\\)[^)\n]+?\.(?:m?js|json)):\d+:\d+\)?/);
+    if (match && !isUseMFile(match[1]) && !match[1].includes('node_modules')) {
+      return absolutePathToFileUrl(match[1]);
     }
 
     // For Node/Deno, try to match absolute paths (improved to handle more cases)
     match = line.match(/at\s+(?:Object\.<anonymous>\s+)?(?:async\s+)?[(]?(\/[^\s:)]+\.(?:m?js|json))(?::\d+:\d+)?\)?/);
     if (match && !isUseMFile(match[1]) && !match[1].includes('node_modules')) {
-      return 'file://' + match[1];
+      return absolutePathToFileUrl(match[1]);
     }
 
     // Alternative pattern for Jest and other environments
     match = line.match(/at\s+[^(]*\(([^)]+\.(?:m?js|json)):\d+:\d+\)/);
     if (match && !isUseMFile(match[1]) && !match[1].includes('node_modules')) {
-      return 'file://' + (match[1].startsWith('/') ? match[1] : '/' + match[1]);
+      return absolutePathToFileUrl(match[1]);
     }
   }
   return null;

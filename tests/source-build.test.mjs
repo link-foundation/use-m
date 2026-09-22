@@ -16,6 +16,11 @@ const listFiles = async (directory) => {
 }
 
 describe('source layout and deterministic bundles', () => {
+  test('pins repository text files to LF for byte-identical Windows builds', async () => {
+    const attributes = await readFile(path.join(repoRoot, '.gitattributes'), 'utf8')
+    expect(attributes).toContain('* text=auto eol=lf')
+  })
+
   test('keeps every source file below 1500 lines', async () => {
     const sourceFiles = await listFiles(path.join(repoRoot, 'src'))
     const oversized = []
