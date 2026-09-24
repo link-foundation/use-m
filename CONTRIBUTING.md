@@ -60,7 +60,7 @@ For cross-runtime testing:
 npm test
 
 # Bun
-bun test
+bun test --timeout 30000
 
 # Deno
 deno test --allow-net --allow-env --allow-run --allow-read --allow-write --allow-sys
@@ -354,7 +354,7 @@ npm link /path/to/use-m
 npm test
 
 # Bun
-bun test
+bun test --timeout 30000
 
 # Deno
 deno test --allow-net --allow-env --allow-run --allow-read --allow-write --allow-sys

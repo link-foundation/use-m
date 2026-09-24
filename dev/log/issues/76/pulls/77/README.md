@@ -40,7 +40,8 @@ Result: 8.16.1 and 8.16.2 are on npm without a `v8.16.1`/`v8.16.2` tag or GitHub
 
 | Kind | Finding | Root cause |
 | --- | --- | --- |
-| False negative (red run, healthy code) | `lodash.test.mjs` timeout on Windows + Node 20 | Jest's default 5 s per-test timeout. Bun already had 30 s (`bunfig.toml`). A real `npm install` from the registry on a Windows runner takes longer. |
+| False negative (red run, healthy code) | `lodash.test.mjs` timeout on Windows + Node 20 | Jest's default 5 s per-test timeout. A real `npm install` from the registry on a Windows runner takes longer. |
+| Latent false negative | Bun tests also ran with a 5 s timeout although `bunfig.toml` set `timeout = "30000ms"`. Locally, `lodash.test.mjs` timed out under `bun test`. | Bun has no test timeout setting in `bunfig.toml` and ignores the key silently. Only `bun test --timeout` works ([Bun docs](https://bun.sh/docs/test/runtime-behavior#test-timeouts); `data/bunfig-timeout-experiment.txt`). |
 | False negative | Publish jobs of 8.16.1 and 8.16.2 failed although both publishes succeeded | Verification allowed about 100 s. npm needed 156 s and 310 s to process the versions. `npm view` also reads the full package document, which the registry CDN caches for up to 300 s (`cf-cache-status: HIT`, `age: 297`), which can add up to 5 minutes. |
 | Missing release artifacts | No tag or release for 8.16.1 and 8.16.2 | The tag and release steps ran only after a successful verification, and nothing repaired them later. |
 | Latent false positive | `npm view ... >/dev/null 2>&1` read any failure as "not published" | An unreachable registry would have led to a publish attempt and a conflict instead of a clear error. |
@@ -67,7 +68,7 @@ Result: 8.16.1 and 8.16.2 are on npm without a `v8.16.1`/`v8.16.2` tag or GitHub
 
 ## Solutions
 
-1. **Jest timeout.** `jest.config.js` sets `testTimeout: 30000`, matching `bunfig.toml`. `tests/test-runner-config.test.mjs` keeps the two equal.
+1. **Test timeouts.** `jest.config.js` sets `testTimeout: 30000`, and CI runs `bun test --timeout 30000`, the same as the template. The ignored key is removed from `bunfig.toml`. `tests/test-runner-config.test.mjs` keeps the two budgets equal and fails if a timeout reappears in `bunfig.toml`. `experiments/issue-76-bunfig-timeout.mjs` reproduces the ignored setting.
 2. **Install-script warnings.** `package.json` has `"allowScripts": { "esbuild": true, "puppeteer": true }`.
 3. **Expected runtime warnings.**
    - The `npm test` script adds `--disable-warning=ExperimentalWarning` and disables the three deprecation codes by code only (Node ≥ 20.11).
@@ -94,6 +95,7 @@ Result: 8.16.1 and 8.16.2 are on npm without a `v8.16.1`/`v8.16.2` tag or GitHub
 
 Adopted:
 - `ubuntu-24.04`
+- `bun test --timeout 30000`
 - `GIT_CONFIG_COUNT`/`GIT_CONFIG_KEY_0`/`GIT_CONFIG_VALUE_0`
 - `persist-credentials: false`
 - digest-pinned actionlint

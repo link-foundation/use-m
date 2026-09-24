@@ -146,9 +146,11 @@ jobs:
         if: matrix.runtime == 'node'
         run: npm test -- --runInBand
 
+      # Same 30 s per-test budget as jest.config.js. Bun reads the global
+      # timeout only from this flag; bunfig.toml has no such setting.
       - name: Run Bun tests
         if: matrix.runtime == 'bun'
-        run: bun test
+        run: bun test --timeout 30000
 
       - name: Run Deno tests
         if: matrix.runtime == 'deno'

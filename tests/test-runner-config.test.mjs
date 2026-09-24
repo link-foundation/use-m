@@ -9,21 +9,27 @@ function readText(fileName) {
   return fs.readFileSync(path.join(rootDir, fileName), 'utf8').replace(/\r\n/g, '\n')
 }
 
-function bunTimeoutMs() {
-  const match = readText('bunfig.toml').match(/^timeout\s*=\s*"(\d+)ms"/m)
+function bunCommandTimeoutMs() {
+  const match = readText('.github/workflows/release.yml').match(/^\s*run: bun test --timeout (\d+)$/m)
   return match ? Number(match[1]) : null
 }
 
 describe('test runner configuration', () => {
-  test('gives Jest the same per-test budget as Bun for real registry installs', async () => {
+  test('gives Jest and Bun the same per-test budget for real registry installs', async () => {
     // Issue #76: lodash.test.mjs installs lodash from the npm registry. On
     // windows-latest + Node.js 20 that took longer than Jest's 5 s default, so
-    // a healthy install was reported as a failure while Bun (30 s) passed.
+    // a healthy install was reported as a failure.
     const { default: jestConfig } = await import(pathToFileURL(path.join(rootDir, 'jest.config.js')).href)
-    const bunTimeout = bunTimeoutMs()
 
-    expect(bunTimeout).toBe(30000)
-    expect(jestConfig.testTimeout).toBe(bunTimeout)
+    expect(jestConfig.testTimeout).toBe(30000)
+    expect(bunCommandTimeoutMs()).toBe(jestConfig.testTimeout)
+  })
+
+  test('does not configure the Bun timeout where Bun ignores it', () => {
+    // bunfig.toml has no test timeout setting: Bun 1.4 silently ignored
+    // `timeout = "30000ms"` and kept its 5 s default (reproduce with
+    // experiments/issue-76-bunfig-timeout.mjs). Only `bun test --timeout` works.
+    expect(readText('bunfig.toml')).not.toMatch(/^\s*timeout\s*=/m)
   })
 
   test('approves the install scripts of the dev dependencies that need them', () => {
