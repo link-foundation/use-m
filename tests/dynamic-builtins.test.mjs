@@ -80,12 +80,27 @@ describe(`${moduleName} Dynamic built-in module detection`, () => {
     // never a list kept in use-m. A claimed module either resolves or throws a
     // load error; what matters is that the resolver does not hand it off to the
     // npm/CDN resolvers by returning null.
+    // Loading every built-in also loads the deprecated and experimental ones
+    // (_stream_wrap, sys, punycode, wasi, ...). Their one-time warnings are
+    // expected here and only buried real warnings in CI logs (issue #76), so
+    // they are captured for the duration of this loop instead of printed.
+    // Jest hands tests a copy of `process`, so under Jest the same codes are
+    // disabled by the `npm test` script instead.
     const unclaimed = [];
-    for (const name of builtinModules) {
-      const result = await resolvers.builtin(name).catch(error => error);
-      if (result === null) {
-        unclaimed.push(name);
+    const suppressedWarnings = [];
+    const originalEmitWarning = process.emitWarning;
+    process.emitWarning = (warning) => {
+      suppressedWarnings.push(typeof warning === 'string' ? warning : warning?.message);
+    };
+    try {
+      for (const name of builtinModules) {
+        const result = await resolvers.builtin(name).catch(error => error);
+        if (result === null) {
+          unclaimed.push(name);
+        }
       }
+    } finally {
+      process.emitWarning = originalEmitWarning;
     }
 
     expect(unclaimed).toEqual([]);

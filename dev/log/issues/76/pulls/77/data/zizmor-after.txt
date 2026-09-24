@@ -1,0 +1,4 @@
+ INFO zizmor: 🌈 zizmor v1.29.0
+ INFO audit: zizmor: 🌈 completed .github/workflows/release.yml
+No findings to report. Good job! (1 suppressed)
+zizmor exit=0

@@ -16,15 +16,79 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
+# actions/checkout runs `git init` before any step could configure Git; this
+# sets the default branch for it and silences the "master" hint in every job.
+env:
+  GIT_CONFIG_COUNT: '1'
+  GIT_CONFIG_KEY_0: init.defaultBranch
+  GIT_CONFIG_VALUE_0: main
+
 jobs:
+  workflow-lint:
+    name: Lint workflows
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      # The image bundles shellcheck, so every `run:` block is linted too.
+      # Pinned by digest; re-resolve when bumping with
+      #   docker inspect --format='{{index .RepoDigests 0}}' rhysd/actionlint:<tag>
+      # Reproduce locally:
+      #   docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint:1.7.12 -color
+      - name: Run actionlint
+        uses: docker://rhysd/actionlint@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667 # v1.7.12
+        with:
+          args: -color
+
+      # Reproduce locally:
+      #   pipx run zizmor==1.29.0 --config .github/zizmor.yml --min-confidence low .github/workflows
+      - name: Run zizmor
+        uses: zizmorcore/zizmor-action@v0.6.2
+        with:
+          advanced-security: false
+          annotations: true
+          config: .github/zizmor.yml
+          min-confidence: low
+          version: 1.29.0
+
+  version-check:
+    name: Check the package version is unpublished
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.x
+          package-manager-cache: false
+
+      # Every merge to main publishes package.json's version. Checking it here
+      # fails the pull request instead of the publish job after the merge.
+      - name: Check npm version
+        run: node scripts/npm-release.mjs check-unpublished
+
   test:
-    name: Test on ${{ matrix.runtime }} ${{ matrix.node-version }} (${{ matrix.os }})
+    name: Test on ${{ matrix.runtime == 'node' && format('Node.js {0}', matrix.node-version) || matrix.runtime }} (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 25
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        # The floating Ubuntu label moves to Ubuntu 26 from 2026-10-19 and
+        # announced it in a notice on every job
+        # (https://github.com/actions/runner-images/issues/14748); the Linux
+        # image is pinned so that move is a reviewed change, not a surprise.
+        os: [ubuntu-24.04, macos-latest, windows-latest]
         runtime: [node, bun, deno]
         # Every Node.js line users still run: the supported built-in modules are
         # read from the runtime instead of a table inside use-m, so what each
@@ -45,6 +109,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -54,13 +120,13 @@ jobs:
 
       - name: Setup Bun
         if: matrix.runtime == 'bun'
-        uses: oven-sh/setup-bun@v2
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version: latest
 
       - name: Setup Deno
         if: matrix.runtime == 'deno'
-        uses: denoland/setup-deno@v2
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
         with:
           deno-version: v2.x
 
@@ -68,7 +134,7 @@ jobs:
         run: npm ci --no-audit --no-fund
 
       - name: Audit production dependencies
-        if: matrix.runtime == 'node' && matrix.os == 'ubuntu-latest' && matrix.node-version == '24.x'
+        if: matrix.runtime == 'node' && matrix.os == 'ubuntu-24.04' && matrix.node-version == '24.x'
         run: npm audit --omit=dev
 
       - name: Verify missing fetch through the shebang
@@ -80,9 +146,11 @@ jobs:
         if: matrix.runtime == 'node'
         run: npm test -- --runInBand
 
+      # Same 30 s per-test budget as jest.config.js. Bun reads the global
+      # timeout only from this flag; bunfig.toml has no such setting.
       - name: Run Bun tests
         if: matrix.runtime == 'bun'
-        run: bun test
+        run: bun test --timeout 30000
 
       - name: Run Deno tests
         if: matrix.runtime == 'deno'
@@ -104,17 +172,21 @@ jobs:
     name: Publish to npm
     needs: [test]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push' && needs.test.result == 'success'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
       contents: write
       id-token: write
 
     steps:
+      # Full history: the backfill step checks that the commit npm recorded
+      # for a version is on main. Tags and releases are created through the
+      # GitHub API, so the checkout keeps no credentials.
       - name: Checkout code
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Setup Node.js for release
         uses: actions/setup-node@v6
@@ -126,104 +198,83 @@ jobs:
       - name: Install dependencies
         run: npm ci --no-audit --no-fund
 
-      - name: Read package metadata
-        id: package
-        run: |
-          VERSION=$(node -p "require('./package.json').version")
-          NAME=$(node -p "require('./package.json').name")
-          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
-          echo "name=${NAME}" >> "$GITHUB_OUTPUT"
-          echo "tag=v${VERSION}" >> "$GITHUB_OUTPUT"
-          echo "Package: ${NAME}@${VERSION}"
-
+      # An unreachable registry fails this step instead of being read as "not
+      # published" and walking into a publish conflict.
       - name: Check npm version
         id: npm-version
         env:
           GH_TOKEN: ${{ github.token }}
-          PACKAGE_NAME: ${{ steps.package.outputs.name }}
-          PACKAGE_VERSION: ${{ steps.package.outputs.version }}
-          TAG: ${{ steps.package.outputs.tag }}
+        run: node scripts/npm-release.mjs status
+
+      - name: Stop when this version is already released
+        if: steps.npm-version.outputs.exists == 'true'
+        env:
+          PACKAGE: ${{ steps.npm-version.outputs.name }}@${{ steps.npm-version.outputs.version }}
+          TAG: ${{ steps.npm-version.outputs.tag }}
+          TAG_EXISTS: ${{ steps.npm-version.outputs.tag_exists }}
+          RELEASE_EXISTS: ${{ steps.npm-version.outputs.release_exists }}
         run: |
-          if npm view "${PACKAGE_NAME}@${PACKAGE_VERSION}" version >/dev/null 2>&1; then
-            echo "exists=true" >> "$GITHUB_OUTPUT"
-            echo "${PACKAGE_NAME}@${PACKAGE_VERSION} already exists on npm."
-
-            tag_exists=false
-            release_exists=false
-
-            if git rev-parse "$TAG" >/dev/null 2>&1; then
-              tag_exists=true
-            fi
-
-            if gh release view "$TAG" >/dev/null 2>&1; then
-              release_exists=true
-            fi
-
-            echo "tag_exists=${tag_exists}" >> "$GITHUB_OUTPUT"
-            echo "release_exists=${release_exists}" >> "$GITHUB_OUTPUT"
-
-            if [ "$tag_exists" = "true" ] && [ "$release_exists" = "true" ]; then
-              echo "::error::${PACKAGE_NAME}@${PACKAGE_VERSION}, git tag ${TAG}, and GitHub release ${TAG} already exist. Update package.json to the next unpublished version before merging to main."
-              exit 1
-            fi
-
-            echo "release metadata is incomplete; skipping npm publish and repairing tag/release."
-          else
-            echo "exists=false" >> "$GITHUB_OUTPUT"
-            echo "tag_exists=false" >> "$GITHUB_OUTPUT"
-            echo "release_exists=false" >> "$GITHUB_OUTPUT"
-            echo "${PACKAGE_NAME}@${PACKAGE_VERSION} is not on npm; publishing after tests."
+          if [ "$TAG_EXISTS" = "true" ] && [ "$RELEASE_EXISTS" = "true" ]; then
+            echo "::error::${PACKAGE}, git tag ${TAG}, and GitHub release ${TAG} already exist. Update package.json to the next unpublished version before merging to main."
+            exit 1
           fi
+          echo "${PACKAGE} is on npm but its release metadata is incomplete; skipping npm publish and repairing tag/release."
 
-      - name: Update npm for trusted publishing
+      # Trusted publishing needs npm 11.5.1 or newer. Node.js 24 bundles it, so
+      # this only checks instead of installing npm outside the lockfile.
+      - name: Check npm supports trusted publishing
         if: steps.npm-version.outputs.exists == 'false'
         run: |
-          npm install -g npm@^11.5.1
           node --version
           npm --version
+          node -e '
+            const [major, minor, patch] = process.argv[1].split(".").map(Number)
+            if (major < 11 || (major === 11 && (minor < 5 || (minor === 5 && patch < 1)))) {
+              console.error("::error::npm " + process.argv[1] + " cannot publish with trusted publishing; it needs 11.5.1 or newer.")
+              process.exit(1)
+            }
+          ' "$(npm --version)"
 
       - name: Publish to npm
         if: steps.npm-version.outputs.exists == 'false'
         run: npm publish --access public --provenance
 
-      - name: Verify npm publication
+      # npm accepts the upload immediately but serves the version minutes
+      # later (8.16.1: 2.6 min, 8.16.2: 5.2 min). Waiting up to 15 minutes
+      # keeps that normal delay from skipping the tag and release below.
+      - name: Wait for npm to serve the new version
         if: steps.npm-version.outputs.exists == 'false'
-        run: |
-          for attempt in 1 2 3 4 5 6 7 8 9 10; do
-            PUBLISHED_VERSION=$(npm view "${{ steps.package.outputs.name }}@${{ steps.package.outputs.version }}" version 2>/dev/null || true)
-            if [ "$PUBLISHED_VERSION" = "${{ steps.package.outputs.version }}" ]; then
-              echo "Verified npm package ${{ steps.package.outputs.name }}@${PUBLISHED_VERSION}"
-              exit 0
-            fi
-            echo "npm registry has not returned the new version yet (attempt ${attempt}/10)."
-            sleep 10
-          done
-          echo "Failed to verify ${{ steps.package.outputs.name }}@${{ steps.package.outputs.version }} on npm."
-          exit 1
+        run: node scripts/npm-release.mjs wait --timeout-seconds 900 --interval-seconds 15
 
-      - name: Create git tag
-        run: |
-          TAG="${{ steps.package.outputs.tag }}"
-          git config user.email "action@github.com"
-          git config user.name "GitHub Action"
-          if git rev-parse "$TAG" >/dev/null 2>&1; then
-            echo "Tag $TAG already exists."
-          else
-            git tag -a "$TAG" -m "Release $TAG"
-            git push origin "$TAG"
-          fi
-
-      - name: Create GitHub Release
+      - name: Create git tag and GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
+        run: node scripts/npm-release.mjs release --target "$GITHUB_SHA"
+
+      # Versions a failed run published without a tag or release (8.16.1 and
+      # 8.16.2) get them at the commit npm recorded for them.
+      - name: Repair tags and releases of earlier versions
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/npm-release.mjs backfill
+
+  # Single status to watch: fails when any job failed or was cancelled, which
+  # includes jobs killed by timeout-minutes. Skipped jobs (publish on pull
+  # requests, version-check on main) are expected.
+  pipeline-status:
+    name: Pipeline status
+    if: '!cancelled()'
+    needs: [workflow-lint, version-check, test, publish]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Fail when a required job failed or was cancelled
+        env:
+          NEEDS_JSON: ${{ toJSON(needs) }}
         run: |
-          TAG="${{ steps.package.outputs.tag }}"
-          VERSION="${{ steps.package.outputs.version }}"
-          NAME="${{ steps.package.outputs.name }}"
-          if gh release view "$TAG" >/dev/null 2>&1; then
-            echo "GitHub release $TAG already exists."
-          else
-            gh release create "$TAG" \
-              --title "$TAG" \
-              --notes "npm: https://www.npmjs.com/package/${NAME}/v/${VERSION}"
+          echo "$NEEDS_JSON" | jq -r 'to_entries[] | "\(.key): \(.value.result)"'
+          failed=$(echo "$NEEDS_JSON" | jq -r 'to_entries[] | select(.value.result == "failure" or .value.result == "cancelled") | .key')
+          if [ -n "$failed" ]; then
+            echo "::error::Jobs that failed or were cancelled: $(echo "$failed" | paste -sd, -)"
+            exit 1
           fi

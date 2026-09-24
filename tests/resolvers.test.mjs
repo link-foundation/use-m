@@ -2,13 +2,8 @@ import { resolvers } from 'use-m';
 import { createRequire } from 'node:module';
 import { describe, test, expect } from '../src/test-adapter.mjs';
 
-// Mock jest object for Deno compatibility
-const jest = typeof Deno !== 'undefined' ? { setTimeout: () => {} } : (await import('@jest/globals')).jest;
-
 const { resolve } = typeof Deno !== 'undefined' ? { resolve: (path) => path } : createRequire(import.meta.url);
 const moduleName = `[${import.meta.url.split('.').pop()} module]`;
-
-jest.setTimeout(10000);
 
 describe(`${moduleName} resolvers tests`, () => {
   test(`${moduleName} npm resolver resolves package path`, async () => {
