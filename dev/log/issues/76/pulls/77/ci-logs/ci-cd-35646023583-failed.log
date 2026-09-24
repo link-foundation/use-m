@@ -1,0 +1,532 @@
+Publish to npm	UNKNOWN STEP	﻿2026-09-21T19:40:01.1352457Z Current runner version: '2.337.0'
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:01.1377068Z ##[group]Runner Image Provisioner
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:01.1377852Z Hosted Compute Agent
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:01.1378468Z Version: 20260828.587
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:01.1379076Z Commit: abac92662cab4cc7352de4f9f9d2e2419aad9c29
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:01.1379750Z Build Date: 2026-08-28T16:44:25Z
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:01.1380388Z Worker ID: {997e4e4f-16bc-49c8-adb3-6fcd12f1a6fc}
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:01.1381023Z Azure Region: westus3
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:01.1381603Z ##[endgroup]
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:01.1382897Z ##[group]Operating System
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:01.1383481Z Ubuntu
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:01.1384189Z 24.04.5
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:01.1384707Z LTS
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:01.1385212Z ##[endgroup]
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:01.1385738Z ##[group]Runner Image
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:01.1386272Z Image: ubuntu-24.04
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:01.1386808Z Version: 20260907.300.1
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:01.1387928Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260907.300/images/ubuntu/Ubuntu2404-Readme.md
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:01.1389363Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260907.300
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:01.1390206Z ##[endgroup]
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:01.1391267Z ##[group]GITHUB_TOKEN Permissions
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:01.1393148Z Contents: write
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:01.1393818Z Metadata: read
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:01.1394577Z ##[endgroup]
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:01.1396688Z Secret source: Actions
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:01.1397522Z Cache mode: write
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:01.1398182Z Prepare workflow directory
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:01.1724641Z Prepare all required actions
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:01.1776399Z Getting action download info
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:01.5181149Z Download action repository 'actions/checkout@v6' (SHA:d23441a48e516b6c34aea4fa41551a30e30af803)
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:01.6217580Z Download action repository 'actions/setup-node@v6' (SHA:249970729cb0ef3589644e2896645e5dc5ba9c38)
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:01.8057883Z Complete job name: Publish to npm
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:01.8900725Z ##[group]Run actions/checkout@v6
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:01.8901541Z with:
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:01.8901933Z   fetch-depth: 0
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:01.8902371Z   repository: link-foundation/use-m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:01.8906472Z   token: ***
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:01.8906861Z   ssh-strict: true
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:01.8907254Z   ssh-user: git
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:01.8907665Z   persist-credentials: true
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:01.8908115Z   clean: true
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:01.8908531Z   sparse-checkout-cone-mode: true
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:01.8909034Z   fetch-tags: false
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:01.8909452Z   show-progress: true
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:01.8909864Z   lfs: false
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:01.8910237Z   submodules: false
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:01.8910638Z   set-safe-directory: true
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:01.8911086Z   allow-unsafe-pr-checkout: false
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:01.8911831Z ##[endgroup]
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:01.9889531Z Syncing repository: link-foundation/use-m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:01.9891241Z ##[group]Getting Git version info
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:01.9891937Z Working directory is '/home/runner/work/use-m/use-m'
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:01.9892816Z [command]/usr/bin/git version
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:01.9969568Z git version 2.55.0
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:01.9995337Z ##[endgroup]
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:02.0011775Z Temporarily overriding HOME='/home/runner/work/_temp/d10a052b-a085-48ba-9125-5191f34e4dc5' before making global git config changes
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:02.0013209Z Adding repository directory to the temporary git global config as a safe directory
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:02.0018274Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/use-m/use-m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:02.0078585Z Deleting the contents of '/home/runner/work/use-m/use-m'
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:02.0084481Z ##[group]Determining repository object format
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:02.0088192Z ##[endgroup]
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:02.0089029Z ##[group]Initializing the repository
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:02.0095162Z [command]/usr/bin/git init /home/runner/work/use-m/use-m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:02.0189396Z hint: Using 'master' as the name for the initial branch. This default branch name
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:02.0191002Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:02.0192298Z hint: to use in all of your new repositories, which will suppress this warning,
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:02.0192969Z hint: call:
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:02.0193342Z hint:
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:02.0193815Z hint: 	git config --global init.defaultBranch <name>
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:02.0194846Z hint:
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:02.0195403Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:02.0196248Z hint: 'development'. The just-created branch can be renamed via this command:
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:02.0196904Z hint:
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:02.0197272Z hint: 	git branch -m <name>
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:02.0197689Z hint:
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:02.0198251Z hint: Disable this message with "git config set advice.defaultBranchName false"
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:02.0199544Z Initialized empty Git repository in /home/runner/work/use-m/use-m/.git/
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:02.0204796Z [command]/usr/bin/git remote add origin https://github.com/link-foundation/use-m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:02.0247955Z ##[endgroup]
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:02.0248675Z ##[group]Disabling automatic garbage collection
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:02.0252921Z [command]/usr/bin/git config --local gc.auto 0
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:02.0281926Z ##[endgroup]
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:02.0283271Z ##[group]Setting up auth
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:02.0284084Z Removing SSH command configuration
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:02.0291057Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:02.0323619Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:02.0649339Z Removing HTTP extra header
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:02.0656869Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:02.0691309Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:02.0880525Z Removing includeIf entries pointing to credentials config files
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:02.0887794Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:02.0919781Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:02.1114484Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-3eab74ac-ca96-401b-909d-91a1f4678d70.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:02.1151126Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/use-m/use-m/.git.path /home/runner/work/_temp/git-credentials-3eab74ac-ca96-401b-909d-91a1f4678d70.config
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:02.1179825Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/use-m/use-m/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-3eab74ac-ca96-401b-909d-91a1f4678d70.config
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:02.1220585Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-3eab74ac-ca96-401b-909d-91a1f4678d70.config
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:02.1251545Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-3eab74ac-ca96-401b-909d-91a1f4678d70.config
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:02.1275176Z ##[endgroup]
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:02.1276257Z ##[group]Fetching the repository
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:02.1283255Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules origin +refs/heads/*:refs/remotes/origin/* +refs/tags/*:refs/tags/*
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4874644Z From https://github.com/link-foundation/use-m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4886728Z  * [new branch]      bun-support           -> origin/bun-support
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4889259Z  * [new branch]      claude/code-review-and-issues-01SdiL7uBLTa5p6uxQR2kdAF -> origin/claude/code-review-and-issues-01SdiL7uBLTa5p6uxQR2kdAF
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4892616Z  * [new branch]      deno-support          -> origin/deno-support
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4894153Z  * [new branch]      issue-13-b52bc46f     -> origin/issue-13-b52bc46f
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4895709Z  * [new branch]      issue-14-f47d1e1a     -> origin/issue-14-f47d1e1a
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4897261Z  * [new branch]      issue-15-6f3473cd     -> origin/issue-15-6f3473cd
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4899302Z  * [new branch]      issue-17-0819020f     -> origin/issue-17-0819020f
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4900879Z  * [new branch]      issue-19-f9451b6d     -> origin/issue-19-f9451b6d
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4902118Z  * [new branch]      issue-23-4cfef6db     -> origin/issue-23-4cfef6db
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4903125Z  * [new branch]      issue-24-9d12af89     -> origin/issue-24-9d12af89
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4904363Z  * [new branch]      issue-27-74634788     -> origin/issue-27-74634788
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4905354Z  * [new branch]      issue-28-af25aca1     -> origin/issue-28-af25aca1
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4906363Z  * [new branch]      issue-29-d342ccce     -> origin/issue-29-d342ccce
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4907395Z  * [new branch]      issue-32-fd09fad6     -> origin/issue-32-fd09fad6
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4908453Z  * [new branch]      issue-45-4e2fcd1f     -> origin/issue-45-4e2fcd1f
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4909884Z  * [new branch]      issue-47-4b9297ff6c31 -> origin/issue-47-4b9297ff6c31
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4911389Z  * [new branch]      issue-50-05d4b42f950f -> origin/issue-50-05d4b42f950f
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4912346Z  * [new branch]      issue-52-0a29ba8c2974 -> origin/issue-52-0a29ba8c2974
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4913288Z  * [new branch]      issue-54-405adccd9a8d -> origin/issue-54-405adccd9a8d
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4914426Z  * [new branch]      issue-56-fe0c27a4113b -> origin/issue-56-fe0c27a4113b
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4915622Z  * [new branch]      issue-58-42314bfdce85 -> origin/issue-58-42314bfdce85
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4916583Z  * [new branch]      issue-60-4e765a3f3c78 -> origin/issue-60-4e765a3f3c78
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4917531Z  * [new branch]      issue-62-b423ddd03866 -> origin/issue-62-b423ddd03866
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4918479Z  * [new branch]      issue-64-2a5fb759e0ae -> origin/issue-64-2a5fb759e0ae
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4919436Z  * [new branch]      issue-66-7a69d81d33de -> origin/issue-66-7a69d81d33de
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4920379Z  * [new branch]      issue-68-bf9ee8e88536 -> origin/issue-68-bf9ee8e88536
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4921320Z  * [new branch]      issue-70-594f83b7eb44 -> origin/issue-70-594f83b7eb44
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4922267Z  * [new branch]      issue-72-606b39bd9f42 -> origin/issue-72-606b39bd9f42
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4923301Z  * [new branch]      issue-73-b1203d46aeed -> origin/issue-73-b1203d46aeed
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4924562Z  * [new branch]      issue-8-13202ab8      -> origin/issue-8-13202ab8
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4925386Z  * [new branch]      main                  -> origin/main
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4926069Z  * [new tag]         v1.0.1                -> v1.0.1
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4926732Z  * [new tag]         v1.0.10               -> v1.0.10
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4927382Z  * [new tag]         v1.0.11               -> v1.0.11
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4928024Z  * [new tag]         v1.0.12               -> v1.0.12
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4928670Z  * [new tag]         v1.0.2                -> v1.0.2
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4929318Z  * [new tag]         v1.0.3                -> v1.0.3
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4929954Z  * [new tag]         v1.0.4                -> v1.0.4
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4930596Z  * [new tag]         v1.0.5                -> v1.0.5
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4931236Z  * [new tag]         v1.0.6                -> v1.0.6
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4931878Z  * [new tag]         v1.0.7                -> v1.0.7
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4932517Z  * [new tag]         v1.0.8                -> v1.0.8
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4933156Z  * [new tag]         v1.0.9                -> v1.0.9
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4933804Z  * [new tag]         v1.1.0                -> v1.1.0
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4934586Z  * [new tag]         v1.2.0                -> v1.2.0
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4935359Z  * [new tag]         v1.2.1                -> v1.2.1
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4936009Z  * [new tag]         v1.4.0                -> v1.4.0
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4936646Z  * [new tag]         v1.4.1                -> v1.4.1
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4937298Z  * [new tag]         v1.5.0                -> v1.5.0
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4937941Z  * [new tag]         v1.5.1                -> v1.5.1
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4938712Z  * [new tag]         v1.5.2                -> v1.5.2
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4939692Z  * [new tag]         v1.5.3                -> v1.5.3
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4940734Z  * [new tag]         v2.0.0                -> v2.0.0
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4941829Z  * [new tag]         v2.0.1                -> v2.0.1
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4942904Z  * [new tag]         v2.0.2                -> v2.0.2
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4944170Z  * [new tag]         v2.0.3                -> v2.0.3
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4945225Z  * [new tag]         v2.0.4                -> v2.0.4
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4946347Z  * [new tag]         v2.0.5                -> v2.0.5
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4947490Z  * [new tag]         v2.1.0                -> v2.1.0
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4948629Z  * [new tag]         v2.2.0                -> v2.2.0
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4949761Z  * [new tag]         v2.2.1                -> v2.2.1
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4950791Z  * [new tag]         v2.2.2                -> v2.2.2
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4951922Z  * [new tag]         v2.2.3                -> v2.2.3
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4953068Z  * [new tag]         v2.2.4                -> v2.2.4
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4954298Z  * [new tag]         v3.0.0                -> v3.0.0
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4954958Z  * [new tag]         v3.0.1                -> v3.0.1
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4955605Z  * [new tag]         v3.0.2                -> v3.0.2
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4956255Z  * [new tag]         v3.0.3                -> v3.0.3
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4957095Z  * [new tag]         v3.1.0                -> v3.1.0
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4957754Z  * [new tag]         v3.1.1                -> v3.1.1
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4958421Z  * [new tag]         v3.2.0                -> v3.2.0
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4959079Z  * [new tag]         v3.2.1                -> v3.2.1
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4959903Z  * [new tag]         v3.2.2                -> v3.2.2
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4961146Z  * [new tag]         v3.3.0                -> v3.3.0
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4962168Z  * [new tag]         v3.3.1                -> v3.3.1
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4963035Z  * [new tag]         v3.3.2                -> v3.3.2
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4964223Z  * [new tag]         v3.3.3                -> v3.3.3
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4965381Z  * [new tag]         v3.4.0                -> v3.4.0
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4966566Z  * [new tag]         v4.0.0                -> v4.0.0
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4967660Z  * [new tag]         v5.0.0                -> v5.0.0
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4968863Z  * [new tag]         v5.0.1                -> v5.0.1
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4969955Z  * [new tag]         v5.0.10               -> v5.0.10
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4971090Z  * [new tag]         v5.0.2                -> v5.0.2
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4972184Z  * [new tag]         v5.0.3                -> v5.0.3
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4973267Z  * [new tag]         v5.0.4                -> v5.0.4
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4974486Z  * [new tag]         v5.0.5                -> v5.0.5
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4975536Z  * [new tag]         v5.0.6                -> v5.0.6
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4976615Z  * [new tag]         v5.0.7                -> v5.0.7
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4977697Z  * [new tag]         v5.0.8                -> v5.0.8
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4978827Z  * [new tag]         v5.0.9                -> v5.0.9
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4979916Z  * [new tag]         v5.1.0                -> v5.1.0
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4981002Z  * [new tag]         v5.1.1                -> v5.1.1
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4982044Z  * [new tag]         v5.1.2                -> v5.1.2
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4982704Z  * [new tag]         v5.1.3                -> v5.1.3
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4983374Z  * [new tag]         v5.1.4                -> v5.1.4
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4984763Z  * [new tag]         v5.1.5                -> v5.1.5
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4985845Z  * [new tag]         v5.2.0                -> v5.2.0
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4986947Z  * [new tag]         v6.0.0                -> v6.0.0
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4987703Z  * [new tag]         v6.0.1                -> v6.0.1
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4988325Z  * [new tag]         v6.0.2                -> v6.0.2
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4988947Z  * [new tag]         v6.0.3                -> v6.0.3
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4989560Z  * [new tag]         v6.1.0                -> v6.1.0
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4990181Z  * [new tag]         v6.1.1                -> v6.1.1
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4990797Z  * [new tag]         v6.1.2                -> v6.1.2
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4991432Z  * [new tag]         v6.1.3                -> v6.1.3
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4992155Z  * [new tag]         v7.0.0                -> v7.0.0
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4992813Z  * [new tag]         v8.0.0                -> v8.0.0
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4993661Z  * [new tag]         v8.0.1                -> v8.0.1
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4994795Z  * [new tag]         v8.0.10               -> v8.0.10
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.4995724Z  * [new tag]         v8.0.11               -> v8.0.11
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5002038Z  * [new tag]         v8.0.12               -> v8.0.12
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5002736Z  * [new tag]         v8.0.13               -> v8.0.13
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5004083Z  * [new tag]         v8.0.14               -> v8.0.14
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5005151Z  * [new tag]         v8.0.15               -> v8.0.15
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5006081Z  * [new tag]         v8.0.16               -> v8.0.16
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5007253Z  * [new tag]         v8.0.17               -> v8.0.17
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5008535Z  * [new tag]         v8.0.18               -> v8.0.18
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5009784Z  * [new tag]         v8.0.19               -> v8.0.19
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5011136Z  * [new tag]         v8.0.2                -> v8.0.2
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5012308Z  * [new tag]         v8.0.20               -> v8.0.20
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5013415Z  * [new tag]         v8.0.21               -> v8.0.21
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5014724Z  * [new tag]         v8.0.22               -> v8.0.22
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5015865Z  * [new tag]         v8.0.3                -> v8.0.3
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5017007Z  * [new tag]         v8.0.4                -> v8.0.4
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5018109Z  * [new tag]         v8.0.5                -> v8.0.5
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5019238Z  * [new tag]         v8.0.6                -> v8.0.6
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5020389Z  * [new tag]         v8.0.7                -> v8.0.7
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5021593Z  * [new tag]         v8.0.8                -> v8.0.8
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5022708Z  * [new tag]         v8.0.9                -> v8.0.9
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5023453Z  * [new tag]         v8.1.0                -> v8.1.0
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5024408Z  * [new tag]         v8.10.0               -> v8.10.0
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5025090Z  * [new tag]         v8.10.1               -> v8.10.1
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5025764Z  * [new tag]         v8.10.10              -> v8.10.10
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5026427Z  * [new tag]         v8.10.11              -> v8.10.11
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5027096Z  * [new tag]         v8.10.12              -> v8.10.12
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5027771Z  * [new tag]         v8.10.13              -> v8.10.13
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5028427Z  * [new tag]         v8.10.14              -> v8.10.14
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5029085Z  * [new tag]         v8.10.15              -> v8.10.15
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5029924Z  * [new tag]         v8.10.16              -> v8.10.16
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5030712Z  * [new tag]         v8.10.17              -> v8.10.17
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5031405Z  * [new tag]         v8.10.18              -> v8.10.18
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5032106Z  * [new tag]         v8.10.19              -> v8.10.19
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5032808Z  * [new tag]         v8.10.2               -> v8.10.2
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5033713Z  * [new tag]         v8.10.25              -> v8.10.25
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5035032Z  * [new tag]         v8.10.26              -> v8.10.26
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5036142Z  * [new tag]         v8.10.3               -> v8.10.3
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5037268Z  * [new tag]         v8.10.4               -> v8.10.4
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5038506Z  * [new tag]         v8.10.7               -> v8.10.7
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5039766Z  * [new tag]         v8.10.8               -> v8.10.8
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5040999Z  * [new tag]         v8.10.9               -> v8.10.9
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5042226Z  * [new tag]         v8.11.0               -> v8.11.0
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5043427Z  * [new tag]         v8.11.1               -> v8.11.1
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5044631Z  * [new tag]         v8.12.0               -> v8.12.0
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5045579Z  * [new tag]         v8.12.1               -> v8.12.1
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5046288Z  * [new tag]         v8.13.0               -> v8.13.0
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5047015Z  * [new tag]         v8.13.1               -> v8.13.1
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5047778Z  * [new tag]         v8.13.2               -> v8.13.2
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5048845Z  * [new tag]         v8.13.3               -> v8.13.3
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5049670Z  * [new tag]         v8.13.4               -> v8.13.4
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5050385Z  * [new tag]         v8.13.5               -> v8.13.5
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5051097Z  * [new tag]         v8.13.6               -> v8.13.6
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5051807Z  * [new tag]         v8.13.7               -> v8.13.7
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5052533Z  * [new tag]         v8.13.8               -> v8.13.8
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5053249Z  * [new tag]         v8.14.0               -> v8.14.0
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5054205Z  * [new tag]         v8.14.1               -> v8.14.1
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5055072Z  * [new tag]         v8.14.2               -> v8.14.2
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5056127Z  * [new tag]         v8.14.3               -> v8.14.3
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5057015Z  * [new tag]         v8.14.4               -> v8.14.4
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5057725Z  * [new tag]         v8.15.0               -> v8.15.0
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5058435Z  * [new tag]         v8.15.1               -> v8.15.1
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5059137Z  * [new tag]         v8.16.0               -> v8.16.0
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5059848Z  * [new tag]         v8.2.0                -> v8.2.0
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5060561Z  * [new tag]         v8.2.1                -> v8.2.1
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5061252Z  * [new tag]         v8.2.2                -> v8.2.2
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5061959Z  * [new tag]         v8.2.3                -> v8.2.3
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5062666Z  * [new tag]         v8.2.4                -> v8.2.4
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5063733Z  * [new tag]         v8.2.5                -> v8.2.5
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5064987Z  * [new tag]         v8.2.6                -> v8.2.6
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5066041Z  * [new tag]         v8.2.7                -> v8.2.7
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5066999Z  * [new tag]         v8.2.8                -> v8.2.8
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5068187Z  * [new tag]         v8.3.0                -> v8.3.0
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5069497Z  * [new tag]         v8.3.1                -> v8.3.1
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5070745Z  * [new tag]         v8.4.0                -> v8.4.0
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5071878Z  * [new tag]         v8.5.0                -> v8.5.0
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5073067Z  * [new tag]         v8.5.1                -> v8.5.1
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5074336Z  * [new tag]         v8.5.10               -> v8.5.10
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5075527Z  * [new tag]         v8.5.11               -> v8.5.11
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5076677Z  * [new tag]         v8.5.2                -> v8.5.2
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5077842Z  * [new tag]         v8.5.3                -> v8.5.3
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5078946Z  * [new tag]         v8.5.4                -> v8.5.4
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5080094Z  * [new tag]         v8.5.5                -> v8.5.5
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5081252Z  * [new tag]         v8.5.6                -> v8.5.6
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5082483Z  * [new tag]         v8.5.7                -> v8.5.7
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5083678Z  * [new tag]         v8.5.8                -> v8.5.8
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5085139Z  * [new tag]         v8.5.9                -> v8.5.9
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5086336Z  * [new tag]         v8.6.0                -> v8.6.0
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5087475Z  * [new tag]         v8.7.0                -> v8.7.0
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5088188Z  * [new tag]         v8.7.1                -> v8.7.1
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5088887Z  * [new tag]         v8.7.2                -> v8.7.2
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5089579Z  * [new tag]         v8.7.3                -> v8.7.3
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5090433Z  * [new tag]         v8.7.4                -> v8.7.4
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5091511Z  * [new tag]         v8.8.0                -> v8.8.0
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5092234Z  * [new tag]         v8.8.1                -> v8.8.1
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5092957Z  * [new tag]         v8.8.2                -> v8.8.2
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5094125Z  * [new tag]         v8.8.3                -> v8.8.3
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5095048Z  * [new tag]         v8.8.4                -> v8.8.4
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5095873Z  * [new tag]         v8.8.5                -> v8.8.5
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5096849Z  * [new tag]         v8.8.6                -> v8.8.6
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5098090Z  * [new tag]         v8.9.0                -> v8.9.0
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5098902Z  * [new tag]         v8.9.1                -> v8.9.1
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5099703Z  * [new tag]         v8.9.2                -> v8.9.2
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5100514Z  * [new tag]         v8.9.3                -> v8.9.3
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5101312Z  * [new tag]         v8.9.4                -> v8.9.4
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5102111Z  * [new tag]         v8.9.5                -> v8.9.5
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5103007Z  * [new tag]         v8.9.6                -> v8.9.6
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5105230Z [command]/usr/bin/git branch --list --remote origin/main
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5106234Z   origin/main
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5107834Z [command]/usr/bin/git rev-parse refs/remotes/origin/main
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5108833Z 63d9d746ea9e3e90c66f272367fa7169e5bc5b15
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5110697Z ##[endgroup]
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5111571Z ##[group]Determining the checkout info
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5112636Z ##[endgroup]
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5113190Z [command]/usr/bin/git sparse-checkout disable
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5115429Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5117779Z ##[group]Checking out the ref
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5118897Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5510363Z Switched to a new branch 'main'
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5514178Z branch 'main' set up to track 'origin/main'.
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5522771Z ##[endgroup]
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5566874Z [command]/usr/bin/git log -1 --format=%H
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5591994Z 63d9d746ea9e3e90c66f272367fa7169e5bc5b15
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5884524Z ##[group]Run actions/setup-node@v6
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5885301Z with:
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5885730Z   node-version: 24.x
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5886324Z   registry-url: https://registry.npmjs.org
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5887139Z   package-manager-cache: false
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5887779Z   check-latest: false
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5896332Z   token: ***
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.5896777Z ##[endgroup]
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.7293367Z Found in cache @ /opt/hostedtoolcache/node/24.20.0/x64
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:03.7297683Z ##[group]Environment details
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:06.0418664Z node: v24.20.0
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:06.0419289Z npm: 11.19.0
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:06.0419739Z yarn: 1.22.22
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:06.0421242Z ##[endgroup]
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:06.0584254Z ##[group]Run npm ci --no-audit --no-fund
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:06.0584933Z ^[[36;1mnpm ci --no-audit --no-fund^[[0m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:06.0656575Z shell: /usr/bin/bash -e {0}
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:06.0656926Z env:
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:06.0657238Z   NPM_CONFIG_USERCONFIG: /home/runner/work/_temp/.npmrc
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:06.0657650Z   NODE_AUTH_TOKEN: XXXXX-XXXXX-XXXXX-XXXXX
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:06.0657978Z ##[endgroup]
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.3278090Z 
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.3285179Z added 476 packages in 9s
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.3291406Z npm warn install-scripts 1 package has install scripts not yet covered by allowScripts:
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.3292153Z npm warn install-scripts   puppeteer@24.16.2 (postinstall: node install.mjs)
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.3292606Z npm warn install-scripts
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.3293262Z npm warn install-scripts Run `npm install-scripts ls` to review, or `npm install-scripts approve <pkg>` to allow.
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.3625987Z ##[group]Run VERSION=$(node -p "require('./package.json').version")
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.3626523Z ^[[36;1mVERSION=$(node -p "require('./package.json').version")^[[0m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.3626914Z ^[[36;1mNAME=$(node -p "require('./package.json').name")^[[0m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.3627272Z ^[[36;1mecho "version=${VERSION}" >> "$GITHUB_OUTPUT"^[[0m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.3627600Z ^[[36;1mecho "name=${NAME}" >> "$GITHUB_OUTPUT"^[[0m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.3627922Z ^[[36;1mecho "tag=v${VERSION}" >> "$GITHUB_OUTPUT"^[[0m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.3628245Z ^[[36;1mecho "Package: ${NAME}@${VERSION}"^[[0m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.3651650Z shell: /usr/bin/bash -e {0}
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.3651940Z env:
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.3652220Z   NPM_CONFIG_USERCONFIG: /home/runner/work/_temp/.npmrc
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.3652563Z   NODE_AUTH_TOKEN: XXXXX-XXXXX-XXXXX-XXXXX
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.3652835Z ##[endgroup]
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.4300061Z Package: use-m@8.16.2
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.4360154Z ##[group]Run if npm view "${PACKAGE_NAME}@${PACKAGE_VERSION}" version >/dev/null 2>&1; then
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.4360812Z ^[[36;1mif npm view "${PACKAGE_NAME}@${PACKAGE_VERSION}" version >/dev/null 2>&1; then^[[0m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.4361232Z ^[[36;1m  echo "exists=true" >> "$GITHUB_OUTPUT"^[[0m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.4361620Z ^[[36;1m  echo "${PACKAGE_NAME}@${PACKAGE_VERSION} already exists on npm."^[[0m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.4361960Z ^[[36;1m^[[0m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.4362167Z ^[[36;1m  tag_exists=false^[[0m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.4362411Z ^[[36;1m  release_exists=false^[[0m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.4362649Z ^[[36;1m^[[0m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.4362890Z ^[[36;1m  if git rev-parse "$TAG" >/dev/null 2>&1; then^[[0m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.4363214Z ^[[36;1m    tag_exists=true^[[0m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.4363440Z ^[[36;1m  fi^[[0m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.4363633Z ^[[36;1m^[[0m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.4363869Z ^[[36;1m  if gh release view "$TAG" >/dev/null 2>&1; then^[[0m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.4364723Z ^[[36;1m    release_exists=true^[[0m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.4365009Z ^[[36;1m  fi^[[0m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.4365205Z ^[[36;1m^[[0m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.4365458Z ^[[36;1m  echo "tag_exists=${tag_exists}" >> "$GITHUB_OUTPUT"^[[0m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.4365847Z ^[[36;1m  echo "release_exists=${release_exists}" >> "$GITHUB_OUTPUT"^[[0m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.4366174Z ^[[36;1m^[[0m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.4366450Z ^[[36;1m  if [ "$tag_exists" = "true" ] && [ "$release_exists" = "true" ]; then^[[0m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.4367238Z ^[[36;1m    echo "::error::${PACKAGE_NAME}@${PACKAGE_VERSION}, git tag ${TAG}, and GitHub release ${TAG} already exist. Update package.json to the next unpublished version before merging to main."^[[0m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.4367919Z ^[[36;1m    exit 1^[[0m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.4368129Z ^[[36;1m  fi^[[0m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.4368336Z ^[[36;1m^[[0m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.4368699Z ^[[36;1m  echo "release metadata is incomplete; skipping npm publish and repairing tag/release."^[[0m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.4369123Z ^[[36;1melse^[[0m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.4369358Z ^[[36;1m  echo "exists=false" >> "$GITHUB_OUTPUT"^[[0m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.4369685Z ^[[36;1m  echo "tag_exists=false" >> "$GITHUB_OUTPUT"^[[0m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.4370024Z ^[[36;1m  echo "release_exists=false" >> "$GITHUB_OUTPUT"^[[0m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.4370466Z ^[[36;1m  echo "${PACKAGE_NAME}@${PACKAGE_VERSION} is not on npm; publishing after tests."^[[0m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.4370851Z ^[[36;1mfi^[[0m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.4394201Z shell: /usr/bin/bash -e {0}
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.4394477Z env:
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.4394739Z   NPM_CONFIG_USERCONFIG: /home/runner/work/_temp/.npmrc
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.4395074Z   NODE_AUTH_TOKEN: XXXXX-XXXXX-XXXXX-XXXXX
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.4397934Z   GH_TOKEN: ***
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.4398292Z   PACKAGE_NAME: use-m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.4398520Z   PACKAGE_VERSION: 8.16.2
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.4398746Z   TAG: v8.16.2
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.4398949Z ##[endgroup]
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.8728005Z use-m@8.16.2 is not on npm; publishing after tests.
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.8765417Z ##[group]Run npm install -g npm@^11.5.1
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.8765802Z ^[[36;1mnpm install -g npm@^11.5.1^[[0m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.8766076Z ^[[36;1mnode --version^[[0m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.8766310Z ^[[36;1mnpm --version^[[0m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.8788411Z shell: /usr/bin/bash -e {0}
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.8788689Z env:
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.8788952Z   NPM_CONFIG_USERCONFIG: /home/runner/work/_temp/.npmrc
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.8789300Z   NODE_AUTH_TOKEN: XXXXX-XXXXX-XXXXX-XXXXX
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:15.8789572Z ##[endgroup]
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:19.5917942Z 
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:19.5918588Z changed 15 packages in 4s
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:19.5919000Z 
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:19.5945725Z 15 packages are looking for funding
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:19.5946292Z   run `npm fund` for details
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:19.6083679Z v24.20.0
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:19.6784944Z 11.19.1
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:19.6849813Z ##[group]Run npm publish --access public --provenance
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:19.6850204Z ^[[36;1mnpm publish --access public --provenance^[[0m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:19.6871786Z shell: /usr/bin/bash -e {0}
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:19.6872053Z env:
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:19.6872318Z   NPM_CONFIG_USERCONFIG: /home/runner/work/_temp/.npmrc
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:19.6872668Z   NODE_AUTH_TOKEN: XXXXX-XXXXX-XXXXX-XXXXX
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:19.6872958Z ##[endgroup]
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:20.1099199Z npm notice
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:20.1103252Z npm notice 📦  use-m@8.16.2
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:20.1104086Z npm notice Tarball Contents
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:20.1108394Z npm notice 1.2kB LICENSE
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:20.1108947Z npm notice 29.0kB README.md
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:20.1109532Z npm notice 1.9kB package.json
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:20.1110111Z npm notice 1.6kB src/cli.mjs
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:20.1110624Z npm notice 7.4kB src/load.cjs
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:20.1111148Z npm notice 7.3kB src/load.mjs
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:20.1111754Z npm notice 2.3kB src/loader.js
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:20.1112433Z npm notice 1.7kB src/test-adapter.cjs
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:20.1113082Z npm notice 1.8kB src/test-adapter.mjs
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:20.1113677Z npm notice 70.4kB src/use.cjs
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:20.1114371Z npm notice 70.4kB src/use.js
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:20.1114915Z npm notice 70.4kB src/use.mjs
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:20.1115409Z npm notice 70.8kB use.cjs
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:20.1115863Z npm notice 70.7kB use.js
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:20.1116257Z npm notice 70.8kB use.mjs
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:20.1117259Z npm notice Tarball Details
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:20.1117666Z npm notice name: use-m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:20.1118063Z npm notice version: 8.16.2
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:20.1118709Z npm notice filename: use-m-8.16.2.tgz
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:20.1119209Z npm notice package size: 124.4 kB
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:20.1119898Z npm notice unpacked size: 477.6 kB
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:20.1120635Z npm notice shasum: 84d36fcf7acf202c13696574da507190152088c8
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:20.1121571Z npm notice integrity: sha512-JK6poQypwNUbE[...]Wyhl7CKnud6UQ==
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:20.1122292Z npm notice total files: 15
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:20.1122789Z npm notice
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:21.2378906Z npm notice npm tokens that bypass 2FA are being restricted for account changes and direct publishing. Learn how to prepare: https://gh.io/npm-gat-bypass2fa-deprecation
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:21.3750716Z npm notice Publishing to https://registry.npmjs.org/ with tag latest and public access
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:22.0242619Z npm notice publish Signed provenance statement with source and build information from GitHub Actions
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:22.0244541Z npm notice publish Provenance statement published to transparency log: https://search.sigstore.dev/?logIndex=2906800767
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:23.5956282Z npm notice Your package is being processed and may take a few minutes to become available.
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:23.5959193Z + use-m@8.16.2
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:23.6106468Z ##[group]Run for attempt in 1 2 3 4 5 6 7 8 9 10; do
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:23.6106977Z ^[[36;1mfor attempt in 1 2 3 4 5 6 7 8 9 10; do^[[0m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:23.6107376Z ^[[36;1m  PUBLISHED_VERSION=$(npm view "use-m@8.16.2" version 2>/dev/null || true)^[[0m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:23.6107793Z ^[[36;1m  if [ "$PUBLISHED_VERSION" = "8.16.2" ]; then^[[0m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:23.6108155Z ^[[36;1m    echo "Verified npm package use-m@${PUBLISHED_VERSION}"^[[0m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:23.6108487Z ^[[36;1m    exit 0^[[0m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:23.6108688Z ^[[36;1m  fi^[[0m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:23.6109029Z ^[[36;1m  echo "npm registry has not returned the new version yet (attempt ${attempt}/10)."^[[0m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:23.6109430Z ^[[36;1m  sleep 10^[[0m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:23.6109635Z ^[[36;1mdone^[[0m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:23.6109866Z ^[[36;1mecho "Failed to verify use-m@8.16.2 on npm."^[[0m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:23.6110142Z ^[[36;1mexit 1^[[0m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:23.6131889Z shell: /usr/bin/bash -e {0}
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:23.6132148Z env:
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:23.6132456Z   NPM_CONFIG_USERCONFIG: /home/runner/work/_temp/.npmrc
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:23.6132791Z   NODE_AUTH_TOKEN: XXXXX-XXXXX-XXXXX-XXXXX
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:23.6133066Z ##[endgroup]
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:23.9394725Z npm registry has not returned the new version yet (attempt 1/10).
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:34.2592119Z npm registry has not returned the new version yet (attempt 2/10).
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:44.5704870Z npm registry has not returned the new version yet (attempt 3/10).
+Publish to npm	UNKNOWN STEP	2026-09-21T19:40:54.8760272Z npm registry has not returned the new version yet (attempt 4/10).
+Publish to npm	UNKNOWN STEP	2026-09-21T19:41:05.1722353Z npm registry has not returned the new version yet (attempt 5/10).
+Publish to npm	UNKNOWN STEP	2026-09-21T19:41:15.4770858Z npm registry has not returned the new version yet (attempt 6/10).
+Publish to npm	UNKNOWN STEP	2026-09-21T19:41:25.7770313Z npm registry has not returned the new version yet (attempt 7/10).
+Publish to npm	UNKNOWN STEP	2026-09-21T19:41:36.0764575Z npm registry has not returned the new version yet (attempt 8/10).
+Publish to npm	UNKNOWN STEP	2026-09-21T19:41:46.3735089Z npm registry has not returned the new version yet (attempt 9/10).
+Publish to npm	UNKNOWN STEP	2026-09-21T19:41:56.6788800Z npm registry has not returned the new version yet (attempt 10/10).
+Publish to npm	UNKNOWN STEP	2026-09-21T19:42:06.6805291Z Failed to verify use-m@8.16.2 on npm.
+Publish to npm	UNKNOWN STEP	2026-09-21T19:42:06.6821521Z ##[error]Process completed with exit code 1.
+Publish to npm	UNKNOWN STEP	2026-09-21T19:42:06.6968919Z Post job cleanup.
+Publish to npm	UNKNOWN STEP	2026-09-21T19:42:06.7813062Z [command]/usr/bin/git version
+Publish to npm	UNKNOWN STEP	2026-09-21T19:42:06.7851372Z git version 2.55.0
+Publish to npm	UNKNOWN STEP	2026-09-21T19:42:06.7889506Z Temporarily overriding HOME='/home/runner/work/_temp/93c5323e-c017-4715-87d7-42d70cb796ef' before making global git config changes
+Publish to npm	UNKNOWN STEP	2026-09-21T19:42:06.7891044Z Adding repository directory to the temporary git global config as a safe directory
+Publish to npm	UNKNOWN STEP	2026-09-21T19:42:06.7900143Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/use-m/use-m
+Publish to npm	UNKNOWN STEP	2026-09-21T19:42:06.7931029Z Removing SSH command configuration
+Publish to npm	UNKNOWN STEP	2026-09-21T19:42:06.7938174Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+Publish to npm	UNKNOWN STEP	2026-09-21T19:42:06.7973537Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+Publish to npm	UNKNOWN STEP	2026-09-21T19:42:06.8187225Z Removing HTTP extra header
+Publish to npm	UNKNOWN STEP	2026-09-21T19:42:06.8188859Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+Publish to npm	UNKNOWN STEP	2026-09-21T19:42:06.8214177Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+Publish to npm	UNKNOWN STEP	2026-09-21T19:42:06.8406306Z Removing includeIf entries pointing to credentials config files
+Publish to npm	UNKNOWN STEP	2026-09-21T19:42:06.8415196Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+Publish to npm	UNKNOWN STEP	2026-09-21T19:42:06.8444690Z includeif.gitdir:/home/runner/work/use-m/use-m/.git.path
+Publish to npm	UNKNOWN STEP	2026-09-21T19:42:06.8446114Z includeif.gitdir:/home/runner/work/use-m/use-m/.git/worktrees/*.path
+Publish to npm	UNKNOWN STEP	2026-09-21T19:42:06.8447226Z includeif.gitdir:/github/workspace/.git.path
+Publish to npm	UNKNOWN STEP	2026-09-21T19:42:06.8448290Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+Publish to npm	UNKNOWN STEP	2026-09-21T19:42:06.8464494Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/use-m/use-m/.git.path
+Publish to npm	UNKNOWN STEP	2026-09-21T19:42:06.8485729Z /home/runner/work/_temp/git-credentials-3eab74ac-ca96-401b-909d-91a1f4678d70.config
+Publish to npm	UNKNOWN STEP	2026-09-21T19:42:06.8495679Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/use-m/use-m/.git.path /home/runner/work/_temp/git-credentials-3eab74ac-ca96-401b-909d-91a1f4678d70.config
+Publish to npm	UNKNOWN STEP	2026-09-21T19:42:06.8529029Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/use-m/use-m/.git/worktrees/*.path
+Publish to npm	UNKNOWN STEP	2026-09-21T19:42:06.8554205Z /home/runner/work/_temp/git-credentials-3eab74ac-ca96-401b-909d-91a1f4678d70.config
+Publish to npm	UNKNOWN STEP	2026-09-21T19:42:06.8564498Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/use-m/use-m/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-3eab74ac-ca96-401b-909d-91a1f4678d70.config
+Publish to npm	UNKNOWN STEP	2026-09-21T19:42:06.8593654Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git.path
+Publish to npm	UNKNOWN STEP	2026-09-21T19:42:06.8612428Z /github/runner_temp/git-credentials-3eab74ac-ca96-401b-909d-91a1f4678d70.config
+Publish to npm	UNKNOWN STEP	2026-09-21T19:42:06.8619788Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-3eab74ac-ca96-401b-909d-91a1f4678d70.config
+Publish to npm	UNKNOWN STEP	2026-09-21T19:42:06.8647792Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+Publish to npm	UNKNOWN STEP	2026-09-21T19:42:06.8668034Z /github/runner_temp/git-credentials-3eab74ac-ca96-401b-909d-91a1f4678d70.config
+Publish to npm	UNKNOWN STEP	2026-09-21T19:42:06.8675542Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-3eab74ac-ca96-401b-909d-91a1f4678d70.config
+Publish to npm	UNKNOWN STEP	2026-09-21T19:42:06.8713107Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+Publish to npm	UNKNOWN STEP	2026-09-21T19:42:06.8899810Z Removing credentials config '/home/runner/work/_temp/git-credentials-3eab74ac-ca96-401b-909d-91a1f4678d70.config'
+Publish to npm	UNKNOWN STEP	2026-09-21T19:42:06.9036711Z Cleaning up orphan processes

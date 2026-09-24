@@ -10,6 +10,8 @@ lerna-debug.log*
 # Re-include CI logs preserved as evidence inside case studies.
 !docs/case-studies/**/logs/
 !docs/case-studies/**/logs/*.log
+!dev/log/**/
+!dev/log/**/*.log
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
