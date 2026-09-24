@@ -37,9 +37,12 @@ export function buildRegistryUrl(name, version, registry = DEFAULT_REGISTRY) {
   return version === undefined ? `${base}${encodedName}` : `${base}${encodedName}/${encodeURIComponent(version)}`
 }
 
-// The registry CDN caches documents for 300 s (`cache-control: max-age=300`),
-// including the 404 a poll sees right after publishing. A unique query string
-// is not a cache key it has seen, so every poll reaches the origin.
+// The registry CDN serves the full package document (what `npm view` and the
+// backfill read) from cache for up to 300 s (`cf-cache-status: HIT`,
+// `cache-control: public, max-age=300`), so a version npm has just processed
+// can stay invisible for five more minutes. A unique query string is a cache
+// miss, so every poll sees the origin's current answer. See
+// dev/log/issues/76/pulls/77/data/registry-cache-headers.txt.
 function cacheBusted(url, now) {
   return `${url}?cache-bust=${now()}`
 }

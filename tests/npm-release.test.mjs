@@ -62,8 +62,8 @@ describe('npm release helper', () => {
   })
 
   test('bypasses the registry CDN cache on every check', async () => {
-    // The registry answers with `cache-control: max-age=300`, so a cached 404
-    // could hide a fresh publish for five minutes.
+    // The registry CDN caches package documents for up to 300 s, so a cached
+    // answer could hide a fresh publish for five more minutes.
     const { fetchFn, requests } = fakeFetch([jsonResponse(200, { version: '1.0.0', gitHead: HEAD_A })])
     const result = await checkNpmVersion({ name: 'use-m', version: '1.0.0', fetchFn, now: () => 42 })
 
