@@ -139,7 +139,7 @@ describe('release workflow policy', () => {
     expect(testJob.includes('shell: bash')).toBe(true)
     expect(testJob.includes('./experiments/test-polyfill-no-fetch.mjs')).toBe(true)
     expect(packageJson.scripts.test).toBe(
-      'node --experimental-vm-modules ./node_modules/jest/bin/jest.js'
+      'node --experimental-vm-modules --disable-warning=ExperimentalWarning --disable-warning=DEP0025 --disable-warning=DEP0040 --disable-warning=DEP0125 ./node_modules/jest/bin/jest.js'
     )
   })
 
