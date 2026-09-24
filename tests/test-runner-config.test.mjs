@@ -25,6 +25,23 @@ describe('test runner configuration', () => {
     expect(bunCommandTimeoutMs()).toBe(jestConfig.testTimeout)
   })
 
+  test('does not lower the per-test budget in individual test files', async () => {
+    // Issue #76: resolvers.test.{mjs,cjs} set a 10 s jest.setTimeout, which
+    // overrode the 30 s default and failed a real lodash install on
+    // windows-latest (run 36050374345).
+    const { default: jestConfig } = await import(pathToFileURL(path.join(rootDir, 'jest.config.js')).href)
+    const lowered = fs
+      .readdirSync(path.join(rootDir, 'tests'))
+      .filter((fileName) => /\.(c|m)?js$/.test(fileName))
+      .flatMap((fileName) =>
+        [...readText(path.join('tests', fileName)).matchAll(/jest\.setTimeout\((\d+)\)/g)]
+          .filter((match) => Number(match[1]) < jestConfig.testTimeout)
+          .map((match) => `${fileName}: ${match[0]}`)
+      )
+
+    expect(lowered).toEqual([])
+  })
+
   test('does not configure the Bun timeout where Bun ignores it', () => {
     // bunfig.toml has no test timeout setting: Bun 1.4 silently ignored
     // `timeout = "30000ms"` and kept its 5 s default (reproduce with

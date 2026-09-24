@@ -3,8 +3,6 @@ const { describe, test, expect } = require('../src/test-adapter.cjs');
 const resolve = require.resolve;
 const moduleName = `[${__filename.split('.').pop()} module]`;
 
-jest.setTimeout(10000);
-
 describe(`${moduleName} resolvers tests`, () => {
   const { resolvers } = require('../src/use.cjs');
 
