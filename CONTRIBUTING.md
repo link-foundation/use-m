@@ -70,21 +70,23 @@ deno test --allow-net --allow-env --allow-run --allow-read --allow-write --allow
 
 ```
 /home/user/use-m/
-├── src/                    # All shipped source code (single source of truth)
-│   ├── use.mjs             # ES Module version (main implementation)
-│   ├── use.cjs             # CommonJS version
-│   ├── use.js              # Universal version (browser/eval)
+├── src/                    # Shipped source and compact compatibility builds
+│   ├── use/                # Canonical implementation fragments (<1500 lines each)
+│   ├── use.mjs             # AUTO-GENERATED compact ES Module compatibility build
+│   ├── use.cjs             # AUTO-GENERATED compact CommonJS compatibility build
+│   ├── use.js              # AUTO-GENERATED compact universal compatibility build
 │   ├── load.mjs            # Robust CDN bootstrap (loadUseM + loadWithFallback)
 │   ├── load.cjs            # CommonJS variant of load.mjs
 │   ├── cli.mjs             # CLI tool
 │   ├── loader.js           # Node.js module loader hooks
 │   ├── test-adapter.mjs    # Cross-runtime test framework adapter
 │   └── test-adapter.cjs    # CommonJS version of test adapter
-├── use.js                  # AUTO-GENERATED root mirror of src/use.js (CDN URL compat)
-├── use.cjs                 # AUTO-GENERATED root mirror of src/use.cjs (CDN URL compat)
-├── use.mjs                 # AUTO-GENERATED root mirror of src/use.mjs (CDN URL compat)
+├── use.js                  # AUTO-GENERATED readable universal single-file bundle
+├── use.cjs                 # AUTO-GENERATED readable CommonJS single-file bundle
+├── use.mjs                 # AUTO-GENERATED readable ES Module single-file bundle
 ├── scripts/                # Maintenance scripts
-│   └── sync-root-entries.mjs  # Regenerates the root use.* mirrors from src/
+│   ├── build-use-bundles.mjs  # Builds all six use.* distribution files
+│   └── sync-root-entries.mjs  # Backward-compatible build command wrapper
 ├── tests/                  # Test suite
 ├── examples/               # Usage examples
 ├── experiments/            # Throwaway scripts for verifying assumptions
@@ -94,12 +96,12 @@ deno test --allow-net --allow-env --allow-run --allow-read --allow-write --allow
 
 ### Key Files
 
-- **src/use.mjs**: Primary implementation file. Changes here should be synchronized to `src/use.cjs`
-- **src/use.cjs**: CommonJS variant of `src/use.mjs`
-- **src/use.js**: Universal eval-loadable build kept in sync with `src/use.mjs`/`src/use.cjs` (the `tests/script-sync.test.mjs` check enforces this for the npm resolver)
+- **src/use/**: Canonical implementation split into focused fragments. Every source file stays below 1,500 lines
+- **src/use.mjs / src/use.cjs / src/use.js**: AUTO-GENERATED compact compatibility bundles retained for consumers of historical `/src/` CDN URLs
 - **src/load.mjs / src/load.cjs**: Robust bootstrap loader and shared `loadWithFallback` engine reused by `src/loader.js` and per-package CDN fallback chains in `src/use.{mjs,cjs}`
-- **use.js / use.cjs / use.mjs** (repo root): AUTO-GENERATED full mirrors of `src/use.*`. They exist only so the historical CDN bootstrap URLs (e.g. `https://unpkg.com/use-m/use.js`) keep resolving — unpkg/jsdelivr serve raw files and ignore package.json `exports`. **Never edit them by hand**; run `npm run sync:entries` after changing any `src/use.*` file. `tests/root-entries.test.mjs` enforces that they stay in sync. See [#60](https://github.com/link-foundation/use-m/issues/60)
-- **scripts/sync-root-entries.mjs**: Regenerates the root `use.*` mirrors from `src/` (invoked by `npm run sync:entries`)
+- **use.js / use.cjs / use.mjs** (repo root): AUTO-GENERATED readable, standalone distributions used by package exports and historical CDN bootstrap URLs. They intentionally remain unminified single files. **Never edit them by hand**
+- **scripts/build-use-bundles.mjs**: Deterministically generates both the readable root bundles and compact `/src/` compatibility bundles from `src/use/` (`npm run build`)
+- **scripts/sync-root-entries.mjs**: Backward-compatible wrapper around the same build for existing contributor workflows
 - **tests/**: Each test file has both `.mjs` and `.cjs` versions
 - **examples/**: Real-world usage examples
 
@@ -132,8 +134,9 @@ deno test --allow-net --allow-env --allow-run --allow-read --allow-write --allow
 
 ### Important Notes
 
-- **Dual-file updates**: Changes to `src/use.mjs` typically require corresponding updates to `src/use.cjs` (and frequently `src/use.js` for the npm resolver block — `tests/script-sync.test.mjs` enforces this)
-- **Regenerate root mirrors**: After editing any `src/use.*` file, run `npm run sync:entries` and commit the regenerated root `use.js` / `use.cjs` / `use.mjs`. `tests/root-entries.test.mjs` fails if they drift from `src/`
+- **Single source of truth**: Edit the focused files in `src/use/`, not any generated `use.*` file
+- **Regenerate distribution bundles**: Run `npm run build` after editing `src/use/`, then commit all six generated root and compatibility bundles. Deterministic build tests fail if any artifact drifts
+- **Source size**: Keep every file in `src/` below 1,500 lines; split a focused source fragment before it reaches that limit
 - **Cross-runtime compatibility**: Ensure changes work on Node.js, Bun, and Deno
 - **Examples**: Update examples if you change public APIs
 

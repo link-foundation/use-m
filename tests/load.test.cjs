@@ -72,9 +72,9 @@ describe(`${moduleName} looksLikeUseModule`, () => {
 describe(`${moduleName} DEFAULT_SOURCES`, () => {
   test(`${moduleName} lists unpkg, jsDelivr and esm.sh in priority order`, () => {
     expect(DEFAULT_SOURCES).toEqual([
-      'https://unpkg.com/use-m/src/use.js',
-      'https://cdn.jsdelivr.net/npm/use-m/src/use.js',
-      'https://esm.sh/use-m/src/use.js',
+      'https://unpkg.com/use-m/use.js',
+      'https://cdn.jsdelivr.net/npm/use-m/use.js',
+      'https://esm.sh/use-m/use.js',
     ]);
   });
 });
@@ -116,7 +116,7 @@ describe(`${moduleName} loadUseM`, () => {
       if (attempts < 3) return response('Service Unavailable', { ok: false, status: 503, statusText: 'Service Unavailable' });
       return response(FAKE_MODULE);
     });
-    const mod = await loadUseM({ fetch, retryDelayMs: 0, sources: ['https://unpkg.com/use-m/src/use.js'] });
+    const mod = await loadUseM({ fetch, retryDelayMs: 0, sources: ['https://unpkg.com/use-m/use.js'] });
     expect(typeof mod.use).toBe('function');
     expect(attempts).toBe(3);
   });
@@ -146,7 +146,7 @@ describe(`${moduleName} loadUseM`, () => {
   test(`${moduleName} surfaces the HTTP status for non-ok responses`, async () => {
     const fetch = mockFetch(() => response('Bad Gateway', { ok: false, status: 502, statusText: 'Bad Gateway' }));
     await expect(
-      loadUseM({ fetch, retryDelayMs: 0, maxAttemptsPerSource: 1, sources: ['https://unpkg.com/use-m/src/use.js'] })
+      loadUseM({ fetch, retryDelayMs: 0, maxAttemptsPerSource: 1, sources: ['https://unpkg.com/use-m/use.js'] })
     ).rejects.toThrow(/HTTP 502/);
   });
 
@@ -156,7 +156,7 @@ describe(`${moduleName} loadUseM`, () => {
     const body = '/* not the use module ' + 'y'.repeat(300) + ' */\n({ notExported: 1 })';
     const fetch = mockFetch(() => response(body));
     await expect(
-      loadUseM({ fetch, retryDelayMs: 0, maxAttemptsPerSource: 1, sources: ['https://unpkg.com/use-m/src/use.js'] })
+      loadUseM({ fetch, retryDelayMs: 0, maxAttemptsPerSource: 1, sources: ['https://unpkg.com/use-m/use.js'] })
     ).rejects.toThrow(/did not export a `use` function/);
   });
 
@@ -166,7 +166,7 @@ describe(`${moduleName} loadUseM`, () => {
     const fetch = mockFetch(() => response(malformed));
     let thrown;
     try {
-      await loadUseM({ fetch, retryDelayMs: 0, maxAttemptsPerSource: 1, sources: ['https://unpkg.com/use-m/src/use.js'] });
+      await loadUseM({ fetch, retryDelayMs: 0, maxAttemptsPerSource: 1, sources: ['https://unpkg.com/use-m/use.js'] });
     } catch (error) {
       thrown = error;
     }
@@ -199,7 +199,7 @@ describe(`${moduleName} loadUseM`, () => {
       }
     });
     await expect(
-      loadUseM({ fetch: hangingFetch, timeoutMs: 50, retryDelayMs: 0, maxAttemptsPerSource: 1, sources: ['https://unpkg.com/use-m/src/use.js'] })
+      loadUseM({ fetch: hangingFetch, timeoutMs: 50, retryDelayMs: 0, maxAttemptsPerSource: 1, sources: ['https://unpkg.com/use-m/use.js'] })
     ).rejects.toThrow(/timed out after 50ms/);
   });
 });

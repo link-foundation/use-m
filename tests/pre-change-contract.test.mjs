@@ -222,6 +222,16 @@ for (const [format, api] of implementations) {
       await expect(api.baseUse('file:///definitely/missing/use-m-contract.mjs')).rejects.toThrow(
         'Failed to import module from'
       );
+
+      let windowsPathError;
+      try {
+        await api.baseUse('C:\\missing folder\\use-m-contract.mjs');
+      } catch (error) {
+        windowsPathError = error;
+      }
+      expect(windowsPathError).toBeDefined();
+      expect(windowsPathError.cause?.code).not.toBe('ERR_UNSUPPORTED_ESM_URL_SCHEME');
+      expect(String(windowsPathError.cause?.message)).not.toContain("Received protocol 'c:'");
     });
 
     test('keeps explicit resolver and multi-resolver makeUse behavior stable', async () => {
@@ -311,6 +321,42 @@ for (const [format, api] of implementations) {
 
   });
 }
+
+describe('Windows path import portability', () => {
+  test('converts native drive-letter paths before using the Node ESM loader', async () => {
+    if (typeof Bun !== 'undefined' || typeof Deno !== 'undefined') return;
+
+    // Use the CommonJS binding so this probe does not prime Jest's synthetic
+    // ESM built-in cache before the Bun resolver contract swaps exec below.
+    const { spawnSync } = require('node:child_process');
+    const bundleUrl = new URL('../src/use.mjs', import.meta.url).href;
+    const probe = spawnSync(process.execPath, [
+      '--input-type=module',
+      '--eval',
+      `import { baseUse } from ${JSON.stringify(bundleUrl)};
+let result;
+try {
+  await baseUse(process.env.USE_M_WINDOWS_IMPORT_PATH);
+  result = { loaded: true };
+} catch (error) {
+  result = { code: error.cause?.code, message: error.cause?.message, url: error.cause?.url };
+}
+process.stdout.write(JSON.stringify(result));`,
+    ], {
+      encoding: 'utf8',
+      env: {
+        ...process.env,
+        USE_M_WINDOWS_IMPORT_PATH: 'C:\\missing folder\\use-m-contract.mjs',
+      },
+    });
+
+    expect(probe.status).toBe(0);
+    const result = JSON.parse(probe.stdout);
+    expect(result.code).not.toBe('ERR_UNSUPPORTED_ESM_URL_SCHEME');
+    expect(result.message).not.toContain("Received protocol 'c:'");
+    expect(result.url).toBe('file:///C:/missing%20folder/use-m-contract.mjs');
+  });
+});
 
 describe('Bun resolver pre-change public contract', () => {
   test('retains install, reuse, package resolution, and error behavior', async () => {

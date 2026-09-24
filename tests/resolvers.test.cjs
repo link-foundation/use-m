@@ -11,7 +11,7 @@ describe(`${moduleName} resolvers tests`, () => {
   test(`${moduleName} npm resolver resolves package path`, async () => {
     const { npm } = resolvers;
     const packagePath = await npm('lodash@4.17.21', resolve);
-    expect(packagePath).toMatch(/node_modules\/lodash-v-4\.17\.21/);
+    expect(packagePath).toMatch(/node_modules[\\/]lodash-v-4\.17\.21/);
   });
 
   // Tests for https://github.com/link-foundation/use-m/issues/16 issue
@@ -19,7 +19,7 @@ describe(`${moduleName} resolvers tests`, () => {
   test(`${moduleName} npm resolver resolves scoped package path for @octokit/core@6.1.5`, async () => {
     const { npm } = resolvers;
     const packagePath = await npm('@octokit/core@6.1.5', resolve);
-    expect(packagePath).toMatch(/node_modules\/octokit-core-v-6\.1\.5/);
+    expect(packagePath).toMatch(/node_modules[\\/]octokit-core-v-6\.1\.5/);
   });
 
   test(`${moduleName} npm resolver resolves package path with version`, async () => {
@@ -35,19 +35,19 @@ describe(`${moduleName} resolvers tests`, () => {
   test(`${moduleName} npm resolver resolves yargs/helpers`, async () => {
     const { npm } = resolvers;
     const packagePath = await npm('yargs@17.7.2/helpers', resolve);
-    expect(packagePath).toMatch(/node_modules\/yargs-v-17\.7\.2\/helpers/);
+    expect(packagePath).toMatch(/node_modules[\\/]yargs-v-17\.7\.2[\\/]helpers/);
   });
 
   test(`${moduleName} npm resolver resolves yargs@18.0.0/helpers`, async () => {
     const { npm } = resolvers;
     const packagePath = await npm('yargs@18.0.0/helpers', resolve);
-    expect(packagePath).toMatch(/node_modules\/yargs-v-18\.0\.0\/helpers/);
+    expect(packagePath).toMatch(/node_modules[\\/]yargs-v-18\.0\.0[\\/]helpers/);
   });
 
   test(`${moduleName} npm resolver resolves yargs@latest/helpers`, async () => {
     const { npm } = resolvers;
     const packagePath = await npm('yargs@latest/helpers', resolve);
-    expect(packagePath).toMatch(/node_modules\/yargs-v-latest\/helpers/);
+    expect(packagePath).toMatch(/node_modules[\\/]yargs-v-latest[\\/]helpers/);
   });
 
   test(`${moduleName} skypack resolver resolves URL`, async () => {
@@ -116,7 +116,7 @@ describe(`${moduleName} resolvers tests`, () => {
     }
     const { bun } = resolvers;
     const packagePath = await bun('lodash@4.17.21', resolve);
-    expect(packagePath).toMatch(/node_modules\/lodash-v-4\.17\.21/);
+    expect(packagePath).toMatch(/node_modules[\\/]lodash-v-4\.17\.21/);
   });
 
   test(`${moduleName} bun resolver resolves yargs/helpers`, async () => {
@@ -125,7 +125,7 @@ describe(`${moduleName} resolvers tests`, () => {
     }
     const { bun } = resolvers;
     const packagePath = await bun('yargs@17.7.2/helpers', resolve);
-    expect(packagePath).toMatch(/node_modules\/yargs-v-17\.7\.2\/helpers/);
+    expect(packagePath).toMatch(/node_modules[\\/]yargs-v-17\.7\.2[\\/]helpers/);
   });
 
   test(`${moduleName} bun resolver resolves yargs@latest/helpers`, async () => {
@@ -134,6 +134,6 @@ describe(`${moduleName} resolvers tests`, () => {
     }
     const { bun } = resolvers;
     const packagePath = await bun('yargs@latest/helpers', resolve);
-    expect(packagePath).toMatch(/node_modules\/yargs-v-latest\/helpers/);
+    expect(packagePath).toMatch(/node_modules[\\/]yargs-v-latest[\\/]helpers/);
   });
 });

@@ -18,6 +18,7 @@ It may be useful for standalone scripts that do not require a `package.json`. Al
   - [Key features](#key-features)
   - [Usage](#usage)
     - [Universal](#universal)
+    - [Missing `fetch` in Node.js or Windows Git Bash](#missing-fetch-in-nodejs-or-windows-git-bash)
     - [Robust loading (resilient CDN bootstrap)](#robust-loading-resilient-cdn-bootstrap)
       - [Troubleshooting: `SyntaxError: Unexpected identifier 'found'`](#troubleshooting-syntaxerror-unexpected-identifier-found)
     - [Resilient package loading (shared fallback engine)](#resilient-package-loading-shared-fallback-engine)
@@ -57,7 +58,7 @@ It may be useful for standalone scripts that do not require a `package.json`. Al
 Works in CommonJS, ES Modules and browser, and interactive environments.
 
 ```javascript
-fetch('https://unpkg.com/use-m/src/use.js')
+fetch('https://unpkg.com/use-m/use.js')
   .then(async useJs => {
     const { use } = eval(await useJs.text());
     const _ = await use('lodash@4.17.21');
@@ -65,7 +66,24 @@ fetch('https://unpkg.com/use-m/src/use.js')
   });
 ```
 
-Universal execution comes at cost of `eval` usage, that is considered potential security threat. In case of this library only single file is evaled, it short, unminified and has no dependencies, so you can check [the contents](https://unpkg.com/use-m/src/use.js) yourself. Once you have `use` function instance no more `eval` function will be executed by this library. If you don't want to use `eval` you can use `await import()` in browser or in `node.js`. In `node.js` you can also just install the package from `npm` as usual.
+Universal execution comes at cost of `eval` usage, that is considered potential security threat. In case of this library only single file is evaled, it short, unminified and has no dependencies, so you can check [the contents](https://unpkg.com/use-m/use.js) yourself. Once you have `use` function instance no more `eval` function will be executed by this library. If you don't want to use `eval` you can use `await import()` in browser or in `node.js`. In `node.js` you can also just install the package from `npm` as usual.
+
+### Missing `fetch` in Node.js or Windows Git Bash
+
+Node.js 18 and later normally provide `fetch`. If a host, shell wrapper, or shebang execution context does not expose it, install `use-m` locally and import the packaged polyfill before the universal bootstrap:
+
+```javascript
+import 'use-m/fetch-polyfill';
+// CommonJS: require('use-m/fetch-polyfill');
+
+const response = await fetch('https://unpkg.com/use-m/use.js');
+if (!response.ok) throw new Error(`Failed to load use-m: HTTP ${response.status}`);
+const { use } = eval(await response.text());
+```
+
+The polyfill supplies the complete set of missing web globals used by Undici: `fetch`, `Headers`, `Request`, `Response`, `FormData`, `File`, `Blob`, `FileReader`, `WebSocket`, `CloseEvent`, `ErrorEvent`, `MessageEvent`, `EventSource`, and `caches`. Existing globals are never replaced, so it is safe to import unconditionally.
+
+The polyfill cannot bootstrap itself from a CDN when `fetch` is already absent; install the package first (`npm install use-m`) or provide another host-level HTTP client. See the runnable [Windows/shebang example](examples/windows-fetch-workaround/test-with-polyfill.mjs).
 
 ### Robust loading (resilient CDN bootstrap)
 
@@ -92,7 +110,7 @@ console.log(`_.add(1, 2) = ${_.add(1, 2)}`);
 
 ```javascript
 const { use } = await loadUseM({
-  sources: ['https://unpkg.com/use-m/src/use.js', 'https://cdn.jsdelivr.net/npm/use-m/src/use.js'],
+  sources: ['https://unpkg.com/use-m/use.js', 'https://cdn.jsdelivr.net/npm/use-m/use.js'],
   maxAttemptsPerSource: 3,  // attempts per mirror before moving on
   retryDelayMs: 250,        // linear backoff between attempts
   timeoutMs: 10000,         // per-attempt timeout (0 disables)
@@ -103,9 +121,9 @@ const { use } = await loadUseM({
 
 ```javascript
 async function loadUse(sources = [
-  'https://unpkg.com/use-m/src/use.js',
-  'https://cdn.jsdelivr.net/npm/use-m/src/use.js',
-  'https://esm.sh/use-m/src/use.js',
+  'https://unpkg.com/use-m/use.js',
+  'https://cdn.jsdelivr.net/npm/use-m/use.js',
+  'https://esm.sh/use-m/use.js',
 ]) {
   const failures = [];
   for (const url of sources) {
@@ -148,11 +166,11 @@ it hit a packaging regression in `use-m@8.14.0`: the entry files moved under `sr
 This is fixed in **`use-m@8.14.1`**: the bare URLs (`https://unpkg.com/use-m/use.js`, `.cjs`, `.mjs`) resolve again via root-level mirrors of `src/`, so no consumer change is required once that version is installed. To fix an affected project:
 
 - **Recommended — pick up the patched release.** Nothing to change in your code; just ensure your CDN URL resolves to `8.14.1` or later. If you pin an exact version, bump it (e.g. `https://unpkg.com/use-m@8.14.1/use.js`).
-- **One-line workaround (works on every version, including `8.14.0`).** Point the URL at the `src/` path — the reliable fix on every CDN host:
-  - `https://unpkg.com/use-m/use.js` → `https://unpkg.com/use-m/src/use.js`
-  - `https://cdn.jsdelivr.net/npm/use-m/use.js` → `https://cdn.jsdelivr.net/npm/use-m/src/use.js`
+- **One-line workaround for projects pinned specifically to `8.14.0`.** Point the URL at the `src/` path:
+  - `https://unpkg.com/use-m@8.14.0/use.js` → `https://unpkg.com/use-m@8.14.0/src/use.js`
+  - `https://cdn.jsdelivr.net/npm/use-m@8.14.0/use.js` → `https://cdn.jsdelivr.net/npm/use-m@8.14.0/src/use.js`
 
-  (CDNs serve raw files and ignore package.json `exports`. On `8.14.0` the bare `/use.js` returns `404` on unpkg; jsDelivr may instead return a **stale older** copy for the *unversioned* URL, which silently gives you outdated code — so prefer the explicit `/src/` path to be sure you get the current build.)
+  (CDNs serve raw files and ignore package.json `exports`. This workaround is only needed for `8.14.0`; the root URL is the canonical, readable single-file bundle in current releases.)
 - **Make it future-proof.** Replace the naive `eval(await (await fetch(url)).text())` with a loader that checks `response.ok`, rejects non-JavaScript bodies, and falls back across mirrors — either the packaged [`use-m/load`](#robust-loading-resilient-cdn-bootstrap) helper or the self-contained snippet above. With those two guards, a future 404/redirect can never again be silently `eval()`'d into a cryptic `SyntaxError`.
 
 ### Resilient package loading (shared fallback engine)
@@ -261,7 +279,7 @@ Advanced tests and embedded runtimes may inject `fetch` and `debugLogger`. Setti
    Single line version:
 
    ```javascript
-   const { use } = eval(await (await fetch('https://unpkg.com/use-m/src/use.js')).text());
+   const { use } = eval(await (await fetch('https://unpkg.com/use-m/use.js')).text());
    ```
 
    > This minimal form is fine for an interactive REPL. For scripts that should survive a flaky CDN, prefer the resilient loader from [Robust loading](#robust-loading-resilient-cdn-bootstrap) — otherwise a CDN error body makes `eval()` throw a cryptic `SyntaxError` ([#58](https://github.com/link-foundation/use-m/issues/58)).
@@ -274,7 +292,7 @@ Advanced tests and embedded runtimes may inject `fetch` and `debugLogger`. Setti
    const { use } = eval(
      await (
        await fetch(
-         'https://unpkg.com/use-m/src/use.js'
+         'https://unpkg.com/use-m/use.js'
        )
      ).text()
    );
@@ -355,7 +373,7 @@ It is possible to use `--experimental-network-imports` to enable the same style 
 
 1. Create file named `example.mjs`:
    ```javascript
-   const { use } = await import('https://unpkg.com/use-m/src/use.mjs');
+   const { use } = await import('https://unpkg.com/use-m/use.mjs');
    const _ = await use('lodash@4.17.21');
    console.log(`_.add(1, 2) = ${_.add(1, 2)}`);
    ```
@@ -377,7 +395,7 @@ If you need to use `use-m` without adding it to a project locally, you can load 
 
    ```javascript
    const { use } = eval(
-     await fetch('https://unpkg.com/use-m/src/use.js').then(u => u.text())
+     await fetch('https://unpkg.com/use-m/use.js').then(u => u.text())
    );
    
    const { $ } = await use('command-stream');
@@ -412,7 +430,7 @@ Bun provides a built-in `$` shell API that works seamlessly with `use-m`:
     #!/usr/bin/env bun
 
    const { use } = eval(
-     await fetch('https://unpkg.com/use-m/src/use.js').then(u => u.text())
+     await fetch('https://unpkg.com/use-m/use.js').then(u => u.text())
    );
    
    const _ = await use('lodash');
@@ -446,7 +464,7 @@ Bun provides a built-in `$` shell API that works seamlessly with `use-m`:
    #!/usr/bin/env zx --verbose
    
    const { use } = eval(
-     await fetch('https://unpkg.com/use-m/src/use.js').then(u => u.text())
+     await fetch('https://unpkg.com/use-m/use.js').then(u => u.text())
    );
     
    const _ = await use('lodash@latest');
@@ -479,7 +497,7 @@ Bun provides a built-in `$` shell API that works seamlessly with `use-m`:
    #!/usr/bin/env node
 
    const { use } = eval(
-     await fetch('https://unpkg.com/use-m/src/use.js').then(u => u.text())
+     await fetch('https://unpkg.com/use-m/use.js').then(u => u.text())
    ); 
    
    const _ = await use('lodash');
@@ -587,7 +605,7 @@ console.log(`_.add(1, 2) = ${_.add(1, 2)}`);
 3. **Use CDN resolver in untrusted environments**: For browser or Deno environments, packages are loaded from CDNs without running install scripts:
    ```javascript
    // Browser - loads from CDN, no install scripts
-   const { use } = await import("https://unpkg.com/use-m/src/use.mjs");
+   const { use } = await import("https://unpkg.com/use-m/use.mjs");
    const _ = await use('lodash@4.17.21');
    ```
 
@@ -609,7 +627,7 @@ Some examples use `eval()` for convenience in interactive shells and browsers. B
 
 - `eval()` executes arbitrary code
 - Only use with trusted sources
-- The `use-m` library code is short, unminified, and has no dependencies - you can [review it yourself](https://unpkg.com/use-m/src/use.js)
+- The `use-m` library code is short, unminified, and has no dependencies - you can [review it yourself](https://unpkg.com/use-m/use.js)
 - For production code, prefer standard imports without `eval()`
 
 ### Recommendations by Use Case

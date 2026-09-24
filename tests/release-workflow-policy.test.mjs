@@ -128,6 +128,21 @@ describe('release workflow policy', () => {
     expect(workflowText.includes('deno-version: v2.x')).toBe(true)
   })
 
+  test('covers every supported operating system and the missing-fetch shebang path', () => {
+    const workflowText = readText(releaseWorkflowPath)
+    const jobs = jobBlocks(workflowText)
+    const testJob = jobs.get('test') || ''
+    const packageJson = JSON.parse(readText(path.join(rootDir, 'package.json')))
+
+    expect(testJob.includes('os: [ubuntu-latest, macos-latest, windows-latest]')).toBe(true)
+    expect(testJob.includes('name: Verify missing fetch through the shebang')).toBe(true)
+    expect(testJob.includes('shell: bash')).toBe(true)
+    expect(testJob.includes('./experiments/test-polyfill-no-fetch.mjs')).toBe(true)
+    expect(packageJson.scripts.test).toBe(
+      'node --experimental-vm-modules ./node_modules/jest/bin/jest.js'
+    )
+  })
+
   test('keeps dependency install logs quiet while auditing shipped dependencies', () => {
     const workflowText = readText(releaseWorkflowPath)
 
@@ -153,6 +168,11 @@ describe('release workflow policy', () => {
   test('retries Deno network-import tests without hiding persistent failures', () => {
     const workflowText = readText(releaseWorkflowPath)
 
+    expect(
+      workflowText.includes(
+        "- name: Run Deno tests\n        if: matrix.runtime == 'deno'\n        shell: bash\n        run: |"
+      )
+    ).toBe(true)
     expect(workflowText.includes('for attempt in 1 2 3; do')).toBe(true)
     expect(workflowText.includes('Deno tests failed on attempt ${attempt}/3')).toBe(true)
     expect(workflowText.includes('if [ "$attempt" = "3" ]; then')).toBe(true)

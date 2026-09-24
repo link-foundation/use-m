@@ -1,14 +1,55 @@
-// AUTO-GENERATED — do not edit. This is a root-level mirror of src/use.mjs,
-// published so the historical CDN URL https://unpkg.com/use-m/use.mjs keeps
-// resolving (unpkg/jsdelivr ignore package.json "exports"). The canonical
-// source is src/use.mjs; edit it and run `npm run sync:entries`. See
-// https://github.com/link-foundation/use-m/issues/60.
+// AUTO-GENERATED — do not edit use.mjs directly.
+// This readable, single-file distribution bundle is built deterministically
+// from the smaller source fragments in src/use/. Run `npm run build` after
+// editing those fragments. The root file remains available for historical
+// CDN URLs such as https://unpkg.com/use-m/use.mjs.
+// Source fragment: caller context, specifier parsing, and built-in helpers.
+// Generated bundles concatenate this file; do not import it directly.
+
+const nativeWindowsPathToFileUrl = (filePath) => {
+  if (typeof filePath !== 'string') return filePath;
+
+  const drivePath = filePath.match(/^([A-Za-z]):[\\/](.*)$/s);
+  if (drivePath) {
+    const pathname = drivePath[2]
+      .split(/[\\/]/)
+      .map(segment => encodeURIComponent(segment))
+      .join('/');
+    return `file:///${drivePath[1].toUpperCase()}:/${pathname}`;
+  }
+
+  const uncPath = filePath.match(/^\\\\([^\\/]+)[\\/](.*)$/s);
+  if (uncPath) {
+    const pathname = uncPath[2]
+      .split(/[\\/]/)
+      .map(segment => encodeURIComponent(segment))
+      .join('/');
+    return `file://${uncPath[1]}/${pathname}`;
+  }
+
+  return filePath;
+};
+
+const absolutePathToFileUrl = (filePath) => {
+  const windowsUrl = nativeWindowsPathToFileUrl(filePath);
+  if (windowsUrl !== filePath) return windowsUrl;
+  return typeof filePath === 'string' && filePath.startsWith('/')
+    ? `file://${filePath}`
+    : filePath;
+};
+
 const extractCallerContext = (stack) => {
   // Helper to check if a path is a use-m file
   const isUseMFile = (path) => {
-    return path.endsWith('/use.mjs') ||
-           path.endsWith('/use.cjs') ||
-           path.endsWith('/use.js');
+    // Stack-frame URLs still include their :line:column suffix here. Browser
+    // module URLs may also carry a cache-busting query or fragment.
+    const normalizedPath = path
+      .replace(/:\d+:\d+$/, '')
+      .replace(/[?#].*$/, '')
+      .replaceAll('\\', '/');
+    return normalizedPath.endsWith('/use.mjs') ||
+           normalizedPath.endsWith('/use.cjs') ||
+           normalizedPath.endsWith('/use.js');
   };
 
   // In browser environment, use the current document URL as fallback
@@ -63,28 +104,34 @@ const extractCallerContext = (stack) => {
       if (match && match[1]) {
         const testPath = match[1];
         // Convert to file:// URL format if it's an absolute path
-        if (testPath.startsWith('/')) {
-          return `file://${testPath}`;
+        if (testPath.startsWith('/') || /^[A-Za-z]:[\\/]/.test(testPath) || testPath.startsWith('\\\\')) {
+          return absolutePathToFileUrl(testPath);
         }
       }
+    }
+
+    // Native Windows stack frames use drive-letter or UNC paths. Passing a
+    // drive-letter path directly to import() is interpreted as a URL scheme.
+    match = line.match(/(?:\(|\s)((?:[A-Za-z]:[\\/]|\\\\)[^)\n]+?\.(?:m?js|json)):\d+:\d+\)?/);
+    if (match && !isUseMFile(match[1]) && !match[1].includes('node_modules')) {
+      return absolutePathToFileUrl(match[1]);
     }
 
     // For Node/Deno, try to match absolute paths (improved to handle more cases)
     match = line.match(/at\s+(?:Object\.<anonymous>\s+)?(?:async\s+)?[(]?(\/[^\s:)]+\.(?:m?js|json))(?::\d+:\d+)?\)?/);
     if (match && !isUseMFile(match[1]) && !match[1].includes('node_modules')) {
-      return 'file://' + match[1];
+      return absolutePathToFileUrl(match[1]);
     }
 
     // Alternative pattern for Jest and other environments
     match = line.match(/at\s+[^(]*\(([^)]+\.(?:m?js|json)):\d+:\d+\)/);
     if (match && !isUseMFile(match[1]) && !match[1].includes('node_modules')) {
-      return 'file://' + (match[1].startsWith('/') ? match[1] : '/' + match[1]);
+      return absolutePathToFileUrl(match[1]);
     }
   }
   return null;
 };
-
-export const parseModuleSpecifier = (moduleSpecifier) => {
+const parseModuleSpecifier = (moduleSpecifier) => {
   if (!moduleSpecifier || typeof moduleSpecifier !== 'string' || moduleSpecifier.length <= 0) {
     throw new Error(
       `Name for a package to be imported is not provided.
@@ -334,7 +381,10 @@ const loadBuiltinModule = async (moduleName) => {
   return { default: m, ...m };
 };
 
-export const resolvers = {
+// Source fragment: built-in, npm, Bun, Deno, and CDN resolvers.
+// Generated bundles concatenate this file; do not import it directly.
+
+const resolvers = {
   builtin: async (moduleSpecifier, pathResolver) => {
     const { packageName, modulePath } = parseModuleSpecifier(moduleSpecifier);
 
@@ -393,14 +443,10 @@ export const resolvers = {
     // If we have a caller URL, resolve relative to it
     if (callerUrl && (callerUrl.startsWith('file://') || callerUrl.startsWith('http://') || callerUrl.startsWith('https://'))) {
       try {
-        // Try URL-based resolution for both file:// and http(s):// URLs
+        // Keep URL-based resolution as a URL on every runtime. A pathname such
+        // as /C:/... is not a valid native Windows path and breaks Bun imports.
         const url = new URL(moduleSpecifier, callerUrl);
-        // For Bun, return pathname instead of full URL
-        if (typeof Bun !== 'undefined' && callerUrl.startsWith('file://')) {
-          resolvedPath = url.pathname;
-        } else {
-          resolvedPath = url.href;
-        }
+        resolvedPath = url.href;
       } catch (error) {
         // Fallback for non-URL basePath (only for file:// URLs)
         if (callerUrl.startsWith('file://')) {
@@ -437,7 +483,7 @@ export const resolvers = {
         return baseUse(resolvedPath);
       }
     }
-    
+
     return baseUse(resolvedPath);
   },
   npm: async (moduleSpecifier, pathResolver, options = {}) => {
@@ -515,7 +561,7 @@ export const resolvers = {
         const stats = await stat(filePath);
         return stats.isFile();
       } catch (error) {
-        if (error.code !== 'ENOENT') {
+        if (error.code !== 'ENOENT' && error.code !== 'ENOTDIR') {
           throw error;
         }
         return false;
@@ -527,7 +573,7 @@ export const resolvers = {
         const stats = await stat(directoryPath);
         return stats.isDirectory();
       } catch (error) {
-        if (error.code !== 'ENOENT') {
+        if (error.code !== 'ENOENT' && error.code !== 'ENOTDIR') {
           throw error;
         }
         return false;
@@ -1250,8 +1296,8 @@ export const resolvers = {
     // a cold top-level-await wave starts its own `npm install -g` (issue #70).
     const ensurePackageInstalled = async ({ packageName, version }, { repair = false } = {}) => {
       const alias = `${packageName.replace('@', '').replace('/', '-')}-v-${version}`;
-      const aliasKey = `${getNpmEnvId(npmEnvSource)} ${alias}`;
-      const requestKey = repair ? `${aliasKey} repair` : aliasKey;
+      const aliasKey = `${getNpmEnvId(npmEnvSource)}\0${alias}`;
+      const requestKey = repair ? `${aliasKey}\0repair` : aliasKey;
       return dedupeNpmInstall(
         requestKey,
         aliasKey,
@@ -1497,12 +1543,15 @@ export const resolvers = {
   },
 }
 
+// Source fragment: resolver chains and concurrent npm install coordination.
+// Generated bundles concatenate this file; do not import it directly.
+
 // Ordered chains of universal-ESM CDN resolvers tried for network/CDN loading.
 // Each entry is a key into `resolvers`; the chains list *distinct* CDN hosts so a
 // single CDN outage no longer breaks `use()` — when the first host fails we fall
 // back to the next. The primary entry preserves the previous default per runtime.
-export const networkResolverChain = ['esm', 'jspm', 'skypack']
-export const denoResolverChain = ['deno', 'jspm', 'skypack']
+const networkResolverChain = ['esm', 'jspm', 'skypack']
+const denoResolverChain = ['deno', 'jspm', 'skypack']
 
 // npm installs for the same alias must not overlap. `npm install -g` takes no
 // lock on the global prefix, so two runs writing the same alias directory delete
@@ -1591,6 +1640,9 @@ const cacheBustNpmModulePath = async (modulePath) => {
 const toResolverFunction = (resolver) =>
   typeof resolver === 'function' ? resolver : resolvers[resolver]
 
+// Source fragment: fallback loading and the public use()/makeUse() runtime.
+// Generated bundles concatenate this file; do not import it directly.
+
 // Generic, mechanism-agnostic "try sources in order until one works" engine.
 // Tries each `source` in order (optionally retrying each `maxAttemptsPerSource`
 // times with linear backoff) and returns the first successful `load(source,
@@ -1609,7 +1661,7 @@ const toResolverFunction = (resolver) =>
 // @param {(source: unknown) => string} [options.describeSource] - human label for a source in errors
 // @param {string} [options.label] - what we were trying to do (used in the error message)
 // @param {string} [options.hint] - extra guidance appended to the aggregated error
-export const loadWithFallback = async (sources, load, options = {}) => {
+const loadWithFallback = async (sources, load, options = {}) => {
   const {
     maxAttemptsPerSource = 1,
     retryDelayMs = 0,
@@ -1642,10 +1694,14 @@ export const loadWithFallback = async (sources, load, options = {}) => {
   )
 }
 
-export const baseUse = async (modulePath) => {
+const baseUse = async (modulePath) => {
   // Dynamically import the module
   try {
-    const module = await import(modulePath);
+    const importSpecifier = nativeWindowsPathToFileUrl(modulePath);
+    const isJsonModule = /\.json(?:[?#].*)?$/i.test(modulePath);
+    const module = isJsonModule
+      ? await import(importSpecifier, { with: { type: 'json' } })
+      : await import(importSpecifier);
 
     // More robust default export handling for cross-environment compatibility
     const keys = Object.keys(module);
@@ -1682,7 +1738,7 @@ export const baseUse = async (modulePath) => {
   }
 }
 
-export const makeUse = async (options) => {
+const makeUse = async (options) => {
   let scriptPath = options?.scriptPath;
   const hasBrowserGlobals = typeof window !== 'undefined' && typeof document !== 'undefined';
   if (!scriptPath && !hasBrowserGlobals && typeof global !== 'undefined' && typeof global['__filename'] !== 'undefined') {
@@ -1695,6 +1751,7 @@ export const makeUse = async (options) => {
   if (!scriptPath) {
     scriptPath = import.meta.url;
   }
+  scriptPath = nativeWindowsPathToFileUrl(scriptPath);
   let protocol;
   if (scriptPath) {
     try {
@@ -1811,7 +1868,7 @@ export const makeUse = async (options) => {
 }
 
 let __usePromise = null;
-const _use = async (moduleSpecifier) => {
+const use = async (moduleSpecifier) => {
   const stack = new Error().stack;
 
   // For Bun, we need to capture the stack trace before any other calls
@@ -1819,11 +1876,12 @@ const _use = async (moduleSpecifier) => {
   if (typeof Bun !== 'undefined') {
     if (stack) {
       const lines = stack.split('\n');
-      // Look for any .mjs file that's not use.mjs
+      // Look for any .mjs file that's not use.mjs. Bun stack traces can use
+      // either POSIX paths or native Windows drive-letter/UNC paths.
       for (const line of lines) {
-        const match = line.match(/[(]?(\/[^\s:)]+\.m?js)/);
-        if (match && !match[1].endsWith('/use.mjs')) {
-          bunCallerContext = 'file://' + match[1];
+        const match = line.match(/[(]?((?:\/|[A-Za-z]:[\\/]|\\\\)[^)\n]+?\.m?js)(?::\d+:\d+)?\)?/);
+        if (match && !match[1].replaceAll('\\', '/').endsWith('/use.mjs')) {
+          bunCallerContext = absolutePathToFileUrl(match[1]);
           break;
         }
       }
@@ -1839,11 +1897,12 @@ const _use = async (moduleSpecifier) => {
   const useInstance = await __usePromise;
   return useInstance(moduleSpecifier, callerContext);
 }
-_use.all = async (...moduleSpecifiers) => {
+use.all = async (...moduleSpecifiers) => {
   if (!__usePromise) {
     __usePromise = makeUse();
   }
   const useInstance = await __usePromise;
   return Promise.all(moduleSpecifiers.map(useInstance));
 }
-export const use = _use;
+
+export { parseModuleSpecifier, resolvers, makeUse, baseUse, loadWithFallback, networkResolverChain, denoResolverChain, use };

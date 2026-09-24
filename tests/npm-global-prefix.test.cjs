@@ -138,6 +138,7 @@ console.error('Unsupported fake npm command:', args.join(' '));
 process.exit(1);
 `);
   await chmod(npmPath, 0o755);
+  await writeFile(`${npmPath}.cmd`, '@echo off\r\nnode "%~dp0npm" %*\r\n');
 
   const { npm_config_prefix, NPM_CONFIG_PREFIX, ...cleanProcessEnv } = process.env;
   const baseEnv = {
@@ -379,9 +380,11 @@ describe(`${moduleName} npm global prefix handling`, () => {
     }
 
     const fixture = await createFakeNpm();
+    const blockedRoot = path.join(fixture.root, 'blocked-global-root');
+    await writeFile(blockedRoot, 'not a directory');
     const env = {
       ...fixture.baseEnv,
-      USE_M_FAKE_NPM_DEFAULT_ROOT: '/sys/use-m-root/lib/node_modules'
+      USE_M_FAKE_NPM_DEFAULT_ROOT: path.join(blockedRoot, 'lib', 'node_modules')
     };
 
     const packagePath = await resolvers.npm('fixture-pkg@1.0.0', resolve, { env });
@@ -774,25 +777,33 @@ describe(`${moduleName} npm global prefix handling`, () => {
     })).rejects.toThrow('npm root -g returned an empty global root');
 
     const configuredFixture = await createFakeNpm();
+    const configuredPrefix = path.join(configuredFixture.root, 'blocked-prefix');
+    await writeFile(configuredPrefix, 'not a directory');
     await expect(resolvers.npm('fixture-pkg@1.0.0', resolve, {
-      env: { ...configuredFixture.baseEnv, npm_config_prefix: '/sys/use-m-test-prefix' }
+      env: { ...configuredFixture.baseEnv, npm_config_prefix: configuredPrefix }
     })).rejects.toThrow('will not override the configured npm prefix');
 
     const rootFailureFixture = await createFakeNpm();
+    const blockedRoot = path.join(rootFailureFixture.root, 'blocked-global-root');
+    await writeFile(blockedRoot, 'not a directory');
     await expect(resolvers.npm('fixture-pkg@1.0.0', resolve, {
       env: {
         ...rootFailureFixture.baseEnv,
-        USE_M_FAKE_NPM_DEFAULT_ROOT: '/sys/use-m-test-root/lib/node_modules',
+        USE_M_FAKE_NPM_DEFAULT_ROOT: path.join(blockedRoot, 'lib', 'node_modules'),
         USE_M_FAKE_NPM_PREFIX_ROOT_FAILURE: '1'
       }
     })).rejects.toThrow('Failed to resolve use-m npm cache root');
 
     const mkdirFailureFixture = await createFakeNpm();
+    const mkdirBlockedRoot = path.join(mkdirFailureFixture.root, 'blocked-global-root');
+    const blockedCacheHome = path.join(mkdirFailureFixture.root, 'blocked-cache-home');
+    await writeFile(mkdirBlockedRoot, 'not a directory');
+    await writeFile(blockedCacheHome, 'not a directory');
     await expect(resolvers.npm('fixture-pkg@1.0.0', resolve, {
       env: {
         ...mkdirFailureFixture.baseEnv,
-        USE_M_FAKE_NPM_DEFAULT_ROOT: '/sys/use-m-test-root/lib/node_modules',
-        XDG_CACHE_HOME: '/sys/use-m-test-cache'
+        USE_M_FAKE_NPM_DEFAULT_ROOT: path.join(mkdirBlockedRoot, 'lib', 'node_modules'),
+        XDG_CACHE_HOME: blockedCacheHome
       }
     })).rejects.toThrow('Failed to create use-m npm cache root');
   });

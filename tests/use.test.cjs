@@ -24,7 +24,7 @@
     });
 
     test(`${moduleName} Universal (then style)`, async () => {
-      // const { use } = await fetch('https://unpkg.com/use-m/src/use.js')
+      // const { use } = await fetch('https://unpkg.com/use-m/use.js')
       //   .then(response => response.text())
       //   .then(code => eval(code));
       // const _ = await use('lodash@4.17.21');
@@ -32,7 +32,7 @@
     });
 
     test(`${moduleName} Universal (then style, use inside)`, async () => {
-      // await fetch('https://unpkg.com/use-m/src/use.js')
+      // await fetch('https://unpkg.com/use-m/use.js')
       //   .then(response => response.text())
       //   .then(code => eval(code))
       //   .then(async ({ use }) => {
@@ -43,7 +43,7 @@
 
     test(`${moduleName} Universal (eval style)`, async () => {
       // const { use } = eval(
-      //   await fetch('https://unpkg.com/use-m/src/use.js')
+      //   await fetch('https://unpkg.com/use-m/use.js')
       //     .then(useJs => useJs.text())
       // );
       // const _ = await use('lodash@4.17.21');
@@ -51,7 +51,7 @@
     });
 
     test(`${moduleName} Universal (single then style)`, async () => {
-      // await fetch('https://unpkg.com/use-m/src/use.js')
+      // await fetch('https://unpkg.com/use-m/use.js')
       //   .then(async useJs => {
       //     const { use } = eval(await useJs.text());
       //     const _ = await use('lodash@4.17.21');
@@ -70,7 +70,7 @@
       );
       expect(lodash3.add(1, 2)).toBe(3);
       expect(lodash4.add(1, 2)).toBe(3);
-    });
+    }, 30000);
 
     test(`${moduleName} use.all with dynamic import`, async () => {
       const { use } = await import('use-m');
@@ -83,10 +83,10 @@
       );
       expect(lodash3.add(1, 2)).toBe(3);
       expect(lodash4.add(1, 2)).toBe(3);
-    });
+    }, 30000);
 
     test(`${moduleName} use.all (script)`, async () => {
-      // await fetch('https://unpkg.com/use-m/src/use.js')
+      // await fetch('https://unpkg.com/use-m/use.js')
       //   .then(async useJs => {
       //     const { use } = eval(await useJs.text());
       //     const [
@@ -104,7 +104,7 @@
     // Test for https://github.com/link-foundation/use-m/issues/16 issue
 
     test(`${moduleName} Universal (script) @octokit/core@6.1.5`, async () => {
-      // await fetch('https://unpkg.com/use-m/src/use.js')
+      // await fetch('https://unpkg.com/use-m/use.js')
       //   .then(async useJs => {
       //     const { use } = eval
       //       (await useJs.text());
@@ -115,7 +115,7 @@
     });
 
     test(`${moduleName} Universal (script) @octokit/core@5`, async () => {
-      // await fetch('https://unpkg.com/use-m/src/use.js')
+      // await fetch('https://unpkg.com/use-m/use.js')
       //   .then(async useJs => {
       //     const { use } = eval
       //       (await useJs.text());
@@ -126,7 +126,7 @@
     });
 
     test(`${moduleName} Universal (script) @octokit/core (latest)`, async () => {
-      // await fetch('https://unpkg.com/use-m/src/use.js')
+      // await fetch('https://unpkg.com/use-m/use.js')
       //   .then(async useJs => {
       //     const { use } = eval
       //       (await useJs.text());
