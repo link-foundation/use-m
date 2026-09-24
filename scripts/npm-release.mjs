@@ -280,6 +280,9 @@ export async function main(argv = process.argv.slice(2), env = process.env) {
     }
     const tag = `v${version}`
     setOutputs({
+      name,
+      version,
+      tag,
       exists: npm.status === 'published',
       tag_exists: await tagExists({ run, repo, tag }),
       release_exists: await releaseExists({ run, repo, tag })

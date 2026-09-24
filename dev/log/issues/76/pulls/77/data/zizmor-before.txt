@@ -1,0 +1,228 @@
+ INFO zizmor: 🌈 zizmor v1.29.0
+ INFO audit: zizmor: 🌈 completed .github/workflows/release.yml
+help[artipacked]: credential persistence through GitHub Actions artifacts
+  --> .github/workflows/release.yml:46:9
+   |
+46 |         - name: Checkout code
+   |  _________^
+47 | |         uses: actions/checkout@v6
+   | |_________________________________^ does not set persist-credentials: false
+   |
+   = note: audit confidence → Low
+   = note: this finding has an auto-fix
+   = help: audit documentation → https://docs.zizmor.sh/audits/#artipacked
+
+help[artipacked]: credential persistence through GitHub Actions artifacts
+   --> .github/workflows/release.yml:114:9
+    |
+114 |         - name: Checkout code
+    |  _________^
+115 | |         uses: actions/checkout@v6
+116 | |         with:
+117 | |           fetch-depth: 0
+    | |________________________^ does not set persist-credentials: false
+    |
+    = note: audit confidence → Low
+    = note: this finding has an auto-fix
+    = help: audit documentation → https://docs.zizmor.sh/audits/#artipacked
+
+info[template-injection]: code injection via template expansion
+   --> .github/workflows/release.yml:193:47
+    |
+191 | ...   run: |
+    |       --- this run block
+192 | ...     for attempt in 1 2 3 4 5 6 7 8 9 10; do
+193 | ...       PUBLISHED_VERSION=$(npm view "${{ steps.package.outputs.name }}@${{ steps.package.outputs.version }}" version 2>/dev/null...
+    |                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^ may expand into attacker-controllable code
+    |
+    = note: audit confidence → Low
+    = note: this finding has an auto-fix
+    = help: audit documentation → https://docs.zizmor.sh/audits/#template-injection
+
+info[template-injection]: code injection via template expansion
+   --> .github/workflows/release.yml:193:81
+    |
+191 |         run: |
+    |         --- this run block
+192 |           for attempt in 1 2 3 4 5 6 7 8 9 10; do
+193 |             PUBLISHED_VERSION=$(npm view "${{ steps.package.outputs.name }}@${{ steps.package.outputs.version }}" version 2>/dev/nu...
+    |                                                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ may expand into attacker-controllable code
+    |
+    = note: audit confidence → Low
+    = note: this finding has an auto-fix
+    = help: audit documentation → https://docs.zizmor.sh/audits/#template-injection
+
+info[template-injection]: code injection via template expansion
+   --> .github/workflows/release.yml:194:46
+    |
+191 |         run: |
+    |         --- this run block
+...
+194 |             if [ "$PUBLISHED_VERSION" = "${{ steps.package.outputs.version }}" ]; then
+    |                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ may expand into attacker-controllable code
+    |
+    = note: audit confidence → Low
+    = note: this finding has an auto-fix
+    = help: audit documentation → https://docs.zizmor.sh/audits/#template-injection
+
+info[template-injection]: code injection via template expansion
+   --> .github/workflows/release.yml:195:46
+    |
+191 |         run: |
+    |         --- this run block
+...
+195 |               echo "Verified npm package ${{ steps.package.outputs.name }}@${PUBLISHED_VERSION}"
+    |                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^ may expand into attacker-controllable code
+    |
+    = note: audit confidence → Low
+    = note: this finding has an auto-fix
+    = help: audit documentation → https://docs.zizmor.sh/audits/#template-injection
+
+info[template-injection]: code injection via template expansion
+   --> .github/workflows/release.yml:201:38
+    |
+191 |         run: |
+    |         --- this run block
+...
+201 |           echo "Failed to verify ${{ steps.package.outputs.name }}@${{ steps.package.outputs.version }} on npm."
+    |                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^ may expand into attacker-controllable code
+    |
+    = note: audit confidence → Low
+    = note: this finding has an auto-fix
+    = help: audit documentation → https://docs.zizmor.sh/audits/#template-injection
+
+info[template-injection]: code injection via template expansion
+   --> .github/workflows/release.yml:201:72
+    |
+191 |         run: |
+    |         --- this run block
+...
+201 |           echo "Failed to verify ${{ steps.package.outputs.name }}@${{ steps.package.outputs.version }} on npm."
+    |                                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ may expand into attacker-controllable code
+    |
+    = note: audit confidence → Low
+    = note: this finding has an auto-fix
+    = help: audit documentation → https://docs.zizmor.sh/audits/#template-injection
+
+info[template-injection]: code injection via template expansion
+   --> .github/workflows/release.yml:206:20
+    |
+205 |         run: |
+    |         --- this run block
+206 |           TAG="${{ steps.package.outputs.tag }}"
+    |                    ^^^^^^^^^^^^^^^^^^^^^^^^^ may expand into attacker-controllable code
+    |
+    = note: audit confidence → Low
+    = note: this finding has an auto-fix
+    = help: audit documentation → https://docs.zizmor.sh/audits/#template-injection
+
+info[template-injection]: code injection via template expansion
+   --> .github/workflows/release.yml:220:20
+    |
+219 |         run: |
+    |         --- this run block
+220 |           TAG="${{ steps.package.outputs.tag }}"
+    |                    ^^^^^^^^^^^^^^^^^^^^^^^^^ may expand into attacker-controllable code
+    |
+    = note: audit confidence → Low
+    = note: this finding has an auto-fix
+    = help: audit documentation → https://docs.zizmor.sh/audits/#template-injection
+
+info[template-injection]: code injection via template expansion
+   --> .github/workflows/release.yml:221:24
+    |
+219 |         run: |
+    |         --- this run block
+220 |           TAG="${{ steps.package.outputs.tag }}"
+221 |           VERSION="${{ steps.package.outputs.version }}"
+    |                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ may expand into attacker-controllable code
+    |
+    = note: audit confidence → Low
+    = note: this finding has an auto-fix
+    = help: audit documentation → https://docs.zizmor.sh/audits/#template-injection
+
+info[template-injection]: code injection via template expansion
+   --> .github/workflows/release.yml:222:21
+    |
+219 |         run: |
+    |         --- this run block
+...
+222 |           NAME="${{ steps.package.outputs.name }}"
+    |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^ may expand into attacker-controllable code
+    |
+    = note: audit confidence → Low
+    = note: this finding has an auto-fix
+    = help: audit documentation → https://docs.zizmor.sh/audits/#template-injection
+
+error[unpinned-uses]: unpinned action reference
+  --> .github/workflows/release.yml:47:15
+   |
+47 |         uses: actions/checkout@v6
+   |               ^^^^^^^^^^^^^^^^^^^ action is not pinned to a hash (required by blanket policy)
+   |
+   = note: audit confidence → High
+   = note: this finding has an auto-fix
+   = help: audit documentation → https://docs.zizmor.sh/audits/#unpinned-uses
+
+error[unpinned-uses]: unpinned action reference
+  --> .github/workflows/release.yml:50:15
+   |
+50 |         uses: actions/setup-node@v6
+   |               ^^^^^^^^^^^^^^^^^^^^^ action is not pinned to a hash (required by blanket policy)
+   |
+   = note: audit confidence → High
+   = note: this finding has an auto-fix
+   = help: audit documentation → https://docs.zizmor.sh/audits/#unpinned-uses
+
+error[unpinned-uses]: unpinned action reference
+  --> .github/workflows/release.yml:57:15
+   |
+57 |         uses: oven-sh/setup-bun@v2
+   |               ^^^^^^^^^^^^^^^^^^^^ action is not pinned to a hash (required by blanket policy)
+   |
+   = note: audit confidence → High
+   = note: this finding has an auto-fix
+   = help: audit documentation → https://docs.zizmor.sh/audits/#unpinned-uses
+
+error[unpinned-uses]: unpinned action reference
+  --> .github/workflows/release.yml:63:15
+   |
+63 |         uses: denoland/setup-deno@v2
+   |               ^^^^^^^^^^^^^^^^^^^^^^ action is not pinned to a hash (required by blanket policy)
+   |
+   = note: audit confidence → High
+   = note: this finding has an auto-fix
+   = help: audit documentation → https://docs.zizmor.sh/audits/#unpinned-uses
+
+error[unpinned-uses]: unpinned action reference
+   --> .github/workflows/release.yml:115:15
+    |
+115 |         uses: actions/checkout@v6
+    |               ^^^^^^^^^^^^^^^^^^^ action is not pinned to a hash (required by blanket policy)
+    |
+    = note: audit confidence → High
+    = note: this finding has an auto-fix
+    = help: audit documentation → https://docs.zizmor.sh/audits/#unpinned-uses
+
+error[unpinned-uses]: unpinned action reference
+   --> .github/workflows/release.yml:120:15
+    |
+120 |         uses: actions/setup-node@v6
+    |               ^^^^^^^^^^^^^^^^^^^^^ action is not pinned to a hash (required by blanket policy)
+    |
+    = note: audit confidence → High
+    = note: this finding has an auto-fix
+    = help: audit documentation → https://docs.zizmor.sh/audits/#unpinned-uses
+
+help[adhoc-packages]: ad-hoc installation of packages
+   --> .github/workflows/release.yml:181:11
+    |
+180 |         run: |
+    |         --- this step
+181 |           npm install -g npm@^11.5.1
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^^ installs a package outside of a lockfile
+    |
+    = note: audit confidence → High
+    = help: audit documentation → https://docs.zizmor.sh/audits/#adhoc-packages
+
+20 findings (1 suppressed, 18 unsafe fixes): 10 informational, 3 low, 0 medium, 6 high

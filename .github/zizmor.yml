@@ -1,0 +1,12 @@
+# zizmor configuration - https://docs.zizmor.sh/configuration/
+# Same policy as link-foundation/js-ai-driven-development-pipeline-template:
+# GitHub's own actions and zizmor's action are trusted at tag granularity,
+# every other action is pinned to a full commit hash.
+rules:
+  unpinned-uses:
+    config:
+      policies:
+        actions/*: ref-pin
+        github/*: ref-pin
+        zizmorcore/*: ref-pin
+        '*': hash-pin
