@@ -1,0 +1,9 @@
+Warnings in main run 36042299802 (before) vs PR run 36051110749 (after), counted with grep -c on the full logs.
+The ubuntu-latest migration notice is an annotation, not a log line: 5 in annotations-36042299802.tsv, 0 annotations on the Ubuntu jobs of 36051110749.
+pattern                                    before    after
+npm warn                                       15        0
+ExperimentalWarning: VM Modules                 9        0
+ExperimentalWarning: WASI                       9        0
+DeprecationWarning                             27        0
+Using 'master'                                 10        0
+Exceeded timeout                                2        0

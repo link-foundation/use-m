@@ -15,6 +15,9 @@ Issue: https://github.com/link-foundation/use-m/issues/76 · Pull request: https
 | `data/backfill-dry-run.txt` | `node scripts/npm-release.mjs backfill --dry-run` against the real registry |
 | `data/registry-cache-headers.txt` | CDN cache headers of registry documents |
 | `data/actionlint-*.txt`, `data/zizmor-*.txt` | Workflow lint findings before and after this pull request |
+| `ci-logs/ci-cd-36050374345-failed.log` | PR run that exposed the 10 s `jest.setTimeout` in `resolvers.test.*` |
+| `ci-logs/ci-cd-36051110749-full.log`, `data/warning-counts.txt` | First fully green PR run, and warning counts before and after |
+| `data/bunfig-timeout-experiment.txt` | Output of `experiments/issue-76-bunfig-timeout.mjs` |
 | `data/hive-mind-CI-CD-BEST-PRACTICES.md` | The referenced best-practices document |
 | `template/file-tree.txt` | File tree of link-foundation/js-ai-driven-development-pipeline-template |
 
@@ -48,7 +51,7 @@ Result: 8.16.1 and 8.16.2 are on npm without a `v8.16.1`/`v8.16.2` tag or GitHub
 | Latent false positive | `npm view ... >/dev/null 2>&1` read any failure as "not published" | An unreachable registry would have led to a publish attempt and a conflict instead of a clear error. |
 | Late failure | A merge without a version bump fails on main, after the merge | The version was checked only in the publish job. |
 | Warning (15×) | `npm warn` about unapproved install scripts (esbuild, puppeteer) on every `npm ci` | npm 11 warns about packages with install scripts that are not in `allowScripts`. npm 12 blocks them, and puppeteer then has no browser. |
-| Warning (18×) | `ExperimentalWarning: VM Modules is an experimental feature` | Jest needs `--experimental-vm-modules`, and Node prints the warning once per Jest worker. |
+| Warning (18×) | `ExperimentalWarning`: 9 × "VM Modules is an experimental feature", 9 × "WASI is an experimental feature" | Jest needs `--experimental-vm-modules`, and the built-ins tests load `wasi`. Each warning is printed once per Node.js test job. |
 | Warning (27×) | `DeprecationWarning` for `sys` (DEP0025), `punycode` (DEP0040) and `_stream_wrap` (DEP0125) | `tests/dynamic-builtins.test.*` deliberately loads every built-in module, including the deprecated ones. |
 | Notice (every Linux job) | "The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026" | Floating runner label. |
 | Hint (every checkout) | `hint: Using 'master' as the name for the initial branch` | `actions/checkout` runs `git init` with Git's default settings. |
