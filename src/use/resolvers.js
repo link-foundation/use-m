@@ -104,6 +104,7 @@ const resolvers = {
     return baseUse(resolvedPath);
   },
   npm: async (moduleSpecifier, pathResolver, options = {}) => {
+    const { packageName, version, modulePath } = parseModuleSpecifier(moduleSpecifier);
     const path = await import('node:path');
     const { exec } = await import('node:child_process');
     const { createHash } = await import('node:crypto');
@@ -114,6 +115,13 @@ const resolvers = {
     const execAsync = promisify(exec);
     const npmEnvSource = options?.env || process.env;
     const baseNpmEnv = { ...npmEnvSource };
+    const engineStrict = options?.engineStrict ?? !['false', '0'].includes(baseNpmEnv.USE_M_ENGINE_STRICT);
+    const engineAware = engineStrict && (version === 'latest' ||
+      (!npmSemver.valid(version) && npmSemver.validRange(version) !== null));
+    const nodeVersion = process.versions.node;
+    const versionCacheKey = (registry, name) => JSON.stringify(engineAware
+      ? [registry, name, 'engines-v1', nodeVersion, version]
+      : [registry, name]);
     const installMaxAttempts = Number.isInteger(options?.installMaxAttempts) && options.installMaxAttempts > 0
       ? options.installMaxAttempts
       : 3;
@@ -290,7 +298,7 @@ const resolvers = {
 
     const getLatestVersionCachePath = (cacheDirectory, registry, packageName) => {
       const digest = createHash('sha256')
-        .update(JSON.stringify([registry, packageName]))
+        .update(versionCacheKey(registry, packageName))
         .digest('hex');
       return path.join(cacheDirectory, `${digest}.json`);
     };
@@ -302,11 +310,14 @@ const resolvers = {
       typeof entry.version === 'string' &&
       entry.version.trim() !== '' &&
       typeof entry.fetchedAt === 'number' &&
-      Number.isFinite(entry.fetchedAt);
+      Number.isFinite(entry.fetchedAt) &&
+      (!engineAware || (entry.nodeVersion === nodeVersion && entry.requestedVersion === version &&
+        entry.metadata?.version === entry.version && supportsNodeEngine(entry.metadata, nodeVersion) &&
+        npmSemver.satisfies(entry.version, version === 'latest' ? '*' : version)));
 
     const readLatestVersionCache = async (registry, packageName, env) => {
       if (!latestVersionCacheEnabled) return null;
-      const cacheKey = JSON.stringify([registry, packageName]);
+      const cacheKey = versionCacheKey(registry, packageName);
       let cached = npmLatestVersionMemoryCache.get(cacheKey) || null;
       const cacheDirectory = getLatestVersionCacheDirectory(env);
       if (cacheDirectory) {
@@ -329,10 +340,11 @@ const resolvers = {
       return { ...cached, fresh };
     };
 
-    const writeLatestVersionCache = async (registry, packageName, version, env) => {
+    const writeLatestVersionCache = async (registry, packageName, selectedVersion, env, metadata) => {
       if (!latestVersionCacheEnabled) return;
-      const entry = { registry, packageName, version, fetchedAt: Date.now() };
-      const cacheKey = JSON.stringify([registry, packageName]);
+      const entry = { registry, packageName, version: selectedVersion, fetchedAt: Date.now(),
+        ...(engineAware ? { metadata, nodeVersion, requestedVersion: version } : {}) };
+      const cacheKey = versionCacheKey(registry, packageName);
       npmLatestVersionMemoryCache.set(cacheKey, entry);
       const cacheDirectory = getLatestVersionCacheDirectory(env);
       if (!cacheDirectory) return;
@@ -349,19 +361,19 @@ const resolvers = {
       }
     };
 
-    const getRegistryEndpoint = (registry, packageName) =>
-      new URL(`${encodeURIComponent(packageName)}/latest`, registry).href;
+    const getRegistryEndpoint = (registry, packageName, fullMetadata) =>
+      new URL(`${encodeURIComponent(packageName)}${fullMetadata ? '' : '/latest'}`, registry).href;
 
     const isTransientRegistryFailure = (error) => {
       const status = error?.status;
       return status === 403 || status === 408 || status === 425 || status === 429 || status >= 500;
     };
 
-    const fetchLatestVersion = async (registry, packageName) => {
+    const fetchRegistryMetadata = async (registry, packageName, fullMetadata = false) => {
       if (!registryFetch) {
         throw new Error('This runtime does not provide fetch.');
       }
-      const endpoint = getRegistryEndpoint(registry, packageName);
+      const endpoint = getRegistryEndpoint(registry, packageName, fullMetadata);
       let lastError;
       for (let attempt = 1; attempt <= registryMaxAttempts; attempt++) {
         let timeout = null;
@@ -372,7 +384,7 @@ const resolvers = {
             timeout = setTimeout(() => controller.abort(), registryRequestTimeoutMs);
           }
           const registryResponse = await registryFetch(endpoint, {
-            headers: { accept: 'application/json' },
+            headers: { accept: fullMetadata ? 'application/vnd.npm.install-v1+json' : 'application/json' },
             signal: controller.signal,
           });
           if (!registryResponse?.ok) {
@@ -383,10 +395,10 @@ const resolvers = {
             throw error;
           }
           const metadata = await registryResponse.json();
-          if (typeof metadata?.version !== 'string' || metadata.version.trim() === '') {
+          if (!fullMetadata && (typeof metadata?.version !== 'string' || metadata.version.trim() === '')) {
             throw new Error('npm registry metadata did not contain a version.');
           }
-          return metadata.version.trim();
+          return metadata;
         } catch (error) {
           lastError = error;
           const retryable = error?.name === 'AbortError' || error?.status === undefined || isTransientRegistryFailure(error);
@@ -408,7 +420,7 @@ const resolvers = {
 
       const failures = [];
       try {
-        const version = await fetchLatestVersion(registry, packageName);
+        const { version } = await fetchRegistryMetadata(registry, packageName);
         await writeLatestVersionCache(registry, packageName, version, env);
         return version;
       } catch (error) {
@@ -449,15 +461,65 @@ const resolvers = {
       );
     };
 
-    const getInstalledPackageVersion = async (packagePath) => {
+    const getInstalledPackageMetadata = async (packagePath) => {
       try {
-        const packageJsonPath = path.join(packagePath, 'package.json');
-        const data = await readFile(packageJsonPath, 'utf8');
-        const { version } = JSON.parse(data);
-        return version;
+        return JSON.parse(await readFile(path.join(packagePath, 'package.json'), 'utf8'));
       } catch {
         return null;
       }
+    };
+    const getInstalledPackageVersion = async (packagePath) =>
+      (await getInstalledPackageMetadata(packagePath))?.version || null;
+
+    const getCompatibleVersion = async (packageName, env, installedPackagePath) => {
+      const registry = await getRegistry(env);
+      const cached = await readLatestVersionCache(registry, packageName, env);
+      if (cached?.fresh) return cached.version;
+      const select = metadata => selectNodeCompatibleVersion(metadata, packageName, version, nodeVersion, debug);
+      const save = async metadata => {
+        const selected = select(metadata);
+        await writeLatestVersionCache(registry, packageName, selected.version, env, selected);
+        return selected.version;
+      };
+      let lastError;
+      try {
+        return await save(await fetchRegistryMetadata(registry, packageName, true));
+      } catch (error) {
+        if (error.code === 'USE_M_UNSUPPORTED_NODE') throw error;
+        lastError = error;
+        debug(1, `direct engine metadata lookup failed for ${packageName}; trying npm CLI (${error.message})`);
+      }
+      if (registryCliFallbackEnabled) {
+        try {
+          // npm view pkg@* returns a manifest for every stable published version,
+          // unlike npm view pkg, whose versions array has no per-version engines.
+          const selector = version === 'latest' ? '*' : version;
+          const { stdout } = await execAsync(
+            `npm view ${quoteNpmArgument(`${packageName}@${selector}`)} version engines --json`,
+            { env, maxBuffer: 16 * 1024 * 1024 }
+          );
+          return await save(JSON.parse(stdout));
+        } catch (error) {
+          if (error.code === 'USE_M_UNSUPPORTED_NODE') throw error;
+          lastError = error;
+          debug(1, `npm CLI engine metadata lookup failed for ${packageName} (${error.message})`);
+        }
+      }
+      if (cached) {
+        debug(1, `using stale cached compatible version ${cached.version} for ${packageName}`);
+        return cached.version;
+      }
+      const installed = await getInstalledPackageMetadata(installedPackagePath);
+      if (installed?.version) {
+        const selected = select(installed);
+        debug(1, `using installed compatible version ${selected.version} for unavailable metadata of ${packageName}`);
+        return selected.version;
+      }
+      throw new Error(
+        `Failed to determine a Node-compatible version of '${packageName}@${version}' from '${registry}'. ` +
+        `Pin a known version, for example '${packageName}@1.2.3', or retry when the registry is available.`,
+        { cause: lastError }
+      );
     };
 
     const getConfiguredNpmPrefix = (env) => env.npm_config_prefix || env.NPM_CONFIG_PREFIX || '';
@@ -619,13 +681,13 @@ const resolvers = {
       }
       const marker = await readInstallMarker(markerPath);
       if (marker) {
-        return version === 'latest' ? marker.version === latestVersion : true;
+        return latestVersion !== null ? marker.version === latestVersion : true;
       }
       if (!adopt) {
         return false;
       }
       const installedVersion = await getInstalledPackageVersion(packagePath);
-      if (version === 'latest' && installedVersion !== latestVersion) {
+      if (latestVersion !== null && installedVersion !== latestVersion) {
         return false;
       }
       // An alias installed by an older use-m (or by hand) carries no marker.
@@ -803,7 +865,7 @@ const resolvers = {
         try {
           debug(1, `installing ${packageName}@${version} (attempt ${attempt}/${installMaxAttempts})`);
           await execAsync(
-            `npm install -g ${alias}@npm:${packageName}@${version}`,
+            `npm install -g ${quoteNpmArgument(`${alias}@npm:${packageName}@${version}`)}`,
             { env: installContext.env }
           );
           debug(1, `installed ${packageName}@${version} as ${alias}`);
@@ -820,7 +882,7 @@ const resolvers = {
           if (conflictingBinPath) {
             try {
               await execAsync(
-                `npm install -g --force --no-bin-links ${alias}@npm:${packageName}@${version}`,
+                `npm install -g --force --no-bin-links ${quoteNpmArgument(`${alias}@npm:${packageName}@${version}`)}`,
                 { env: installContext.env }
               );
               return;
@@ -858,9 +920,9 @@ const resolvers = {
     const resolveInstalledPackagePath = async ({ packageName, version, alias, repair }) => {
       const globalModulesPath = await getNpmGlobalRoot(baseNpmEnv);
       const packagePath = path.join(globalModulesPath, alias);
-      const latestVersion = version === 'latest'
-        ? await getLatestVersion(packageName, baseNpmEnv, packagePath)
-        : null;
+      const latestVersion = engineAware
+        ? await getCompatibleVersion(packageName, baseNpmEnv, packagePath)
+        : version === 'latest' ? await getLatestVersion(packageName, baseNpmEnv, packagePath) : null;
       if (!repair && await isPackageInstalled(
         packagePath,
         version,
@@ -896,7 +958,7 @@ const resolvers = {
         // Install the exact version returned by metadata lookup. Otherwise the
         // `latest` tag could move between lookup and install, leaving the cache
         // marker immediately stale and triggering a reinstall on every call.
-        const versionToInstall = version === 'latest' ? latestVersion : version;
+        const versionToInstall = latestVersion || version;
         await installPackage({ alias, packageName, version: versionToInstall, packagePath: installPath, installContext, exclusive });
         await writeInstallMarker(markerPath, {
           alias,
@@ -912,9 +974,11 @@ const resolvers = {
     // alias are serialized instead of overlapping. Without this every `use()` in
     // a cold top-level-await wave starts its own `npm install -g` (issue #70).
     const ensurePackageInstalled = async ({ packageName, version }, { repair = false } = {}) => {
-      const alias = `${packageName.replace('@', '').replace('/', '-')}-v-${version}`;
+      const aliasVersion = npmSemver.validRange(version) && !npmSemver.valid(version)
+        ? `range-${createHash('sha256').update(version).digest('hex').slice(0, 16)}` : version;
+      const alias = `${packageName.replace('@', '').replace('/', '-')}-v-${aliasVersion}`;
       const aliasKey = `${getNpmEnvId(npmEnvSource)}\0${alias}`;
-      const requestKey = repair ? `${aliasKey}\0repair` : aliasKey;
+      const requestKey = `${aliasKey}\0${engineAware ? 'engines' : 'unchecked'}${repair ? '\0repair' : ''}`;
       return dedupeNpmInstall(
         requestKey,
         aliasKey,
@@ -922,7 +986,6 @@ const resolvers = {
       );
     };
 
-    const { packageName, version, modulePath } = parseModuleSpecifier(moduleSpecifier);
     const resolvePackageModule = async (packagePath) => {
       const packageJsonPath = path.join(packagePath, 'package.json');
       if (await fileExists(packageJsonPath)) {

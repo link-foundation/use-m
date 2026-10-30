@@ -20,7 +20,7 @@ const response = (status, body = {}) => ({
   ok: status >= 200 && status < 300,
   status,
   statusText: status === 200 ? 'OK' : 'fixture failure',
-  json: async () => body,
+  json: async () => body.version ? { versions: { [body.version]: body } } : body,
 });
 
 const createFixture = async () => {
@@ -55,13 +55,13 @@ if (args[0] === 'config' && args[1] === 'get' && args[2] === 'registry') {
   console.log(process.env.USE_M_FIXTURE_REGISTRY || 'https://registry.npmjs.org/');
   process.exit(0);
 }
-if (args[0] === 'show' && args[2] === 'version') {
+if (args[0] === 'view' && args[2] === 'version') {
   if (process.env.USE_M_FIXTURE_SHOW_FAILURE === '1') {
     console.error('npm error code E403');
     console.error('npm error 403 forbidden');
     process.exit(1);
   }
-  console.log(process.env.USE_M_FIXTURE_VERSION || '1.0.0');
+  console.log(JSON.stringify({ version: process.env.USE_M_FIXTURE_VERSION || '1.0.0' }));
   process.exit(0);
 }
 
@@ -162,11 +162,11 @@ for (const [format, api] of [['ESM', esmApi], ['CommonJS', cjsApi]]) {
 
       expect(first).toBe(second);
       expect(urls).toEqual([
-        'https://registry.example.test/custom/%40scope%2Fretry-fixture/latest',
-        'https://registry.example.test/custom/%40scope%2Fretry-fixture/latest',
+        'https://registry.example.test/custom/%40scope%2Fretry-fixture',
+        'https://registry.example.test/custom/%40scope%2Fretry-fixture',
       ]);
       const calls = await readNpmLog(fixture);
-      expect(calls.filter(call => call.args[0] === 'show')).toHaveLength(0);
+      expect(calls.filter(call => call.args[0] === 'view')).toHaveLength(0);
       const installCalls = calls.filter(call => call.args[0] === 'install');
       expect(installCalls).toHaveLength(1);
       expect(installCalls[0]).toMatchObject({
@@ -189,7 +189,7 @@ for (const [format, api] of [['ESM', esmApi], ['CommonJS', cjsApi]]) {
 
       expect(attempts).toBe(1);
       const calls = await readNpmLog(fixture);
-      expect(calls.filter(call => call.args[0] === 'show')).toHaveLength(1);
+      expect(calls.filter(call => call.args[0] === 'view')).toHaveLength(1);
     });
 
     test('honors npm config registry discovery when no option or environment override exists', async () => {
@@ -203,7 +203,7 @@ for (const [format, api] of [['ESM', esmApi], ['CommonJS', cjsApi]]) {
         },
       }));
 
-      expect(urls).toEqual(['https://configured.example.test/team/configured-fixture/latest']);
+      expect(urls).toEqual(['https://configured.example.test/team/configured-fixture']);
       const calls = await readNpmLog(fixture);
       expect(calls.some(call => call.args.join(' ') === 'config get registry')).toBe(true);
     });
@@ -219,7 +219,7 @@ for (const [format, api] of [['ESM', esmApi], ['CommonJS', cjsApi]]) {
         },
       }));
 
-      expect(urls).toEqual(['https://environment.example.test/npm/environment-fixture/latest']);
+      expect(urls).toEqual(['https://environment.example.test/npm/environment-fixture']);
       const calls = await readNpmLog(fixture);
       expect(calls.filter(call => call.args[0] === 'config')).toHaveLength(0);
     });
@@ -236,7 +236,7 @@ for (const [format, api] of [['ESM', esmApi], ['CommonJS', cjsApi]]) {
 
       expect(fetched).toBe(false);
       const calls = await readNpmLog(fixture);
-      expect(calls.filter(call => ['config', 'show'].includes(call.args[0]))).toHaveLength(0);
+      expect(calls.filter(call => ['config', 'view'].includes(call.args[0]))).toHaveLength(0);
     });
 
     test('can disable latest-version caches explicitly', async () => {
@@ -279,7 +279,7 @@ for (const [format, api] of [['ESM', esmApi], ['CommonJS', cjsApi]]) {
 
       expect(attempts).toBe(2);
       const calls = await readNpmLog(fixture);
-      expect(calls.filter(call => call.args[0] === 'show')).toHaveLength(1);
+      expect(calls.filter(call => call.args[0] === 'view')).toHaveLength(1);
     });
 
     test('falls back to an already-installed latest alias when metadata lookup is unavailable', async () => {
@@ -315,7 +315,7 @@ for (const [format, api] of [['ESM', esmApi], ['CommonJS', cjsApi]]) {
         })
       )).rejects.toThrow("Pin a known version, for example 'missing-latest-fixture@1.2.3'");
       const calls = await readNpmLog(fixture);
-      expect(calls.filter(call => call.args[0] === 'show')).toHaveLength(0);
+      expect(calls.filter(call => call.args[0] === 'view')).toHaveLength(0);
     });
 
     test('emits detailed diagnostics only when debug logging is enabled', async () => {
@@ -399,7 +399,7 @@ describe('npm latest-version disk cache', () => {
     })).resolves.toContain(path.join('stale-cache-fixture-v-latest', 'index.js'));
 
     const calls = await readNpmLog(fixture);
-    expect(calls.filter(call => call.args[0] === 'show')).toHaveLength(1);
+    expect(calls.filter(call => call.args[0] === 'view')).toHaveLength(1);
     expect(calls.filter(call => call.args[0] === 'install')).toHaveLength(1);
   });
 });

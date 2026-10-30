@@ -1,6 +1,6 @@
 {
   "name": "use-m",
-  "version": "8.16.4",
+  "version": "8.17.0",
   "description": "use-m: dynamically import any JavaScript module",
   "type": "module",
   "main": "use.cjs",
@@ -99,10 +99,11 @@
     "esbuild": "^0.25.12",
     "express": "^5.1.0",
     "jest": "^29.7.0",
-    "puppeteer": "^24.16.2"
+    "puppeteer": "^24.16.2",
+    "semver": "7.8.5"
   },
   "dependencies": {
-    "undici": "^6.28.1"
+    "undici": "^6.29.1"
   },
   "allowScripts": {
     "esbuild": true,

@@ -100,7 +100,7 @@ deno test --allow-net --allow-env --allow-run --allow-read --allow-write --allow
 - **src/use.mjs / src/use.cjs / src/use.js**: AUTO-GENERATED compact compatibility bundles retained for consumers of historical `/src/` CDN URLs
 - **src/load.mjs / src/load.cjs**: Robust bootstrap loader and shared `loadWithFallback` engine reused by `src/loader.js` and per-package CDN fallback chains in `src/use.{mjs,cjs}`
 - **use.js / use.cjs / use.mjs** (repo root): AUTO-GENERATED readable, standalone distributions used by package exports and historical CDN bootstrap URLs. They intentionally remain unminified single files. **Never edit them by hand**
-- **scripts/build-use-bundles.mjs**: Deterministically generates both the readable root bundles and compact `/src/` compatibility bundles from `src/use/` (`npm run build`)
+- **scripts/build-use-bundles.mjs**: Embeds the pinned `semver` dev dependency and its ISC license so distributions remain standalone, then deterministically generates both the readable root bundles and compact `/src/` compatibility bundles from `src/use/` (`npm run build`)
 - **scripts/sync-root-entries.mjs**: Backward-compatible wrapper around the same build for existing contributor workflows
 - **tests/**: Each test file has both `.mjs` and `.cjs` versions
 - **examples/**: Real-world usage examples
