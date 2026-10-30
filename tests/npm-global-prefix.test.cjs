@@ -309,7 +309,8 @@ describe(`${moduleName} npm global prefix handling`, () => {
     const fixture = await createFakeNpm();
     const env = {
       ...fixture.baseEnv,
-      USE_M_FAKE_NPM_BIN_NAME: 'fixture-cli'
+      USE_M_FAKE_NPM_BIN_NAME: 'fixture-cli',
+      USE_M_FAKE_NPM_LATEST_VERSION: '2.0.0'
     };
     const binPath = path.resolve(fixture.defaultRoot, '..', '..', 'bin', 'fixture-cli');
     const latestPath = await resolvers.npm('fixture-pkg', resolve, {

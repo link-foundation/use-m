@@ -18,7 +18,7 @@ try {
   });
   const installs = (await fixture.calls()).filter(args => args[0] === 'install');
   assert.equal(installs.length, 1);
-  assert.ok(installs[0].includes('command-stream-v-latest@npm:command-stream@1.6.2'));
+  assert.ok(installs[0].includes('command-stream-v-1.6.2@npm:command-stream@1.6.2'));
   console.log('PASS: Node 20.20.2 selected command-stream@1.6.2 instead of incompatible 2.0.0.');
 } finally {
   Object.defineProperty(process.versions, 'node', descriptor);

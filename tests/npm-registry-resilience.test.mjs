@@ -170,7 +170,7 @@ for (const [format, api] of [['ESM', esmApi], ['CommonJS', cjsApi]]) {
       const installCalls = calls.filter(call => call.args[0] === 'install');
       expect(installCalls).toHaveLength(1);
       expect(installCalls[0]).toMatchObject({
-        args: ['install', '-g', 'scope-retry-fixture-v-latest@npm:@scope/retry-fixture@2.0.0'],
+        args: ['install', '-g', 'scope-retry-fixture-v-2.0.0@npm:@scope/retry-fixture@2.0.0'],
         registry: 'https://registry.example.test/custom/',
       });
     });
@@ -396,7 +396,7 @@ describe('npm latest-version disk cache', () => {
       ...initialOptions,
       fetch: async () => response(503),
       registryMaxAttempts: 2,
-    })).resolves.toContain(path.join('stale-cache-fixture-v-latest', 'index.js'));
+    })).resolves.toContain(path.join('stale-cache-fixture-v-1.0.0', 'index.js'));
 
     const calls = await readNpmLog(fixture);
     expect(calls.filter(call => call.args[0] === 'view')).toHaveLength(1);

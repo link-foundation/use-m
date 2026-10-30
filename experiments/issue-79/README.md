@@ -22,8 +22,13 @@ the fixture even if an assertion fails.
 
 Before implementation, the initial ESM/CommonJS regression run had 40 failures
 and 2 passes. It showed `latest` selecting `2.0.0`, ranges being handed directly
-to npm, and incompatible requests reaching installation. The final regressions
-cover selection, pre-install rejection, configuration, and cache/alias behavior.
+to npm, and incompatible requests reaching installation. The regressions cover
+selection, pre-install rejection, configuration, and cache/alias behavior. Final review also reproduced two failing actual-import
+regressions: a strict call could install a compatible replacement but return the
+previous unchecked module from the runtime cache. Checked selections now use
+immutable exact-version alias paths. Tests import real fixture modules to verify
+unchecked-to-checked calls and newly published range selections, retain earlier
+references, reuse exact pins, and validate installed versions during outages.
 
 ## Requirement inventory
 
@@ -35,7 +40,7 @@ cover selection, pre-install rejection, configuration, and cache/alias behavior.
 | Provide an opt-out | `engineStrict:false` per call or instance; `USE_M_ENGINE_STRICT=false` / `0` | instance, exported `use`, environment, and per-call tests |
 | Fail fast when no compatible release exists | Actionable error exits metadata selection before installation | no-install assertions; no CLI/stale fallback after incompatibility |
 | Preserve resilient loading | Retry/CLI/cache/installed fallback paths retain engine metadata or validate installed manifest | registry resilience suite; stale cache; compatible/incompatible installed alias tests |
-| Avoid unsafe reuse after a Node upgrade or range change | Cache identity includes runtime and selector; alias marker must match selected exact version | Node 20-to-22 cache test; range cache isolation and alias refresh |
+| Avoid unsafe reuse after a Node upgrade or range change | Cache identity includes runtime and selector; each selected version has its own installation path | Node 20-to-22 cache test; range cache isolation; actual-import cache regressions |
 | Keep distributions standalone | Build embeds pinned npm semver functions with their ISC license | deterministic build, root entry, browser and cross-runtime suites |
 
 Exact pins and named tags other than `latest` stay explicit choices. As with
@@ -110,10 +115,24 @@ the browser and its finite local server, including after an assertion fails.
 
 Local verification before the matrix follow-up passed all 623 tests on Node 24
 and Bun, including the browser suite, and 42 Deno groups / 365 steps. The added
-native-first regression brings the final counts to 625 Node/Bun tests and
+native-first regression brought the counts to 625 Node/Bun tests and
 366 Deno steps (with the existing 1 ignored group / 3 steps unchanged).
 The standalone incident reproduction and real npm example pass.
 The production audit reports zero vulnerabilities;
 the version check, deterministic bundle verification, package dry run, and
 missing-fetch shebang experiment pass. Large command outputs remain in local
 `ci-logs/` for inspection rather than being added to the package.
+
+### Import-cache follow-up
+
+Final self-review reproduced a strict call returning a previously loaded unchecked
+module after installing its compatible replacement: both ESM and CommonJS tests
+failed (expected 1.10.0, received 2.0.0). Replacing a moving alias does not clear
+the runtime's module cache. Checked selections now share the immutable alias of
+their selected exact version. Actual-import regressions cover unchecked-to-checked
+calls, moving ranges, retained earlier references, and reuse of explicit pins.
+Offline tests validate all installed exact versions against the requested range
+and current runtime, and preserve adoption of compatible legacy moving aliases.
+The shared-binary regression still installs different versions to exercise the
+existing guarded collision recovery. The final suites contain 633 Node/Bun tests
+and 370 Deno steps, including 68 engine-policy regressions across ESM/CommonJS.

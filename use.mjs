@@ -1800,7 +1800,7 @@ const resolvers = {
     const { exec } = await import('node:child_process');
     const { createHash } = await import('node:crypto');
     const { promisify } = await import('node:util');
-    const { access, mkdir, readFile, readlink, rename, rm, rmdir, stat, unlink, utimes, writeFile } = await import('node:fs/promises');
+    const { access, mkdir, readFile, readdir, readlink, rename, rm, rmdir, stat, unlink, utimes, writeFile } = await import('node:fs/promises');
     const { constants: fsConstants } = await import('node:fs');
     const os = await import('node:os');
     const execAsync = promisify(exec);
@@ -2162,6 +2162,8 @@ const resolvers = {
     const getInstalledPackageVersion = async (packagePath) =>
       (await getInstalledPackageMetadata(packagePath))?.version || null;
 
+    const exactAlias = selectedVersion => `${packageName.replace('@', '').replace('/', '-')}-v-${selectedVersion}`;
+    let offlineLegacyAlias = null;
     const getCompatibleVersion = async (packageName, env, installedPackagePath) => {
       const registry = await getRegistry(env);
       const cached = await readLatestVersionCache(registry, packageName, env);
@@ -2200,9 +2202,25 @@ const resolvers = {
         debug(1, `using stale cached compatible version ${cached.version} for ${packageName}`);
         return cached.version;
       }
-      const installed = await getInstalledPackageMetadata(installedPackagePath);
-      if (installed?.version) {
+      const globalModulesPath = path.dirname(installedPackagePath);
+      const installed = [];
+      const aliasPrefix = exactAlias('');
+      for (const alias of await readdir(globalModulesPath).catch(() => [])) {
+        if (!alias.startsWith(aliasPrefix)) continue;
+        const installedVersion = alias.slice(aliasPrefix.length);
+        if (!npmSemver.valid(installedVersion)) continue;
+        const manifest = await getInstalledPackageMetadata(path.join(globalModulesPath, alias));
+        if (manifest?.version === installedVersion) installed.push(manifest);
+      }
+      const legacy = await getInstalledPackageMetadata(installedPackagePath);
+      if (legacy?.version) installed.push(legacy);
+      if (installed.length) {
         const selected = select(installed);
+        // Keep older, already-installed moving aliases usable during outages.
+        // New checked installs always use an immutable exact-version path.
+        if (!installed.some(manifest => manifest !== legacy && manifest.version === selected.version)) {
+          offlineLegacyAlias = path.basename(installedPackagePath);
+        }
         debug(1, `using installed compatible version ${selected.version} for unavailable metadata of ${packageName}`);
         return selected.version;
       }
@@ -2610,10 +2628,13 @@ const resolvers = {
 
     const resolveInstalledPackagePath = async ({ packageName, version, alias, repair }) => {
       const globalModulesPath = await getNpmGlobalRoot(baseNpmEnv);
-      const packagePath = path.join(globalModulesPath, alias);
+      const requestedAlias = alias;
+      const requestedPackagePath = path.join(globalModulesPath, requestedAlias);
       const latestVersion = engineAware
-        ? await getCompatibleVersion(packageName, baseNpmEnv, packagePath)
-        : version === 'latest' ? await getLatestVersion(packageName, baseNpmEnv, packagePath) : null;
+        ? await getCompatibleVersion(packageName, baseNpmEnv, requestedPackagePath)
+        : version === 'latest' ? await getLatestVersion(packageName, baseNpmEnv, requestedPackagePath) : null;
+      if (engineAware) alias = offlineLegacyAlias || exactAlias(latestVersion);
+      const packagePath = path.join(globalModulesPath, alias);
       if (!repair && await isPackageInstalled(
         packagePath,
         version,

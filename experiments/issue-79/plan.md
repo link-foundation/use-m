@@ -10,6 +10,7 @@ Objective: implement and verify all issue #79 requirements in PR #82.
 - [x] Support engineStrict:false and environment opt-out, with default-off diagnostics explaining fallback selection.
 - [x] Preserve safe retries, registry/CLI/cache/offline behavior, runtime and distribution compatibility.
 - [x] Document behavior, examples, reproduction evidence, and acceptance checks; prepare a release version.
+- [x] Reproduce runtime import-cache reuse with failing actual-import tests and use immutable version paths, preserving offline and binary-collision behavior.
 - [x] Run focused tests, then all local CI checks, keeping large logs in files and subprocess memory bounded.
 - [x] Review canonical changes and verify current main is an ancestor; prepare atomic commits.
 

@@ -134,7 +134,7 @@ describe('Node engine compatible npm resolution', () => {
     }
   });
 
-  test('keeps range caches separate and refreshes moving aliases', async () => {
+  test('keeps range caches separate and resolves newly published versions', async () => {
     const fixture = await fixtureFor();
     await resolvers.npm('fixture-pkg@^1', resolve, fixture.options);
     await resolvers.npm('fixture-pkg@~1.2', resolve, fixture.options);
@@ -179,6 +179,20 @@ describe('Node engine compatible npm resolution', () => {
     expect(await installedVersions(fixture)).toEqual(['1.10.0']);
   });
 
+  test('adopts a compatible legacy moving alias during an outage', async () => {
+    const fixture = await fixtureFor();
+    const alias = path.join(fixture.modules, 'fixture-pkg-v-latest');
+    await mkdir(alias, { recursive: true });
+    await writeFile(path.join(alias, 'package.json'), JSON.stringify({
+      version: '1.10.0', engines: { node: '>=18' }, type: 'commonjs', main: 'index.js',
+    }));
+    await writeFile(path.join(alias, 'index.js'), 'module.exports = { version: "1.10.0" };');
+    expect(await resolvers.npm('fixture-pkg', resolve, { ...fixture.options,
+      fetch: async () => { throw new Error('offline'); },
+    })).toBe(path.join(alias, 'index.js'));
+    expect(await installedVersions(fixture)).toEqual([]);
+  });
+
   test('skips invalid engine declarations without silently installing them', async () => {
     const metadata = enginePackument();
     metadata.versions['1.10.0'].engines.node = 'not-a-range';
@@ -206,6 +220,40 @@ describe('Node engine compatible npm resolution', () => {
       specifierResolver: 'npm', engineStrict: false,
     });
     expect(loaded.version).toBe('2.0.0');
+  });
+
+  test('imports the compatible replacement after an unchecked module was already loaded', async () => {
+    const fixture = await fixtureFor();
+    const fetch = async url => ({ ok: true, json: async () => url.endsWith('/latest')
+      ? { version: '2.0.0' } : enginePackument() });
+    const use = await makeUse({ ...fixture.options, fetch, specifierResolver: 'npm', pathResolver: resolve });
+    expect((await use('fixture-pkg', { engineStrict: false })).version).toBe('2.0.0');
+    expect((await use('fixture-pkg')).version).toBe('1.10.0');
+  });
+
+  test('imports a new range selection without changing an already loaded version', async () => {
+    const metadata = enginePackument();
+    const fixture = await fixtureFor(metadata);
+    const use = await makeUse({ ...fixture.options, latestVersionCache: false,
+      specifierResolver: 'npm', pathResolver: resolve });
+    const previous = await use('fixture-pkg@^1');
+    metadata.versions['1.11.0'] = { version: '1.11.0' };
+    expect((await use('fixture-pkg@^1')).version).toBe('1.11.0');
+    expect(previous.version).toBe('1.10.0');
+    expect((await use('fixture-pkg@1.10.0')).version).toBe('1.10.0');
+    expect(await installedVersions(fixture)).toEqual(['1.10.0', '1.11.0']);
+  });
+
+  test('chooses the highest compatible installed exact version during an outage', async () => {
+    const fixture = await fixtureFor();
+    await resolvers.npm('fixture-pkg@1.2.0', resolve, fixture.options);
+    await resolvers.npm('fixture-pkg@1.10.0', resolve, fixture.options);
+    await resolvers.npm('fixture-pkg@2.0.0', resolve, fixture.options);
+    const entry = await resolvers.npm('fixture-pkg', resolve, { ...fixture.options,
+      latestVersionCache: false, fetch: async () => { throw new Error('offline'); },
+    });
+    expect(JSON.parse(await readFile(path.join(path.dirname(entry), 'package.json'), 'utf8')).version).toBe('1.10.0');
+    expect(await installedVersions(fixture)).toEqual(['1.2.0', '1.10.0', '2.0.0']);
   });
 
   test('keeps diagnostics off by default', async () => {

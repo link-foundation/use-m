@@ -25,7 +25,8 @@ else if (args[0] === 'install') {
   const version = spec.slice(spec.lastIndexOf('@') + 1);
   const dir = path.join(process.env.USE_M_ENGINE_MODULES, alias);
   fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({version, type:'commonjs', main:'index.js'}));
+  const engines = JSON.parse(process.env.USE_M_ENGINE_METADATA).find(manifest => manifest.version === version)?.engines;
+  fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({version, engines, type:'commonjs', main:'index.js'}));
   fs.writeFileSync(path.join(dir, 'index.js'), 'module.exports = ' + JSON.stringify({version}) + ';');
 } else process.exit(1);
 `);
