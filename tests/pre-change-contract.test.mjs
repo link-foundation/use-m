@@ -283,7 +283,8 @@ for (const [format, api] of implementations) {
           pathResolver: value => value,
           import: async value => value,
         });
-        await expect(denoUse('fixture@4')).resolves.toBe('https://esm.sh/fixture@4');
+        // Deno now prefers the native npm archive over mutable CDN builds.
+        await expect(denoUse('fixture@4')).resolves.toBe('npm:fixture@4');
       };
       if (typeof Deno !== 'undefined') {
         await checkDenoDefault();

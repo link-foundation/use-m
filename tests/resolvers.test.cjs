@@ -45,7 +45,7 @@ describe(`${moduleName} resolvers tests`, () => {
   test(`${moduleName} npm resolver resolves yargs@latest/helpers`, async () => {
     const { npm } = resolvers;
     const packagePath = await npm('yargs@latest/helpers', resolve);
-    expect(packagePath).toMatch(/node_modules[\\/]yargs-v-latest[\\/]helpers/);
+    expect(packagePath).toMatch(/node_modules[\\/]yargs-v-\d+\.\d+\.\d+[\\/]helpers/);
   });
 
   test(`${moduleName} skypack resolver resolves URL`, async () => {

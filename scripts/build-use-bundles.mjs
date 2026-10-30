@@ -3,12 +3,13 @@
 import { readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { transform } from 'esbuild'
+import { build, transform } from 'esbuild'
 
 export const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 
 export const USE_SOURCE_FRAGMENTS = [
   'src/use/core.js',
+  'src/use/engines.js',
   'src/use/resolvers.js',
   'src/use/coordination.js',
   'src/use/runtime.js',
@@ -85,7 +86,30 @@ export async function readUseSource() {
   const fragments = await Promise.all(
     USE_SOURCE_FRAGMENTS.map(relativePath => readFile(path.join(repoRoot, relativePath), 'utf8'))
   )
-  return fragments
+  // Embed npm's semver implementation so bare CDN/eval consumers need no
+  // local dependency installation. Keep its license in every standalone file.
+  const semverBundle = await build({
+    stdin: {
+      contents: `export { default as valid } from 'semver/functions/valid.js';
+export { default as satisfies } from 'semver/functions/satisfies.js';
+export { default as validRange } from 'semver/ranges/valid.js';
+export { default as rcompare } from 'semver/functions/rcompare.js';`,
+      resolveDir: repoRoot,
+    },
+    bundle: true,
+    write: false,
+    format: 'iife',
+    globalName: 'npmSemver',
+    platform: 'browser',
+    // Semver's optional NODE_DEBUG hook must work in browsers without process.
+    define: { 'process.env.NODE_DEBUG': 'undefined' },
+  })
+  const semverLicense = await readFile(path.join(repoRoot, 'node_modules/semver/LICENSE'), 'utf8')
+  return [
+    `/*! Bundled node-semver (ISC):\n${semverLicense.trim()}\n*/`,
+    semverBundle.outputFiles[0].text.trimEnd(),
+    ...fragments,
+  ]
     .map(fragment => fragment.replace(/\r\n?/g, '\n').trimEnd())
     .join('\n\n')
 }

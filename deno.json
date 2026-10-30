@@ -1,4 +1,5 @@
 {
+  "nodeModulesDir": "none",
   "tasks": {
     "test": "deno test --allow-all tests/*.test.mjs"
   },
