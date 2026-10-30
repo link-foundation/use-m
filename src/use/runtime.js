@@ -92,6 +92,15 @@ const baseUse = async (modulePath) => {
     // Return the whole module if it has multiple meaningful exports or no default
     return module;
   } catch (error) {
+    // Deno's npm ESM imports require file extensions for legacy subpaths that
+    // Node resolves automatically. Honor its explicit .js suggestion while
+    // leaving package export maps and unrelated import errors unchanged.
+    if (typeof Deno !== 'undefined' && modulePath.startsWith('npm:') && !modulePath.endsWith('.js') &&
+        error.code === 'ERR_MODULE_NOT_FOUND' &&
+        error.message.includes('Did you mean to import with the ".js" extension?') &&
+        parseModuleSpecifier(modulePath.slice(4)).modulePath) {
+      return baseUse(`${modulePath}.js`);
+    }
     throw new Error(`Failed to import module from '${modulePath}'.`, { cause: error });
   }
 }

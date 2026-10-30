@@ -51,3 +51,40 @@ research. Related issues #73/#78 supply incident context and are separate work.
 The local production audit also exposed an existing vulnerable Undici lock.
 The PR moves the supported 6.x dependency to 6.29.1 so the required audit passes.
 Release version: 8.17.0.
+
+## CI investigation
+
+The initial [run 41047208222](https://github.com/link-foundation/use-m/actions/runs/41047208222)
+started at 2026-10-30 11:19:03 UTC on the untouched branch SHA
+`b0858907ac8811a3ac04d9484cf3db7df4605e41`. Logs were downloaded to local
+`ci-logs/` before making the corresponding repairs:
+
+- `initial-124034110593.log:176`: version 8.16.4 was already published.
+  Version 8.17.0 passes the unpublished-version check.
+- `initial-124034111006.log:198-209`: Undici 6.28.1 failed the production audit.
+  The supported 6.x update to 6.29.1 leaves zero production vulnerabilities.
+- `initial-124034110989.log:793-804`: Deno stopped on the TypeScript 5.9.3
+  CDN hash mismatch (expected `64861860...`, served `dc5e8d5f...`). The latter
+  SHA-256 was independently verified from the current version-labelled artifact
+  before refreshing that one existing remote hash.
+- Deno also failed command-stream and lodash subpath imports. The retained
+  `inspect-deno-cdn.mjs` probe exposed HTTP 500 from esm.sh and HTTP 404 from
+  both alternate mirrors for command-stream 0.0.5. Deno's native `npm:` importer
+  is now a final fallback; the original CDN order remains first. The repository
+  uses Deno-managed global npm caching so dynamic packages can be fetched without
+  changing the local npm installation. The lockfile includes these npm versions.
+  Deno's explicit `.js` suggestion is honored once for extensionless npm subpaths,
+  preserving the existing lodash import regression. The fixture declares its
+  CommonJS type so public `use()` imports work on Deno too.
+
+The native-fallback regressions failed before implementation (4 failures across
+the ESM/CommonJS suites). The full Deno run subsequently passed 42 test groups
+and 365 steps; its existing 1 ignored group/3 steps remain unchanged. The final
+focused Deno run passed all 41 steps for engine selection, command-stream, and
+lodash imports. The standalone incident reproduction and real npm example pass.
+
+Final local verification also passed all 623 tests on Node 24 and all 623 on Bun,
+including the browser suite. The production audit reports zero vulnerabilities;
+the version check, deterministic bundle verification, package dry run, and
+missing-fetch shebang experiment pass. Large command outputs remain in local
+`ci-logs/` for inspection rather than being added to the package.

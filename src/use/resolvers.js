@@ -1185,6 +1185,10 @@ const resolvers = {
     const resolvedPath = `https://esm.sh/${packageName}@${version}${modulePath}`;
     return resolvedPath;
   },
+  denoNpm: async (moduleSpecifier) => {
+    const { packageName, version, modulePath } = parseModuleSpecifier(moduleSpecifier);
+    return `npm:${packageName}@${version}${modulePath}`;
+  },
   skypack: async (moduleSpecifier, pathResolver) => {
     const resolvedPath = `https://cdn.skypack.dev/${moduleSpecifier}`;
     return resolvedPath;

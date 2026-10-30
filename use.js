@@ -2876,6 +2876,10 @@ const resolvers = {
     const resolvedPath = `https://esm.sh/${packageName}@${version}${modulePath}`;
     return resolvedPath;
   },
+  denoNpm: async (moduleSpecifier) => {
+    const { packageName, version, modulePath } = parseModuleSpecifier(moduleSpecifier);
+    return `npm:${packageName}@${version}${modulePath}`;
+  },
   skypack: async (moduleSpecifier, pathResolver) => {
     const resolvedPath = `https://cdn.skypack.dev/${moduleSpecifier}`;
     return resolvedPath;
@@ -2922,7 +2926,8 @@ const resolvers = {
 // single CDN outage no longer breaks `use()` — when the first host fails we fall
 // back to the next. The primary entry preserves the previous default per runtime.
 const networkResolverChain = ['esm', 'jspm', 'skypack']
-const denoResolverChain = ['deno', 'jspm', 'skypack']
+// Deno can still load npm packages when no CDN can build or serve them.
+const denoResolverChain = ['deno', 'jspm', 'skypack', 'denoNpm']
 
 // npm installs for the same alias must not overlap. `npm install -g` takes no
 // lock on the global prefix, so two runs writing the same alias directory delete
@@ -3105,6 +3110,15 @@ const baseUse = async (modulePath) => {
     // Return the whole module if it has multiple meaningful exports or no default
     return module;
   } catch (error) {
+    // Deno's npm ESM imports require file extensions for legacy subpaths that
+    // Node resolves automatically. Honor its explicit .js suggestion while
+    // leaving package export maps and unrelated import errors unchanged.
+    if (typeof Deno !== 'undefined' && modulePath.startsWith('npm:') && !modulePath.endsWith('.js') &&
+        error.code === 'ERR_MODULE_NOT_FOUND' &&
+        error.message.includes('Did you mean to import with the ".js" extension?') &&
+        parseModuleSpecifier(modulePath.slice(4)).modulePath) {
+      return baseUse(`${modulePath}.js`);
+    }
     throw new Error(`Failed to import module from '${modulePath}'.`, { cause: error });
   }
 }

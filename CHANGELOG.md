@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Fall back to Deno native npm imports after all CDN mirrors fail, preserving imports when a CDN cannot build a package. Refresh the verified TypeScript CDN artifact lock and update Undici to 6.29.1 for the production audit.
 - Resolve implicit/explicit `latest` and semver ranges to the highest published release whose `engines.node` supports the running Node.js version. Reject incompatible requests before installation, explain selections with debug logging, and allow `engineStrict: false` per call/instance or `USE_M_ENGINE_STRICT=false`.
 - Isolate compatible-version caches by Node.js version and requested range, preserve checked offline fallbacks, and refresh range aliases when their selected version changes. Bundle npm's semver parser in every standalone distribution. Resolves [#79](https://github.com/link-foundation/use-m/issues/79).
 - A conditional `use-m/fetch-polyfill` entry for Node.js hosts that do not expose `fetch`, including Windows Git Bash and shebang execution contexts. It installs every missing Undici web global while preserving host-provided implementations, and supports both ES Modules and CommonJS. Resolves [#45](https://github.com/link-foundation/use-m/issues/45).

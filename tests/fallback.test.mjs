@@ -155,9 +155,24 @@ describe(`${moduleName} makeUse per-package CDN fallback`, () => {
     expect(calls).toEqual(['only']);
   });
 
+  test(`${moduleName} Deno falls back to native npm when every CDN fails`, async () => {
+    const calls = [];
+    const use = await makeUse({
+      specifierResolvers: denoResolverChain,
+      import: async url => {
+        calls.push(url);
+        if (!url.startsWith('npm:')) throw new Error('CDN unavailable');
+        return { loadedFrom: url };
+      },
+    });
+    expect(await use('command-stream@0.0.5')).toEqual({ loadedFrom: 'npm:command-stream@0.0.5' });
+    expect(calls.length).toBe(4);
+    expect(calls[0]).toBe('https://esm.sh/command-stream@0.0.5');
+  });
+
   test(`${moduleName} exposes the default mirror chains`, () => {
     // Distinct CDN hosts so a single outage cannot break network loading.
     expect(networkResolverChain).toEqual(['esm', 'jspm', 'skypack']);
-    expect(denoResolverChain).toEqual(['deno', 'jspm', 'skypack']);
+    expect(denoResolverChain).toEqual(['deno', 'jspm', 'skypack', 'denoNpm']);
   });
 });

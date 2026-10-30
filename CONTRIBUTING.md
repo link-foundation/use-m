@@ -102,6 +102,7 @@ deno test --allow-net --allow-env --allow-run --allow-read --allow-write --allow
 - **use.js / use.cjs / use.mjs** (repo root): AUTO-GENERATED readable, standalone distributions used by package exports and historical CDN bootstrap URLs. They intentionally remain unminified single files. **Never edit them by hand**
 - **scripts/build-use-bundles.mjs**: Embeds the pinned `semver` dev dependency and its ISC license so distributions remain standalone, then deterministically generates both the readable root bundles and compact `/src/` compatibility bundles from `src/use/` (`npm run build`)
 - **scripts/sync-root-entries.mjs**: Backward-compatible wrapper around the same build for existing contributor workflows
+- **deno.json**: Uses Deno's global npm cache (`nodeModulesDir: "none"`) so native npm fallback can load dynamic packages without changing npm's local installation.
 - **tests/**: Each test file has both `.mjs` and `.cjs` versions
 - **examples/**: Real-world usage examples
 

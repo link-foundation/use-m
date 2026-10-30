@@ -6,7 +6,8 @@
 // single CDN outage no longer breaks `use()` — when the first host fails we fall
 // back to the next. The primary entry preserves the previous default per runtime.
 const networkResolverChain = ['esm', 'jspm', 'skypack']
-const denoResolverChain = ['deno', 'jspm', 'skypack']
+// Deno can still load npm packages when no CDN can build or serve them.
+const denoResolverChain = ['deno', 'jspm', 'skypack', 'denoNpm']
 
 // npm installs for the same alias must not overlap. `npm install -g` takes no
 // lock on the global prefix, so two runs writing the same alias directory delete
