@@ -12,9 +12,12 @@
     "npm:express@^5.1.0": "5.1.0",
     "npm:jest@^29.7.0": "29.7.0",
     "npm:lodash@3": "3.10.1",
+    "npm:lodash@4": "4.17.21",
     "npm:lodash@4.17.21": "4.17.21",
+    "npm:lodash@latest": "4.18.1",
     "npm:puppeteer@^24.16.2": "24.16.2_devtools-protocol@0.0.1475386",
     "npm:semver@7.8.5": "7.8.5",
+    "npm:typescript@5.9.3": "5.9.3",
     "npm:undici@^6.29.1": "6.29.1"
   },
   "npm": {
@@ -2677,6 +2680,9 @@
     "lodash@4.17.21": {
       "integrity": "sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg=="
     },
+    "lodash@4.18.1": {
+      "integrity": "sha512-dMInicTPVE8d1e5otfwmmjlxkZoUpiVLwyeTdUsi/Caj/gfzzblBcCE5sRHV/AsjuCmxWrte2TNGSYuCeCq+0Q=="
+    },
     "log-lazy@1.0.4": {
       "integrity": "sha512-UHTdwIjZymnYIaNA5l6mW7YEQpJYXGhWsRwpblG+BpA8oThnsCj69JPy+CDRo6T2oi39u5TChlcqCfk+Qh6mHg=="
     },
@@ -3300,6 +3306,10 @@
     "typed-query-selector@2.12.0": {
       "integrity": "sha512-SbklCd1F0EiZOyPiW192rrHZzZ5sBijB6xM+cpmrwDqObvdtunOHHIk9fCGsoK5JVIYXoyEp4iEdE3upFH3PAg=="
     },
+    "typescript@5.9.3": {
+      "integrity": "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==",
+      "bin": true
+    },
     "undici-types@7.10.0": {
       "integrity": "sha512-t5Fy/nfn+14LuOc2KNYg75vZqClpAiqscVvMygNnlsHBFpSXdJaYtXMcdNLpl/Qvc3P2cB3s6lOV51nqsFq4ag=="
     },
@@ -3612,7 +3622,7 @@
     "https://esm.sh/typescript@5.9.2": "c2a7b731460ca9bf9fc333d96810151a98ca5e0c6f26892a1a3be78a731fb8fe",
     "https://esm.sh/typescript@5.9.2/denonext/typescript.mjs": "70c8ec7953761f4896f56d8417076a5c564f489b0bcc29bcecbf4c06ceb16557",
     "https://esm.sh/typescript@5.9.3": "8444891231375e9b3ab2908397af30bba2a199607348135480fb72b82427a388",
-    "https://esm.sh/typescript@5.9.3/denonext/typescript.mjs": "dc5e8d5f408cd6ca16854aa727b4dc365f9ea8c60ce7e33ac52bd9aa04d75e8e",
+    "https://esm.sh/typescript@5.9.3/denonext/typescript.mjs": "6486186025c9617b64436ed7373c5f80fb5e27aaa469367cb55dce16c1ae262e",
     "https://esm.sh/typescript@6.0.3": "1d89c6c1fd21b46b06b112c50c800b2d7cd6e558a0f5f0d0b8a78e1da896be23",
     "https://esm.sh/typescript@6.0.3/denonext/typescript.mjs": "82f4491e67d8671d89a0a9efd12ba0d6fca5c614d1bacee5355ce8cc6efb5c8a",
     "https://esm.sh/universal-user-agent@7.0.3/denonext/universal-user-agent.mjs": "021090b5f3bb060b1b0364cb79daa2cc3760db58a023cd8892a098e6256a84c4",

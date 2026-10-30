@@ -13,9 +13,10 @@ Objective: implement and verify all issue #79 requirements in PR #82.
 - [x] Run focused tests, then all local CI checks, keeping large logs in files and subprocess memory bounded.
 - [x] Review canonical changes and verify current main is an ancestor; prepare atomic commits.
 
-The remaining remote completion gates are tracked in PR #82's checks and review status:
+Remote completion gates (this snapshot precedes final CI; PR #82's live checks
+and review status track their completion):
 
-- [ ] Push only issue-79-d39ddb29030b.
-- [ ] Update PR title/body with reproduction, tests, assumptions and Fixes #79; review gh pr diff.
+- [x] Push only issue-79-d39ddb29030b.
+- [x] Update PR title/body with reproduction, tests, assumptions and Fixes #79; review gh pr diff.
 - [ ] Inspect CI runs with timestamps and SHAs; download/analyze any failure logs and resolve every check.
 - [ ] Confirm no uncommitted task changes, recheck feedback, and mark PR #82 ready.

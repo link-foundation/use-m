@@ -65,26 +65,55 @@ started at 2026-10-30 11:19:03 UTC on the untouched branch SHA
   The supported 6.x update to 6.29.1 leaves zero production vulnerabilities.
 - `initial-124034110989.log:793-804`: Deno stopped on the TypeScript 5.9.3
   CDN hash mismatch (expected `64861860...`, served `dc5e8d5f...`). The latter
-  SHA-256 was independently verified from the current version-labelled artifact
-  before refreshing that one existing remote hash.
+  SHA-256 was independently verified from the current version-labelled artifact.
+  A subsequent matrix run proved that both different builds are still served
+  from that same URL; the original hash is retained and native npm imports avoid
+  the unstable transform.
 - Deno also failed command-stream and lodash subpath imports. The retained
   `inspect-deno-cdn.mjs` probe exposed HTTP 500 from esm.sh and HTTP 404 from
   both alternate mirrors for command-stream 0.0.5. Deno's native `npm:` importer
-  is now a final fallback; the original CDN order remains first. The repository
+  is now preferred; all original CDNs remain fallbacks in their original order. The repository
   uses Deno-managed global npm caching so dynamic packages can be fetched without
   changing the local npm installation. The lockfile includes these npm versions.
   Deno's explicit `.js` suggestion is honored once for extensionless npm subpaths,
   preserving the existing lodash import regression. The fixture declares its
   CommonJS type so public `use()` imports work on Deno too.
 
-The native-fallback regressions failed before implementation (4 failures across
-the ESM/CommonJS suites). The full Deno run subsequently passed 42 test groups
-and 365 steps; its existing 1 ignored group/3 steps remain unchanged. The final
-focused Deno run passed all 41 steps for engine selection, command-stream, and
-lodash imports. The standalone incident reproduction and real npm example pass.
+The native-import regressions failed before implementation. Moving native npm
+ahead of the mutable CDN builds reproduced 6 failures across the ESM/CommonJS
+suites before the resolver-order change. Tests also prove that all CDN fallbacks
+remain available if native resolution fails.
 
-Final local verification also passed all 623 tests on Node 24 and all 623 on Bun,
-including the browser suite. The production audit reports zero vulnerabilities;
+### Matrix follow-up
+
+[Run 41050700146](https://github.com/link-foundation/use-m/actions/runs/41050700146)
+started at 2026-10-30 11:48:15 UTC on SHA
+`2ecf2c733863187420480bf3cd171505bdb0219d`. Its downloaded logs isolated two
+remaining failures; all other runtime jobs passed:
+
+- `run-41050700146-deno-ubuntu.log:1328-1332`: the same TypeScript URL served
+  SHA-256 `64861860...` on Linux while macOS, Windows, and the local environment
+  received `dc5e8d5f...`. Merely swapping the hash cannot make this reliable.
+  Native npm imports preserve archive integrity checks and avoid the transform;
+  all CDN resolvers remain available.
+- `run-41050700146-node24-macos.log:208-218`: browser navigation hit its 30-second
+  network-idle deadline before the suite read its explicit completion signal.
+  `browser-navigation.mjs` reproduces this with one unrelated pending request,
+  using the navigation policy directly from the browser test. It fails before
+  the fix with a bounded 3-second navigation timeout and passes afterward.
+  Navigation now waits for DOM readiness, then the existing test result signal;
+  no test or CI timeout was increased.
+
+Run the browser regression with `node experiments/issue-79/browser-navigation.mjs`
+(set `PUPPETEER_EXECUTABLE_PATH` if using an installed Chrome). It always closes
+the browser and its finite local server, including after an assertion fails.
+
+Local verification before the matrix follow-up passed all 623 tests on Node 24
+and Bun, including the browser suite, and 42 Deno groups / 365 steps. The added
+native-first regression brings the final counts to 625 Node/Bun tests and
+366 Deno steps (with the existing 1 ignored group / 3 steps unchanged).
+The standalone incident reproduction and real npm example pass.
+The production audit reports zero vulnerabilities;
 the version check, deterministic bundle verification, package dry run, and
 missing-fetch shebang experiment pass. Large command outputs remain in local
 `ci-logs/` for inspection rather than being added to the package.

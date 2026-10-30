@@ -180,10 +180,10 @@ The resilience above is not limited to bootstrapping `use-m` itself — once you
 | Runtime / entry point | Mirror chain tried in order |
 | --- | --- |
 | Browser / `http(s)` script | `esm.sh` → `jspm.dev` → `cdn.skypack.dev` |
-| Deno | `esm.sh` (deno target) → `jspm.dev` → `cdn.skypack.dev` → native `npm:` import |
+| Deno | native `npm:` import → `esm.sh` (deno target) → `jspm.dev` → `cdn.skypack.dev` |
 | Node.js (`npm i -g`), Bun | single local resolver (Node's npm metadata lookup has its own retry/cache/fallback path) |
 
-Deno uses its native npm importer after all CDN mirrors fail. In a project with `package.json`, enable Deno-managed npm resolution (`"nodeModulesDir": "none"` for its global cache, or `"auto"` for local modules) to allow dynamically requested packages that are absent from the manifest.
+Deno prefers its native npm importer, which verifies the package archive rather than a mutable CDN transform; CDN mirrors remain fallbacks. In a project with `package.json`, enable Deno-managed npm resolution (`"nodeModulesDir": "none"` for its global cache, or `"auto"` for local modules) to allow dynamically requested packages that are absent from the manifest.
 
 If every source fails, `use()` throws one clear, aggregated error listing each attempt instead of the cryptic error from a single failing host:
 

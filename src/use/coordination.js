@@ -4,10 +4,10 @@
 // Ordered chains of universal-ESM CDN resolvers tried for network/CDN loading.
 // Each entry is a key into `resolvers`; the chains list *distinct* CDN hosts so a
 // single CDN outage no longer breaks `use()` — when the first host fails we fall
-// back to the next. The primary entry preserves the previous default per runtime.
+// back to the next.
 const networkResolverChain = ['esm', 'jspm', 'skypack']
-// Deno can still load npm packages when no CDN can build or serve them.
-const denoResolverChain = ['deno', 'jspm', 'skypack', 'denoNpm']
+// Prefer Deno's integrity-checked npm packages over mutable CDN transforms.
+const denoResolverChain = ['denoNpm', 'deno', 'jspm', 'skypack']
 
 // npm installs for the same alias must not overlap. `npm install -g` takes no
 // lock on the global prefix, so two runs writing the same alias directory delete
