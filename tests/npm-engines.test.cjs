@@ -298,7 +298,7 @@ describe('Node engine compatible npm resolution', () => {
   });
 
   test('does not leak the embedded semver helper into evaluating scripts', async () => {
-    const source = await readFile(path.join(path.dirname(require.resolve('use-m/package.json')), 'use.js'), 'utf8');
+    const source = await readFile(path.join(__dirname, '..', 'use.js'), 'utf8');
     const context = vm.createContext({});
     vm.runInContext(source, context);
     expect(Object.prototype.hasOwnProperty.call(context, 'npmSemver')).toBe(false);
