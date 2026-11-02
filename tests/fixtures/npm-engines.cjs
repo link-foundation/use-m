@@ -2,6 +2,10 @@ const { chmod, mkdir, mkdtemp, readFile, realpath, rm, writeFile } = require('no
 const { tmpdir } = require('node:os');
 const path = require('node:path');
 
+// Mirrors the registry: `<package>/latest` serves the manifest of the latest
+// dist-tag, `<package>` the document listing every version.
+const latestManifest = metadata => metadata.versions[metadata['dist-tags'].latest];
+
 exports.createEngineFixture = async (metadata) => {
   const root = await realpath(await mkdtemp(path.join(tmpdir(), 'use-m-engines-')));
   const bin = path.join(root, 'bin');
@@ -17,8 +21,8 @@ const path = require('node:path');
 const args = process.argv.slice(2);
 fs.appendFileSync(process.env.USE_M_ENGINE_LOG, JSON.stringify(args) + '\\n');
 if (args[0] === 'root') console.log(process.env.USE_M_ENGINE_MODULES);
-else if (args[0] === 'view') console.log(process.env.USE_M_ENGINE_METADATA);
-else if (args[0] === 'show') console.log('2.0.0');
+else if (args[0] === 'view') console.log(process.env.USE_M_ENGINE_VIEW || process.env.USE_M_ENGINE_METADATA);
+else if (args[0] === 'show') console.log(args.includes('--json') ? process.env.USE_M_ENGINE_LATEST : JSON.parse(process.env.USE_M_ENGINE_LATEST).version);
 else if (args[0] === 'install') {
   const spec = args.find(arg => arg.includes('@npm:'));
   const alias = spec.split('@npm:')[0];
@@ -35,17 +39,23 @@ else if (args[0] === 'install') {
   const env = { ...process.env,
     PATH: `${bin}${path.delimiter}${process.env.PATH || ''}`,
     USE_M_ENGINE_MODULES: modules, USE_M_ENGINE_LOG: log,
-    USE_M_ENGINE_METADATA: JSON.stringify(Object.values(metadata.versions)),
+    USE_M_ENGINE_METADATA: JSON.stringify(Object.values(metadata.versions)
+      .map(manifest => ({ ...manifest, 'dist-tags': metadata['dist-tags'] }))),
+    USE_M_ENGINE_LATEST: JSON.stringify(latestManifest(metadata)),
   };
   delete env.USE_M_ENGINE_STRICT;
   const messages = [];
+  const fetched = [];
   const options = { env, registry: `https://engines.example.test/${path.basename(root)}/`,
     latestVersionCacheDirectory: path.join(root, 'cache'),
     registryMaxAttempts: 1, registryCliFallback: false, installRetryDelayMs: 0,
     debug: true, debugLogger: message => messages.push(message),
-    fetch: async () => ({ ok: true, json: async () => metadata }),
+    fetch: async url => {
+      fetched.push(url);
+      return { ok: true, json: async () => url.endsWith('/latest') ? latestManifest(metadata) : metadata };
+    },
   };
-  return { root, modules, options, messages, cleanup: () => rm(root, { recursive: true, force: true }),
+  return { root, fetched, modules, options, messages, cleanup: () => rm(root, { recursive: true, force: true }),
     calls: async () => (await readFile(log, 'utf8')).trim().split('\n').filter(Boolean).map(JSON.parse),
   };
 };

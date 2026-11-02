@@ -93,7 +93,8 @@ export async function readUseSource() {
       contents: `export { default as valid } from 'semver/functions/valid.js';
 export { default as satisfies } from 'semver/functions/satisfies.js';
 export { default as validRange } from 'semver/ranges/valid.js';
-export { default as rcompare } from 'semver/functions/rcompare.js';`,
+export { default as rcompare } from 'semver/functions/rcompare.js';
+export { default as lte } from 'semver/functions/lte.js';`,
       resolveDir: repoRoot,
     },
     bundle: true,
@@ -107,7 +108,9 @@ export { default as rcompare } from 'semver/functions/rcompare.js';`,
   const semverLicense = await readFile(path.join(repoRoot, 'node_modules/semver/LICENSE'), 'utf8')
   return [
     `/*! Bundled node-semver (ISC):\n${semverLicense.trim()}\n*/`,
-    semverBundle.outputFiles[0].text.trimEnd(),
+    // esbuild emits `var npmSemver = ...`; a block-scoped binding keeps the
+    // helper out of the global object of scripts that evaluate use.js.
+    semverBundle.outputFiles[0].text.trimEnd().replace(/^var npmSemver\b/, 'const npmSemver'),
     ...fragments,
   ]
     .map(fragment => fragment.replace(/\r\n?/g, '\n').trimEnd())
