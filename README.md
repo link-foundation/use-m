@@ -45,7 +45,7 @@ It may be useful for standalone scripts that do not require a `package.json`. Al
 
 ## Key features
 
-- **Dynamic package loading**: In `node.js`, `use-m` loads and imports npm packages on-demand with **global installation** (using `npm i -g` with separate alias for each version), making them available across projects and reusable without needing to reinstall each time. Unpinned versions and semver ranges select the newest published release compatible with the running Node.js version. Metadata is resolved directly from the configured npm registry with transient-error retries and a five-minute memory/disk cache; npm CLI, stale-cache, and installed-package fallbacks keep CI usable during registry outages. Failed npm installs are retried three times with 1s/2s backoff and include captured npm output in the final error. If versioned aliases expose the same executable, `use-m` verifies that the conflicting symlink belongs to another alias of that package, then installs the new alias without replacing the existing executable. Unrelated global executables are never force-overwritten. If an interrupted install leaves a corrupt alias, `use-m` removes and reinstalls that alias once, then imports it through a cache-busted file URL so recovery works in the same process. Recursive alias cleanup has its own retry budget so transient filesystem races do not abort recovery. In case of a browser `use-m` loads npm packages directly from CDNs (by default `esm.sh` is used).
+- **Dynamic package loading**: In `node.js`, `use-m` loads and imports npm packages on-demand with **global installation** (using `npm i -g` with separate alias for each version), making them available across projects and reusable without needing to reinstall each time. When the `latest` release (or the release npm would pick for a semver range) declares an `engines.node` range that excludes the running Node.js, the newest compatible release is installed instead; everything else resolves exactly as before. Metadata is resolved directly from the configured npm registry with transient-error retries and a five-minute memory/disk cache; npm CLI, stale-cache, and installed-package fallbacks keep CI usable during registry outages. Failed npm installs are retried three times with 1s/2s backoff and include captured npm output in the final error. If versioned aliases expose the same executable, `use-m` verifies that the conflicting symlink belongs to another alias of that package, then installs the new alias without replacing the existing executable. Unrelated global executables are never force-overwritten. If an interrupted install leaves a corrupt alias, `use-m` removes and reinstalls that alias once, then imports it through a cache-busted file URL so recovery works in the same process. Recursive alias cleanup has its own retry budget so transient filesystem races do not abort recovery. In case of a browser `use-m` loads npm packages directly from CDNs (by default `esm.sh` is used).
 - **Version-safe imports**: Allows multiple versions of the same library to coexist without conflicts, so you can specify any version for each import (usage) without affecting other scripts or other usages (imports) in the same script.
 - **No more `require`, `import`, or `package.json`**: With `use-m`, traditional module loading approaches like `require()`, `import` statements, and `package.json` dependencies become effectively obsolete. You can dynamically load any module at runtime without pre-declaring dependencies in separate file. This enables truly self-contained `.mjs` files that can effectively replace shell scripts.
 - **Built-in modules emulation**: Every built-in module the host runtime reports is loadable, in every environment (browser, Node.js, Bun, Deno). The supported set is read from the runtime through `node:module` rather than kept as a list inside `use-m`, so modules added by future Node.js, Bun or Deno releases work immediately; browser polyfills are provided for `console`, `crypto`, `url` and `performance`.
@@ -180,10 +180,10 @@ The resilience above is not limited to bootstrapping `use-m` itself — once you
 | Runtime / entry point | Mirror chain tried in order |
 | --- | --- |
 | Browser / `http(s)` script | `esm.sh` → `jspm.dev` → `cdn.skypack.dev` |
-| Deno | native `npm:` import → `esm.sh` (deno target) → `jspm.dev` → `cdn.skypack.dev` |
+| Deno | `esm.sh` (deno target) → `jspm.dev` → `cdn.skypack.dev` → native `npm:` import |
 | Node.js (`npm i -g`), Bun | single local resolver (Node's npm metadata lookup has its own retry/cache/fallback path) |
 
-Deno prefers its native npm importer, which verifies the package archive rather than a mutable CDN transform; CDN mirrors remain fallbacks. In a project with `package.json`, enable Deno-managed npm resolution (`"nodeModulesDir": "none"` for its global cache, or `"auto"` for local modules) to allow dynamically requested packages that are absent from the manifest.
+When no CDN can build a package for Deno (for example because its `engines.node` excludes the CDN's Node.js), `use-m` finally tries Deno's native `npm:` import. Packages that loaded from a CDN before keep loading from the same CDN. In a project with `package.json`, this last fallback needs Deno-managed npm resolution (`"nodeModulesDir": "none"` for its global cache, or `"auto"` for local modules) to load packages that are absent from the manifest.
 
 If every source fails, `use()` throws one clear, aggregated error listing each attempt instead of the cryptic error from a single failing host:
 
@@ -237,14 +237,23 @@ A runnable, dependency-free demonstration lives in [`examples/load/shared-fallba
 In Node.js, an unpinned import such as `use('lodash')` must discover what `latest` means before deciding whether its global alias can be reused. That lookup now follows this sequence:
 
 1. Read a fresh in-memory or disk cache entry (five-minute TTL by default).
-2. Fetch the package metadata (packument) from `<configured registry>/<package>` directly, retrying transient network failures and HTTP 403, 408, 425, 429, and 5xx responses up to three times.
-3. Fall back once to `npm view <package>@<range> version engines --json`, preserving authentication, proxy, scoped-registry, and private-registry behavior from npm configuration.
-4. If the registry remains unavailable, use stale cached metadata, then the highest compatible version already installed under an exact-version alias (or an older alias for the request).
+2. Fetch `<configured registry>/<package>/latest` directly, retrying transient network failures and HTTP 403, 408, 425, 429, and 5xx responses up to three times.
+3. Fall back once to `npm show <package> version engines --json`, preserving authentication, proxy, scoped-registry, and private-registry behavior from npm configuration.
+4. If the registry remains unavailable, use stale cached metadata, then the version already installed under the `latest` alias.
 5. If no safe fallback exists, throw an error that suggests pinning a known version.
 
-Successful metadata is cached under `$XDG_CACHE_HOME/use-m/registry` (or `~/.cache/use-m/registry`). Cache keys include registry, package, Node.js version, and requested range, writes are atomic, and credentials embedded in a registry URL are stripped from requests, cache records, and diagnostic messages. Checked selections use an exact-version alias, shared with explicit pins for that version. A newly selected release gets its own installation path, so the runtime imports the selected code even if an older release is already in its module cache. Existing references continue to use their original version.
+Successful metadata is cached under `$XDG_CACHE_HOME/use-m/registry` (or `~/.cache/use-m/registry`). Cache keys include both registry and package, writes are atomic, and credentials embedded in a registry URL are stripped from requests, cache records, and diagnostic messages. The exact version returned by the lookup is installed, so a moving `latest` tag cannot make the cache marker stale immediately.
 
-For implicit or explicit `latest` and semver ranges (`^1`, `~1.2`, `>=1 <3`, `1.x`, etc.), the npm resolver checks each release's `engines.node` against `process.versions.node` and selects the highest compatible version within the request. Releases without `engines.node` are compatible; invalid engine ranges are excluded. Normal semver rules exclude prereleases unless the requested range explicitly includes them. `latest` searches all stable published releases. If no compatible release exists, resolution fails **before npm install**, naming the package, required engine, and running Node version, with a hint to pin a version or upgrade Node. Only the requested package's Node engine is checked; dependency engines and native build requirements remain npm's responsibility.
+#### Node.js engine compatibility
+
+npm installs whatever the `latest` dist-tag points to, even when that release declares `engines.node` that excludes the running Node.js, so the import later fails with a syntax or API error. `use-m` checks the `engines.node` of the `latest` manifest it already fetches (no extra request when it is compatible):
+
+- If `latest` supports the running Node.js, or declares no `engines.node`, nothing changes: the same requests, cache entries and `<package>-v-latest` alias are used as before.
+- Otherwise `use-m` fetches the version list once (`<registry>/<package>`, falling back to `npm view`) and installs the newest release not newer than `latest` that supports the running Node.js, preferring releases that are not deprecated, under its exact-version alias (shared with an explicit pin of that version). Prereleases are never selected for `latest`. The selection is cached per Node.js version, so upgrading Node picks up the newer release again.
+- For semver ranges (`^1`, `~1.2`, `>=1 <3`, `1.x`, …) the same check happens just before the first installation of the range; an already installed range alias is reused without registry lookups, as before.
+- If no release is compatible, `use-m` keeps npm's previous choice and logs why. Pass `engineStrict: true` (or set `USE_M_ENGINE_STRICT=true`/`1`) to fail **before npm install** instead, with an error (`code: 'USE_M_UNSUPPORTED_NODE'`) naming the package, the required engine and the running Node version, with a hint to pin a version or upgrade Node.
+
+Releases without `engines.node` are compatible; invalid engine ranges are treated as incompatible. Only the requested package's Node engine is checked; dependency engines and native build requirements remain npm's responsibility.
 
 For example, on Node 20.20.2, if `command-stream@2.0.0` requires Node >=22 and `1.6.2` requires Node >=20, `use('command-stream')` selects `1.6.2`. With `USE_M_DEBUG=1`, it explains the fallback:
 
@@ -252,7 +261,7 @@ For example, on Node 20.20.2, if `command-stream@2.0.0` requires Node >=22 and `
 [use-m] command-stream@latest is 2.0.0 (engines node >=22.0.0) — using 1.6.2, the newest release compatible with Node 20.20.2
 ```
 
-Engine checking is on by default for the Node/npm resolver. To restore registry `latest` behavior, use `await use('command-stream', { engineStrict: false })`, configure `makeUse({ engineStrict: false })`, or set `USE_M_ENGINE_STRICT=false` (or `0`). An explicit `engineStrict: true` overrides the environment opt-out. An unchecked cached selection cannot be reused for a checked request. Exact version pins and named tags other than `latest` remain explicit choices and skip engine metadata lookup. Bun and CDN resolvers keep their runtime-specific behavior.
+To always install the registry's `latest` release, use `await use('command-stream', { engineStrict: false })`, configure `makeUse({ engineStrict: false })`, or set `USE_M_ENGINE_STRICT=false` (or `0`). An explicit `engineStrict` option overrides the environment variable. Exact version pins and named tags other than `latest` remain explicit choices and are never engine-checked. Bun and CDN resolvers keep their runtime-specific behavior.
 
 The resolver honors, in order, the `registry`/`npmRegistry` option, `npm_config_registry` or `NPM_CONFIG_REGISTRY`, `npm config get registry` (including `.npmrc`), and finally the public npm registry. Pinning a version, such as `use('lodash@4.17.21')`, skips metadata lookup entirely.
 
@@ -269,7 +278,7 @@ import { makeUse } from 'use-m';
 
 const use = await makeUse({
   registry: 'https://registry.npmjs.org/',
-  engineStrict: true,
+  engineStrict: true,              // fail fast when no release supports this Node.js
   registryMaxAttempts: 3,
   registryRetryDelayMs: 250,       // exponential: 250 ms, then 500 ms
   registryRequestTimeoutMs: 10_000,

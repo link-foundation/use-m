@@ -1,23 +1,16 @@
 # Issue #79 work plan
 
-Objective: implement and verify all issue #79 requirements in PR #82.
+Objective: implement and verify all issue #79 requirements in PR #82 without
+changing behavior that already worked (maintainer feedback on PR #82).
 
-- [x] Read the complete issue, issue comments, required sub-issues (none), PR conversation, inline comments, and reviews (none).
-- [x] Read contributing guidance and inspect related issues #73/#78 and recent merged PRs. Those are context, not required sub-issues.
-- [x] Trace version resolution, alias reuse, configuration forwarding, and distribution generation.
-- [x] Add deterministic failing ESM/CommonJS regressions before implementation.
-- [x] Select the highest Node-compatible stable published version for implicit/explicit latest and matching ranges; handle pins/tags and clear no-compatible errors.
-- [x] Support engineStrict:false and environment opt-out, with default-off diagnostics explaining fallback selection.
-- [x] Preserve safe retries, registry/CLI/cache/offline behavior, runtime and distribution compatibility.
-- [x] Document behavior, examples, reproduction evidence, and acceptance checks; prepare a release version.
-- [x] Reproduce runtime import-cache reuse with failing actual-import tests and use immutable version paths, preserving offline and binary-collision behavior.
-- [x] Run focused tests, then all local CI checks, keeping large logs in files and subprocess memory bounded.
-- [x] Review canonical changes and verify current main is an ancestor; prepare atomic commits.
-
-Remote completion gates (this snapshot precedes final CI; PR #82's live checks
-and review status track their completion):
-
-- [x] Push only issue-79-d39ddb29030b.
-- [x] Update PR title/body with reproduction, tests, assumptions and Fixes #79; review gh pr diff.
-- [ ] Inspect CI runs with timestamps and SHAs; download/analyze any failure logs and resolve every check.
-- [ ] Confirm no uncommitted task changes, recheck feedback, and mark PR #82 ready.
+- [x] Read the issue, comments (none at start), PR conversation and reviews.
+- [x] Trace version resolution, alias reuse, option forwarding and bundle generation.
+- [x] Add ESM/CommonJS regressions for the engine policy.
+- [x] Select the newest Node-compatible release for `latest` and ranges.
+- [x] Debug line on fallback; `engineStrict` option and `USE_M_ENGINE_STRICT` env var.
+- [x] Fail fast with a clear message under `engineStrict: true`.
+- [x] Backward compatibility review: keep the `/latest` path, aliases, caches and
+      the Deno CDN order; restore unchanged tests from `main` and keep them passing.
+- [x] Make the repository's Deno tests independent of mutable esm.sh builds.
+- [x] Document behavior in README, CHANGELOG and CONTRIBUTING; release 8.17.0.
+- [ ] Push, verify CI for the latest commit, update the PR description, mark ready.

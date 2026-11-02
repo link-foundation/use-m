@@ -5,7 +5,7 @@ import { createRequire } from 'node:module';
 import { resolvers } from '../../use.mjs';
 import fixtures from '../../tests/fixtures/npm-engines.cjs';
 
-const metadata = { versions: {
+const metadata = { 'dist-tags': { latest: '2.0.0' }, versions: {
   '1.6.2': { version: '1.6.2', engines: { node: '>=20.0.0' } },
   '2.0.0': { version: '2.0.0', engines: { node: '>=22.0.0' } },
 } };
