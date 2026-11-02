@@ -108,12 +108,20 @@ const resolvers = {
     const { exec } = await import('node:child_process');
     const { createHash } = await import('node:crypto');
     const { promisify } = await import('node:util');
-    const { access, mkdir, readFile, readlink, rename, rm, rmdir, stat, unlink, utimes, writeFile } = await import('node:fs/promises');
+    const { access, mkdir, readdir, readFile, readlink, rename, rm, rmdir, stat, unlink, utimes, writeFile } = await import('node:fs/promises');
     const { constants: fsConstants } = await import('node:fs');
     const os = await import('node:os');
     const execAsync = promisify(exec);
     const npmEnvSource = options?.env || process.env;
     const baseNpmEnv = { ...npmEnvSource };
+    // Node engine policy (issue #79). Only `latest` and semver ranges are
+    // checked; exact versions and other dist-tags remain explicit choices.
+    const engineStrictSetting = parseEngineStrictSetting(options?.engineStrict)
+      ?? parseEngineStrictSetting(baseNpmEnv.USE_M_ENGINE_STRICT);
+    const engineChecksEnabled = engineStrictSetting !== false;
+    const failOnUnsupportedNode = engineStrictSetting === true;
+    const nodeVersion = process.versions.node;
+    const isVersionRange = (value) => value !== 'latest' && !npmSemver.valid(value) && npmSemver.validRange(value) !== null;
     const installMaxAttempts = Number.isInteger(options?.installMaxAttempts) && options.installMaxAttempts > 0
       ? options.installMaxAttempts
       : 3;
@@ -288,9 +296,14 @@ const resolvers = {
       return path.join(cacheHome, 'use-m', 'registry');
     };
 
-    const getLatestVersionCachePath = (cacheDirectory, registry, packageName) => {
+    // `scope` separates derived entries (such as Node-compatible selections)
+    // from the plain latest-version entries shared with earlier use-m releases.
+    const getLatestVersionCacheKey = (registry, packageName, scope) =>
+      JSON.stringify(scope ? [registry, packageName, ...scope] : [registry, packageName]);
+
+    const getLatestVersionCachePath = (cacheDirectory, registry, packageName, scope) => {
       const digest = createHash('sha256')
-        .update(JSON.stringify([registry, packageName]))
+        .update(getLatestVersionCacheKey(registry, packageName, scope))
         .digest('hex');
       return path.join(cacheDirectory, `${digest}.json`);
     };
@@ -304,13 +317,13 @@ const resolvers = {
       typeof entry.fetchedAt === 'number' &&
       Number.isFinite(entry.fetchedAt);
 
-    const readLatestVersionCache = async (registry, packageName, env) => {
+    const readLatestVersionCache = async (registry, packageName, env, scope) => {
       if (!latestVersionCacheEnabled) return null;
-      const cacheKey = JSON.stringify([registry, packageName]);
+      const cacheKey = getLatestVersionCacheKey(registry, packageName, scope);
       let cached = npmLatestVersionMemoryCache.get(cacheKey) || null;
       const cacheDirectory = getLatestVersionCacheDirectory(env);
       if (cacheDirectory) {
-        const cachePath = getLatestVersionCachePath(cacheDirectory, registry, packageName);
+        const cachePath = getLatestVersionCachePath(cacheDirectory, registry, packageName, scope);
         try {
           const diskEntry = JSON.parse(await readFile(cachePath, 'utf8'));
           if (isValidLatestVersionEntry(diskEntry, registry, packageName)
@@ -329,14 +342,14 @@ const resolvers = {
       return { ...cached, fresh };
     };
 
-    const writeLatestVersionCache = async (registry, packageName, version, env) => {
+    const writeLatestVersionCache = async (registry, packageName, version, env, details = {}, scope) => {
       if (!latestVersionCacheEnabled) return;
-      const entry = { registry, packageName, version, fetchedAt: Date.now() };
-      const cacheKey = JSON.stringify([registry, packageName]);
+      const entry = { registry, packageName, version, fetchedAt: Date.now(), ...details };
+      const cacheKey = getLatestVersionCacheKey(registry, packageName, scope);
       npmLatestVersionMemoryCache.set(cacheKey, entry);
       const cacheDirectory = getLatestVersionCacheDirectory(env);
       if (!cacheDirectory) return;
-      const cachePath = getLatestVersionCachePath(cacheDirectory, registry, packageName);
+      const cachePath = getLatestVersionCachePath(cacheDirectory, registry, packageName, scope);
       const temporaryPath = `${cachePath}.${process.pid}.${Date.now()}.${Math.random().toString(16).slice(2)}.tmp`;
       try {
         await mkdir(cacheDirectory, { recursive: true });
@@ -349,19 +362,23 @@ const resolvers = {
       }
     };
 
-    const getRegistryEndpoint = (registry, packageName) =>
-      new URL(`${encodeURIComponent(packageName)}/latest`, registry).href;
+    const getRegistryEndpoint = (registry, packageName, packument = false) =>
+      new URL(`${encodeURIComponent(packageName)}${packument ? '' : '/latest'}`, registry).href;
 
     const isTransientRegistryFailure = (error) => {
       const status = error?.status;
       return status === 403 || status === 408 || status === 425 || status === 429 || status >= 500;
     };
 
-    const fetchLatestVersion = async (registry, packageName) => {
+    // Fetches `<registry>/<package>/latest` (the latest manifest, as before) or,
+    // with `packument`, the abbreviated document listing every version with its
+    // engines. The packument is only requested when the latest release does not
+    // support the running Node.js.
+    const fetchRegistryDocument = async (registry, packageName, { packument = false } = {}) => {
       if (!registryFetch) {
         throw new Error('This runtime does not provide fetch.');
       }
-      const endpoint = getRegistryEndpoint(registry, packageName);
+      const endpoint = getRegistryEndpoint(registry, packageName, packument);
       let lastError;
       for (let attempt = 1; attempt <= registryMaxAttempts; attempt++) {
         let timeout = null;
@@ -372,7 +389,11 @@ const resolvers = {
             timeout = setTimeout(() => controller.abort(), registryRequestTimeoutMs);
           }
           const registryResponse = await registryFetch(endpoint, {
-            headers: { accept: 'application/json' },
+            headers: {
+              accept: packument
+                ? 'application/vnd.npm.install-v1+json; q=1.0, application/json; q=0.8'
+                : 'application/json',
+            },
             signal: controller.signal,
           });
           if (!registryResponse?.ok) {
@@ -383,10 +404,10 @@ const resolvers = {
             throw error;
           }
           const metadata = await registryResponse.json();
-          if (typeof metadata?.version !== 'string' || metadata.version.trim() === '') {
+          if (!packument && (typeof metadata?.version !== 'string' || metadata.version.trim() === '')) {
             throw new Error('npm registry metadata did not contain a version.');
           }
-          return metadata.version.trim();
+          return metadata;
         } catch (error) {
           lastError = error;
           const retryable = error?.name === 'AbortError' || error?.status === undefined || isTransientRegistryFailure(error);
@@ -401,16 +422,51 @@ const resolvers = {
       throw lastError;
     };
 
+    // Engines are recorded alongside the version whenever the source provides
+    // them: an object (or null when the release declares none) means known,
+    // undefined means unknown (for example a cache entry written by an older
+    // use-m), in which case no engine check is possible and npm's choice stands.
+    const knownEngines = (source) => {
+      if (!source || typeof source !== 'object' || !Object.prototype.hasOwnProperty.call(source, 'engines')) {
+        return undefined;
+      }
+      const { engines } = source;
+      return engines && typeof engines === 'object' ? engines : null;
+    };
+
+    // `npm show <pkg> version engines --json` prints a JSON object, or just the
+    // version as a JSON string when the release declares no engines. Plain text
+    // (as printed without --json) is accepted too, with unknown engines.
+    const parseNpmShowLatest = (stdout) => {
+      const text = stdout.trim();
+      let parsed;
+      try {
+        parsed = JSON.parse(text);
+      } catch {
+        return { version: text };
+      }
+      if (typeof parsed === 'string') return { version: parsed.trim(), engines: null };
+      if (parsed && typeof parsed === 'object' && typeof parsed.version === 'string') {
+        return { version: parsed.version.trim(), engines: knownEngines({ engines: parsed.engines ?? null }) };
+      }
+      return { version: text };
+    };
+
+    // Returns `{ version, engines }` for the `latest` dist-tag. The lookup order,
+    // cache entries and fallbacks are the same as in earlier use-m releases.
     const getLatestVersion = async (packageName, env, installedPackagePath) => {
       const registry = await getRegistry(env);
       const cached = await readLatestVersionCache(registry, packageName, env);
-      if (cached?.fresh) return cached.version;
+      if (cached?.fresh) return { version: cached.version, engines: knownEngines(cached) };
 
+      const remember = async (version, engines) => {
+        await writeLatestVersionCache(registry, packageName, version, env, engines === undefined ? {} : { engines });
+        return { version, engines };
+      };
       const failures = [];
       try {
-        const version = await fetchLatestVersion(registry, packageName);
-        await writeLatestVersionCache(registry, packageName, version, env);
-        return version;
+        const metadata = await fetchRegistryDocument(registry, packageName);
+        return await remember(metadata.version.trim(), knownEngines({ engines: metadata.engines ?? null }));
       } catch (error) {
         failures.push(error);
         debug(1, `direct registry lookup failed for ${packageName}; trying npm CLI (${error?.message || error})`);
@@ -418,11 +474,13 @@ const resolvers = {
 
       if (registryCliFallbackEnabled) {
         try {
-          const { stdout } = await execAsync(`npm show ${packageName} version`, { env });
-          const version = stdout.trim();
+          const command = engineChecksEnabled
+            ? `npm show ${packageName} version engines --json`
+            : `npm show ${packageName} version`;
+          const { stdout } = await execAsync(command, { env });
+          const { version, engines } = parseNpmShowLatest(stdout);
           if (!version) throw new Error('npm show returned an empty version.');
-          await writeLatestVersionCache(registry, packageName, version, env);
-          return version;
+          return await remember(version, engines);
         } catch (error) {
           failures.push(error);
           debug(1, `npm CLI latest-version lookup failed for ${packageName} (${error?.message || error})`);
@@ -431,14 +489,14 @@ const resolvers = {
 
       if (cached) {
         debug(1, `using stale cached latest version ${cached.version} for ${packageName}`);
-        return cached.version;
+        return { version: cached.version, engines: knownEngines(cached) };
       }
-      const installedVersion = installedPackagePath
-        ? await getInstalledPackageVersion(installedPackagePath)
+      const installedManifest = installedPackagePath
+        ? await getInstalledPackageManifest(installedPackagePath)
         : null;
-      if (installedVersion) {
-        debug(1, `using installed version ${installedVersion} for unavailable latest metadata of ${packageName}`);
-        return installedVersion;
+      if (installedManifest?.version) {
+        debug(1, `using installed version ${installedManifest.version} for unavailable latest metadata of ${packageName}`);
+        return { version: installedManifest.version, engines: knownEngines({ engines: installedManifest.engines ?? null }) };
       }
 
       const cause = failures[failures.length - 1];
@@ -449,15 +507,147 @@ const resolvers = {
       );
     };
 
-    const getInstalledPackageVersion = async (packagePath) => {
+    const getInstalledPackageManifest = async (packagePath) => {
       try {
         const packageJsonPath = path.join(packagePath, 'package.json');
-        const data = await readFile(packageJsonPath, 'utf8');
-        const { version } = JSON.parse(data);
-        return version;
+        const manifest = JSON.parse(await readFile(packageJsonPath, 'utf8'));
+        return manifest && typeof manifest === 'object' ? manifest : null;
       } catch {
         return null;
       }
+    };
+
+    const getInstalledPackageVersion = async (packagePath) =>
+      (await getInstalledPackageManifest(packagePath))?.version;
+
+    const getAliasPrefix = (packageName) => `${packageName.replace('@', '').replace('/', '-')}-v-`;
+
+    // Aliases keep the `<package>-v-<version>` form of earlier releases. A range
+    // that cannot be part of a directory or npm alias name (spaces, `>`, `|`, ...)
+    // never installed before, because the shell split or redirected it; such
+    // ranges get a stable hashed alias instead.
+    const getPackageAlias = (packageName, version) => {
+      const safeVersion = process.platform === 'win32' ? /^[\w.~^+-]+$/ : /^[\w.~^+*-]+$/;
+      if (safeVersion.test(version)) return `${getAliasPrefix(packageName)}${version}`;
+      const digest = createHash('sha256').update(version).digest('hex').slice(0, 16);
+      return `${getAliasPrefix(packageName)}range-${digest}`;
+    };
+
+    // Offline fallback for `latest`: the newest compatible release that is
+    // already installed as an exact-version alias (for example by a previous
+    // engine-aware selection), never newer than the `latest` tag.
+    const findInstalledCompatibleRelease = async (packageName, globalModulesPath, latestTag) => {
+      const prefix = getAliasPrefix(packageName);
+      let entries = [];
+      try {
+        entries = await readdir(globalModulesPath);
+      } catch {
+        return null;
+      }
+      const versions = [];
+      for (const entry of entries) {
+        if (!entry.startsWith(prefix)) continue;
+        const candidate = entry.slice(prefix.length);
+        if (!npmSemver.valid(candidate) || (latestTag && npmSemver.valid(latestTag) && !npmSemver.lte(candidate, latestTag))) continue;
+        const manifest = await getInstalledPackageManifest(path.join(globalModulesPath, entry));
+        if (manifest?.name === packageName && manifest.version === candidate && supportsNodeEngine(manifest, nodeVersion)) {
+          versions.push(candidate);
+        }
+      }
+      return versions.sort(npmSemver.rcompare)[0] || null;
+    };
+
+    // Finds the newest release of `latest` or a range that supports the running
+    // Node.js. Resolves to `{ version, newest }` (version null when no release
+    // is compatible) or throws when no metadata is available.
+    const selectCompatibleRelease = async (packageName, requestedVersion, { globalModulesPath, latestTag } = {}) => {
+      const registry = await getRegistry(baseNpmEnv);
+      const scope = ['engines-v1', nodeVersion, requestedVersion];
+      const fromCache = (entry) => ({
+        version: entry.compatible === false ? null : entry.version,
+        newest: entry.newest && typeof entry.newest === 'object' ? entry.newest : null,
+      });
+      const cached = await readLatestVersionCache(registry, packageName, baseNpmEnv, scope);
+      if (cached?.fresh && (requestedVersion !== 'latest' || !latestTag || cached.latestTag === latestTag)) {
+        return fromCache(cached);
+      }
+
+      const remember = async (metadata) => {
+        const selection = selectNodeCompatibleVersion(metadata, requestedVersion, nodeVersion);
+        const newest = selection.newest
+          ? { version: selection.newest.version, engines: { node: describeNodeEngine(selection.newest) } }
+          : null;
+        await writeLatestVersionCache(registry, packageName, selection.version ?? newest?.version ?? requestedVersion, baseNpmEnv, {
+          compatible: selection.version !== null,
+          newest,
+          latestTag: normalizeVersionMetadata(metadata).latestTag,
+        }, scope);
+        return { version: selection.version, newest };
+      };
+
+      const failures = [];
+      try {
+        return await remember(await fetchRegistryDocument(registry, packageName, { packument: true }));
+      } catch (error) {
+        failures.push(error);
+        debug(1, `registry version list lookup failed for ${packageName}; trying npm CLI (${error?.message || error})`);
+      }
+      if (registryCliFallbackEnabled) {
+        try {
+          const selector = requestedVersion === 'latest' ? '*' : requestedVersion;
+          const { stdout } = await execAsync(
+            `npm view ${quoteNpmArgument(`${packageName}@${selector}`)} version engines deprecated dist-tags --json`,
+            { env: baseNpmEnv, maxBuffer: 16 * 1024 * 1024 }
+          );
+          return await remember(JSON.parse(stdout));
+        } catch (error) {
+          failures.push(error);
+          debug(1, `npm CLI version list lookup failed for ${packageName} (${error?.message || error})`);
+        }
+      }
+      if (cached) {
+        debug(1, `using stale cached Node-compatible selection for ${packageName}@${requestedVersion}`);
+        return fromCache(cached);
+      }
+      if (requestedVersion === 'latest' && globalModulesPath) {
+        const installed = await findInstalledCompatibleRelease(packageName, globalModulesPath, latestTag);
+        if (installed) {
+          debug(1, `using installed Node-compatible release ${packageName}@${installed} for unavailable version metadata`);
+          return { version: installed, newest: null };
+        }
+      }
+      throw new Error(
+        `Failed to determine a release of '${packageName}@${requestedVersion}' compatible with Node ${nodeVersion} from '${registry}'.`,
+        { cause: failures[failures.length - 1] }
+      );
+    };
+
+    // Applies the engine policy to `latest` or a range whose npm choice may not
+    // support the running Node.js. Returns the exact version to install, or
+    // null to keep npm's own choice exactly as earlier use-m releases did.
+    const chooseNodeCompatibleRelease = async (packageName, requestedVersion, details = {}) => {
+      let selection;
+      try {
+        selection = await selectCompatibleRelease(packageName, requestedVersion, details);
+      } catch (error) {
+        if (failOnUnsupportedNode) throw error;
+        debug(1, `${error.message} Keeping npm's choice for ${packageName}@${requestedVersion}.`);
+        return null;
+      }
+      if (selection.version) {
+        const { newest } = selection;
+        if (requestedVersion === 'latest' || (newest && newest.version !== selection.version)) {
+          debug(1, `${packageName}@${requestedVersion} is ${newest?.version ?? details.latestTag ?? 'unknown'}` +
+            ` (engines node ${describeNodeEngine(newest ?? { engines: details.engines })})` +
+            ` — using ${selection.version}, the newest release compatible with Node ${nodeVersion}`);
+        }
+        return selection.version;
+      }
+      if (failOnUnsupportedNode) {
+        throw createUnsupportedNodeError(packageName, requestedVersion, selection.newest, nodeVersion);
+      }
+      debug(1, `${describeUnsupportedNode(packageName, requestedVersion, selection.newest, nodeVersion)} Installing it anyway, as npm would.`);
+      return null;
     };
 
     const getConfiguredNpmPrefix = (env) => env.npm_config_prefix || env.NPM_CONFIG_PREFIX || '';
@@ -783,7 +973,7 @@ const resolvers = {
         }
 
         const [ownerAlias] = relativeTarget.split(path.sep);
-        const aliasPrefix = `${packageName.replace('@', '').replace('/', '-')}-v-`;
+        const aliasPrefix = getAliasPrefix(packageName);
         if (ownerAlias === alias || !ownerAlias.startsWith(aliasPrefix)) {
           return null;
         }
@@ -803,7 +993,7 @@ const resolvers = {
         try {
           debug(1, `installing ${packageName}@${version} (attempt ${attempt}/${installMaxAttempts})`);
           await execAsync(
-            `npm install -g ${alias}@npm:${packageName}@${version}`,
+            `npm install -g ${quoteNpmArgument(`${alias}@npm:${packageName}@${version}`)}`,
             { env: installContext.env }
           );
           debug(1, `installed ${packageName}@${version} as ${alias}`);
@@ -820,7 +1010,7 @@ const resolvers = {
           if (conflictingBinPath) {
             try {
               await execAsync(
-                `npm install -g --force --no-bin-links ${alias}@npm:${packageName}@${version}`,
+                `npm install -g --force --no-bin-links ${quoteNpmArgument(`${alias}@npm:${packageName}@${version}`)}`,
                 { env: installContext.env }
               );
               return;
@@ -855,12 +1045,32 @@ const resolvers = {
       );
     };
 
-    const resolveInstalledPackagePath = async ({ packageName, version, alias, repair }) => {
+    const resolveInstalledPackagePath = async ({ packageName, version: requestedVersion, alias: requestedAlias, repair }) => {
       const globalModulesPath = await getNpmGlobalRoot(baseNpmEnv);
-      const packagePath = path.join(globalModulesPath, alias);
-      const latestVersion = version === 'latest'
-        ? await getLatestVersion(packageName, baseNpmEnv, packagePath)
-        : null;
+      let version = requestedVersion;
+      let alias = requestedAlias;
+      let packagePath = path.join(globalModulesPath, alias);
+      let latestVersion = null;
+      if (version === 'latest') {
+        const latest = await getLatestVersion(packageName, baseNpmEnv, packagePath);
+        latestVersion = latest.version;
+        // Unknown engines (undefined) keep the previous behavior. Only a
+        // `latest` release that declares an unsupported Node range switches to
+        // the newest compatible release, installed under its exact alias.
+        if (engineChecksEnabled && latest.engines !== undefined && !supportsNodeEngine(latest, nodeVersion)) {
+          const compatibleVersion = await chooseNodeCompatibleRelease(packageName, 'latest', {
+            globalModulesPath,
+            latestTag: latestVersion,
+            engines: latest.engines,
+          });
+          if (compatibleVersion) {
+            version = compatibleVersion;
+            alias = getPackageAlias(packageName, compatibleVersion);
+            packagePath = path.join(globalModulesPath, alias);
+            latestVersion = null;
+          }
+        }
+      }
       if (!repair && await isPackageInstalled(
         packagePath,
         version,
@@ -896,7 +1106,13 @@ const resolvers = {
         // Install the exact version returned by metadata lookup. Otherwise the
         // `latest` tag could move between lookup and install, leaving the cache
         // marker immediately stale and triggering a reinstall on every call.
-        const versionToInstall = version === 'latest' ? latestVersion : version;
+        let versionToInstall = version === 'latest' ? latestVersion : version;
+        // A range is resolved by npm itself; pick the newest release in it that
+        // supports this Node.js first. Already installed ranges are reused
+        // above without any extra registry request, as before.
+        if (engineChecksEnabled && isVersionRange(version)) {
+          versionToInstall = await chooseNodeCompatibleRelease(packageName, version) ?? version;
+        }
         await installPackage({ alias, packageName, version: versionToInstall, packagePath: installPath, installContext, exclusive });
         await writeInstallMarker(markerPath, {
           alias,
@@ -912,7 +1128,7 @@ const resolvers = {
     // alias are serialized instead of overlapping. Without this every `use()` in
     // a cold top-level-await wave starts its own `npm install -g` (issue #70).
     const ensurePackageInstalled = async ({ packageName, version }, { repair = false } = {}) => {
-      const alias = `${packageName.replace('@', '').replace('/', '-')}-v-${version}`;
+      const alias = getPackageAlias(packageName, version);
       const aliasKey = `${getNpmEnvId(npmEnvSource)}\0${alias}`;
       const requestKey = repair ? `${aliasKey}\0repair` : aliasKey;
       return dedupeNpmInstall(
@@ -1121,6 +1337,12 @@ const resolvers = {
     // Use esm.sh as the default CDN for Deno, which provides good Deno compatibility
     const resolvedPath = `https://esm.sh/${packageName}@${version}${modulePath}`;
     return resolvedPath;
+  },
+  // Last resort in Deno's resolver chain: Deno's own npm: support installs
+  // npm's choice locally when no CDN can build the package (issue #79).
+  denoNpm: async (moduleSpecifier) => {
+    const { packageName, version, modulePath } = parseModuleSpecifier(moduleSpecifier);
+    return `npm:${packageName}@${version}${modulePath}`;
   },
   skypack: async (moduleSpecifier, pathResolver) => {
     const resolvedPath = `https://cdn.skypack.dev/${moduleSpecifier}`;

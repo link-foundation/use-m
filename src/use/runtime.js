@@ -92,6 +92,15 @@ const baseUse = async (modulePath) => {
     // Return the whole module if it has multiple meaningful exports or no default
     return module;
   } catch (error) {
+    // Deno's npm ESM imports require file extensions for legacy subpaths that
+    // Node resolves automatically. Honor its explicit .js suggestion while
+    // leaving package export maps and unrelated import errors unchanged.
+    if (typeof Deno !== 'undefined' && modulePath.startsWith('npm:') && !modulePath.endsWith('.js') &&
+        error.code === 'ERR_MODULE_NOT_FOUND' &&
+        error.message.includes('Did you mean to import with the ".js" extension?') &&
+        parseModuleSpecifier(modulePath.slice(4)).modulePath) {
+      return baseUse(`${modulePath}.js`);
+    }
     throw new Error(`Failed to import module from '${modulePath}'.`, { cause: error });
   }
 }
@@ -171,9 +180,11 @@ const makeUse = async (options) => {
   }
   return async (moduleSpecifier, providedCallerContext) => {
     const stack = new Error().stack;
+    const resolverOptions = providedCallerContext && typeof providedCallerContext === 'object'
+      ? { ...(options || {}), ...providedCallerContext } : options;
 
     // Use provided caller context or try to capture it from stack trace
-    const callerContext = providedCallerContext || extractCallerContext(stack);
+    const callerContext = (typeof providedCallerContext === 'string' ? providedCallerContext : null) || extractCallerContext(stack);
 
     // Always try built-in resolver first
     const builtinModule = await resolvers.builtin(moduleSpecifier, pathResolver);
@@ -194,7 +205,7 @@ const makeUse = async (options) => {
     if (resolverChain.length === 1) {
       const resolver = resolverChain[0];
       const resolverFunction = toResolverFunction(resolver);
-      const modulePath = await resolverFunction(moduleSpecifier, pathResolver, options);
+      const modulePath = await resolverFunction(moduleSpecifier, pathResolver, resolverOptions);
       try {
         return await importModule(modulePath);
       } catch (error) {
@@ -204,7 +215,7 @@ const makeUse = async (options) => {
         const repairedModulePath = await resolverFunction(
           moduleSpecifier,
           pathResolver,
-          { ...(options || {}), repair: true }
+          { ...(resolverOptions || {}), repair: true }
         );
         return importModule(await cacheBustNpmModulePath(repairedModulePath));
       }
@@ -224,7 +235,7 @@ const makeUse = async (options) => {
 }
 
 let __usePromise = null;
-const use = async (moduleSpecifier) => {
+const use = async (moduleSpecifier, options) => {
   const stack = new Error().stack;
 
   // For Bun, we need to capture the stack trace before any other calls
@@ -247,6 +258,10 @@ const use = async (moduleSpecifier) => {
   // Capture the caller context here, before entering makeUse
   const callerContext = bunCallerContext || extractCallerContext(stack);
 
+  if (options && typeof options === 'object') {
+    const useInstance = await makeUse(options);
+    return useInstance(moduleSpecifier, callerContext);
+  }
   if (!__usePromise) {
     __usePromise = makeUse();
   }

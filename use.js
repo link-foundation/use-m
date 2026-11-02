@@ -3,6 +3,1273 @@
 // from the smaller source fragments in src/use/. Run `npm run build` after
 // editing those fragments. The root file remains available for historical
 // CDN URLs such as https://unpkg.com/use-m/use.js.
+/*! Bundled node-semver (ISC):
+The ISC License
+
+Copyright (c) Isaac Z. Schlueter and Contributors
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
+IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+*/
+
+const npmSemver = (() => {
+  var __create = Object.create;
+  var __defProp = Object.defineProperty;
+  var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+  var __getOwnPropNames = Object.getOwnPropertyNames;
+  var __getProtoOf = Object.getPrototypeOf;
+  var __hasOwnProp = Object.prototype.hasOwnProperty;
+  var __commonJS = (cb, mod) => function __require() {
+    return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
+  };
+  var __export = (target, all) => {
+    for (var name in all)
+      __defProp(target, name, { get: all[name], enumerable: true });
+  };
+  var __copyProps = (to, from, except, desc) => {
+    if (from && typeof from === "object" || typeof from === "function") {
+      for (let key of __getOwnPropNames(from))
+        if (!__hasOwnProp.call(to, key) && key !== except)
+          __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+    }
+    return to;
+  };
+  var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+    // If the importer is in node compatibility mode or this is not an ESM
+    // file that has been converted to a CommonJS file using a Babel-
+    // compatible transform (i.e. "__esModule" has not been set), then set
+    // "default" to the CommonJS "module.exports" for node compatibility.
+    isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+    mod
+  ));
+  var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+
+  // node_modules/semver/internal/debug.js
+  var require_debug = __commonJS({
+    "node_modules/semver/internal/debug.js"(exports, module) {
+      "use strict";
+      var debug = typeof process === "object" && process.env && void 0 ? (...args) => console.error("SEMVER", ...args) : () => {
+      };
+      module.exports = debug;
+    }
+  });
+
+  // node_modules/semver/internal/constants.js
+  var require_constants = __commonJS({
+    "node_modules/semver/internal/constants.js"(exports, module) {
+      "use strict";
+      var SEMVER_SPEC_VERSION = "2.0.0";
+      var MAX_LENGTH = 256;
+      var MAX_SAFE_INTEGER = Number.MAX_SAFE_INTEGER || /* istanbul ignore next */
+      9007199254740991;
+      var MAX_SAFE_COMPONENT_LENGTH = 16;
+      var MAX_SAFE_BUILD_LENGTH = MAX_LENGTH - 6;
+      var RELEASE_TYPES = [
+        "major",
+        "premajor",
+        "minor",
+        "preminor",
+        "patch",
+        "prepatch",
+        "prerelease"
+      ];
+      module.exports = {
+        MAX_LENGTH,
+        MAX_SAFE_COMPONENT_LENGTH,
+        MAX_SAFE_BUILD_LENGTH,
+        MAX_SAFE_INTEGER,
+        RELEASE_TYPES,
+        SEMVER_SPEC_VERSION,
+        FLAG_INCLUDE_PRERELEASE: 1,
+        FLAG_LOOSE: 2
+      };
+    }
+  });
+
+  // node_modules/semver/internal/re.js
+  var require_re = __commonJS({
+    "node_modules/semver/internal/re.js"(exports, module) {
+      "use strict";
+      var {
+        MAX_SAFE_COMPONENT_LENGTH,
+        MAX_SAFE_BUILD_LENGTH,
+        MAX_LENGTH
+      } = require_constants();
+      var debug = require_debug();
+      exports = module.exports = {};
+      var re = exports.re = [];
+      var safeRe = exports.safeRe = [];
+      var src = exports.src = [];
+      var safeSrc = exports.safeSrc = [];
+      var t = exports.t = {};
+      var R = 0;
+      var LETTERDASHNUMBER = "[a-zA-Z0-9-]";
+      var safeRegexReplacements = [
+        ["\\s", 1],
+        ["\\d", MAX_LENGTH],
+        [LETTERDASHNUMBER, MAX_SAFE_BUILD_LENGTH]
+      ];
+      var makeSafeRegex = (value) => {
+        for (const [token, max] of safeRegexReplacements) {
+          value = value.split(`${token}*`).join(`${token}{0,${max}}`).split(`${token}+`).join(`${token}{1,${max}}`);
+        }
+        return value;
+      };
+      var createToken = (name, value, isGlobal) => {
+        const safe = makeSafeRegex(value);
+        const index = R++;
+        debug(name, index, value);
+        t[name] = index;
+        src[index] = value;
+        safeSrc[index] = safe;
+        re[index] = new RegExp(value, isGlobal ? "g" : void 0);
+        safeRe[index] = new RegExp(safe, isGlobal ? "g" : void 0);
+      };
+      createToken("NUMERICIDENTIFIER", "0|[1-9]\\d*");
+      createToken("NUMERICIDENTIFIERLOOSE", "\\d+");
+      createToken("NONNUMERICIDENTIFIER", `\\d*[a-zA-Z-]${LETTERDASHNUMBER}*`);
+      createToken("MAINVERSION", `(${src[t.NUMERICIDENTIFIER]})\\.(${src[t.NUMERICIDENTIFIER]})\\.(${src[t.NUMERICIDENTIFIER]})`);
+      createToken("MAINVERSIONLOOSE", `(${src[t.NUMERICIDENTIFIERLOOSE]})\\.(${src[t.NUMERICIDENTIFIERLOOSE]})\\.(${src[t.NUMERICIDENTIFIERLOOSE]})`);
+      createToken("PRERELEASEIDENTIFIER", `(?:${src[t.NONNUMERICIDENTIFIER]}|${src[t.NUMERICIDENTIFIER]})`);
+      createToken("PRERELEASEIDENTIFIERLOOSE", `(?:${src[t.NONNUMERICIDENTIFIER]}|${src[t.NUMERICIDENTIFIERLOOSE]})`);
+      createToken("PRERELEASE", `(?:-(${src[t.PRERELEASEIDENTIFIER]}(?:\\.${src[t.PRERELEASEIDENTIFIER]})*))`);
+      createToken("PRERELEASELOOSE", `(?:-?(${src[t.PRERELEASEIDENTIFIERLOOSE]}(?:\\.${src[t.PRERELEASEIDENTIFIERLOOSE]})*))`);
+      createToken("BUILDIDENTIFIER", `${LETTERDASHNUMBER}+`);
+      createToken("BUILD", `(?:\\+(${src[t.BUILDIDENTIFIER]}(?:\\.${src[t.BUILDIDENTIFIER]})*))`);
+      createToken("FULLPLAIN", `v?${src[t.MAINVERSION]}${src[t.PRERELEASE]}?${src[t.BUILD]}?`);
+      createToken("FULL", `^${src[t.FULLPLAIN]}$`);
+      createToken("LOOSEPLAIN", `[v=\\s]*${src[t.MAINVERSIONLOOSE]}${src[t.PRERELEASELOOSE]}?${src[t.BUILD]}?`);
+      createToken("LOOSE", `^${src[t.LOOSEPLAIN]}$`);
+      createToken("GTLT", "((?:<|>)?=?)");
+      createToken("XRANGEIDENTIFIERLOOSE", `${src[t.NUMERICIDENTIFIERLOOSE]}|x|X|\\*`);
+      createToken("XRANGEIDENTIFIER", `${src[t.NUMERICIDENTIFIER]}|x|X|\\*`);
+      createToken("XRANGEPLAIN", `[v=\\s]*(${src[t.XRANGEIDENTIFIER]})(?:\\.(${src[t.XRANGEIDENTIFIER]})(?:\\.(${src[t.XRANGEIDENTIFIER]})(?:${src[t.PRERELEASE]})?${src[t.BUILD]}?)?)?`);
+      createToken("XRANGEPLAINLOOSE", `[v=\\s]*(${src[t.XRANGEIDENTIFIERLOOSE]})(?:\\.(${src[t.XRANGEIDENTIFIERLOOSE]})(?:\\.(${src[t.XRANGEIDENTIFIERLOOSE]})(?:${src[t.PRERELEASELOOSE]})?${src[t.BUILD]}?)?)?`);
+      createToken("XRANGE", `^${src[t.GTLT]}\\s*${src[t.XRANGEPLAIN]}$`);
+      createToken("XRANGELOOSE", `^${src[t.GTLT]}\\s*${src[t.XRANGEPLAINLOOSE]}$`);
+      createToken("COERCEPLAIN", `${"(^|[^\\d])(\\d{1,"}${MAX_SAFE_COMPONENT_LENGTH}})(?:\\.(\\d{1,${MAX_SAFE_COMPONENT_LENGTH}}))?(?:\\.(\\d{1,${MAX_SAFE_COMPONENT_LENGTH}}))?`);
+      createToken("COERCE", `${src[t.COERCEPLAIN]}(?:$|[^\\d])`);
+      createToken("COERCEFULL", src[t.COERCEPLAIN] + `(?:${src[t.PRERELEASE]})?(?:${src[t.BUILD]})?(?:$|[^\\d])`);
+      createToken("COERCERTL", src[t.COERCE], true);
+      createToken("COERCERTLFULL", src[t.COERCEFULL], true);
+      createToken("LONETILDE", "(?:~>?)");
+      createToken("TILDETRIM", `(\\s*)${src[t.LONETILDE]}\\s+`, true);
+      exports.tildeTrimReplace = "$1~";
+      createToken("TILDE", `^${src[t.LONETILDE]}${src[t.XRANGEPLAIN]}$`);
+      createToken("TILDELOOSE", `^${src[t.LONETILDE]}${src[t.XRANGEPLAINLOOSE]}$`);
+      createToken("LONECARET", "(?:\\^)");
+      createToken("CARETTRIM", `(\\s*)${src[t.LONECARET]}\\s+`, true);
+      exports.caretTrimReplace = "$1^";
+      createToken("CARET", `^${src[t.LONECARET]}${src[t.XRANGEPLAIN]}$`);
+      createToken("CARETLOOSE", `^${src[t.LONECARET]}${src[t.XRANGEPLAINLOOSE]}$`);
+      createToken("COMPARATORLOOSE", `^${src[t.GTLT]}\\s*(${src[t.LOOSEPLAIN]})$|^$`);
+      createToken("COMPARATOR", `^${src[t.GTLT]}\\s*(${src[t.FULLPLAIN]})$|^$`);
+      createToken("COMPARATORTRIM", `(\\s*)${src[t.GTLT]}\\s*(${src[t.LOOSEPLAIN]}|${src[t.XRANGEPLAIN]})`, true);
+      exports.comparatorTrimReplace = "$1$2$3";
+      createToken("HYPHENRANGE", `^\\s*(${src[t.XRANGEPLAIN]})\\s+-\\s+(${src[t.XRANGEPLAIN]})\\s*$`);
+      createToken("HYPHENRANGELOOSE", `^\\s*(${src[t.XRANGEPLAINLOOSE]})\\s+-\\s+(${src[t.XRANGEPLAINLOOSE]})\\s*$`);
+      createToken("STAR", "(<|>)?=?\\s*\\*");
+      createToken("GTE0", "^\\s*>=\\s*0\\.0\\.0\\s*$");
+      createToken("GTE0PRE", "^\\s*>=\\s*0\\.0\\.0-0\\s*$");
+    }
+  });
+
+  // node_modules/semver/internal/parse-options.js
+  var require_parse_options = __commonJS({
+    "node_modules/semver/internal/parse-options.js"(exports, module) {
+      "use strict";
+      var looseOption = Object.freeze({ loose: true });
+      var emptyOpts = Object.freeze({});
+      var parseOptions = (options) => {
+        if (!options) {
+          return emptyOpts;
+        }
+        if (typeof options !== "object") {
+          return looseOption;
+        }
+        return options;
+      };
+      module.exports = parseOptions;
+    }
+  });
+
+  // node_modules/semver/internal/identifiers.js
+  var require_identifiers = __commonJS({
+    "node_modules/semver/internal/identifiers.js"(exports, module) {
+      "use strict";
+      var numeric = /^[0-9]+$/;
+      var compareIdentifiers = (a, b) => {
+        if (typeof a === "number" && typeof b === "number") {
+          return a === b ? 0 : a < b ? -1 : 1;
+        }
+        const anum = numeric.test(a);
+        const bnum = numeric.test(b);
+        if (anum && bnum) {
+          a = +a;
+          b = +b;
+        }
+        return a === b ? 0 : anum && !bnum ? -1 : bnum && !anum ? 1 : a < b ? -1 : 1;
+      };
+      var rcompareIdentifiers = (a, b) => compareIdentifiers(b, a);
+      module.exports = {
+        compareIdentifiers,
+        rcompareIdentifiers
+      };
+    }
+  });
+
+  // node_modules/semver/classes/semver.js
+  var require_semver = __commonJS({
+    "node_modules/semver/classes/semver.js"(exports, module) {
+      "use strict";
+      var debug = require_debug();
+      var { MAX_LENGTH, MAX_SAFE_INTEGER } = require_constants();
+      var { safeRe: re, t } = require_re();
+      var parseOptions = require_parse_options();
+      var { compareIdentifiers } = require_identifiers();
+      var isPrereleaseIdentifier = (prerelease, identifier) => {
+        const identifiers = identifier.split(".");
+        if (identifiers.length > prerelease.length) {
+          return false;
+        }
+        for (let i = 0; i < identifiers.length; i++) {
+          if (compareIdentifiers(prerelease[i], identifiers[i]) !== 0) {
+            return false;
+          }
+        }
+        return true;
+      };
+      var SemVer = class _SemVer {
+        constructor(version, options) {
+          options = parseOptions(options);
+          if (version instanceof _SemVer) {
+            if (version.loose === !!options.loose && version.includePrerelease === !!options.includePrerelease) {
+              return version;
+            } else {
+              version = version.version;
+            }
+          } else if (typeof version !== "string") {
+            throw new TypeError(`Invalid version. Must be a string. Got type "${typeof version}".`);
+          }
+          if (version.length > MAX_LENGTH) {
+            throw new TypeError(
+              `version is longer than ${MAX_LENGTH} characters`
+            );
+          }
+          debug("SemVer", version, options);
+          this.options = options;
+          this.loose = !!options.loose;
+          this.includePrerelease = !!options.includePrerelease;
+          const m = version.trim().match(options.loose ? re[t.LOOSE] : re[t.FULL]);
+          if (!m) {
+            throw new TypeError(`Invalid Version: ${version}`);
+          }
+          this.raw = version;
+          this.major = +m[1];
+          this.minor = +m[2];
+          this.patch = +m[3];
+          if (this.major > MAX_SAFE_INTEGER || this.major < 0) {
+            throw new TypeError("Invalid major version");
+          }
+          if (this.minor > MAX_SAFE_INTEGER || this.minor < 0) {
+            throw new TypeError("Invalid minor version");
+          }
+          if (this.patch > MAX_SAFE_INTEGER || this.patch < 0) {
+            throw new TypeError("Invalid patch version");
+          }
+          if (!m[4]) {
+            this.prerelease = [];
+          } else {
+            this.prerelease = m[4].split(".").map((id) => {
+              if (/^[0-9]+$/.test(id)) {
+                const num = +id;
+                if (num >= 0 && num < MAX_SAFE_INTEGER) {
+                  return num;
+                }
+              }
+              return id;
+            });
+          }
+          this.build = m[5] ? m[5].split(".") : [];
+          this.format();
+        }
+        format() {
+          this.version = `${this.major}.${this.minor}.${this.patch}`;
+          if (this.prerelease.length) {
+            this.version += `-${this.prerelease.join(".")}`;
+          }
+          return this.version;
+        }
+        toString() {
+          return this.version;
+        }
+        compare(other) {
+          debug("SemVer.compare", this.version, this.options, other);
+          if (!(other instanceof _SemVer)) {
+            if (typeof other === "string" && other === this.version) {
+              return 0;
+            }
+            other = new _SemVer(other, this.options);
+          }
+          if (other.version === this.version) {
+            return 0;
+          }
+          return this.compareMain(other) || this.comparePre(other);
+        }
+        compareMain(other) {
+          if (!(other instanceof _SemVer)) {
+            other = new _SemVer(other, this.options);
+          }
+          if (this.major < other.major) {
+            return -1;
+          }
+          if (this.major > other.major) {
+            return 1;
+          }
+          if (this.minor < other.minor) {
+            return -1;
+          }
+          if (this.minor > other.minor) {
+            return 1;
+          }
+          if (this.patch < other.patch) {
+            return -1;
+          }
+          if (this.patch > other.patch) {
+            return 1;
+          }
+          return 0;
+        }
+        comparePre(other) {
+          if (!(other instanceof _SemVer)) {
+            other = new _SemVer(other, this.options);
+          }
+          if (this.prerelease.length && !other.prerelease.length) {
+            return -1;
+          } else if (!this.prerelease.length && other.prerelease.length) {
+            return 1;
+          } else if (!this.prerelease.length && !other.prerelease.length) {
+            return 0;
+          }
+          let i = 0;
+          do {
+            const a = this.prerelease[i];
+            const b = other.prerelease[i];
+            debug("prerelease compare", i, a, b);
+            if (a === void 0 && b === void 0) {
+              return 0;
+            } else if (b === void 0) {
+              return 1;
+            } else if (a === void 0) {
+              return -1;
+            } else if (a === b) {
+              continue;
+            } else {
+              return compareIdentifiers(a, b);
+            }
+          } while (++i);
+        }
+        compareBuild(other) {
+          if (!(other instanceof _SemVer)) {
+            other = new _SemVer(other, this.options);
+          }
+          let i = 0;
+          do {
+            const a = this.build[i];
+            const b = other.build[i];
+            debug("build compare", i, a, b);
+            if (a === void 0 && b === void 0) {
+              return 0;
+            } else if (b === void 0) {
+              return 1;
+            } else if (a === void 0) {
+              return -1;
+            } else if (a === b) {
+              continue;
+            } else {
+              return compareIdentifiers(a, b);
+            }
+          } while (++i);
+        }
+        // preminor will bump the version up to the next minor release, and immediately
+        // down to pre-release. premajor and prepatch work the same way.
+        inc(release, identifier, identifierBase) {
+          if (release.startsWith("pre")) {
+            if (!identifier && identifierBase === false) {
+              throw new Error("invalid increment argument: identifier is empty");
+            }
+            if (identifier) {
+              const match = `-${identifier}`.match(this.options.loose ? re[t.PRERELEASELOOSE] : re[t.PRERELEASE]);
+              if (!match || match[1] !== identifier) {
+                throw new Error(`invalid identifier: ${identifier}`);
+              }
+            }
+          }
+          switch (release) {
+            case "premajor":
+              this.prerelease.length = 0;
+              this.patch = 0;
+              this.minor = 0;
+              this.major++;
+              this.inc("pre", identifier, identifierBase);
+              break;
+            case "preminor":
+              this.prerelease.length = 0;
+              this.patch = 0;
+              this.minor++;
+              this.inc("pre", identifier, identifierBase);
+              break;
+            case "prepatch":
+              this.prerelease.length = 0;
+              this.inc("patch", identifier, identifierBase);
+              this.inc("pre", identifier, identifierBase);
+              break;
+            // If the input is a non-prerelease version, this acts the same as
+            // prepatch.
+            case "prerelease":
+              if (this.prerelease.length === 0) {
+                this.inc("patch", identifier, identifierBase);
+              }
+              this.inc("pre", identifier, identifierBase);
+              break;
+            case "release":
+              if (this.prerelease.length === 0) {
+                throw new Error(`version ${this.raw} is not a prerelease`);
+              }
+              this.prerelease.length = 0;
+              break;
+            case "major":
+              if (this.minor !== 0 || this.patch !== 0 || this.prerelease.length === 0) {
+                this.major++;
+              }
+              this.minor = 0;
+              this.patch = 0;
+              this.prerelease = [];
+              break;
+            case "minor":
+              if (this.patch !== 0 || this.prerelease.length === 0) {
+                this.minor++;
+              }
+              this.patch = 0;
+              this.prerelease = [];
+              break;
+            case "patch":
+              if (this.prerelease.length === 0) {
+                this.patch++;
+              }
+              this.prerelease = [];
+              break;
+            // This probably shouldn't be used publicly.
+            // 1.0.0 'pre' would become 1.0.0-0 which is the wrong direction.
+            case "pre": {
+              const base = Number(identifierBase) ? 1 : 0;
+              if (this.prerelease.length === 0) {
+                this.prerelease = [base];
+              } else {
+                let i = this.prerelease.length;
+                while (--i >= 0) {
+                  if (typeof this.prerelease[i] === "number") {
+                    this.prerelease[i]++;
+                    i = -2;
+                  }
+                }
+                if (i === -1) {
+                  if (identifier === this.prerelease.join(".") && identifierBase === false) {
+                    throw new Error("invalid increment argument: identifier already exists");
+                  }
+                  this.prerelease.push(base);
+                }
+              }
+              if (identifier) {
+                let prerelease = [identifier, base];
+                if (identifierBase === false) {
+                  prerelease = [identifier];
+                }
+                if (isPrereleaseIdentifier(this.prerelease, identifier)) {
+                  const prereleaseBase = this.prerelease[identifier.split(".").length];
+                  if (isNaN(prereleaseBase)) {
+                    this.prerelease = prerelease;
+                  }
+                } else {
+                  this.prerelease = prerelease;
+                }
+              }
+              break;
+            }
+            default:
+              throw new Error(`invalid increment argument: ${release}`);
+          }
+          this.raw = this.format();
+          if (this.build.length) {
+            this.raw += `+${this.build.join(".")}`;
+          }
+          return this;
+        }
+      };
+      module.exports = SemVer;
+    }
+  });
+
+  // node_modules/semver/functions/parse.js
+  var require_parse = __commonJS({
+    "node_modules/semver/functions/parse.js"(exports, module) {
+      "use strict";
+      var SemVer = require_semver();
+      var parse = (version, options, throwErrors = false) => {
+        if (version instanceof SemVer) {
+          return version;
+        }
+        try {
+          return new SemVer(version, options);
+        } catch (er) {
+          if (!throwErrors) {
+            return null;
+          }
+          throw er;
+        }
+      };
+      module.exports = parse;
+    }
+  });
+
+  // node_modules/semver/functions/valid.js
+  var require_valid = __commonJS({
+    "node_modules/semver/functions/valid.js"(exports, module) {
+      "use strict";
+      var parse = require_parse();
+      var valid = (version, options) => {
+        const v = parse(version, options);
+        return v ? v.version : null;
+      };
+      module.exports = valid;
+    }
+  });
+
+  // node_modules/semver/internal/lrucache.js
+  var require_lrucache = __commonJS({
+    "node_modules/semver/internal/lrucache.js"(exports, module) {
+      "use strict";
+      var LRUCache = class {
+        constructor() {
+          this.max = 1e3;
+          this.map = /* @__PURE__ */ new Map();
+        }
+        get(key) {
+          const value = this.map.get(key);
+          if (value === void 0) {
+            return void 0;
+          } else {
+            this.map.delete(key);
+            this.map.set(key, value);
+            return value;
+          }
+        }
+        delete(key) {
+          return this.map.delete(key);
+        }
+        set(key, value) {
+          const deleted = this.delete(key);
+          if (!deleted && value !== void 0) {
+            if (this.map.size >= this.max) {
+              const firstKey = this.map.keys().next().value;
+              this.delete(firstKey);
+            }
+            this.map.set(key, value);
+          }
+          return this;
+        }
+      };
+      module.exports = LRUCache;
+    }
+  });
+
+  // node_modules/semver/functions/compare.js
+  var require_compare = __commonJS({
+    "node_modules/semver/functions/compare.js"(exports, module) {
+      "use strict";
+      var SemVer = require_semver();
+      var compare = (a, b, loose) => new SemVer(a, loose).compare(new SemVer(b, loose));
+      module.exports = compare;
+    }
+  });
+
+  // node_modules/semver/functions/eq.js
+  var require_eq = __commonJS({
+    "node_modules/semver/functions/eq.js"(exports, module) {
+      "use strict";
+      var compare = require_compare();
+      var eq = (a, b, loose) => compare(a, b, loose) === 0;
+      module.exports = eq;
+    }
+  });
+
+  // node_modules/semver/functions/neq.js
+  var require_neq = __commonJS({
+    "node_modules/semver/functions/neq.js"(exports, module) {
+      "use strict";
+      var compare = require_compare();
+      var neq = (a, b, loose) => compare(a, b, loose) !== 0;
+      module.exports = neq;
+    }
+  });
+
+  // node_modules/semver/functions/gt.js
+  var require_gt = __commonJS({
+    "node_modules/semver/functions/gt.js"(exports, module) {
+      "use strict";
+      var compare = require_compare();
+      var gt = (a, b, loose) => compare(a, b, loose) > 0;
+      module.exports = gt;
+    }
+  });
+
+  // node_modules/semver/functions/gte.js
+  var require_gte = __commonJS({
+    "node_modules/semver/functions/gte.js"(exports, module) {
+      "use strict";
+      var compare = require_compare();
+      var gte = (a, b, loose) => compare(a, b, loose) >= 0;
+      module.exports = gte;
+    }
+  });
+
+  // node_modules/semver/functions/lt.js
+  var require_lt = __commonJS({
+    "node_modules/semver/functions/lt.js"(exports, module) {
+      "use strict";
+      var compare = require_compare();
+      var lt = (a, b, loose) => compare(a, b, loose) < 0;
+      module.exports = lt;
+    }
+  });
+
+  // node_modules/semver/functions/lte.js
+  var require_lte = __commonJS({
+    "node_modules/semver/functions/lte.js"(exports, module) {
+      "use strict";
+      var compare = require_compare();
+      var lte = (a, b, loose) => compare(a, b, loose) <= 0;
+      module.exports = lte;
+    }
+  });
+
+  // node_modules/semver/functions/cmp.js
+  var require_cmp = __commonJS({
+    "node_modules/semver/functions/cmp.js"(exports, module) {
+      "use strict";
+      var eq = require_eq();
+      var neq = require_neq();
+      var gt = require_gt();
+      var gte = require_gte();
+      var lt = require_lt();
+      var lte = require_lte();
+      var cmp = (a, op, b, loose) => {
+        switch (op) {
+          case "===":
+            if (typeof a === "object") {
+              a = a.version;
+            }
+            if (typeof b === "object") {
+              b = b.version;
+            }
+            return a === b;
+          case "!==":
+            if (typeof a === "object") {
+              a = a.version;
+            }
+            if (typeof b === "object") {
+              b = b.version;
+            }
+            return a !== b;
+          case "":
+          case "=":
+          case "==":
+            return eq(a, b, loose);
+          case "!=":
+            return neq(a, b, loose);
+          case ">":
+            return gt(a, b, loose);
+          case ">=":
+            return gte(a, b, loose);
+          case "<":
+            return lt(a, b, loose);
+          case "<=":
+            return lte(a, b, loose);
+          default:
+            throw new TypeError(`Invalid operator: ${op}`);
+        }
+      };
+      module.exports = cmp;
+    }
+  });
+
+  // node_modules/semver/classes/comparator.js
+  var require_comparator = __commonJS({
+    "node_modules/semver/classes/comparator.js"(exports, module) {
+      "use strict";
+      var ANY = Symbol("SemVer ANY");
+      var Comparator = class _Comparator {
+        static get ANY() {
+          return ANY;
+        }
+        constructor(comp, options) {
+          options = parseOptions(options);
+          if (comp instanceof _Comparator) {
+            if (comp.loose === !!options.loose) {
+              return comp;
+            } else {
+              comp = comp.value;
+            }
+          }
+          comp = comp.trim().split(/\s+/).join(" ");
+          debug("comparator", comp, options);
+          this.options = options;
+          this.loose = !!options.loose;
+          this.parse(comp);
+          if (this.semver === ANY) {
+            this.value = "";
+          } else {
+            this.value = this.operator + this.semver.version;
+          }
+          debug("comp", this);
+        }
+        parse(comp) {
+          const r = this.options.loose ? re[t.COMPARATORLOOSE] : re[t.COMPARATOR];
+          const m = comp.match(r);
+          if (!m) {
+            throw new TypeError(`Invalid comparator: ${comp}`);
+          }
+          this.operator = m[1] !== void 0 ? m[1] : "";
+          if (this.operator === "=") {
+            this.operator = "";
+          }
+          if (!m[2]) {
+            this.semver = ANY;
+          } else {
+            this.semver = new SemVer(m[2], this.options.loose);
+          }
+        }
+        toString() {
+          return this.value;
+        }
+        test(version) {
+          debug("Comparator.test", version, this.options.loose);
+          if (this.semver === ANY || version === ANY) {
+            return true;
+          }
+          if (typeof version === "string") {
+            try {
+              version = new SemVer(version, this.options);
+            } catch (er) {
+              return false;
+            }
+          }
+          return cmp(version, this.operator, this.semver, this.options);
+        }
+        intersects(comp, options) {
+          if (!(comp instanceof _Comparator)) {
+            throw new TypeError("a Comparator is required");
+          }
+          if (this.operator === "") {
+            if (this.value === "") {
+              return true;
+            }
+            return new Range(comp.value, options).test(this.value);
+          } else if (comp.operator === "") {
+            if (comp.value === "") {
+              return true;
+            }
+            return new Range(this.value, options).test(comp.semver);
+          }
+          options = parseOptions(options);
+          if (options.includePrerelease && (this.value === "<0.0.0-0" || comp.value === "<0.0.0-0")) {
+            return false;
+          }
+          if (!options.includePrerelease && (this.value.startsWith("<0.0.0") || comp.value.startsWith("<0.0.0"))) {
+            return false;
+          }
+          if (this.operator.startsWith(">") && comp.operator.startsWith(">")) {
+            return true;
+          }
+          if (this.operator.startsWith("<") && comp.operator.startsWith("<")) {
+            return true;
+          }
+          if (this.semver.version === comp.semver.version && this.operator.includes("=") && comp.operator.includes("=")) {
+            return true;
+          }
+          if (cmp(this.semver, "<", comp.semver, options) && this.operator.startsWith(">") && comp.operator.startsWith("<")) {
+            return true;
+          }
+          if (cmp(this.semver, ">", comp.semver, options) && this.operator.startsWith("<") && comp.operator.startsWith(">")) {
+            return true;
+          }
+          return false;
+        }
+      };
+      module.exports = Comparator;
+      var parseOptions = require_parse_options();
+      var { safeRe: re, t } = require_re();
+      var cmp = require_cmp();
+      var debug = require_debug();
+      var SemVer = require_semver();
+      var Range = require_range();
+    }
+  });
+
+  // node_modules/semver/classes/range.js
+  var require_range = __commonJS({
+    "node_modules/semver/classes/range.js"(exports, module) {
+      "use strict";
+      var SPACE_CHARACTERS = /\s+/g;
+      var Range = class _Range {
+        constructor(range, options) {
+          options = parseOptions(options);
+          if (range instanceof _Range) {
+            if (range.loose === !!options.loose && range.includePrerelease === !!options.includePrerelease) {
+              return range;
+            } else {
+              return new _Range(range.raw, options);
+            }
+          }
+          if (range instanceof Comparator) {
+            this.raw = range.value;
+            this.set = [[range]];
+            this.formatted = void 0;
+            return this;
+          }
+          this.options = options;
+          this.loose = !!options.loose;
+          this.includePrerelease = !!options.includePrerelease;
+          this.raw = range.trim().replace(SPACE_CHARACTERS, " ");
+          this.set = this.raw.split("||").map((r) => this.parseRange(r.trim())).filter((c) => c.length);
+          if (!this.set.length) {
+            throw new TypeError(`Invalid SemVer Range: ${this.raw}`);
+          }
+          if (this.set.length > 1) {
+            const first = this.set[0];
+            this.set = this.set.filter((c) => !isNullSet(c[0]));
+            if (this.set.length === 0) {
+              this.set = [first];
+            } else if (this.set.length > 1) {
+              for (const c of this.set) {
+                if (c.length === 1 && isAny(c[0])) {
+                  this.set = [c];
+                  break;
+                }
+              }
+            }
+          }
+          this.formatted = void 0;
+        }
+        get range() {
+          if (this.formatted === void 0) {
+            this.formatted = "";
+            for (let i = 0; i < this.set.length; i++) {
+              if (i > 0) {
+                this.formatted += "||";
+              }
+              const comps = this.set[i];
+              for (let k = 0; k < comps.length; k++) {
+                if (k > 0) {
+                  this.formatted += " ";
+                }
+                this.formatted += comps[k].toString().trim();
+              }
+            }
+          }
+          return this.formatted;
+        }
+        format() {
+          return this.range;
+        }
+        toString() {
+          return this.range;
+        }
+        parseRange(range) {
+          range = range.replace(BUILDSTRIPRE, "");
+          const memoOpts = (this.options.includePrerelease && FLAG_INCLUDE_PRERELEASE) | (this.options.loose && FLAG_LOOSE);
+          const memoKey = memoOpts + ":" + range;
+          const cached = cache.get(memoKey);
+          if (cached) {
+            return cached;
+          }
+          const loose = this.options.loose;
+          const hr = loose ? re[t.HYPHENRANGELOOSE] : re[t.HYPHENRANGE];
+          range = range.replace(hr, hyphenReplace(this.options.includePrerelease));
+          debug("hyphen replace", range);
+          range = range.replace(re[t.COMPARATORTRIM], comparatorTrimReplace);
+          debug("comparator trim", range);
+          range = range.replace(re[t.TILDETRIM], tildeTrimReplace);
+          debug("tilde trim", range);
+          range = range.replace(re[t.CARETTRIM], caretTrimReplace);
+          debug("caret trim", range);
+          let rangeList = range.split(" ").map((comp) => parseComparator(comp, this.options)).join(" ").split(/\s+/).map((comp) => replaceGTE0(comp, this.options));
+          if (loose) {
+            rangeList = rangeList.filter((comp) => {
+              debug("loose invalid filter", comp, this.options);
+              return !!comp.match(re[t.COMPARATORLOOSE]);
+            });
+          }
+          debug("range list", rangeList);
+          const rangeMap = /* @__PURE__ */ new Map();
+          const comparators = rangeList.map((comp) => new Comparator(comp, this.options));
+          for (const comp of comparators) {
+            if (isNullSet(comp)) {
+              return [comp];
+            }
+            rangeMap.set(comp.value, comp);
+          }
+          if (rangeMap.size > 1 && rangeMap.has("")) {
+            rangeMap.delete("");
+          }
+          const result = [...rangeMap.values()];
+          cache.set(memoKey, result);
+          return result;
+        }
+        intersects(range, options) {
+          if (!(range instanceof _Range)) {
+            throw new TypeError("a Range is required");
+          }
+          return this.set.some((thisComparators) => {
+            return isSatisfiable(thisComparators, options) && range.set.some((rangeComparators) => {
+              return isSatisfiable(rangeComparators, options) && thisComparators.every((thisComparator) => {
+                return rangeComparators.every((rangeComparator) => {
+                  return thisComparator.intersects(rangeComparator, options);
+                });
+              });
+            });
+          });
+        }
+        // if ANY of the sets match ALL of its comparators, then pass
+        test(version) {
+          if (!version) {
+            return false;
+          }
+          if (typeof version === "string") {
+            try {
+              version = new SemVer(version, this.options);
+            } catch (er) {
+              return false;
+            }
+          }
+          for (let i = 0; i < this.set.length; i++) {
+            if (testSet(this.set[i], version, this.options)) {
+              return true;
+            }
+          }
+          return false;
+        }
+      };
+      module.exports = Range;
+      var LRU = require_lrucache();
+      var cache = new LRU();
+      var parseOptions = require_parse_options();
+      var Comparator = require_comparator();
+      var debug = require_debug();
+      var SemVer = require_semver();
+      var {
+        safeRe: re,
+        src,
+        t,
+        comparatorTrimReplace,
+        tildeTrimReplace,
+        caretTrimReplace
+      } = require_re();
+      var { FLAG_INCLUDE_PRERELEASE, FLAG_LOOSE } = require_constants();
+      var BUILDSTRIPRE = new RegExp(src[t.BUILD], "g");
+      var isNullSet = (c) => c.value === "<0.0.0-0";
+      var isAny = (c) => c.value === "";
+      var isSatisfiable = (comparators, options) => {
+        let result = true;
+        const remainingComparators = comparators.slice();
+        let testComparator = remainingComparators.pop();
+        while (result && remainingComparators.length) {
+          result = remainingComparators.every((otherComparator) => {
+            return testComparator.intersects(otherComparator, options);
+          });
+          testComparator = remainingComparators.pop();
+        }
+        return result;
+      };
+      var parseComparator = (comp, options) => {
+        comp = comp.replace(re[t.BUILD], "");
+        debug("comp", comp, options);
+        comp = replaceCarets(comp, options);
+        debug("caret", comp);
+        comp = replaceTildes(comp, options);
+        debug("tildes", comp);
+        comp = replaceXRanges(comp, options);
+        debug("xrange", comp);
+        comp = replaceStars(comp, options);
+        debug("stars", comp);
+        return comp;
+      };
+      var isX = (id) => !id || id.toLowerCase() === "x" || id === "*";
+      var invalidXRangeOrder = (M, m, p) => isX(M) && !isX(m) || isX(m) && p && !isX(p);
+      var replaceTildes = (comp, options) => {
+        return comp.trim().split(/\s+/).map((c) => replaceTilde(c, options)).join(" ");
+      };
+      var replaceTilde = (comp, options) => {
+        const r = options.loose ? re[t.TILDELOOSE] : re[t.TILDE];
+        const z = options.includePrerelease ? "-0" : "";
+        return comp.replace(r, (_, M, m, p, pr) => {
+          debug("tilde", comp, _, M, m, p, pr);
+          let ret;
+          if (isX(M)) {
+            ret = "";
+          } else if (isX(m)) {
+            ret = `>=${M}.0.0${z} <${+M + 1}.0.0-0`;
+          } else if (isX(p)) {
+            ret = `>=${M}.${m}.0${z} <${M}.${+m + 1}.0-0`;
+          } else if (pr) {
+            debug("replaceTilde pr", pr);
+            ret = `>=${M}.${m}.${p}-${pr} <${M}.${+m + 1}.0-0`;
+          } else {
+            ret = `>=${M}.${m}.${p} <${M}.${+m + 1}.0-0`;
+          }
+          debug("tilde return", ret);
+          return ret;
+        });
+      };
+      var replaceCarets = (comp, options) => {
+        return comp.trim().split(/\s+/).map((c) => replaceCaret(c, options)).join(" ");
+      };
+      var replaceCaret = (comp, options) => {
+        debug("caret", comp, options);
+        const r = options.loose ? re[t.CARETLOOSE] : re[t.CARET];
+        const z = options.includePrerelease ? "-0" : "";
+        return comp.replace(r, (_, M, m, p, pr) => {
+          debug("caret", comp, _, M, m, p, pr);
+          let ret;
+          if (isX(M)) {
+            ret = "";
+          } else if (isX(m)) {
+            ret = `>=${M}.0.0${z} <${+M + 1}.0.0-0`;
+          } else if (isX(p)) {
+            if (M === "0") {
+              ret = `>=${M}.${m}.0${z} <${M}.${+m + 1}.0-0`;
+            } else {
+              ret = `>=${M}.${m}.0${z} <${+M + 1}.0.0-0`;
+            }
+          } else if (pr) {
+            debug("replaceCaret pr", pr);
+            if (M === "0") {
+              if (m === "0") {
+                ret = `>=${M}.${m}.${p}-${pr} <${M}.${m}.${+p + 1}-0`;
+              } else {
+                ret = `>=${M}.${m}.${p}-${pr} <${M}.${+m + 1}.0-0`;
+              }
+            } else {
+              ret = `>=${M}.${m}.${p}-${pr} <${+M + 1}.0.0-0`;
+            }
+          } else {
+            debug("no pr");
+            if (M === "0") {
+              if (m === "0") {
+                ret = `>=${M}.${m}.${p} <${M}.${m}.${+p + 1}-0`;
+              } else {
+                ret = `>=${M}.${m}.${p} <${M}.${+m + 1}.0-0`;
+              }
+            } else {
+              ret = `>=${M}.${m}.${p} <${+M + 1}.0.0-0`;
+            }
+          }
+          debug("caret return", ret);
+          return ret;
+        });
+      };
+      var replaceXRanges = (comp, options) => {
+        debug("replaceXRanges", comp, options);
+        return comp.split(/\s+/).map((c) => replaceXRange(c, options)).join(" ");
+      };
+      var replaceXRange = (comp, options) => {
+        comp = comp.trim();
+        const r = options.loose ? re[t.XRANGELOOSE] : re[t.XRANGE];
+        return comp.replace(r, (ret, gtlt, M, m, p, pr) => {
+          debug("xRange", comp, ret, gtlt, M, m, p, pr);
+          if (invalidXRangeOrder(M, m, p)) {
+            return comp;
+          }
+          const xM = isX(M);
+          const xm = xM || isX(m);
+          const xp = xm || isX(p);
+          const anyX = xp;
+          if (gtlt === "=" && anyX) {
+            gtlt = "";
+          }
+          pr = options.includePrerelease ? "-0" : "";
+          if (xM) {
+            if (gtlt === ">" || gtlt === "<") {
+              ret = "<0.0.0-0";
+            } else {
+              ret = "*";
+            }
+          } else if (gtlt && anyX) {
+            if (xm) {
+              m = 0;
+            }
+            p = 0;
+            if (gtlt === ">") {
+              gtlt = ">=";
+              if (xm) {
+                M = +M + 1;
+                m = 0;
+                p = 0;
+              } else {
+                m = +m + 1;
+                p = 0;
+              }
+            } else if (gtlt === "<=") {
+              gtlt = "<";
+              if (xm) {
+                M = +M + 1;
+              } else {
+                m = +m + 1;
+              }
+            }
+            if (gtlt === "<") {
+              pr = "-0";
+            }
+            ret = `${gtlt + M}.${m}.${p}${pr}`;
+          } else if (xm) {
+            ret = `>=${M}.0.0${pr} <${+M + 1}.0.0-0`;
+          } else if (xp) {
+            ret = `>=${M}.${m}.0${pr} <${M}.${+m + 1}.0-0`;
+          }
+          debug("xRange return", ret);
+          return ret;
+        });
+      };
+      var replaceStars = (comp, options) => {
+        debug("replaceStars", comp, options);
+        return comp.trim().replace(re[t.STAR], "");
+      };
+      var replaceGTE0 = (comp, options) => {
+        debug("replaceGTE0", comp, options);
+        return comp.trim().replace(re[options.includePrerelease ? t.GTE0PRE : t.GTE0], "");
+      };
+      var hyphenReplace = (incPr) => ($0, from, fM, fm, fp, fpr, fb, to, tM, tm, tp, tpr) => {
+        if (isX(fM)) {
+          from = "";
+        } else if (isX(fm)) {
+          from = `>=${fM}.0.0${incPr ? "-0" : ""}`;
+        } else if (isX(fp)) {
+          from = `>=${fM}.${fm}.0${incPr ? "-0" : ""}`;
+        } else if (fpr) {
+          from = `>=${from}`;
+        } else {
+          from = `>=${from}${incPr ? "-0" : ""}`;
+        }
+        if (isX(tM)) {
+          to = "";
+        } else if (isX(tm)) {
+          to = `<${+tM + 1}.0.0-0`;
+        } else if (isX(tp)) {
+          to = `<${tM}.${+tm + 1}.0-0`;
+        } else if (tpr) {
+          to = `<=${tM}.${tm}.${tp}-${tpr}`;
+        } else if (incPr) {
+          to = `<${tM}.${tm}.${+tp + 1}-0`;
+        } else {
+          to = `<=${to}`;
+        }
+        return `${from} ${to}`.trim();
+      };
+      var testSet = (set, version, options) => {
+        for (let i = 0; i < set.length; i++) {
+          if (!set[i].test(version)) {
+            return false;
+          }
+        }
+        if (version.prerelease.length && !options.includePrerelease) {
+          for (let i = 0; i < set.length; i++) {
+            debug(set[i].semver);
+            if (set[i].semver === Comparator.ANY) {
+              continue;
+            }
+            if (set[i].semver.prerelease.length > 0) {
+              const allowed = set[i].semver;
+              if (allowed.major === version.major && allowed.minor === version.minor && allowed.patch === version.patch) {
+                return true;
+              }
+            }
+          }
+          return false;
+        }
+        return true;
+      };
+    }
+  });
+
+  // node_modules/semver/functions/satisfies.js
+  var require_satisfies = __commonJS({
+    "node_modules/semver/functions/satisfies.js"(exports, module) {
+      "use strict";
+      var Range = require_range();
+      var satisfies = (version, range, options) => {
+        try {
+          range = new Range(range, options);
+        } catch (er) {
+          return false;
+        }
+        return range.test(version);
+      };
+      module.exports = satisfies;
+    }
+  });
+
+  // node_modules/semver/ranges/valid.js
+  var require_valid2 = __commonJS({
+    "node_modules/semver/ranges/valid.js"(exports, module) {
+      "use strict";
+      var Range = require_range();
+      var validRange = (range, options) => {
+        try {
+          return new Range(range, options).range || "*";
+        } catch (er) {
+          return null;
+        }
+      };
+      module.exports = validRange;
+    }
+  });
+
+  // node_modules/semver/functions/rcompare.js
+  var require_rcompare = __commonJS({
+    "node_modules/semver/functions/rcompare.js"(exports, module) {
+      "use strict";
+      var compare = require_compare();
+      var rcompare = (a, b, loose) => compare(b, a, loose);
+      module.exports = rcompare;
+    }
+  });
+
+  // <stdin>
+  var stdin_exports = {};
+  __export(stdin_exports, {
+    lte: () => import_lte.default,
+    rcompare: () => import_rcompare.default,
+    satisfies: () => import_satisfies.default,
+    valid: () => import_valid.default,
+    validRange: () => import_valid2.default
+  });
+  var import_valid = __toESM(require_valid());
+  var import_satisfies = __toESM(require_satisfies());
+  var import_valid2 = __toESM(require_valid2());
+  var import_rcompare = __toESM(require_rcompare());
+  var import_lte = __toESM(require_lte());
+  return __toCommonJS(stdin_exports);
+})();
+
 // Source fragment: caller context, specifier parsing, and built-in helpers.
 // Generated bundles concatenate this file; do not import it directly.
 
@@ -381,6 +1648,103 @@ const loadBuiltinModule = async (moduleName) => {
   return { default: m, ...m };
 };
 
+// Source fragment: Node engine policy for automatic npm version selection.
+// npmSemver is embedded by the bundle builder, including its ISC license.
+//
+// Backward compatibility contract: when the release npm would install anyway
+// supports the running Node.js, nothing changes. Only an incompatible `latest`
+// release (or range match) makes use-m look for an older compatible release,
+// and when none exists use-m keeps npm's previous choice unless
+// `engineStrict: true` asks it to fail before installation.
+
+const quoteNpmArgument = (argument) => process.platform === 'win32'
+  ? `"${argument.replaceAll('"', '\\"')}"`
+  : `'${argument.replaceAll("'", "'\\''")}'`;
+
+// `engineStrict` option or USE_M_ENGINE_STRICT: false/0 disables engine-aware
+// selection, true/1 additionally fails fast when no compatible release exists,
+// anything else keeps the default (select a compatible release when possible).
+const parseEngineStrictSetting = (value) => {
+  if (value === false || value === 'false' || value === '0' || value === 0) return false;
+  if (value === true || value === 'true' || value === '1' || value === 1) return true;
+  return undefined;
+};
+
+const supportsNodeEngine = (manifest, nodeVersion) => {
+  const engine = manifest?.engines?.node;
+  return engine === undefined || engine === null || engine === '' ||
+    (typeof engine === 'string' && npmSemver.satisfies(nodeVersion, engine, { includePrerelease: true }));
+};
+
+const describeNodeEngine = (manifest) => manifest?.engines?.node ?? 'any';
+
+// Normalizes a registry packument, an install-v1 (corgi) document, or the
+// output of `npm view <pkg>@<range> version engines deprecated dist-tags --json`
+// (an object for one version, an array of objects or plain version strings for
+// several) into `{ manifests, latestTag }`.
+const normalizeVersionMetadata = (metadata) => {
+  const toManifest = (entry) => typeof entry === 'string' ? { version: entry } : entry;
+  let manifests = null;
+  if (Array.isArray(metadata)) {
+    manifests = metadata.map(toManifest);
+  } else if (metadata?.versions && typeof metadata.versions === 'object' && !Array.isArray(metadata.versions)) {
+    manifests = Object.entries(metadata.versions).map(([version, manifest]) => ({ ...manifest, version }));
+  } else if (typeof metadata === 'string' || typeof metadata?.version === 'string') {
+    manifests = [toManifest(metadata)];
+  }
+  if (!manifests || manifests.length === 0 || manifests.some(manifest => !npmSemver.valid(manifest?.version))) {
+    throw new Error('npm registry metadata did not contain valid version manifests.');
+  }
+  const distTags = (Array.isArray(metadata) ? manifests.find(manifest => manifest['dist-tags']) : metadata)?.['dist-tags'];
+  const latestTag = npmSemver.valid(distTags?.latest) ? distTags.latest : null;
+  return { manifests, latestTag };
+};
+
+// Picks the release to install for `latest` or a semver range, mirroring how
+// npm itself picks a manifest (npm-pick-manifest): the `latest` dist-tag wins
+// when it qualifies; otherwise the highest version, preferring releases whose
+// engines support the running Node.js and that are not deprecated. Unlike npm,
+// a release whose engines exclude the running Node.js is never selected here.
+// Returns `{ version, newest }`, or `{ version: null, newest }` when no
+// published release qualifies.
+const selectNodeCompatibleVersion = (metadata, requestedVersion, nodeVersion) => {
+  const { manifests, latestTag } = normalizeVersionMetadata(metadata);
+  const byVersion = new Map(manifests.map(manifest => [manifest.version, manifest]));
+  const latestManifest = latestTag ? byVersion.get(latestTag) : undefined;
+  const isLatest = requestedVersion === 'latest';
+  const range = isLatest ? '*' : requestedVersion;
+
+  if (latestManifest && supportsNodeEngine(latestManifest, nodeVersion) &&
+      (isLatest || (npmSemver.satisfies(latestTag, range) && !latestManifest.deprecated))) {
+    return { version: latestTag, newest: latestManifest };
+  }
+
+  // `latest` never moves past the dist-tag: versions published above it were
+  // deliberately not promoted (prereleases, staged majors, mistakes).
+  const candidates = manifests
+    .filter(manifest => npmSemver.satisfies(manifest.version, range) &&
+      (!isLatest || !latestTag || npmSemver.lte(manifest.version, latestTag)))
+    .sort((a, b) => npmSemver.rcompare(a.version, b.version));
+  const newest = (isLatest && latestManifest) || candidates[0];
+  const compatible = candidates.filter(manifest => supportsNodeEngine(manifest, nodeVersion));
+  const selected = compatible.find(manifest => !manifest.deprecated) || compatible[0];
+  return { version: selected ? selected.version : null, newest };
+};
+
+const describeUnsupportedNode = (packageName, requestedVersion, newest, nodeVersion) =>
+  `No release of ${packageName}@${requestedVersion} is compatible with Node ${nodeVersion}` +
+  (newest ? `; ${packageName}@${newest.version} requires Node ${describeNodeEngine(newest)}` : '') +
+  '. Pin a version or upgrade Node.';
+
+const createUnsupportedNodeError = (packageName, requestedVersion, newest, nodeVersion) => {
+  const error = new Error(
+    `${describeUnsupportedNode(packageName, requestedVersion, newest, nodeVersion)} ` +
+    'Remove engineStrict: true (or USE_M_ENGINE_STRICT=true) to let npm install it anyway.'
+  );
+  error.code = 'USE_M_UNSUPPORTED_NODE';
+  return error;
+};
+
 // Source fragment: built-in, npm, Bun, Deno, and CDN resolvers.
 // Generated bundles concatenate this file; do not import it directly.
 
@@ -491,12 +1855,20 @@ const resolvers = {
     const { exec } = await import('node:child_process');
     const { createHash } = await import('node:crypto');
     const { promisify } = await import('node:util');
-    const { access, mkdir, readFile, readlink, rename, rm, rmdir, stat, unlink, utimes, writeFile } = await import('node:fs/promises');
+    const { access, mkdir, readdir, readFile, readlink, rename, rm, rmdir, stat, unlink, utimes, writeFile } = await import('node:fs/promises');
     const { constants: fsConstants } = await import('node:fs');
     const os = await import('node:os');
     const execAsync = promisify(exec);
     const npmEnvSource = options?.env || process.env;
     const baseNpmEnv = { ...npmEnvSource };
+    // Node engine policy (issue #79). Only `latest` and semver ranges are
+    // checked; exact versions and other dist-tags remain explicit choices.
+    const engineStrictSetting = parseEngineStrictSetting(options?.engineStrict)
+      ?? parseEngineStrictSetting(baseNpmEnv.USE_M_ENGINE_STRICT);
+    const engineChecksEnabled = engineStrictSetting !== false;
+    const failOnUnsupportedNode = engineStrictSetting === true;
+    const nodeVersion = process.versions.node;
+    const isVersionRange = (value) => value !== 'latest' && !npmSemver.valid(value) && npmSemver.validRange(value) !== null;
     const installMaxAttempts = Number.isInteger(options?.installMaxAttempts) && options.installMaxAttempts > 0
       ? options.installMaxAttempts
       : 3;
@@ -671,9 +2043,14 @@ const resolvers = {
       return path.join(cacheHome, 'use-m', 'registry');
     };
 
-    const getLatestVersionCachePath = (cacheDirectory, registry, packageName) => {
+    // `scope` separates derived entries (such as Node-compatible selections)
+    // from the plain latest-version entries shared with earlier use-m releases.
+    const getLatestVersionCacheKey = (registry, packageName, scope) =>
+      JSON.stringify(scope ? [registry, packageName, ...scope] : [registry, packageName]);
+
+    const getLatestVersionCachePath = (cacheDirectory, registry, packageName, scope) => {
       const digest = createHash('sha256')
-        .update(JSON.stringify([registry, packageName]))
+        .update(getLatestVersionCacheKey(registry, packageName, scope))
         .digest('hex');
       return path.join(cacheDirectory, `${digest}.json`);
     };
@@ -687,13 +2064,13 @@ const resolvers = {
       typeof entry.fetchedAt === 'number' &&
       Number.isFinite(entry.fetchedAt);
 
-    const readLatestVersionCache = async (registry, packageName, env) => {
+    const readLatestVersionCache = async (registry, packageName, env, scope) => {
       if (!latestVersionCacheEnabled) return null;
-      const cacheKey = JSON.stringify([registry, packageName]);
+      const cacheKey = getLatestVersionCacheKey(registry, packageName, scope);
       let cached = npmLatestVersionMemoryCache.get(cacheKey) || null;
       const cacheDirectory = getLatestVersionCacheDirectory(env);
       if (cacheDirectory) {
-        const cachePath = getLatestVersionCachePath(cacheDirectory, registry, packageName);
+        const cachePath = getLatestVersionCachePath(cacheDirectory, registry, packageName, scope);
         try {
           const diskEntry = JSON.parse(await readFile(cachePath, 'utf8'));
           if (isValidLatestVersionEntry(diskEntry, registry, packageName)
@@ -712,14 +2089,14 @@ const resolvers = {
       return { ...cached, fresh };
     };
 
-    const writeLatestVersionCache = async (registry, packageName, version, env) => {
+    const writeLatestVersionCache = async (registry, packageName, version, env, details = {}, scope) => {
       if (!latestVersionCacheEnabled) return;
-      const entry = { registry, packageName, version, fetchedAt: Date.now() };
-      const cacheKey = JSON.stringify([registry, packageName]);
+      const entry = { registry, packageName, version, fetchedAt: Date.now(), ...details };
+      const cacheKey = getLatestVersionCacheKey(registry, packageName, scope);
       npmLatestVersionMemoryCache.set(cacheKey, entry);
       const cacheDirectory = getLatestVersionCacheDirectory(env);
       if (!cacheDirectory) return;
-      const cachePath = getLatestVersionCachePath(cacheDirectory, registry, packageName);
+      const cachePath = getLatestVersionCachePath(cacheDirectory, registry, packageName, scope);
       const temporaryPath = `${cachePath}.${process.pid}.${Date.now()}.${Math.random().toString(16).slice(2)}.tmp`;
       try {
         await mkdir(cacheDirectory, { recursive: true });
@@ -732,19 +2109,23 @@ const resolvers = {
       }
     };
 
-    const getRegistryEndpoint = (registry, packageName) =>
-      new URL(`${encodeURIComponent(packageName)}/latest`, registry).href;
+    const getRegistryEndpoint = (registry, packageName, packument = false) =>
+      new URL(`${encodeURIComponent(packageName)}${packument ? '' : '/latest'}`, registry).href;
 
     const isTransientRegistryFailure = (error) => {
       const status = error?.status;
       return status === 403 || status === 408 || status === 425 || status === 429 || status >= 500;
     };
 
-    const fetchLatestVersion = async (registry, packageName) => {
+    // Fetches `<registry>/<package>/latest` (the latest manifest, as before) or,
+    // with `packument`, the abbreviated document listing every version with its
+    // engines. The packument is only requested when the latest release does not
+    // support the running Node.js.
+    const fetchRegistryDocument = async (registry, packageName, { packument = false } = {}) => {
       if (!registryFetch) {
         throw new Error('This runtime does not provide fetch.');
       }
-      const endpoint = getRegistryEndpoint(registry, packageName);
+      const endpoint = getRegistryEndpoint(registry, packageName, packument);
       let lastError;
       for (let attempt = 1; attempt <= registryMaxAttempts; attempt++) {
         let timeout = null;
@@ -755,7 +2136,11 @@ const resolvers = {
             timeout = setTimeout(() => controller.abort(), registryRequestTimeoutMs);
           }
           const registryResponse = await registryFetch(endpoint, {
-            headers: { accept: 'application/json' },
+            headers: {
+              accept: packument
+                ? 'application/vnd.npm.install-v1+json; q=1.0, application/json; q=0.8'
+                : 'application/json',
+            },
             signal: controller.signal,
           });
           if (!registryResponse?.ok) {
@@ -766,10 +2151,10 @@ const resolvers = {
             throw error;
           }
           const metadata = await registryResponse.json();
-          if (typeof metadata?.version !== 'string' || metadata.version.trim() === '') {
+          if (!packument && (typeof metadata?.version !== 'string' || metadata.version.trim() === '')) {
             throw new Error('npm registry metadata did not contain a version.');
           }
-          return metadata.version.trim();
+          return metadata;
         } catch (error) {
           lastError = error;
           const retryable = error?.name === 'AbortError' || error?.status === undefined || isTransientRegistryFailure(error);
@@ -784,16 +2169,51 @@ const resolvers = {
       throw lastError;
     };
 
+    // Engines are recorded alongside the version whenever the source provides
+    // them: an object (or null when the release declares none) means known,
+    // undefined means unknown (for example a cache entry written by an older
+    // use-m), in which case no engine check is possible and npm's choice stands.
+    const knownEngines = (source) => {
+      if (!source || typeof source !== 'object' || !Object.prototype.hasOwnProperty.call(source, 'engines')) {
+        return undefined;
+      }
+      const { engines } = source;
+      return engines && typeof engines === 'object' ? engines : null;
+    };
+
+    // `npm show <pkg> version engines --json` prints a JSON object, or just the
+    // version as a JSON string when the release declares no engines. Plain text
+    // (as printed without --json) is accepted too, with unknown engines.
+    const parseNpmShowLatest = (stdout) => {
+      const text = stdout.trim();
+      let parsed;
+      try {
+        parsed = JSON.parse(text);
+      } catch {
+        return { version: text };
+      }
+      if (typeof parsed === 'string') return { version: parsed.trim(), engines: null };
+      if (parsed && typeof parsed === 'object' && typeof parsed.version === 'string') {
+        return { version: parsed.version.trim(), engines: knownEngines({ engines: parsed.engines ?? null }) };
+      }
+      return { version: text };
+    };
+
+    // Returns `{ version, engines }` for the `latest` dist-tag. The lookup order,
+    // cache entries and fallbacks are the same as in earlier use-m releases.
     const getLatestVersion = async (packageName, env, installedPackagePath) => {
       const registry = await getRegistry(env);
       const cached = await readLatestVersionCache(registry, packageName, env);
-      if (cached?.fresh) return cached.version;
+      if (cached?.fresh) return { version: cached.version, engines: knownEngines(cached) };
 
+      const remember = async (version, engines) => {
+        await writeLatestVersionCache(registry, packageName, version, env, engines === undefined ? {} : { engines });
+        return { version, engines };
+      };
       const failures = [];
       try {
-        const version = await fetchLatestVersion(registry, packageName);
-        await writeLatestVersionCache(registry, packageName, version, env);
-        return version;
+        const metadata = await fetchRegistryDocument(registry, packageName);
+        return await remember(metadata.version.trim(), knownEngines({ engines: metadata.engines ?? null }));
       } catch (error) {
         failures.push(error);
         debug(1, `direct registry lookup failed for ${packageName}; trying npm CLI (${error?.message || error})`);
@@ -801,11 +2221,13 @@ const resolvers = {
 
       if (registryCliFallbackEnabled) {
         try {
-          const { stdout } = await execAsync(`npm show ${packageName} version`, { env });
-          const version = stdout.trim();
+          const command = engineChecksEnabled
+            ? `npm show ${packageName} version engines --json`
+            : `npm show ${packageName} version`;
+          const { stdout } = await execAsync(command, { env });
+          const { version, engines } = parseNpmShowLatest(stdout);
           if (!version) throw new Error('npm show returned an empty version.');
-          await writeLatestVersionCache(registry, packageName, version, env);
-          return version;
+          return await remember(version, engines);
         } catch (error) {
           failures.push(error);
           debug(1, `npm CLI latest-version lookup failed for ${packageName} (${error?.message || error})`);
@@ -814,14 +2236,14 @@ const resolvers = {
 
       if (cached) {
         debug(1, `using stale cached latest version ${cached.version} for ${packageName}`);
-        return cached.version;
+        return { version: cached.version, engines: knownEngines(cached) };
       }
-      const installedVersion = installedPackagePath
-        ? await getInstalledPackageVersion(installedPackagePath)
+      const installedManifest = installedPackagePath
+        ? await getInstalledPackageManifest(installedPackagePath)
         : null;
-      if (installedVersion) {
-        debug(1, `using installed version ${installedVersion} for unavailable latest metadata of ${packageName}`);
-        return installedVersion;
+      if (installedManifest?.version) {
+        debug(1, `using installed version ${installedManifest.version} for unavailable latest metadata of ${packageName}`);
+        return { version: installedManifest.version, engines: knownEngines({ engines: installedManifest.engines ?? null }) };
       }
 
       const cause = failures[failures.length - 1];
@@ -832,15 +2254,147 @@ const resolvers = {
       );
     };
 
-    const getInstalledPackageVersion = async (packagePath) => {
+    const getInstalledPackageManifest = async (packagePath) => {
       try {
         const packageJsonPath = path.join(packagePath, 'package.json');
-        const data = await readFile(packageJsonPath, 'utf8');
-        const { version } = JSON.parse(data);
-        return version;
+        const manifest = JSON.parse(await readFile(packageJsonPath, 'utf8'));
+        return manifest && typeof manifest === 'object' ? manifest : null;
       } catch {
         return null;
       }
+    };
+
+    const getInstalledPackageVersion = async (packagePath) =>
+      (await getInstalledPackageManifest(packagePath))?.version;
+
+    const getAliasPrefix = (packageName) => `${packageName.replace('@', '').replace('/', '-')}-v-`;
+
+    // Aliases keep the `<package>-v-<version>` form of earlier releases. A range
+    // that cannot be part of a directory or npm alias name (spaces, `>`, `|`, ...)
+    // never installed before, because the shell split or redirected it; such
+    // ranges get a stable hashed alias instead.
+    const getPackageAlias = (packageName, version) => {
+      const safeVersion = process.platform === 'win32' ? /^[\w.~^+-]+$/ : /^[\w.~^+*-]+$/;
+      if (safeVersion.test(version)) return `${getAliasPrefix(packageName)}${version}`;
+      const digest = createHash('sha256').update(version).digest('hex').slice(0, 16);
+      return `${getAliasPrefix(packageName)}range-${digest}`;
+    };
+
+    // Offline fallback for `latest`: the newest compatible release that is
+    // already installed as an exact-version alias (for example by a previous
+    // engine-aware selection), never newer than the `latest` tag.
+    const findInstalledCompatibleRelease = async (packageName, globalModulesPath, latestTag) => {
+      const prefix = getAliasPrefix(packageName);
+      let entries = [];
+      try {
+        entries = await readdir(globalModulesPath);
+      } catch {
+        return null;
+      }
+      const versions = [];
+      for (const entry of entries) {
+        if (!entry.startsWith(prefix)) continue;
+        const candidate = entry.slice(prefix.length);
+        if (!npmSemver.valid(candidate) || (latestTag && npmSemver.valid(latestTag) && !npmSemver.lte(candidate, latestTag))) continue;
+        const manifest = await getInstalledPackageManifest(path.join(globalModulesPath, entry));
+        if (manifest?.name === packageName && manifest.version === candidate && supportsNodeEngine(manifest, nodeVersion)) {
+          versions.push(candidate);
+        }
+      }
+      return versions.sort(npmSemver.rcompare)[0] || null;
+    };
+
+    // Finds the newest release of `latest` or a range that supports the running
+    // Node.js. Resolves to `{ version, newest }` (version null when no release
+    // is compatible) or throws when no metadata is available.
+    const selectCompatibleRelease = async (packageName, requestedVersion, { globalModulesPath, latestTag } = {}) => {
+      const registry = await getRegistry(baseNpmEnv);
+      const scope = ['engines-v1', nodeVersion, requestedVersion];
+      const fromCache = (entry) => ({
+        version: entry.compatible === false ? null : entry.version,
+        newest: entry.newest && typeof entry.newest === 'object' ? entry.newest : null,
+      });
+      const cached = await readLatestVersionCache(registry, packageName, baseNpmEnv, scope);
+      if (cached?.fresh && (requestedVersion !== 'latest' || !latestTag || cached.latestTag === latestTag)) {
+        return fromCache(cached);
+      }
+
+      const remember = async (metadata) => {
+        const selection = selectNodeCompatibleVersion(metadata, requestedVersion, nodeVersion);
+        const newest = selection.newest
+          ? { version: selection.newest.version, engines: { node: describeNodeEngine(selection.newest) } }
+          : null;
+        await writeLatestVersionCache(registry, packageName, selection.version ?? newest?.version ?? requestedVersion, baseNpmEnv, {
+          compatible: selection.version !== null,
+          newest,
+          latestTag: normalizeVersionMetadata(metadata).latestTag,
+        }, scope);
+        return { version: selection.version, newest };
+      };
+
+      const failures = [];
+      try {
+        return await remember(await fetchRegistryDocument(registry, packageName, { packument: true }));
+      } catch (error) {
+        failures.push(error);
+        debug(1, `registry version list lookup failed for ${packageName}; trying npm CLI (${error?.message || error})`);
+      }
+      if (registryCliFallbackEnabled) {
+        try {
+          const selector = requestedVersion === 'latest' ? '*' : requestedVersion;
+          const { stdout } = await execAsync(
+            `npm view ${quoteNpmArgument(`${packageName}@${selector}`)} version engines deprecated dist-tags --json`,
+            { env: baseNpmEnv, maxBuffer: 16 * 1024 * 1024 }
+          );
+          return await remember(JSON.parse(stdout));
+        } catch (error) {
+          failures.push(error);
+          debug(1, `npm CLI version list lookup failed for ${packageName} (${error?.message || error})`);
+        }
+      }
+      if (cached) {
+        debug(1, `using stale cached Node-compatible selection for ${packageName}@${requestedVersion}`);
+        return fromCache(cached);
+      }
+      if (requestedVersion === 'latest' && globalModulesPath) {
+        const installed = await findInstalledCompatibleRelease(packageName, globalModulesPath, latestTag);
+        if (installed) {
+          debug(1, `using installed Node-compatible release ${packageName}@${installed} for unavailable version metadata`);
+          return { version: installed, newest: null };
+        }
+      }
+      throw new Error(
+        `Failed to determine a release of '${packageName}@${requestedVersion}' compatible with Node ${nodeVersion} from '${registry}'.`,
+        { cause: failures[failures.length - 1] }
+      );
+    };
+
+    // Applies the engine policy to `latest` or a range whose npm choice may not
+    // support the running Node.js. Returns the exact version to install, or
+    // null to keep npm's own choice exactly as earlier use-m releases did.
+    const chooseNodeCompatibleRelease = async (packageName, requestedVersion, details = {}) => {
+      let selection;
+      try {
+        selection = await selectCompatibleRelease(packageName, requestedVersion, details);
+      } catch (error) {
+        if (failOnUnsupportedNode) throw error;
+        debug(1, `${error.message} Keeping npm's choice for ${packageName}@${requestedVersion}.`);
+        return null;
+      }
+      if (selection.version) {
+        const { newest } = selection;
+        if (requestedVersion === 'latest' || (newest && newest.version !== selection.version)) {
+          debug(1, `${packageName}@${requestedVersion} is ${newest?.version ?? details.latestTag ?? 'unknown'}` +
+            ` (engines node ${describeNodeEngine(newest ?? { engines: details.engines })})` +
+            ` — using ${selection.version}, the newest release compatible with Node ${nodeVersion}`);
+        }
+        return selection.version;
+      }
+      if (failOnUnsupportedNode) {
+        throw createUnsupportedNodeError(packageName, requestedVersion, selection.newest, nodeVersion);
+      }
+      debug(1, `${describeUnsupportedNode(packageName, requestedVersion, selection.newest, nodeVersion)} Installing it anyway, as npm would.`);
+      return null;
     };
 
     const getConfiguredNpmPrefix = (env) => env.npm_config_prefix || env.NPM_CONFIG_PREFIX || '';
@@ -1166,7 +2720,7 @@ const resolvers = {
         }
 
         const [ownerAlias] = relativeTarget.split(path.sep);
-        const aliasPrefix = `${packageName.replace('@', '').replace('/', '-')}-v-`;
+        const aliasPrefix = getAliasPrefix(packageName);
         if (ownerAlias === alias || !ownerAlias.startsWith(aliasPrefix)) {
           return null;
         }
@@ -1186,7 +2740,7 @@ const resolvers = {
         try {
           debug(1, `installing ${packageName}@${version} (attempt ${attempt}/${installMaxAttempts})`);
           await execAsync(
-            `npm install -g ${alias}@npm:${packageName}@${version}`,
+            `npm install -g ${quoteNpmArgument(`${alias}@npm:${packageName}@${version}`)}`,
             { env: installContext.env }
           );
           debug(1, `installed ${packageName}@${version} as ${alias}`);
@@ -1203,7 +2757,7 @@ const resolvers = {
           if (conflictingBinPath) {
             try {
               await execAsync(
-                `npm install -g --force --no-bin-links ${alias}@npm:${packageName}@${version}`,
+                `npm install -g --force --no-bin-links ${quoteNpmArgument(`${alias}@npm:${packageName}@${version}`)}`,
                 { env: installContext.env }
               );
               return;
@@ -1238,12 +2792,32 @@ const resolvers = {
       );
     };
 
-    const resolveInstalledPackagePath = async ({ packageName, version, alias, repair }) => {
+    const resolveInstalledPackagePath = async ({ packageName, version: requestedVersion, alias: requestedAlias, repair }) => {
       const globalModulesPath = await getNpmGlobalRoot(baseNpmEnv);
-      const packagePath = path.join(globalModulesPath, alias);
-      const latestVersion = version === 'latest'
-        ? await getLatestVersion(packageName, baseNpmEnv, packagePath)
-        : null;
+      let version = requestedVersion;
+      let alias = requestedAlias;
+      let packagePath = path.join(globalModulesPath, alias);
+      let latestVersion = null;
+      if (version === 'latest') {
+        const latest = await getLatestVersion(packageName, baseNpmEnv, packagePath);
+        latestVersion = latest.version;
+        // Unknown engines (undefined) keep the previous behavior. Only a
+        // `latest` release that declares an unsupported Node range switches to
+        // the newest compatible release, installed under its exact alias.
+        if (engineChecksEnabled && latest.engines !== undefined && !supportsNodeEngine(latest, nodeVersion)) {
+          const compatibleVersion = await chooseNodeCompatibleRelease(packageName, 'latest', {
+            globalModulesPath,
+            latestTag: latestVersion,
+            engines: latest.engines,
+          });
+          if (compatibleVersion) {
+            version = compatibleVersion;
+            alias = getPackageAlias(packageName, compatibleVersion);
+            packagePath = path.join(globalModulesPath, alias);
+            latestVersion = null;
+          }
+        }
+      }
       if (!repair && await isPackageInstalled(
         packagePath,
         version,
@@ -1279,7 +2853,13 @@ const resolvers = {
         // Install the exact version returned by metadata lookup. Otherwise the
         // `latest` tag could move between lookup and install, leaving the cache
         // marker immediately stale and triggering a reinstall on every call.
-        const versionToInstall = version === 'latest' ? latestVersion : version;
+        let versionToInstall = version === 'latest' ? latestVersion : version;
+        // A range is resolved by npm itself; pick the newest release in it that
+        // supports this Node.js first. Already installed ranges are reused
+        // above without any extra registry request, as before.
+        if (engineChecksEnabled && isVersionRange(version)) {
+          versionToInstall = await chooseNodeCompatibleRelease(packageName, version) ?? version;
+        }
         await installPackage({ alias, packageName, version: versionToInstall, packagePath: installPath, installContext, exclusive });
         await writeInstallMarker(markerPath, {
           alias,
@@ -1295,7 +2875,7 @@ const resolvers = {
     // alias are serialized instead of overlapping. Without this every `use()` in
     // a cold top-level-await wave starts its own `npm install -g` (issue #70).
     const ensurePackageInstalled = async ({ packageName, version }, { repair = false } = {}) => {
-      const alias = `${packageName.replace('@', '').replace('/', '-')}-v-${version}`;
+      const alias = getPackageAlias(packageName, version);
       const aliasKey = `${getNpmEnvId(npmEnvSource)}\0${alias}`;
       const requestKey = repair ? `${aliasKey}\0repair` : aliasKey;
       return dedupeNpmInstall(
@@ -1505,6 +3085,12 @@ const resolvers = {
     const resolvedPath = `https://esm.sh/${packageName}@${version}${modulePath}`;
     return resolvedPath;
   },
+  // Last resort in Deno's resolver chain: Deno's own npm: support installs
+  // npm's choice locally when no CDN can build the package (issue #79).
+  denoNpm: async (moduleSpecifier) => {
+    const { packageName, version, modulePath } = parseModuleSpecifier(moduleSpecifier);
+    return `npm:${packageName}@${version}${modulePath}`;
+  },
   skypack: async (moduleSpecifier, pathResolver) => {
     const resolvedPath = `https://cdn.skypack.dev/${moduleSpecifier}`;
     return resolvedPath;
@@ -1551,7 +3137,10 @@ const resolvers = {
 // single CDN outage no longer breaks `use()` — when the first host fails we fall
 // back to the next. The primary entry preserves the previous default per runtime.
 const networkResolverChain = ['esm', 'jspm', 'skypack']
-const denoResolverChain = ['deno', 'jspm', 'skypack']
+// Deno's own npm: support comes last: it only runs when every CDN failed to
+// build the package (for example a release whose engines exclude the CDN's
+// Node.js), so packages that loaded before keep loading from the same place.
+const denoResolverChain = ['deno', 'jspm', 'skypack', 'denoNpm']
 
 // npm installs for the same alias must not overlap. `npm install -g` takes no
 // lock on the global prefix, so two runs writing the same alias directory delete
@@ -1734,6 +3323,15 @@ const baseUse = async (modulePath) => {
     // Return the whole module if it has multiple meaningful exports or no default
     return module;
   } catch (error) {
+    // Deno's npm ESM imports require file extensions for legacy subpaths that
+    // Node resolves automatically. Honor its explicit .js suggestion while
+    // leaving package export maps and unrelated import errors unchanged.
+    if (typeof Deno !== 'undefined' && modulePath.startsWith('npm:') && !modulePath.endsWith('.js') &&
+        error.code === 'ERR_MODULE_NOT_FOUND' &&
+        error.message.includes('Did you mean to import with the ".js" extension?') &&
+        parseModuleSpecifier(modulePath.slice(4)).modulePath) {
+      return baseUse(`${modulePath}.js`);
+    }
     throw new Error(`Failed to import module from '${modulePath}'.`, { cause: error });
   }
 }
@@ -1821,9 +3419,11 @@ const makeUse = async (options) => {
   }
   return async (moduleSpecifier, providedCallerContext) => {
     const stack = new Error().stack;
+    const resolverOptions = providedCallerContext && typeof providedCallerContext === 'object'
+      ? { ...(options || {}), ...providedCallerContext } : options;
 
     // Use provided caller context or try to capture it from stack trace
-    const callerContext = providedCallerContext || extractCallerContext(stack);
+    const callerContext = (typeof providedCallerContext === 'string' ? providedCallerContext : null) || extractCallerContext(stack);
 
     // Always try built-in resolver first
     const builtinModule = await resolvers.builtin(moduleSpecifier, pathResolver);
@@ -1844,7 +3444,7 @@ const makeUse = async (options) => {
     if (resolverChain.length === 1) {
       const resolver = resolverChain[0];
       const resolverFunction = toResolverFunction(resolver);
-      const modulePath = await resolverFunction(moduleSpecifier, pathResolver, options);
+      const modulePath = await resolverFunction(moduleSpecifier, pathResolver, resolverOptions);
       try {
         return await importModule(modulePath);
       } catch (error) {
@@ -1854,7 +3454,7 @@ const makeUse = async (options) => {
         const repairedModulePath = await resolverFunction(
           moduleSpecifier,
           pathResolver,
-          { ...(options || {}), repair: true }
+          { ...(resolverOptions || {}), repair: true }
         );
         return importModule(await cacheBustNpmModulePath(repairedModulePath));
       }
@@ -1874,7 +3474,7 @@ const makeUse = async (options) => {
 }
 
 let __usePromise = null;
-const use = async (moduleSpecifier) => {
+const use = async (moduleSpecifier, options) => {
   const stack = new Error().stack;
 
   // For Bun, we need to capture the stack trace before any other calls
@@ -1897,6 +3497,10 @@ const use = async (moduleSpecifier) => {
   // Capture the caller context here, before entering makeUse
   const callerContext = bunCallerContext || extractCallerContext(stack);
 
+  if (options && typeof options === 'object') {
+    const useInstance = await makeUse(options);
+    return useInstance(moduleSpecifier, callerContext);
+  }
   if (!__usePromise) {
     __usePromise = makeUse();
   }

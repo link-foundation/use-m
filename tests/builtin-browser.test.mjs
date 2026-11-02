@@ -73,9 +73,10 @@ describe(`${moduleName} Universal built-in modules in browser`, () => {
       }
     });
 
-    // Navigate to the test page
+    // Navigate, then wait for the page's explicit completion signal below.
+    // Unrelated background requests must not delay completed assertions.
     await page.goto('http://localhost:8002/tests/browser-server/browser-test.html', {
-      waitUntil: 'networkidle0',
+      waitUntil: 'domcontentloaded',
       timeout: 30000
     });
 
