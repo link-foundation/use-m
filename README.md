@@ -23,6 +23,7 @@ It may be useful for standalone scripts that do not require a `package.json`. Al
       - [Troubleshooting: `SyntaxError: Unexpected identifier 'found'`](#troubleshooting-syntaxerror-unexpected-identifier-found)
     - [Resilient package loading (shared fallback engine)](#resilient-package-loading-shared-fallback-engine)
     - [Resilient npm latest-version resolution](#resilient-npm-latest-version-resolution)
+    - [Module shapes and package subpaths](#module-shapes-and-package-subpaths)
     - [Interactive shell in Node.js environment](#interactive-shell-in-nodejs-environment)
     - [Browser](#browser)
     - [Deno](#deno)
@@ -293,6 +294,18 @@ const lodash = await use('lodash');
 ```
 
 Advanced tests and embedded runtimes may inject `fetch` and `debugLogger`. Setting `registryRequestTimeoutMs` to `0` disables the request timeout; setting `latestVersionCache` or `registryCliFallback` to `false` disables that layer. Existing npm-install controls (`installMaxAttempts`, `installRetryDelayMs`, and the `installLock*` options) remain unchanged.
+
+### Module shapes and package subpaths
+
+When a package exports only a default value, `use()` returns that value itself. It also carries a non-enumerable `default` reference to itself, so the direct form and the destructured form both work:
+
+```javascript
+const yargs = await use('yargs@17.7.2');
+const { default: sameYargs } = await use('yargs@17.7.2');
+const { hideBin } = await use('yargs@17.7.2/helpers');
+```
+
+Packages with named exports are returned as their module namespace, for example `const { Octokit } = await use('@octokit/rest@21.1.1')`. With the local npm and Bun resolvers, the package root resolves through `main` first, as Node.js `require()` does. Subpaths go through the package's `exports` map first. A subpath that `exports` does not list, such as `use('ink@5.2.1/build/index.js')`, still loads its file when that file exists. use-m then emits one `USE_M_UNEXPORTED_SUBPATH` process warning per subpath, which `--no-warnings` or `--disable-warning=USE_M_UNEXPORTED_SUBPATH` silences. These shapes are pinned by `tests/module-shape-contract.test.mjs`. On Bun, CommonJS packages such as `yargs@17` and `simple-git@3` come back as a namespace, so `const { default: yargs } = await use(...)` is the form that works on every runtime.
 
 ### Interactive shell in Node.js environment
 
