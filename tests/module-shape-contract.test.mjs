@@ -45,9 +45,19 @@ const expected = {
 // the portable form is `const { default: x } = await use(...)`.
 const expectedOnBun = {
   ...expected,
-  'yargs@17.7.2': { ...expected['yargs@17.7.2'], direct: expect.objectContaining({ error: expect.any(String) }) },
-  'simple-git@3.28.0': { ...expected['simple-git@3.28.0'], direct: expect.objectContaining({ error: expect.any(String) }) },
+  'yargs@17.7.2': { ...expected['yargs@17.7.2'], direct: 'throws' },
+  'simple-git@3.28.0': { ...expected['simple-git@3.28.0'], direct: 'throws' },
 }
+
+// The probe reports a failing pattern as `{ error: message }`. Messages differ
+// between runtimes, so only the fact that the pattern threw is compared.
+const withoutMessages = (results) => Object.fromEntries(Object.entries(results).map(([specifier, checks]) => [
+  specifier,
+  Object.fromEntries(Object.entries(checks).map(([name, value]) => [
+    name,
+    value && typeof value === 'object' && !Array.isArray(value) && 'error' in value ? 'throws' : value,
+  ])),
+]))
 
 const runProbe = (implementation) => {
   // The unexported ink subpath is requested twice to prove its warning is
@@ -66,7 +76,7 @@ const runProbe = (implementation) => {
 
 const expectShapeContract = (implementation) => {
   const { results, stderr } = runProbe(implementation)
-  expect(results).toEqual(isBun ? expectedOnBun : expected)
+  expect(withoutMessages(results)).toEqual(isBun ? expectedOnBun : expected)
   const warnings = stderr.split('[USE_M_UNEXPORTED_SUBPATH]').length - 1
   expect(warnings).toBe(1)
   expect(stderr).toContain("Package subpath './build/index.js' is not exported")
