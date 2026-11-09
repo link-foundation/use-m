@@ -1037,6 +1037,16 @@ describe(`${moduleName} npm global prefix handling`, () => {
       )).resolves.toBe(helpersPath);
     }
 
+    // require.resolve() returns real paths. Through a symlinked global root
+    // (macOS /var -> /private/var) the caller's spelling must be kept.
+    const linkedRoot = path.join(fixture.root, 'linked-node_modules');
+    await symlink(fixture.defaultRoot, linkedRoot, 'junction');
+    await expect(resolvers.npm(
+      'fixture-pkg@1.0.0',
+      identityResolve,
+      { env: { ...fixture.baseEnv, USE_M_FAKE_NPM_DEFAULT_ROOT: linkedRoot }, installRetryDelayMs: 0 }
+    )).resolves.toBe(path.join(linkedRoot, 'fixture-pkg-v-1.0.0', 'main.cjs'));
+
     // A package without "main" falls back to its exports["."] entry. Node
     // caches package.json reads per process, so this uses a fresh directory.
     const exportsOnly = await createFakeNpm();

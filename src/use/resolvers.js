@@ -205,6 +205,21 @@ const resolvers = {
       }
     };
 
+    // require.resolve() returns real paths, which can differ from the caller's
+    // spelling of the same file (macOS /var -> /private/var, Windows short
+    // names). Keep the caller's prefix so resolved paths stay comparable.
+    const requireResolvePreservingPrefix = async (targetPath) => {
+      const { createRequire } = await import('node:module');
+      const { realpath } = await import('node:fs/promises');
+      const resolved = createRequire(targetPath).resolve(targetPath);
+      const base = await directoryExists(targetPath) ? targetPath : path.dirname(targetPath);
+      const relativePath = path.relative(await realpath(base), resolved);
+      if (path.isAbsolute(relativePath) || relativePath === '..' || relativePath.startsWith(`..${path.sep}`)) {
+        return resolved;
+      }
+      return path.join(base, relativePath);
+    };
+
     const tryResolveModule = async (packagePath) => {
       try {
         const resolvedPath = await pathResolver(packagePath);
@@ -214,9 +229,9 @@ const resolvers = {
         // directories, which cannot be imported, and paths that do not exist.
         // Resolve those the way require() does: directories through `main`,
         // and missing paths throw MODULE_NOT_FOUND so the fallbacks below run.
-        if (resolvedPath === packagePath && path.isAbsolute(packagePath)) {
-          const { createRequire } = await import('node:module');
-          return createRequire(packagePath).resolve(packagePath);
+        // Existing files are already importable and are returned as is.
+        if (resolvedPath === packagePath && path.isAbsolute(packagePath) && !await fileExists(packagePath)) {
+          return await requireResolvePreservingPrefix(packagePath);
         }
         return resolvedPath;
       } catch (error) {
@@ -1210,6 +1225,21 @@ const resolvers = {
       }
     };
 
+    // require.resolve() returns real paths, which can differ from the caller's
+    // spelling of the same file (macOS /var -> /private/var, Windows short
+    // names). Keep the caller's prefix so resolved paths stay comparable.
+    const requireResolvePreservingPrefix = async (targetPath) => {
+      const { createRequire } = await import('node:module');
+      const { realpath } = await import('node:fs/promises');
+      const resolved = createRequire(targetPath).resolve(targetPath);
+      const base = await directoryExists(targetPath) ? targetPath : path.dirname(targetPath);
+      const relativePath = path.relative(await realpath(base), resolved);
+      if (path.isAbsolute(relativePath) || relativePath === '..' || relativePath.startsWith(`..${path.sep}`)) {
+        return resolved;
+      }
+      return path.join(base, relativePath);
+    };
+
     const tryResolveModule = async (packagePath) => {
       try {
         const resolvedPath = await pathResolver(packagePath);
@@ -1219,9 +1249,9 @@ const resolvers = {
         // directories, which cannot be imported, and paths that do not exist.
         // Resolve those the way require() does: directories through `main`,
         // and missing paths throw MODULE_NOT_FOUND so the fallbacks below run.
-        if (resolvedPath === packagePath && path.isAbsolute(packagePath)) {
-          const { createRequire } = await import('node:module');
-          return createRequire(packagePath).resolve(packagePath);
+        // Existing files are already importable and are returned as is.
+        if (resolvedPath === packagePath && path.isAbsolute(packagePath) && !await fileExists(packagePath)) {
+          return await requireResolvePreservingPrefix(packagePath);
         }
         return resolvedPath;
       } catch (error) {
