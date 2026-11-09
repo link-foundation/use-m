@@ -1139,41 +1139,16 @@ const resolvers = {
     };
 
     const { packageName, version, modulePath } = parseModuleSpecifier(moduleSpecifier);
-    const resolvePackageModule = async (packagePath) => {
-      const packageJsonPath = path.join(packagePath, 'package.json');
-      if (await fileExists(packageJsonPath)) {
-        const parsed = JSON.parse(await readFile(packageJsonPath, 'utf8'));
-        if (Object.prototype.hasOwnProperty.call(parsed, 'exports')) {
-          const packageSubpath = modulePath ? `.${modulePath}` : '.';
-          const target = resolvePackageExportTarget(parsed.exports, packageSubpath);
-          if (target === unresolvedPackageExport || target === null) {
-            throw new Error(`Package subpath '${packageSubpath}' is not exported by '${packageJsonPath}'.`);
-          }
-          if (typeof target !== 'string' || !target.startsWith('./')) {
-            throw new Error(`Invalid package exports target '${target}' for '${packageSubpath}' in '${packageJsonPath}'.`);
-          }
-          const packageExportPath = path.resolve(packagePath, target);
-          const relativeExportPath = path.relative(packagePath, packageExportPath);
-          if (path.isAbsolute(relativeExportPath)
-            || relativeExportPath === '..'
-            || relativeExportPath.startsWith(`..${path.sep}`)) {
-            throw new Error(`Package exports target '${target}' for '${packageSubpath}' escapes '${packagePath}'.`);
-          }
-          const resolvedExportPath = await tryResolveModule(packageExportPath);
-          if (!resolvedExportPath) {
-            throw new Error(`Failed to resolve package export '${packageSubpath}' from '${packageExportPath}'.`);
-          }
-          return resolvedExportPath;
-        }
-      }
-
-      const packageModulePath = modulePath ? path.join(packagePath, modulePath) : packagePath;
-      const resolvedPath = await tryResolveModule(packageModulePath);
-      if (!resolvedPath) {
-        throw new Error(`Failed to resolve the path to '${moduleSpecifier}' from '${packageModulePath}'.`);
-      }
-      return resolvedPath;
-    };
+    const resolvePackageModule = (packagePath) => resolveInstalledPackageModule({
+      moduleSpecifier,
+      modulePath,
+      packagePath,
+      path,
+      readFile,
+      fileExists,
+      tryResolveModule,
+      warningLogger: options?.warningLogger,
+    });
 
     let packagePath = await ensurePackageInstalled(
       { packageName, version },
@@ -1189,7 +1164,7 @@ const resolvers = {
       return resolvePackageModule(packagePath);
     }
   },
-  bun: async (moduleSpecifier, pathResolver) => {
+  bun: async (moduleSpecifier, pathResolver, options) => {
     const path = await import('node:path');
     const { exec } = await import('node:child_process');
     const { promisify } = await import('node:util');
@@ -1297,39 +1272,16 @@ const resolvers = {
 
     const { packageName, version, modulePath } = parseModuleSpecifier(moduleSpecifier);
     const packagePath = await ensurePackageInstalled({ packageName, version });
-    const packageJsonPath = path.join(packagePath, 'package.json');
-    if (await fileExists(packageJsonPath)) {
-      const parsed = JSON.parse(await readFile(packageJsonPath, 'utf8'));
-      if (Object.prototype.hasOwnProperty.call(parsed, 'exports')) {
-        const packageSubpath = modulePath ? `.${modulePath}` : '.';
-        const target = resolvePackageExportTarget(parsed.exports, packageSubpath);
-        if (target === unresolvedPackageExport || target === null) {
-          throw new Error(`Package subpath '${packageSubpath}' is not exported by '${packageJsonPath}'.`);
-        }
-        if (typeof target !== 'string' || !target.startsWith('./')) {
-          throw new Error(`Invalid package exports target '${target}' for '${packageSubpath}' in '${packageJsonPath}'.`);
-        }
-        const packageExportPath = path.resolve(packagePath, target);
-        const relativeExportPath = path.relative(packagePath, packageExportPath);
-        if (path.isAbsolute(relativeExportPath)
-          || relativeExportPath === '..'
-          || relativeExportPath.startsWith(`..${path.sep}`)) {
-          throw new Error(`Package exports target '${target}' for '${packageSubpath}' escapes '${packagePath}'.`);
-        }
-        const resolvedExportPath = await tryResolveModule(packageExportPath);
-        if (!resolvedExportPath) {
-          throw new Error(`Failed to resolve package export '${packageSubpath}' from '${packageExportPath}'.`);
-        }
-        return resolvedExportPath;
-      }
-    }
-
-    const packageModulePath = modulePath ? path.join(packagePath, modulePath) : packagePath;
-    const resolvedPath = await tryResolveModule(packageModulePath);
-    if (!resolvedPath) {
-      throw new Error(`Failed to resolve the path to '${moduleSpecifier}' from '${packageModulePath}'.`);
-    }
-    return resolvedPath;
+    return resolveInstalledPackageModule({
+      moduleSpecifier,
+      modulePath,
+      packagePath,
+      path,
+      readFile,
+      fileExists,
+      tryResolveModule,
+      warningLogger: options?.warningLogger,
+    });
   },
   deno: async (moduleSpecifier, pathResolver) => {
     const { packageName, version, modulePath } = parseModuleSpecifier(moduleSpecifier);

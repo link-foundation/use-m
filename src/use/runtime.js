@@ -52,6 +52,31 @@ const loadWithFallback = async (sources, load, options = {}) => {
   )
 }
 
+// `use()` unwraps a namespace whose only meaningful export is `default`, so
+// `const yargs = await use('yargs')` gets the function itself. Callers written
+// for the namespace shape destructure `default` instead, which an unwrapped
+// value lacks. A non-enumerable `default` self-reference keeps both forms
+// working: `const { default: yargs } = await use('yargs')` too (issue #83).
+// Primitives, frozen or sealed values, and values that already provide a
+// `default` (own or inherited) are returned untouched.
+const withDefaultAlias = (value) => {
+  if ((typeof value === 'function' || (value !== null && typeof value === 'object'))
+      && Object.isExtensible(value)
+      && !('default' in value)) {
+    try {
+      Object.defineProperty(value, 'default', {
+        value,
+        enumerable: false,
+        configurable: true,
+        writable: true,
+      });
+    } catch {
+      // Proxies and exotic objects may refuse the property; return them as is.
+    }
+  }
+  return value;
+};
+
 const baseUse = async (modulePath) => {
   // Dynamically import the module
   try {
@@ -68,7 +93,7 @@ const baseUse = async (modulePath) => {
     if (module.default !== undefined) {
       // Check if this is likely a CommonJS module with only default export
       if (keys.length === 1 && keys[0] === 'default') {
-        return module.default;
+        return withDefaultAlias(module.default);
       }
 
       // Check if default is the main export and other keys are just function/module metadata
@@ -85,7 +110,7 @@ const baseUse = async (modulePath) => {
 
       // If there are no significant non-metadata keys, return the default
       if (nonMetadataKeys.length === 0) {
-        return module.default;
+        return withDefaultAlias(module.default);
       }
     }
 
