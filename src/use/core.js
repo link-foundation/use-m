@@ -252,6 +252,95 @@ const resolvePackageExportTarget = (exportsField, packageSubpath) => {
     : selectPackageExportTarget(match.value, match.patternMatch, legacyPackageExportConditions);
 };
 
+// Warnings are reported at most once per process. Node.js, Bun and Deno route
+// them through `process.emitWarning`, so `--no-warnings` and
+// `--disable-warning=<code>` silence them; other hosts use `console.warn`.
+const emittedUseMWarnings = new Set();
+const emitUseMWarningOnce = (message, { code, logger } = {}) => {
+  if (emittedUseMWarnings.has(message)) return;
+  emittedUseMWarnings.add(message);
+  try {
+    if (typeof logger === 'function') {
+      logger(message);
+    } else if (typeof process !== 'undefined' && typeof process.emitWarning === 'function') {
+      process.emitWarning(message, { code });
+    } else {
+      console.warn(message);
+    }
+  } catch {
+    // A warning must never change what use() returns.
+  }
+};
+
+// Resolves `<package>[/subpath]` inside an installed npm or Bun alias directory.
+//
+// The package root keeps the resolution use-m 8.16.2 and earlier used: the
+// directory's `main` (or index file) first, and the root `exports` entry only
+// when that fails. Dual packages such as yargs@17 and simple-git@3 therefore
+// keep returning their CommonJS shape instead of switching to the ESM build
+// that `exports["."]` selects for `import` (issue #83).
+//
+// Subpaths go through the `exports` map first, so public subpaths that map
+// elsewhere, such as `yargs/helpers`, resolve (issue #47). A subpath that the
+// map does not export, or explicitly blocks with `null`, still loads the
+// physical file when one exists, as it did before 8.16.3, with a one-time
+// warning. Only when no such file exists does the "is not exported" error stand.
+const resolveInstalledPackageModule = async ({
+  moduleSpecifier,
+  modulePath,
+  packagePath,
+  path,
+  readFile,
+  fileExists,
+  tryResolveModule,
+  warningLogger,
+}) => {
+  const packageModulePath = modulePath ? path.join(packagePath, modulePath) : packagePath;
+  let unexportedError = null;
+  const packageJsonPath = path.join(packagePath, 'package.json');
+  if (modulePath && await fileExists(packageJsonPath)) {
+    const parsed = JSON.parse(await readFile(packageJsonPath, 'utf8'));
+    if (Object.prototype.hasOwnProperty.call(parsed, 'exports')) {
+      const packageSubpath = `.${modulePath}`;
+      const target = resolvePackageExportTarget(parsed.exports, packageSubpath);
+      if (target === unresolvedPackageExport || target === null) {
+        unexportedError = new Error(`Package subpath '${packageSubpath}' is not exported by '${packageJsonPath}'.`);
+      } else {
+        if (typeof target !== 'string' || !target.startsWith('./')) {
+          throw new Error(`Invalid package exports target '${target}' for '${packageSubpath}' in '${packageJsonPath}'.`);
+        }
+        const packageExportPath = path.resolve(packagePath, target);
+        const relativeExportPath = path.relative(packagePath, packageExportPath);
+        if (path.isAbsolute(relativeExportPath)
+          || relativeExportPath === '..'
+          || relativeExportPath.startsWith(`..${path.sep}`)) {
+          throw new Error(`Package exports target '${target}' for '${packageSubpath}' escapes '${packagePath}'.`);
+        }
+        const resolvedExportPath = await tryResolveModule(packageExportPath);
+        if (!resolvedExportPath) {
+          throw new Error(`Failed to resolve package export '${packageSubpath}' from '${packageExportPath}'.`);
+        }
+        return resolvedExportPath;
+      }
+    }
+  }
+
+  const resolvedPath = await tryResolveModule(packageModulePath);
+  if (!resolvedPath) {
+    throw unexportedError
+      || new Error(`Failed to resolve the path to '${moduleSpecifier}' from '${packageModulePath}'.`);
+  }
+  if (unexportedError) {
+    emitUseMWarningOnce(
+      `${unexportedError.message} use-m loads '${resolvedPath}' for '${moduleSpecifier}' anyway, ` +
+      'as versions before 8.16.3 did. Node.js itself rejects this import, so prefer a subpath ' +
+      "listed in the package's \"exports\".",
+      { code: 'USE_M_UNEXPORTED_SUBPATH', logger: warningLogger }
+    );
+  }
+  return resolvedPath;
+};
+
 // Not plain callback APIs: the runtime's own promise versions are kept as is.
 const nonCallbackFileApis = new Set(['glob', 'watch']);
 

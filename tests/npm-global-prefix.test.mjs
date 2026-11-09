@@ -942,7 +942,7 @@ describe(`${moduleName} npm global prefix handling`, () => {
     )).resolves.toBe(arrayFallbackPath);
   });
 
-  test(`${moduleName} does not bypass package exports for private subpaths`, async () => {
+  test(`${moduleName} falls back to unexported physical subpaths with a warning (issue #83)`, async () => {
     if (typeof Deno !== 'undefined' || typeof Bun !== 'undefined') {
       return;
     }
@@ -953,18 +953,119 @@ describe(`${moduleName} npm global prefix handling`, () => {
         name: 'fixture-pkg',
         version: '1.0.0',
         type: 'module',
-        exports: { '.': './index.js' }
+        exports: { '.': './index.js', './blocked.js': null }
       }),
       source: 'export const root = true;\n'
     });
     const privatePath = path.join(packageDirectory, 'private.js');
+    const blockedPath = path.join(packageDirectory, 'blocked.js');
     await writeFile(privatePath, 'export const privateValue = true;\n');
+    await writeFile(blockedPath, 'export const privateValue = true;\n');
+    const warnings = [];
+    const resolveWithWarnings = (specifier) => resolvers.npm(
+      specifier,
+      resolveOnly(path.join(packageDirectory, 'index.js'), privatePath, blockedPath),
+      { env: fixture.baseEnv, installRetryDelayMs: 0, warningLogger: message => warnings.push(message) }
+    );
 
+    // use-m 8.16.2 and earlier imported physical files that "exports" omits;
+    // 8.16.3 started rejecting them and broke callers such as
+    // use('ink@5.2.1/build/index.js'). The file loads again, with a warning.
+    await expect(resolveWithWarnings('fixture-pkg@1.0.0/private.js')).resolves.toBe(privatePath);
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toContain("Package subpath './private.js' is not exported");
+    expect(warnings[0]).toContain(privatePath);
+
+    // The warning is reported once per subpath, not on every import.
+    await expect(resolveWithWarnings('fixture-pkg@1.0.0/private.js')).resolves.toBe(privatePath);
+    expect(warnings).toHaveLength(1);
+
+    // Subpaths blocked with a null target behave the same way.
+    await expect(resolveWithWarnings('fixture-pkg@1.0.0/blocked.js')).resolves.toBe(blockedPath);
+    expect(warnings).toHaveLength(2);
+    expect(warnings[1]).toContain("Package subpath './blocked.js' is not exported");
+
+    // Without a physical file the "is not exported" error still stands.
+    await expect(resolveWithWarnings('fixture-pkg@1.0.0/missing.js'))
+      .rejects.toThrow("Package subpath './missing.js' is not exported");
+    expect(warnings).toHaveLength(2);
+  });
+
+  test(`${moduleName} resolves the package root through main before exports (issue #83)`, async () => {
+    if (typeof Deno !== 'undefined' || typeof Bun !== 'undefined') {
+      return;
+    }
+
+    // Dual packages such as yargs@17 and simple-git@3 point "main" at their
+    // CommonJS build while exports["."] selects an ES module for `import`.
+    // use-m 8.16.2 and earlier loaded "main", and callers depend on that shape.
+    const fixture = await createFakeNpm();
+    const packageDirectory = await corruptAlias(fixture, {
+      packageJson: JSON.stringify({
+        name: 'fixture-pkg',
+        version: '1.0.0',
+        main: './main.cjs',
+        exports: {
+          '.': [{ import: './esm.mjs', require: './main.cjs' }, './main.cjs'],
+          './helpers': { import: './helpers.mjs', require: './helpers.cjs' }
+        }
+      })
+    });
+    const mainPath = path.join(packageDirectory, 'main.cjs');
+    const esmPath = path.join(packageDirectory, 'esm.mjs');
+    const helpersPath = path.join(packageDirectory, 'helpers.mjs');
+    await writeFile(mainPath, 'module.exports = function main() {};\n');
+    await writeFile(esmPath, 'export default function esm() {}\n');
+    await writeFile(helpersPath, 'export const helper = true;\n');
+    await writeFile(path.join(packageDirectory, 'helpers.cjs'), 'exports.helper = true;\n');
+
+    // `use.js` evaluated from an ES module on Windows cannot find its script
+    // path, so makeUse falls back to an identity path resolver. The root must
+    // still resolve through "main" rather than to the bare directory.
+    const identityResolve = (target) => target;
+    for (const pathResolver of [resolve, identityResolve]) {
+      await expect(resolvers.npm(
+        'fixture-pkg@1.0.0',
+        pathResolver,
+        { env: fixture.baseEnv, installRetryDelayMs: 0 }
+      )).resolves.toBe(mainPath);
+      // Subpaths keep using the exports map (issue #47).
+      await expect(resolvers.npm(
+        'fixture-pkg@1.0.0/helpers',
+        pathResolver,
+        { env: fixture.baseEnv, installRetryDelayMs: 0 }
+      )).resolves.toBe(helpersPath);
+    }
+
+    // require.resolve() returns real paths. Through a symlinked global root
+    // (macOS /var -> /private/var) the caller's spelling must be kept.
+    const linkedRoot = path.join(fixture.root, 'linked-node_modules');
+    await symlink(fixture.defaultRoot, linkedRoot, 'junction');
     await expect(resolvers.npm(
-      'fixture-pkg@1.0.0/private.js',
-      resolveOnly(path.join(packageDirectory, 'index.js'), privatePath),
-      { env: fixture.baseEnv, installRetryDelayMs: 0 }
-    )).rejects.toThrow("Package subpath './private.js' is not exported");
+      'fixture-pkg@1.0.0',
+      identityResolve,
+      { env: { ...fixture.baseEnv, USE_M_FAKE_NPM_DEFAULT_ROOT: linkedRoot }, installRetryDelayMs: 0 }
+    )).resolves.toBe(path.join(linkedRoot, 'fixture-pkg-v-1.0.0', 'main.cjs'));
+
+    // A package without "main" falls back to its exports["."] entry. Node
+    // caches package.json reads per process, so this uses a fresh directory.
+    const exportsOnly = await createFakeNpm();
+    const exportsOnlyDirectory = await corruptAlias(exportsOnly, {
+      packageJson: JSON.stringify({
+        name: 'fixture-pkg',
+        version: '1.0.0',
+        exports: { '.': { import: './esm.mjs' } }
+      })
+    });
+    const exportsOnlyEsmPath = path.join(exportsOnlyDirectory, 'esm.mjs');
+    await writeFile(exportsOnlyEsmPath, 'export default function esm() {}\n');
+    for (const pathResolver of [resolve, identityResolve]) {
+      await expect(resolvers.npm(
+        'fixture-pkg@1.0.0',
+        pathResolver,
+        { env: exportsOnly.baseEnv, installRetryDelayMs: 0 }
+      )).resolves.toBe(exportsOnlyEsmPath);
+    }
   });
 
   test(`${moduleName} preserves legacy package-exports resolution branches`, async () => {

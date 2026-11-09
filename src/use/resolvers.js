@@ -205,9 +205,35 @@ const resolvers = {
       }
     };
 
+    // require.resolve() returns real paths, which can differ from the caller's
+    // spelling of the same file (macOS /var -> /private/var, Windows short
+    // names). Keep the caller's prefix so resolved paths stay comparable.
+    const requireResolvePreservingPrefix = async (targetPath) => {
+      const { createRequire } = await import('node:module');
+      const { realpath } = await import('node:fs/promises');
+      const resolved = createRequire(targetPath).resolve(targetPath);
+      const base = await directoryExists(targetPath) ? targetPath : path.dirname(targetPath);
+      const relativePath = path.relative(await realpath(base), resolved);
+      if (path.isAbsolute(relativePath) || relativePath === '..' || relativePath.startsWith(`..${path.sep}`)) {
+        return resolved;
+      }
+      return path.join(base, relativePath);
+    };
+
     const tryResolveModule = async (packagePath) => {
       try {
-        return await pathResolver(packagePath);
+        const resolvedPath = await pathResolver(packagePath);
+        // Without a known script path, makeUse falls back to an identity
+        // resolver (for example `use.js` evaluated from an ES module on
+        // Windows). It returns every path unchanged, including package
+        // directories, which cannot be imported, and paths that do not exist.
+        // Resolve those the way require() does: directories through `main`,
+        // and missing paths throw MODULE_NOT_FOUND so the fallbacks below run.
+        // Existing files are already importable and are returned as is.
+        if (resolvedPath === packagePath && path.isAbsolute(packagePath) && !await fileExists(packagePath)) {
+          return await requireResolvePreservingPrefix(packagePath);
+        }
+        return resolvedPath;
       } catch (error) {
         if (error.code !== 'MODULE_NOT_FOUND') {
           throw new Error(`Failed to resolve module '${packagePath}'`, { cause: error });
@@ -1139,41 +1165,16 @@ const resolvers = {
     };
 
     const { packageName, version, modulePath } = parseModuleSpecifier(moduleSpecifier);
-    const resolvePackageModule = async (packagePath) => {
-      const packageJsonPath = path.join(packagePath, 'package.json');
-      if (await fileExists(packageJsonPath)) {
-        const parsed = JSON.parse(await readFile(packageJsonPath, 'utf8'));
-        if (Object.prototype.hasOwnProperty.call(parsed, 'exports')) {
-          const packageSubpath = modulePath ? `.${modulePath}` : '.';
-          const target = resolvePackageExportTarget(parsed.exports, packageSubpath);
-          if (target === unresolvedPackageExport || target === null) {
-            throw new Error(`Package subpath '${packageSubpath}' is not exported by '${packageJsonPath}'.`);
-          }
-          if (typeof target !== 'string' || !target.startsWith('./')) {
-            throw new Error(`Invalid package exports target '${target}' for '${packageSubpath}' in '${packageJsonPath}'.`);
-          }
-          const packageExportPath = path.resolve(packagePath, target);
-          const relativeExportPath = path.relative(packagePath, packageExportPath);
-          if (path.isAbsolute(relativeExportPath)
-            || relativeExportPath === '..'
-            || relativeExportPath.startsWith(`..${path.sep}`)) {
-            throw new Error(`Package exports target '${target}' for '${packageSubpath}' escapes '${packagePath}'.`);
-          }
-          const resolvedExportPath = await tryResolveModule(packageExportPath);
-          if (!resolvedExportPath) {
-            throw new Error(`Failed to resolve package export '${packageSubpath}' from '${packageExportPath}'.`);
-          }
-          return resolvedExportPath;
-        }
-      }
-
-      const packageModulePath = modulePath ? path.join(packagePath, modulePath) : packagePath;
-      const resolvedPath = await tryResolveModule(packageModulePath);
-      if (!resolvedPath) {
-        throw new Error(`Failed to resolve the path to '${moduleSpecifier}' from '${packageModulePath}'.`);
-      }
-      return resolvedPath;
-    };
+    const resolvePackageModule = (packagePath) => resolveInstalledPackageModule({
+      moduleSpecifier,
+      modulePath,
+      packagePath,
+      path,
+      readFile,
+      fileExists,
+      tryResolveModule,
+      warningLogger: options?.warningLogger,
+    });
 
     let packagePath = await ensurePackageInstalled(
       { packageName, version },
@@ -1189,7 +1190,7 @@ const resolvers = {
       return resolvePackageModule(packagePath);
     }
   },
-  bun: async (moduleSpecifier, pathResolver) => {
+  bun: async (moduleSpecifier, pathResolver, options) => {
     const path = await import('node:path');
     const { exec } = await import('node:child_process');
     const { promisify } = await import('node:util');
@@ -1224,9 +1225,35 @@ const resolvers = {
       }
     };
 
+    // require.resolve() returns real paths, which can differ from the caller's
+    // spelling of the same file (macOS /var -> /private/var, Windows short
+    // names). Keep the caller's prefix so resolved paths stay comparable.
+    const requireResolvePreservingPrefix = async (targetPath) => {
+      const { createRequire } = await import('node:module');
+      const { realpath } = await import('node:fs/promises');
+      const resolved = createRequire(targetPath).resolve(targetPath);
+      const base = await directoryExists(targetPath) ? targetPath : path.dirname(targetPath);
+      const relativePath = path.relative(await realpath(base), resolved);
+      if (path.isAbsolute(relativePath) || relativePath === '..' || relativePath.startsWith(`..${path.sep}`)) {
+        return resolved;
+      }
+      return path.join(base, relativePath);
+    };
+
     const tryResolveModule = async (packagePath) => {
       try {
-        return await pathResolver(packagePath);
+        const resolvedPath = await pathResolver(packagePath);
+        // Without a known script path, makeUse falls back to an identity
+        // resolver (for example `use.js` evaluated from an ES module on
+        // Windows). It returns every path unchanged, including package
+        // directories, which cannot be imported, and paths that do not exist.
+        // Resolve those the way require() does: directories through `main`,
+        // and missing paths throw MODULE_NOT_FOUND so the fallbacks below run.
+        // Existing files are already importable and are returned as is.
+        if (resolvedPath === packagePath && path.isAbsolute(packagePath) && !await fileExists(packagePath)) {
+          return await requireResolvePreservingPrefix(packagePath);
+        }
+        return resolvedPath;
       } catch (error) {
         if (error.code !== 'MODULE_NOT_FOUND') {
           throw new Error(`Failed to resolve module '${packagePath}'`, { cause: error });
@@ -1297,39 +1324,16 @@ const resolvers = {
 
     const { packageName, version, modulePath } = parseModuleSpecifier(moduleSpecifier);
     const packagePath = await ensurePackageInstalled({ packageName, version });
-    const packageJsonPath = path.join(packagePath, 'package.json');
-    if (await fileExists(packageJsonPath)) {
-      const parsed = JSON.parse(await readFile(packageJsonPath, 'utf8'));
-      if (Object.prototype.hasOwnProperty.call(parsed, 'exports')) {
-        const packageSubpath = modulePath ? `.${modulePath}` : '.';
-        const target = resolvePackageExportTarget(parsed.exports, packageSubpath);
-        if (target === unresolvedPackageExport || target === null) {
-          throw new Error(`Package subpath '${packageSubpath}' is not exported by '${packageJsonPath}'.`);
-        }
-        if (typeof target !== 'string' || !target.startsWith('./')) {
-          throw new Error(`Invalid package exports target '${target}' for '${packageSubpath}' in '${packageJsonPath}'.`);
-        }
-        const packageExportPath = path.resolve(packagePath, target);
-        const relativeExportPath = path.relative(packagePath, packageExportPath);
-        if (path.isAbsolute(relativeExportPath)
-          || relativeExportPath === '..'
-          || relativeExportPath.startsWith(`..${path.sep}`)) {
-          throw new Error(`Package exports target '${target}' for '${packageSubpath}' escapes '${packagePath}'.`);
-        }
-        const resolvedExportPath = await tryResolveModule(packageExportPath);
-        if (!resolvedExportPath) {
-          throw new Error(`Failed to resolve package export '${packageSubpath}' from '${packageExportPath}'.`);
-        }
-        return resolvedExportPath;
-      }
-    }
-
-    const packageModulePath = modulePath ? path.join(packagePath, modulePath) : packagePath;
-    const resolvedPath = await tryResolveModule(packageModulePath);
-    if (!resolvedPath) {
-      throw new Error(`Failed to resolve the path to '${moduleSpecifier}' from '${packageModulePath}'.`);
-    }
-    return resolvedPath;
+    return resolveInstalledPackageModule({
+      moduleSpecifier,
+      modulePath,
+      packagePath,
+      path,
+      readFile,
+      fileExists,
+      tryResolveModule,
+      warningLogger: options?.warningLogger,
+    });
   },
   deno: async (moduleSpecifier, pathResolver) => {
     const { packageName, version, modulePath } = parseModuleSpecifier(moduleSpecifier);

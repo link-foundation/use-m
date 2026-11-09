@@ -419,10 +419,22 @@ describe('Bun resolver pre-change public contract', () => {
           `${exportsPackageName}@1.0.0/feature`,
           exportsResolver
         )).resolves.toBe(exportsSubpathEntry);
+        // Unexported physical files load with a one-time warning, as they did
+        // before 8.16.3; only a missing file keeps the error (issue #83).
+        const bunWarnings = [];
         await expect(api.resolvers.bun(
           `${exportsPackageName}@1.0.0/private.js`,
-          exportsResolver
-        )).rejects.toThrow("Package subpath './private.js' is not exported");
+          exportsResolver,
+          { warningLogger: message => bunWarnings.push(message) }
+        )).resolves.toBe(privateEntry);
+        expect(bunWarnings).toHaveLength(1);
+        expect(bunWarnings[0]).toContain("Package subpath './private.js' is not exported");
+        await expect(api.resolvers.bun(
+          `${exportsPackageName}@1.0.0/missing.js`,
+          exportsResolver,
+          { warningLogger: message => bunWarnings.push(message) }
+        )).rejects.toThrow("Package subpath './missing.js' is not exported");
+        expect(bunWarnings).toHaveLength(1);
 
         const unresolvedName = `unresolved-${format.toLowerCase()}`;
         const unresolvedDirectory = path.join(
