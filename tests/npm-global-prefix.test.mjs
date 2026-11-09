@@ -1019,17 +1019,43 @@ describe(`${moduleName} npm global prefix handling`, () => {
     await writeFile(helpersPath, 'export const helper = true;\n');
     await writeFile(path.join(packageDirectory, 'helpers.cjs'), 'exports.helper = true;\n');
 
-    await expect(resolvers.npm(
-      'fixture-pkg@1.0.0',
-      resolve,
-      { env: fixture.baseEnv, installRetryDelayMs: 0 }
-    )).resolves.toBe(mainPath);
-    // Subpaths keep using the exports map (issue #47).
-    await expect(resolvers.npm(
-      'fixture-pkg@1.0.0/helpers',
-      resolve,
-      { env: fixture.baseEnv, installRetryDelayMs: 0 }
-    )).resolves.toBe(helpersPath);
+    // `use.js` evaluated from an ES module on Windows cannot find its script
+    // path, so makeUse falls back to an identity path resolver. The root must
+    // still resolve through "main" rather than to the bare directory.
+    const identityResolve = (target) => target;
+    for (const pathResolver of [resolve, identityResolve]) {
+      await expect(resolvers.npm(
+        'fixture-pkg@1.0.0',
+        pathResolver,
+        { env: fixture.baseEnv, installRetryDelayMs: 0 }
+      )).resolves.toBe(mainPath);
+      // Subpaths keep using the exports map (issue #47).
+      await expect(resolvers.npm(
+        'fixture-pkg@1.0.0/helpers',
+        pathResolver,
+        { env: fixture.baseEnv, installRetryDelayMs: 0 }
+      )).resolves.toBe(helpersPath);
+    }
+
+    // A package without "main" falls back to its exports["."] entry. Node
+    // caches package.json reads per process, so this uses a fresh directory.
+    const exportsOnly = await createFakeNpm();
+    const exportsOnlyDirectory = await corruptAlias(exportsOnly, {
+      packageJson: JSON.stringify({
+        name: 'fixture-pkg',
+        version: '1.0.0',
+        exports: { '.': { import: './esm.mjs' } }
+      })
+    });
+    const exportsOnlyEsmPath = path.join(exportsOnlyDirectory, 'esm.mjs');
+    await writeFile(exportsOnlyEsmPath, 'export default function esm() {}\n');
+    for (const pathResolver of [resolve, identityResolve]) {
+      await expect(resolvers.npm(
+        'fixture-pkg@1.0.0',
+        pathResolver,
+        { env: exportsOnly.baseEnv, installRetryDelayMs: 0 }
+      )).resolves.toBe(exportsOnlyEsmPath);
+    }
   });
 
   test(`${moduleName} preserves legacy package-exports resolution branches`, async () => {

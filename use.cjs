@@ -2043,7 +2043,18 @@ const resolvers = {
 
     const tryResolveModule = async (packagePath) => {
       try {
-        return await pathResolver(packagePath);
+        const resolvedPath = await pathResolver(packagePath);
+        // Without a known script path, makeUse falls back to an identity
+        // resolver (for example `use.js` evaluated from an ES module on
+        // Windows). It returns every path unchanged, including package
+        // directories, which cannot be imported, and paths that do not exist.
+        // Resolve those the way require() does: directories through `main`,
+        // and missing paths throw MODULE_NOT_FOUND so the fallbacks below run.
+        if (resolvedPath === packagePath && path.isAbsolute(packagePath)) {
+          const { createRequire } = await import('node:module');
+          return createRequire(packagePath).resolve(packagePath);
+        }
+        return resolvedPath;
       } catch (error) {
         if (error.code !== 'MODULE_NOT_FOUND') {
           throw new Error(`Failed to resolve module '${packagePath}'`, { cause: error });
@@ -3037,7 +3048,18 @@ const resolvers = {
 
     const tryResolveModule = async (packagePath) => {
       try {
-        return await pathResolver(packagePath);
+        const resolvedPath = await pathResolver(packagePath);
+        // Without a known script path, makeUse falls back to an identity
+        // resolver (for example `use.js` evaluated from an ES module on
+        // Windows). It returns every path unchanged, including package
+        // directories, which cannot be imported, and paths that do not exist.
+        // Resolve those the way require() does: directories through `main`,
+        // and missing paths throw MODULE_NOT_FOUND so the fallbacks below run.
+        if (resolvedPath === packagePath && path.isAbsolute(packagePath)) {
+          const { createRequire } = await import('node:module');
+          return createRequire(packagePath).resolve(packagePath);
+        }
+        return resolvedPath;
       } catch (error) {
         if (error.code !== 'MODULE_NOT_FOUND') {
           throw new Error(`Failed to resolve module '${packagePath}'`, { cause: error });
