@@ -74,6 +74,64 @@ describe(`${moduleName} loadWithFallback (shared engine)`, () => {
     expect(thrown.message).toContain('src(y) (attempt 2/2): boom y');
   });
 
+  // Issue #81: the aggregated error used to keep only each attempt's message,
+  // so a wrapper such as "Failed to import module from '...'" hid the real
+  // failure carried in its `cause`, and the original errors were dropped.
+  test(`${moduleName} keeps every attempt's error as data and names its causes`, async () => {
+    const root = new TypeError("The argument 'filename' must be a file URL object. Received 'shelljs'");
+    root.code = 'ERR_INVALID_ARG_VALUE';
+    const wrapped = new Error("Failed to import module from 'https://esm.sh/x'.", { cause: root });
+    const plain = new Error('mirror down');
+    let thrown;
+    try {
+      await loadWithFallback(['esm', 'jspm'], async (source) => {
+        throw source === 'esm' ? wrapped : plain;
+      }, { label: 'import x' });
+    } catch (error) {
+      thrown = error;
+    }
+    expect(thrown).toBeInstanceOf(Error);
+    expect(thrown.name).toBe('AggregateError');
+    expect(Array.isArray(thrown.errors)).toBe(true);
+    expect(thrown.errors.length).toBe(2);
+    expect(thrown.errors[0] === wrapped).toBe(true);
+    expect(thrown.errors[0].cause === root).toBe(true);
+    expect(thrown.errors[1] === plain).toBe(true);
+    expect(thrown.message).toContain(
+      "esm (attempt 1/1): Failed to import module from 'https://esm.sh/x'.\n" +
+      "      caused by: TypeError [ERR_INVALID_ARG_VALUE]: The argument 'filename' must be a file URL object. Received 'shelljs'\n" +
+      '  - jspm (attempt 1/1): mirror down'
+    );
+  });
+
+  test(`${moduleName} lists a nested cause chain and stops at a cycle`, async () => {
+    const deepest = new RangeError('line one\nline two');
+    const middle = new Error('middle', { cause: deepest });
+    const top = new Error('top', { cause: middle });
+    const cyclic = new Error('cyclic');
+    cyclic.cause = cyclic;
+    let thrown;
+    try {
+      await loadWithFallback(['a', 'b', 'c'], async (source) => {
+        if (source === 'a') throw top;
+        if (source === 'b') throw cyclic;
+        throw 'a string, not an Error';
+      });
+    } catch (error) {
+      thrown = error;
+    }
+    expect(thrown.message).toContain(
+      'a (attempt 1/1): top\n' +
+      '      caused by: Error: middle\n' +
+      '      caused by: RangeError: line one\n' +
+      '      line two\n' +
+      '  - b (attempt 1/1): cyclic\n' +
+      '  - c (attempt 1/1): a string, not an Error'
+    );
+    expect(thrown.errors.length).toBe(3);
+    expect(thrown.errors[2]).toBe('a string, not an Error');
+  });
+
   test(`${moduleName} rejects empty or non-array sources`, async () => {
     await expect(loadWithFallback([], async () => 1)).rejects.toThrow(/no sources were provided/);
     await expect(loadWithFallback(null, async () => 1)).rejects.toThrow(/no sources were provided/);
@@ -130,6 +188,34 @@ describe(`${moduleName} makeUse per-package CDN fallback`, () => {
     expect(thrown.message).toContain('skypack');
     // The underlying per-mirror errors are preserved, not swallowed.
     expect(thrown.message).toContain('down: https://esm.sh/left-pad@1.3.0');
+  });
+
+  test(`${moduleName} keeps why each mirror failed when every mirror fails (issue #81)`, async () => {
+    const use = await makeUse({
+      specifierResolvers: ['esm', 'jspm'],
+      import: async (url) => {
+        const root = new TypeError(`cannot build ${url}`);
+        root.code = 'ERR_INVALID_ARG_VALUE';
+        throw new Error(`Failed to import module from '${url}'.`, { cause: root });
+      },
+    });
+    let thrown;
+    try {
+      await use('command-stream@0.0.5');
+    } catch (error) {
+      thrown = error;
+    }
+    expect(thrown.name).toBe('AggregateError');
+    expect(thrown.errors.map((error) => error.cause.message)).toEqual([
+      'cannot build https://esm.sh/command-stream@0.0.5',
+      'cannot build https://jspm.dev/command-stream@0.0.5',
+    ]);
+    expect(thrown.message).toContain(
+      'caused by: TypeError [ERR_INVALID_ARG_VALUE]: cannot build https://esm.sh/command-stream@0.0.5'
+    );
+    expect(thrown.message).toContain(
+      'caused by: TypeError [ERR_INVALID_ARG_VALUE]: cannot build https://jspm.dev/command-stream@0.0.5'
+    );
   });
 
   test(`${moduleName} a single explicit resolver imports directly with its raw error (no aggregation)`, async () => {

@@ -127,6 +127,7 @@ async function loadUse(sources = [
   'https://esm.sh/use-m/use.js',
 ]) {
   const failures = [];
+  const errors = [];
   for (const url of sources) {
     try {
       const response = await fetch(url);
@@ -141,10 +142,12 @@ async function loadUse(sources = [
       if (!exported || typeof exported.use !== 'function') throw new Error('module did not export a `use` function');
       return exported.use;
     } catch (error) {
-      failures.push(`${url}: ${error.message}`);
+      errors.push(error);
+      // `fetch` reports network failures as "fetch failed" with the reason in `cause`.
+      failures.push(`${url}: ${error.message}${error.cause ? ` (caused by: ${error.cause.message ?? error.cause})` : ''}`);
     }
   }
-  throw new Error('Failed to load use-m from every CDN mirror:\n  - ' + failures.join('\n  - '));
+  throw new AggregateError(errors, 'Failed to load use-m from every CDN mirror:\n  - ' + failures.join('\n  - '));
 }
 
 const use = await loadUse();
@@ -191,9 +194,22 @@ If every source fails, `use()` throws one clear, aggregated error listing each a
 ```
 Failed to import 'left-pad@1.3.0' from any CDN mirror.
 Attempts:
-  - esm (attempt 1/1): <reason>
+  - esm (attempt 1/1): Failed to import module from 'https://esm.sh/left-pad@1.3.0'.
+      caused by: <the error that import() threw, for example TypeError [ERR_INVALID_ARG_VALUE]: …>
   - jspm (attempt 1/1): <reason>
+      caused by: <its cause>
   - skypack (attempt 1/1): <reason>
+      caused by: <its cause>
+```
+
+Each attempt lists its whole `cause` chain, so the message says why every source failed. The thrown value is an `AggregateError`: `error.errors` holds the original error of every attempt, in the order they were tried, with their `cause` intact:
+
+```javascript
+try {
+  await use('left-pad@1.3.0');
+} catch (error) {
+  for (const attempt of error.errors) console.error(attempt.cause ?? attempt);
+}
 ```
 
 You can override the chain (or inject a custom resolver) per `use` instance:
