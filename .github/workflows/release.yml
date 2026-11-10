@@ -268,13 +268,16 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
-      - name: Fail when a required job failed or was cancelled
+      # Only success and skipped count as passing. GitHub also reports results
+      # such as "abandoned" when a runner never finishes a matrix job; on the
+      # 8.17.1 merge that skipped the npm release while this job passed.
+      - name: Fail when a required job did not succeed
         env:
           NEEDS_JSON: ${{ toJSON(needs) }}
         run: |
           echo "$NEEDS_JSON" | jq -r 'to_entries[] | "\(.key): \(.value.result)"'
-          failed=$(echo "$NEEDS_JSON" | jq -r 'to_entries[] | select(.value.result == "failure" or .value.result == "cancelled") | .key')
+          failed=$(echo "$NEEDS_JSON" | jq -r 'to_entries[] | select(.value.result != "success" and .value.result != "skipped") | "\(.key) (\(.value.result))"')
           if [ -n "$failed" ]; then
-            echo "::error::Jobs that failed or were cancelled: $(echo "$failed" | paste -sd, -)"
+            echo "::error::Jobs that did not succeed: $(echo "$failed" | paste -sd, -)"
             exit 1
           fi

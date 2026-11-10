@@ -247,13 +247,14 @@ describe('release workflow policy', () => {
     }
   })
 
-  test('reports failed or timed-out jobs through one pipeline status', () => {
+  test('reports failed, timed-out or abandoned jobs through one pipeline status', () => {
     const jobs = jobBlocks(readText(releaseWorkflowPath))
     const statusJob = jobs.get('pipeline-status') || ''
     const otherJobs = [...jobs.keys()].filter((name) => name !== 'pipeline-status')
 
     expect(statusJob.includes("if: '!cancelled()'")).toBe(true)
     expect(statusJob.includes(`needs: [${otherJobs.join(', ')}]`)).toBe(true)
-    expect(statusJob.includes('select(.value.result == "failure" or .value.result == "cancelled")')).toBe(true)
+    // Anything but success or skipped fails, including GitHub's "abandoned".
+    expect(statusJob.includes('select(.value.result != "success" and .value.result != "skipped")')).toBe(true)
   })
 })
