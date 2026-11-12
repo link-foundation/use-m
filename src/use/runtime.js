@@ -7,6 +7,13 @@
 // attempt)` result. If every attempt fails it throws ONE clear, aggregated error
 // listing every attempt — never just the cryptic last failure (issue #58).
 //
+// The aggregated error is an `AggregateError` whose `errors` holds every
+// attempt's original error, so callers can inspect each failure as data. Each
+// attempt's line in the message also names the chain of causes behind it
+// (`baseUse` wraps import failures as "Failed to import module from '...'"
+// with the real error as `cause`), so the message alone tells why each source
+// failed, not only that it did (issue #81).
+//
 // This is the shared core reused by both resilient per-package CDN imports (see
 // `makeUse` below) and the use-m bootstrap loader (`loadUseM` in load.mjs /
 // load.cjs), so retry/fallback behaves identically everywhere it is used.
@@ -34,22 +41,64 @@ const loadWithFallback = async (sources, load, options = {}) => {
     throw new Error(`Failed to ${label}: a load function is required.`)
   }
   const failures = []
+  const errors = []
   for (const source of sources) {
     for (let attempt = 1; attempt <= maxAttemptsPerSource; attempt++) {
       try {
         return await load(source, attempt)
       } catch (error) {
-        const reason = error && error.message ? error.message : String(error)
-        failures.push(`${describeSource(source)} (attempt ${attempt}/${maxAttemptsPerSource}): ${reason}`)
+        errors.push(error)
+        failures.push(`${describeSource(source)} (attempt ${attempt}/${maxAttemptsPerSource}): ${describeFailure(error)}`)
         if (attempt < maxAttemptsPerSource && retryDelayMs > 0) {
           await new Promise((resolve) => setTimeout(resolve, retryDelayMs * attempt))
         }
       }
     }
   }
-  throw new Error(
+  throw aggregateErrors(
+    errors,
     `Failed to ${label}.${hint ? ' ' + hint : ''}\nAttempts:\n  - ` + failures.join('\n  - ')
   )
+}
+
+// At most this many causes are listed per attempt, so a cyclic or runaway
+// `cause` chain cannot grow the aggregated message without bound.
+const MAX_LISTED_CAUSES = 8
+
+// `TypeError [ERR_INVALID_ARG_VALUE]: message`, the way Node.js names errors.
+const describeError = (error) => {
+  if (error === null || (typeof error !== 'object' && typeof error !== 'function')) {
+    return String(error)
+  }
+  const name = error.name || 'Error'
+  const code = error.code !== undefined && error.code !== null && error.code !== '' ? ` [${error.code}]` : ''
+  return `${name}${code}: ${error.message ?? ''}`
+}
+
+// One attempt's reason: the error's own message, then one `caused by:` line
+// per error in its `cause` chain. Continuation lines are indented so that a
+// multi-line cause stays inside its attempt in the aggregated list.
+const describeFailure = (error) => {
+  const lines = [error && error.message ? error.message : String(error)]
+  const seen = new Set([error])
+  let cause = error !== null && error !== undefined ? error.cause : undefined
+  while (cause !== undefined && cause !== null && !seen.has(cause) && seen.size <= MAX_LISTED_CAUSES) {
+    seen.add(cause)
+    lines.push(`caused by: ${describeError(cause)}`)
+    cause = typeof cause === 'object' || typeof cause === 'function' ? cause.cause : undefined
+  }
+  return lines.join('\n').split('\n').join('\n      ')
+}
+
+// `AggregateError` keeps every attempt's error as data (`error.errors`).
+// Runtimes that predate it get a plain `Error` with the same `errors` property.
+const aggregateErrors = (errors, message) => {
+  if (typeof AggregateError === 'function') {
+    return new AggregateError(errors, message)
+  }
+  const error = new Error(message)
+  Object.defineProperty(error, 'errors', { value: errors, enumerable: false, configurable: true, writable: true })
+  return error
 }
 
 // `use()` unwraps a namespace whose only meaningful export is `default`, so

@@ -21,6 +21,7 @@ async function loadUse(sources = [
   'https://esm.sh/use-m/use.js',
 ]) {
   const failures = [];
+  const errors = [];
   for (const url of sources) {
     try {
       const response = await fetch(url);
@@ -40,10 +41,14 @@ async function loadUse(sources = [
       }
       return exported.use;
     } catch (error) {
-      failures.push(`${url}: ${error.message}`);
+      errors.push(error);
+      // `fetch` reports network failures as "fetch failed" with the reason in `cause`.
+      const cause = error.cause ? ` (caused by: ${error.cause.message ?? error.cause})` : '';
+      failures.push(`${url}: ${error.message}${cause}`);
     }
   }
-  throw new Error(
+  throw new AggregateError(
+    errors,
     'Failed to load use-m from every CDN mirror. This is usually a transient ' +
     'network or CDN outage — please check your connection and try again.\n' +
     'Attempts:\n  - ' + failures.join('\n  - ')
