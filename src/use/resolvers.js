@@ -865,7 +865,13 @@ const resolvers = {
       return true;
     };
 
+    const aliasBinLinks = createAliasBinLinks({ path, readdir, readFile, readlink, stat, unlink, debug });
+
+    // The alias's executables go first: once the directory is gone, the links
+    // npm made into it would dangle and fail every later install of any other
+    // alias of the package with EEXIST (issue #78).
     const removePackageAlias = async (packagePath, reason) => {
+      await aliasBinLinks.removeAliasBinLinks(packagePath);
       try {
         await rm(packagePath, {
           recursive: true,
@@ -979,70 +985,57 @@ const resolvers = {
       error?.cause?.message
     ].filter(value => typeof value === 'string' && value.trim()).join('\n');
 
-    const getOwnedConflictingBinPath = async ({ error, alias, packageName, globalModulesPath }) => {
-      const errorText = getInstallErrorText(error);
-      const pathMatch = errorText.match(/(?:^|\n)npm error path ([^\r\n]+)/);
-      if (!/\bEEXIST\b/.test(errorText) || !pathMatch) {
-        return null;
-      }
-
-      const binPath = pathMatch[1].trim();
-      try {
-        const linkTarget = await readlink(binPath);
-        const resolvedTarget = path.resolve(path.dirname(binPath), linkTarget);
-        const relativeTarget = path.relative(globalModulesPath, resolvedTarget);
-        if (!relativeTarget
-          || path.isAbsolute(relativeTarget)
-          || relativeTarget === '..'
-          || relativeTarget.startsWith(`..${path.sep}`)) {
-          return null;
-        }
-
-        const [ownerAlias] = relativeTarget.split(path.sep);
-        const aliasPrefix = getAliasPrefix(packageName);
-        if (ownerAlias === alias || !ownerAlias.startsWith(aliasPrefix)) {
-          return null;
-        }
-
-        const ownerPackageJson = JSON.parse(
-          await readFile(path.join(globalModulesPath, ownerAlias, 'package.json'), 'utf8')
-        );
-        return ownerPackageJson.name === packageName ? binPath : null;
-      } catch {
-        return null;
-      }
-    };
-
     const installPackage = async ({ alias, packageName, version, packagePath, installContext, exclusive }) => {
       const failures = [];
+      const installArgument = quoteNpmArgument(`${alias}@npm:${packageName}@${version}`);
+      const findBinConflict = (error) => aliasBinLinks.findAliasBinConflict({
+        errorText: getInstallErrorText(error),
+        alias,
+        aliasPrefix: getAliasPrefix(packageName),
+        packageName,
+        globalModulesPath: installContext.globalModulesPath
+      });
       for (let attempt = 1; attempt <= installMaxAttempts; attempt++) {
         try {
           debug(1, `installing ${packageName}@${version} (attempt ${attempt}/${installMaxAttempts})`);
-          await execAsync(
-            `npm install -g ${quoteNpmArgument(`${alias}@npm:${packageName}@${version}`)}`,
-            { env: installContext.env }
-          );
+          await execAsync(`npm install -g ${installArgument}`, { env: installContext.env });
           debug(1, `installed ${packageName}@${version} as ${alias}`);
           return;
         } catch (error) {
           let failure = error;
           let details = formatInstallFailure(error);
-          const conflictingBinPath = await getOwnedConflictingBinPath({
-            error,
-            alias,
-            packageName,
-            globalModulesPath: installContext.globalModulesPath
-          });
-          if (conflictingBinPath) {
+          let conflict = await findBinConflict(error);
+          // A link into an alias that no longer exists is debris of an earlier
+          // failed install. Remove it and install normally, so this alias gets
+          // its own executables (issue #78).
+          if (conflict?.stale) {
+            const removed = await aliasBinLinks.removeStaleAliasBinLinks({
+              binPath: conflict.binPath,
+              globalModulesPath: installContext.globalModulesPath,
+              aliasPrefix: getAliasPrefix(packageName)
+            });
+            if (removed.length > 0) {
+              try {
+                await execAsync(`npm install -g ${installArgument}`, { env: installContext.env });
+                debug(1, `installed ${packageName}@${version} as ${alias} after removing stale executable links`);
+                return;
+              } catch (retryError) {
+                failure = retryError;
+                details += `\nRetry after removing stale executable links ${removed.map(binPath => `'${binPath}'`).join(', ')}: ${formatInstallFailure(retryError)}`;
+                conflict = await findBinConflict(retryError);
+              }
+            }
+          }
+          // Another alias of this package owns the executable (or a stale link
+          // could not be removed): install without linking executables, which
+          // leaves the existing one untouched (issue #73).
+          if (conflict) {
             try {
-              await execAsync(
-                `npm install -g --force --no-bin-links ${quoteNpmArgument(`${alias}@npm:${packageName}@${version}`)}`,
-                { env: installContext.env }
-              );
+              await execAsync(`npm install -g --force --no-bin-links ${installArgument}`, { env: installContext.env });
               return;
             } catch (retryError) {
               failure = retryError;
-              details += `\nSafe no-bin retry after verified conflict at '${conflictingBinPath}': ${formatInstallFailure(retryError)}`;
+              details += `\nSafe no-bin retry after verified conflict at '${conflict.binPath}': ${formatInstallFailure(retryError)}`;
             }
           }
           failures.push({ error: failure, details });
