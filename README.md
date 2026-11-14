@@ -110,13 +110,18 @@ console.log(`_.add(1, 2) = ${_.add(1, 2)}`);
 `loadUseM()` validates the HTTP status and the response body before evaluating it, retries each source, falls back across `unpkg` → `jsDelivr` → `esm.sh`, and — when every mirror fails — throws a clear error listing every attempt instead of a `SyntaxError`. It accepts options to customize the behavior:
 
 ```javascript
+const controller = new AbortController(); // call controller.abort() to cancel the load
 const { use } = await loadUseM({
   sources: ['https://unpkg.com/use-m/use.js', 'https://cdn.jsdelivr.net/npm/use-m/use.js'],
   maxAttemptsPerSource: 3,  // attempts per mirror before moving on
   retryDelayMs: 250,        // linear backoff between attempts
-  timeoutMs: 10000,         // per-attempt timeout (0 disables)
+  timeoutMs: 10000,         // per-attempt timeout, headers and body included (0 disables)
+  totalTimeoutMs: 30000,    // deadline for every attempt, mirror and retry delay (0, the default, disables)
+  signal: controller.signal, // optional
 });
 ```
+
+`timeoutMs` bounds each attempt until the whole response body has been read, so a mirror that sends its headers and then stalls the body cannot hang the loader. When `totalTimeoutMs` elapses or `signal` aborts, the attempt in progress is aborted, no further attempt or retry delay runs, and `loadUseM()` rejects at once. The error says why loading stopped and lists the attempts made so far, `error.errors` holds their errors, and `error.cause` is the abort reason (`signal.reason`, or a `TimeoutError` for `totalTimeoutMs`). Error messages replace URL credentials and query parameter values with `***` and never quote a long body that is not the module.
 
 **Option 2 — self-contained snippet (no install).** For standalone scripts that fetch `use-m` directly, drop in this dependency-free loader. It does the same validation and mirror fallback inline:
 
@@ -130,7 +135,8 @@ async function loadUse(sources = [
   const errors = [];
   for (const url of sources) {
     try {
-      const response = await fetch(url);
+      // The signal also bounds reading the body, not only waiting for the headers.
+      const response = await fetch(url, { signal: AbortSignal.timeout(10000) });
       if (!response.ok) throw new Error(`HTTP ${response.status} ${response.statusText || ''}`.trim());
       const source = await response.text();
       // Guard against CDN error bodies (HTML pages, "Internal Server Error", …)
@@ -231,10 +237,11 @@ const use = await makeUse({
 ```javascript
 import { loadWithFallback } from 'use-m';
 
+const signal = AbortSignal.timeout(30000); // one deadline for every attempt
 const data = await loadWithFallback(
   ['https://primary.example/api', 'https://backup.example/api'],
   async (url) => {
-    const response = await fetch(url);
+    const response = await fetch(url, { signal });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return response.json();
   },
@@ -243,9 +250,13 @@ const data = await loadWithFallback(
     retryDelayMs: 250,        // linear backoff between attempts (0 disables)
     label: 'fetch config from any endpoint',
     hint: 'Check your network connection and try again.',
+    signal,                   // no attempt or retry delay starts once it aborts
+    redact: (line) => line.replace(/key=[^&\s]+/g, 'key=***'), // rewrite each attempt line of the message
   },
 );
 ```
+
+Once `signal` aborts, `loadWithFallback` starts no further attempt and ends a pending retry delay at once; it does not interrupt an attempt in progress, so pass the same signal to the work inside `load`. The rejection then names why loading stopped (`stopped after 2 of 6 planned attempts because …`), lists the attempts made so far, and carries the abort reason as `cause`.
 
 A runnable, dependency-free demonstration lives in [`examples/load/shared-fallback-engine.mjs`](https://github.com/link-foundation/use-m/blob/main/examples/load/shared-fallback-engine.mjs).
 
