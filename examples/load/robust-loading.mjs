@@ -24,7 +24,9 @@ async function loadUse(sources = [
   const errors = [];
   for (const url of sources) {
     try {
-      const response = await fetch(url);
+      // The signal also bounds reading the body, not only waiting for the
+      // headers, so a mirror that stalls mid-body cannot hang the bootstrap.
+      const response = await fetch(url, { signal: AbortSignal.timeout(10000) });
       if (!response.ok) {
         throw new Error(`HTTP ${response.status} ${response.statusText || ''}`.trim());
       }
