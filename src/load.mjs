@@ -66,12 +66,25 @@ export function looksLikeUseModule(source) {
 /**
  * Load use-m, returning the object it exports (with a `use` function).
  *
+ * Deadlines (issue #80). `timeoutMs` bounds each attempt from the request until
+ * the whole response body has been read, so a server that sends its headers
+ * and then stalls the body cannot hang the loader. `totalTimeoutMs` bounds the
+ * whole load across every attempt, mirror and retry delay, and `signal` lets the
+ * caller cancel it. Either one aborts the attempt in progress, starts no further
+ * attempt, and rejects with the aggregated error: its message names why loading
+ * stopped and lists the attempts made so far, `errors` holds their errors, and
+ * `cause` is the abort reason (the caller's `signal.reason`, or a
+ * `TimeoutError` for `totalTimeoutMs`). The loader stops waiting even when a
+ * custom `fetch` ignores the signal it is given.
+ *
  * @param {object} [options]
  * @param {typeof fetch} [options.fetch] - fetch implementation (defaults to globalThis.fetch)
  * @param {string[]} [options.sources] - ordered list of CDN URLs to try
  * @param {number} [options.maxAttemptsPerSource] - attempts per source (default 3)
  * @param {number} [options.retryDelayMs] - base delay between retries, linear backoff (default 250)
- * @param {number} [options.timeoutMs] - per-attempt timeout in ms, 0 to disable (default 10000)
+ * @param {number} [options.timeoutMs] - per-attempt timeout in ms covering headers and body, 0 to disable (default 10000)
+ * @param {number} [options.totalTimeoutMs] - overall deadline in ms for every attempt, mirror and retry delay, 0 to disable (default 0)
+ * @param {AbortSignal} [options.signal] - cancels the load when aborted
  * @param {(source: string) => unknown} [options.evaluate] - evaluator for the module source (defaults to eval)
  * @returns {Promise<{ use: Function }>}
  */
@@ -82,6 +95,8 @@ export async function loadUseM(options = {}) {
     maxAttemptsPerSource = 3,
     retryDelayMs = 250,
     timeoutMs = 10000,
+    totalTimeoutMs = 0,
+    signal: callerSignal,
     evaluate = (source) => eval(source),
   } = options;
 
@@ -94,76 +109,219 @@ export async function loadUseM(options = {}) {
   if (!Array.isArray(sources) || sources.length === 0) {
     throw new Error('Cannot load use-m: `sources` must be a non-empty array of URLs.');
   }
+  if (callerSignal !== undefined && callerSignal !== null && !isAbortSignal(callerSignal)) {
+    throw new TypeError('Cannot load use-m: `signal` must be an AbortSignal.');
+  }
 
-  // Delegate the retry/fallback loop to the shared engine; the per-source work
-  // (fetch → validate body → eval → check `use` export) is the only loader-specific
-  // part. The engine aggregates failures into the same clear, actionable error.
-  return loadWithFallback(
-    sources,
-    async (url) => {
-      const source = await fetchSource(fetchImpl, url, timeoutMs);
-      if (!looksLikeUseModule(source)) {
-        const preview = source.slice(0, 80).replace(/\s+/g, ' ').trim();
-        throw new Error(`response was not the use-m module (got: "${preview}")`);
+  const deadline = createDeadline(callerSignal || undefined, totalTimeoutMs);
+  try {
+    // Delegate the retry/fallback loop to the shared engine; the per-source work
+    // (fetch → validate body → eval → check `use` export) is the only
+    // loader-specific part. The engine aggregates failures into the same clear,
+    // actionable error, and stops early once the deadline signal aborts.
+    return await loadWithFallback(
+      sources,
+      async (url) => {
+        const source = await fetchSource(fetchImpl, url, timeoutMs, deadline.signal);
+        if (!looksLikeUseModule(source)) {
+          const preview = source.slice(0, 80).replace(/\s+/g, ' ').trim();
+          throw new Error(`response was not the use-m module (got: "${preview}")`);
+        }
+        const exported = await evaluate(source);
+        if (!exported || typeof exported.use !== 'function') {
+          throw new Error('evaluated module did not export a `use` function');
+        }
+        return exported;
+      },
+      {
+        maxAttemptsPerSource,
+        retryDelayMs,
+        signal: deadline.signal,
+        describeSource: redactUrl,
+        label: 'load use-m from every CDN mirror',
+        hint: 'This is usually a transient network or CDN outage — please check your connection and try again.',
       }
-      const exported = await evaluate(source);
-      if (!exported || typeof exported.use !== 'function') {
-        throw new Error('evaluated module did not export a `use` function');
-      }
-      return exported;
-    },
-    {
-      maxAttemptsPerSource,
-      retryDelayMs,
-      label: 'load use-m from every CDN mirror',
-      hint: 'This is usually a transient network or CDN outage — please check your connection and try again.',
-    }
-  );
+    );
+  } finally {
+    deadline.clear();
+  }
 }
 
-// Fetch a single source with an optional per-attempt timeout, validating the
-// HTTP status before returning the body text.
-async function fetchSource(fetchImpl, url, timeoutMs) {
-  const timeout = createTimeout(timeoutMs);
-  let response;
+// Fetch a single source and read its body under one attempt deadline. The
+// attempt's timer and abort signal stay active until the body has been read
+// (or the attempt failed): `fetch` resolves as soon as the headers arrive, so
+// clearing them earlier would leave a stalled body unbounded (issue #80).
+async function fetchSource(fetchImpl, url, timeoutMs, parentSignal) {
+  const attempt = createAttempt(timeoutMs, parentSignal);
+  let stage = 'while waiting for the response headers';
   try {
-    response = await fetchImpl(url, timeout.signal ? { signal: timeout.signal } : undefined);
+    const response = await untilAborted(
+      attempt.signal,
+      () => fetchImpl(url, attempt.signal ? { signal: attempt.signal } : undefined)
+    );
+    if (!response || !response.ok) {
+      const status = response
+        ? `${response.status} ${response.statusText || ''}`.trim()
+        : 'no response';
+      discardBody(response);
+      throw new Error(`HTTP ${status}`);
+    }
+    stage = 'while reading the response body';
+    return await untilAborted(attempt.signal, () => response.text());
   } catch (error) {
-    if (timeout.timedOut()) {
-      throw new Error(`request timed out after ${timeoutMs}ms`);
+    if (attempt.timedOut()) {
+      const timeout = new Error(`request timed out after ${timeoutMs}ms ${stage}`);
+      timeout.name = 'TimeoutError';
+      throw timeout;
+    }
+    if (parentSignal && parentSignal.aborted) {
+      // The engine reports why loading stopped; this attempt only says where.
+      const aborted = new Error(`request aborted ${stage}`);
+      aborted.name = 'AbortError';
+      throw aborted;
     }
     throw error;
   } finally {
-    timeout.clear();
+    attempt.clear();
   }
-  if (!response || !response.ok) {
-    const status = response
-      ? `${response.status} ${response.statusText || ''}`.trim()
-      : 'no response';
-    throw new Error(`HTTP ${status}`);
-  }
-  return response.text();
 }
 
-// Build an AbortController-backed timeout. Degrades gracefully where
-// AbortController is unavailable (returns a no-op).
-function createTimeout(timeoutMs) {
-  if (!timeoutMs || typeof AbortController === 'undefined') {
-    return { signal: undefined, clear: () => {}, timedOut: () => false };
+// Settle with `start()`'s promise, or reject as soon as `signal` aborts —
+// whichever happens first — so a `fetch` or body read that ignores its signal
+// still cannot outlive the deadline. A late settlement is observed and ignored.
+function untilAborted(signal, start) {
+  const pending = new Promise((resolve) => resolve(start()));
+  if (!signal) return pending;
+  return new Promise((resolve, reject) => {
+    const onAbort = () => reject(abortReason(signal));
+    if (signal.aborted) {
+      onAbort();
+    } else {
+      signal.addEventListener('abort', onAbort, { once: true });
+    }
+    pending.then(
+      (value) => {
+        signal.removeEventListener('abort', onAbort);
+        resolve(value);
+      },
+      (error) => {
+        signal.removeEventListener('abort', onAbort);
+        reject(error);
+      }
+    );
+  });
+}
+
+// Release the connection of a response whose body will not be read.
+function discardBody(response) {
+  try {
+    const cancelled = response && response.body && typeof response.body.cancel === 'function'
+      ? response.body.cancel()
+      : undefined;
+    if (cancelled && typeof cancelled.catch === 'function') cancelled.catch(() => {});
+  } catch {
+    // A locked or already consumed body cannot be cancelled; nothing to release.
+  }
+}
+
+// One attempt's abort signal: it aborts when the per-attempt timer fires or the
+// parent (caller/overall) signal aborts. Degrades to the parent signal where
+// AbortController is unavailable.
+function createAttempt(timeoutMs, parentSignal) {
+  if (typeof AbortController === 'undefined' || (!timeoutMs && !parentSignal)) {
+    return { signal: parentSignal, clear: () => {}, timedOut: () => false };
   }
   const controller = new AbortController();
   let didTimeout = false;
-  const timer = setTimeout(() => {
-    didTimeout = true;
-    controller.abort();
-  }, timeoutMs);
+  const onParentAbort = () => controller.abort(abortReason(parentSignal));
+  if (parentSignal) {
+    if (parentSignal.aborted) onParentAbort();
+    else parentSignal.addEventListener('abort', onParentAbort, { once: true });
+  }
   // Deliberately NOT unref()'d: this is a guard that must be allowed to fire so
   // the timeout actually triggers, and it is always cleared on the fast path via
   // `clear()`. unref()'ing it would let the runtime exit before the guard fires
   // (and trips Deno's "promise resolution is still pending" op sanitizer).
+  const timer = timeoutMs
+    ? setTimeout(() => {
+      didTimeout = true;
+      controller.abort(timeoutError(`request timed out after ${timeoutMs}ms`));
+    }, timeoutMs)
+    : undefined;
   return {
     signal: controller.signal,
-    clear: () => clearTimeout(timer),
+    clear: () => {
+      clearTimeout(timer);
+      if (parentSignal) parentSignal.removeEventListener('abort', onParentAbort);
+    },
     timedOut: () => didTimeout,
   };
+}
+
+// The signal that bounds the whole load: it aborts when the caller's signal
+// aborts or `totalTimeoutMs` elapses, whichever comes first.
+function createDeadline(callerSignal, totalTimeoutMs) {
+  if (!totalTimeoutMs || typeof AbortController === 'undefined') {
+    return { signal: callerSignal, clear: () => {} };
+  }
+  const controller = new AbortController();
+  const onCallerAbort = () => controller.abort(abortReason(callerSignal));
+  if (callerSignal) {
+    if (callerSignal.aborted) onCallerAbort();
+    else callerSignal.addEventListener('abort', onCallerAbort, { once: true });
+  }
+  // Not unref()'d for the same reason as the per-attempt timer; always cleared.
+  const timer = setTimeout(() => {
+    controller.abort(timeoutError(`the overall deadline of ${totalTimeoutMs}ms was exceeded`));
+  }, totalTimeoutMs);
+  return {
+    signal: controller.signal,
+    clear: () => {
+      clearTimeout(timer);
+      if (callerSignal) callerSignal.removeEventListener('abort', onCallerAbort);
+    },
+  };
+}
+
+function timeoutError(message) {
+  const error = new Error(message);
+  error.name = 'TimeoutError';
+  return error;
+}
+
+// `signal.reason`, or an `AbortError` on runtimes whose signals carry none.
+function abortReason(signal) {
+  if (signal.reason !== undefined) return signal.reason;
+  const error = new Error('This operation was aborted');
+  error.name = 'AbortError';
+  return error;
+}
+
+function isAbortSignal(value) {
+  return typeof value === 'object'
+    && typeof value.aborted === 'boolean'
+    && typeof value.addEventListener === 'function'
+    && typeof value.removeEventListener === 'function';
+}
+
+// Source label for error messages, without credentials: URL user info and
+// query parameter values are replaced with `***`.
+function redactUrl(source) {
+  const text = String(source);
+  let url;
+  try {
+    url = new URL(text);
+  } catch {
+    return text;
+  }
+  if (!url.username && !url.password && !url.search) return text;
+  if (url.username || url.password) {
+    url.username = '***';
+    url.password = '';
+  }
+  if (url.search) {
+    const keys = [...new Set(url.searchParams.keys())];
+    url.search = keys.map((key) => `${encodeURIComponent(key)}=***`).join('&');
+  }
+  return url.href;
 }

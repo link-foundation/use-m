@@ -26,6 +26,14 @@
 // @param {(source: unknown) => string} [options.describeSource] - human label for a source in errors
 // @param {string} [options.label] - what we were trying to do (used in the error message)
 // @param {string} [options.hint] - extra guidance appended to the aggregated error
+// @param {AbortSignal} [options.signal] - stops further attempts and retry delays once aborted
+//
+// Once `options.signal` aborts, no further attempt starts and a pending retry
+// delay ends at once. The engine does not interrupt an attempt already in
+// progress: `load` should watch the same signal itself, as `loadUseM` does. The
+// thrown error then says how many of the planned attempts ran and why loading
+// stopped, keeps the per-attempt lines and `errors`, and carries the abort
+// reason as `cause` (issue #80).
 const loadWithFallback = async (sources, load, options = {}) => {
   const {
     maxAttemptsPerSource = 1,
@@ -33,6 +41,7 @@ const loadWithFallback = async (sources, load, options = {}) => {
     describeSource = (source) => String(source),
     label = 'load from any source',
     hint = '',
+    signal,
   } = options
   if (!Array.isArray(sources) || sources.length === 0) {
     throw new Error(`Failed to ${label}: no sources were provided.`)
@@ -42,24 +51,59 @@ const loadWithFallback = async (sources, load, options = {}) => {
   }
   const failures = []
   const errors = []
-  for (const source of sources) {
+  const isStopped = () => Boolean(signal && signal.aborted)
+  attempts: for (const source of sources) {
     for (let attempt = 1; attempt <= maxAttemptsPerSource; attempt++) {
+      if (isStopped()) break attempts
       try {
         return await load(source, attempt)
       } catch (error) {
         errors.push(error)
         failures.push(`${describeSource(source)} (attempt ${attempt}/${maxAttemptsPerSource}): ${describeFailure(error)}`)
-        if (attempt < maxAttemptsPerSource && retryDelayMs > 0) {
-          await new Promise((resolve) => setTimeout(resolve, retryDelayMs * attempt))
+        if (attempt < maxAttemptsPerSource && retryDelayMs > 0 && !isStopped()) {
+          await abortableDelay(retryDelayMs * attempt, signal)
         }
       }
     }
   }
-  throw aggregateErrors(
-    errors,
-    `Failed to ${label}.${hint ? ' ' + hint : ''}\nAttempts:\n  - ` + failures.join('\n  - ')
-  )
+  const attemptList = failures.length > 0 ? 'Attempts:\n  - ' + failures.join('\n  - ') : 'Attempts: none'
+  if (isStopped()) {
+    const reason = abortReason(signal)
+    const planned = sources.length * maxAttemptsPerSource
+    throw aggregateErrors(
+      errors,
+      `Failed to ${label}: stopped after ${failures.length} of ${planned} planned attempts because ${describeError(reason)}\n${attemptList}`,
+      reason
+    )
+  }
+  throw aggregateErrors(errors, `Failed to ${label}.${hint ? ' ' + hint : ''}\n${attemptList}`)
 }
+
+// `signal.reason`, or an `AbortError` on runtimes whose signals carry none.
+const abortReason = (signal) => {
+  if (signal.reason !== undefined) return signal.reason
+  const error = new Error('This operation was aborted')
+  error.name = 'AbortError'
+  return error
+}
+
+// Wait `ms` milliseconds, or less when `signal` aborts first. The timer is
+// cleared on abort so no runtime is left waiting on it.
+const abortableDelay = (ms, signal) => new Promise((resolve) => {
+  if (!signal || typeof signal.addEventListener !== 'function') {
+    setTimeout(resolve, ms)
+    return
+  }
+  const onAbort = () => {
+    clearTimeout(timer)
+    resolve()
+  }
+  const timer = setTimeout(() => {
+    signal.removeEventListener('abort', onAbort)
+    resolve()
+  }, ms)
+  signal.addEventListener('abort', onAbort, { once: true })
+})
 
 // At most this many causes are listed per attempt, so a cyclic or runaway
 // `cause` chain cannot grow the aggregated message without bound.
@@ -92,12 +136,17 @@ const describeFailure = (error) => {
 
 // `AggregateError` keeps every attempt's error as data (`error.errors`).
 // Runtimes that predate it get a plain `Error` with the same `errors` property.
-const aggregateErrors = (errors, message) => {
-  if (typeof AggregateError === 'function') {
-    return new AggregateError(errors, message)
+// A `cause`, when given, is set even where the constructors ignore the option.
+const aggregateErrors = (errors, message, cause) => {
+  const error = typeof AggregateError === 'function'
+    ? new AggregateError(errors, message)
+    : new Error(message)
+  if (!('errors' in error)) {
+    Object.defineProperty(error, 'errors', { value: errors, enumerable: false, configurable: true, writable: true })
   }
-  const error = new Error(message)
-  Object.defineProperty(error, 'errors', { value: errors, enumerable: false, configurable: true, writable: true })
+  if (cause !== undefined) {
+    Object.defineProperty(error, 'cause', { value: cause, enumerable: false, configurable: true, writable: true })
+  }
   return error
 }
 
