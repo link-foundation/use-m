@@ -1,4 +1,4 @@
-const { chmod, mkdir, mkdtemp, readFile, readlink, realpath, rm, symlink, utimes, writeFile } = require('node:fs/promises');
+const { chmod, lstat, mkdir, mkdtemp, readFile, readlink, realpath, rm, symlink, utimes, writeFile } = require('node:fs/promises');
 const { execFile } = require('node:child_process');
 const { tmpdir } = require('node:os');
 const path = require('node:path');
@@ -36,7 +36,12 @@ const path = require('node:path');
 
 const args = process.argv.slice(2);
 const prefix = process.env.npm_config_prefix || process.env.NPM_CONFIG_PREFIX || '';
-const root = prefix ? path.join(prefix, 'lib', 'node_modules') : process.env.USE_M_FAKE_NPM_DEFAULT_ROOT;
+// Windows npm keeps the global root in <prefix>/node_modules and writes .cmd,
+// .ps1 and sh shims for each executable into <prefix> itself.
+const windowsLayout = process.env.USE_M_FAKE_NPM_WINDOWS_LAYOUT === '1';
+const root = prefix
+  ? path.join(prefix, ...(windowsLayout ? [] : ['lib']), 'node_modules')
+  : process.env.USE_M_FAKE_NPM_DEFAULT_ROOT;
 const logFile = process.env.USE_M_FAKE_NPM_LOG;
 
 if (logFile) {
@@ -68,7 +73,32 @@ if (args[0] === 'install' && args[1] === '-g' && installSpecifier) {
     : requestedVersion;
   const packageDirectory = path.join(root, alias);
   const binName = process.env.USE_M_FAKE_NPM_BIN_NAME;
-  const binPath = binName ? path.resolve(root, '..', '..', 'bin', binName) : null;
+  const binDirectory = windowsLayout ? path.dirname(root) : path.resolve(root, '..', '..', 'bin');
+  const binPath = binName ? path.join(binDirectory, binName) : null;
+  const binPaths = binPath ? (windowsLayout ? [binPath, binPath + '.cmd', binPath + '.ps1'] : [binPath]) : [];
+  // Like npm's bin-links: a missing entry is fine, an entry that points into
+  // the package being installed is fine, and anything else — including a
+  // dangling link into another package — is a conflict.
+  const readBinTarget = (candidate) => {
+    try {
+      return path.resolve(path.dirname(candidate), fs.readlinkSync(candidate));
+    } catch {}
+    try {
+      const match = fs.readFileSync(candidate, 'utf8').match(/"(?:%dp0%\\\\|[$]basedir\\/)([^"]+?)"/);
+      return match ? path.resolve(path.dirname(candidate), match[1].replace(/\\\\/g, '/')) : '';
+    } catch {
+      return '';
+    }
+  };
+  const conflictingBinPath = binPaths.find(candidate => {
+    try {
+      fs.lstatSync(candidate);
+    } catch {
+      return false;
+    }
+    const target = readBinTarget(candidate);
+    return target !== packageDirectory && !target.startsWith(packageDirectory + path.sep);
+  });
   const installAttempt = fs.readFileSync(logFile, 'utf8')
     .trim()
     .split('\\n')
@@ -81,11 +111,11 @@ if (args[0] === 'install' && args[1] === '-g' && installSpecifier) {
   // npm 11 checks an existing global executable even with --no-bin-links.
   // Only --force gets past the collision, after which --no-bin-links keeps the
   // existing executable untouched.
-  if (binPath && fs.existsSync(binPath) && !args.includes('--force')) {
+  if (conflictingBinPath && !args.includes('--force')) {
     console.error('npm error code EEXIST');
-    console.error('npm error path ' + binPath);
+    console.error('npm error path ' + conflictingBinPath);
     console.error('npm error EEXIST: file already exists');
-    console.error('npm error File exists: ' + binPath);
+    console.error('npm error File exists: ' + conflictingBinPath);
     process.exit(1);
   }
 
@@ -128,8 +158,18 @@ if (args[0] === 'install' && args[1] === '-g' && installSpecifier) {
     'export const installed = true; export const installAttempt = ' + installAttempt + ';\\n'
   );
   if (binPath && !args.includes('--no-bin-links')) {
-    fs.mkdirSync(path.dirname(binPath), { recursive: true });
-    fs.symlinkSync(path.relative(path.dirname(binPath), path.join(packageDirectory, 'index.js')), binPath);
+    fs.mkdirSync(binDirectory, { recursive: true });
+    const entry = path.relative(binDirectory, path.join(packageDirectory, 'index.js'));
+    if (windowsLayout) {
+      const posixEntry = entry.split(path.sep).join('/');
+      const windowsEntry = entry.split(path.sep).join('\\\\');
+      fs.writeFileSync(binPath, '#!/bin/sh\\nexec node  "$basedir/' + posixEntry + '" "$@"\\n');
+      fs.writeFileSync(binPath + '.cmd', '@ECHO off\\r\\n"%_prog%"  "%dp0%\\\\' + windowsEntry + '" %*\\r\\n');
+      fs.writeFileSync(binPath + '.ps1', '& "$basedir/node$exe"  "$basedir/' + posixEntry + '" $args\\n');
+    } else {
+      fs.rmSync(binPath, { force: true });
+      fs.symlinkSync(entry, binPath);
+    }
   }
   process.exit(0);
 }
@@ -153,6 +193,48 @@ process.exit(1);
 
   return { root, defaultRoot, cache, logFile, baseEnv };
 };
+
+// A fake npm prefix in the POSIX layout (<prefix>/lib/node_modules, executables
+// linked into <prefix>/bin) or the Windows one (<prefix>/node_modules, shims
+// written into <prefix>).
+const createBinLayoutFixture = async (layout) => {
+  const fixture = await createFakeNpm();
+  const env = { ...fixture.baseEnv, USE_M_FAKE_NPM_BIN_NAME: 'fixture-cli' };
+  let globalRoot = fixture.defaultRoot;
+  let binDirectory = path.resolve(globalRoot, '..', '..', 'bin');
+  if (layout === 'windows') {
+    globalRoot = path.join(fixture.root, 'windows-global', 'node_modules');
+    binDirectory = path.dirname(globalRoot);
+    env.USE_M_FAKE_NPM_DEFAULT_ROOT = globalRoot;
+    env.USE_M_FAKE_NPM_WINDOWS_LAYOUT = '1';
+  }
+  await mkdir(globalRoot, { recursive: true });
+  await mkdir(binDirectory, { recursive: true });
+  return { fixture, env, globalRoot, binDirectory, binPath: path.join(binDirectory, 'fixture-cli') };
+};
+
+const binEntryPaths = (layout, binPath) => layout === 'windows'
+  ? [binPath, `${binPath}.cmd`, `${binPath}.ps1`]
+  : [binPath];
+
+// Writes an executable the way npm does: a relative symlink, or the three shims
+// cmd-shim generates.
+const writeBinEntry = async (layout, binPath, target) => {
+  const relativeTarget = path.relative(path.dirname(binPath), target);
+  if (layout !== 'windows') {
+    await symlink(relativeTarget, binPath);
+    return;
+  }
+  const posixTarget = relativeTarget.split(path.sep).join('/');
+  const windowsTarget = relativeTarget.split(path.sep).join('\\');
+  await writeFile(binPath, `#!/bin/sh\nexec node  "$basedir/${posixTarget}" "$@"\n`);
+  await writeFile(`${binPath}.cmd`, `@ECHO off\r\n"%_prog%"  "%dp0%\\${windowsTarget}" %*\r\n`);
+  await writeFile(`${binPath}.ps1`, `& "$basedir/node$exe"  "$basedir/${posixTarget}" $args\n`);
+};
+
+const readBinEntry = (layout, binPath) => layout === 'windows'
+  ? readFile(`${binPath}.cmd`, 'utf8')
+  : readlink(binPath);
 
 const readNpmLog = async (logFile) => {
   const log = await readFile(logFile, 'utf8');
@@ -373,6 +455,102 @@ describe(`${moduleName} npm global prefix handling`, () => {
     expect(await readlink(binPath)).toBe(originalBinTarget);
     expect(await readFile(unrelatedEntry, 'utf8')).toBe('user installed executable\n');
   });
+
+  // Issue #78: a failed install used to delete the alias directory but keep the
+  // executables npm had linked into it. Every later install of any other
+  // version of the package then failed with EEXIST until someone deleted the
+  // dangling link by hand. Both npm layouts are covered: POSIX symlinks in
+  // <prefix>/bin, and Windows shims (`<name>`, `.cmd`, `.ps1`) in <prefix>.
+  for (const layout of ['posix', 'windows']) {
+    test(`${moduleName} removes the ${layout} executables of an alias whose upgrade failed (issue #78)`, async () => {
+      if (typeof Deno !== 'undefined' || typeof Bun !== 'undefined') {
+        return;
+      }
+
+      const { fixture, env, globalRoot, binPath } = await createBinLayoutFixture(layout);
+      const registry = { latest: '1.0.0' };
+      const options = {
+        env,
+        installRetryDelayMs: 0,
+        latestVersionCache: false,
+        registry: 'https://registry.example.test/',
+        fetch: async () => ({
+          ok: true,
+          status: 200,
+          statusText: 'OK',
+          json: async () => ({ version: registry.latest }),
+        }),
+      };
+
+      await resolvers.npm('fixture-pkg', resolve, options);
+      expect(await readBinEntry(layout, binPath)).toContain('fixture-pkg-v-latest');
+
+      // A new release is published and every attempt to upgrade the alias
+      // fails, as a native build without `make` does.
+      registry.latest = '2.0.0';
+      env.USE_M_FAKE_NPM_INSTALL_FAILURES = '4';
+      await expect(resolvers.npm('fixture-pkg', resolve, options)).rejects.toThrow('after 3 attempts');
+      await expect(lstat(path.join(globalRoot, 'fixture-pkg-v-latest'))).rejects.toThrow();
+      for (const entryPath of binEntryPaths(layout, binPath)) {
+        await expect(lstat(entryPath)).rejects.toThrow();
+      }
+
+      const pinnedPath = await resolvers.npm('fixture-pkg@1.0.0', resolve, options);
+      const installCalls = (await readNpmLog(fixture.logFile)).filter(call => call.args[0] === 'install');
+
+      expect(await readFile(pinnedPath, 'utf8')).toContain('installed = true');
+      expect(installCalls).toHaveLength(5);
+      expect(installCalls[4].args).toEqual(['install', '-g', 'fixture-pkg-v-1.0.0@npm:fixture-pkg@1.0.0']);
+      expect(await readBinEntry(layout, binPath)).toContain('fixture-pkg-v-1.0.0');
+    });
+
+    test(`${moduleName} replaces dangling ${layout} executables of removed aliases instead of failing with EEXIST (issue #78)`, async () => {
+      if (typeof Deno !== 'undefined' || typeof Bun !== 'undefined') {
+        return;
+      }
+
+      const { fixture, env, globalRoot, binDirectory, binPath } = await createBinLayoutFixture(layout);
+      // The state an older use-m left behind: links into aliases it deleted.
+      await writeBinEntry(layout, binPath, path.join(globalRoot, 'fixture-pkg-v-latest', 'index.js'));
+      const extraBinPath = path.join(binDirectory, 'fixture-extra');
+      await writeBinEntry(layout, extraBinPath, path.join(globalRoot, 'fixture-pkg-v-0.9.0', 'cli.js'));
+      // Entries use-m must leave alone: a healthy executable of another alias
+      // of the package, a dangling one of another package, and a dangling one
+      // that points outside the npm global root.
+      const healthyAliasPath = path.join(globalRoot, 'fixture-pkg-v-0.5.0');
+      await mkdir(healthyAliasPath, { recursive: true });
+      await writeFile(path.join(healthyAliasPath, 'package.json'), JSON.stringify({ name: 'fixture-pkg', version: '0.5.0' }));
+      await writeFile(path.join(healthyAliasPath, 'index.js'), 'export default 1;\n');
+      const kept = {
+        healthy: path.join(binDirectory, 'fixture-healthy'),
+        otherPackage: path.join(binDirectory, 'other-cli'),
+        outsideRoot: path.join(binDirectory, 'outside-cli'),
+      };
+      await writeBinEntry(layout, kept.healthy, path.join(healthyAliasPath, 'index.js'));
+      await writeBinEntry(layout, kept.otherPackage, path.join(globalRoot, 'other-pkg-v-latest', 'index.js'));
+      await writeBinEntry(layout, kept.outsideRoot, path.join(fixture.root, 'elsewhere', 'fixture-pkg-v-latest', 'index.js'));
+      const keptEntries = {};
+      for (const keptPath of Object.values(kept)) {
+        keptEntries[keptPath] = await readBinEntry(layout, keptPath);
+      }
+
+      const packagePath = await resolvers.npm('fixture-pkg@1.0.0', resolve, { env, installRetryDelayMs: 0 });
+      const installCalls = (await readNpmLog(fixture.logFile)).filter(call => call.args[0] === 'install');
+
+      expect(await readFile(packagePath, 'utf8')).toContain('installed = true');
+      expect(installCalls.map(call => call.args)).toEqual([
+        ['install', '-g', 'fixture-pkg-v-1.0.0@npm:fixture-pkg@1.0.0'],
+        ['install', '-g', 'fixture-pkg-v-1.0.0@npm:fixture-pkg@1.0.0'],
+      ]);
+      expect(await readBinEntry(layout, binPath)).toContain('fixture-pkg-v-1.0.0');
+      for (const entryPath of binEntryPaths(layout, extraBinPath)) {
+        await expect(lstat(entryPath)).rejects.toThrow();
+      }
+      for (const keptPath of Object.values(kept)) {
+        expect(await readBinEntry(layout, keptPath)).toBe(keptEntries[keptPath]);
+      }
+    });
+  }
 
   test(`${moduleName} redirects installs to use-m cache when npm global root is not writable`, async () => {
     if (typeof Deno !== 'undefined' || typeof Bun !== 'undefined') {

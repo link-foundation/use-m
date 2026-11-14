@@ -10,6 +10,7 @@ export const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)
 export const USE_SOURCE_FRAGMENTS = [
   'src/use/core.js',
   'src/use/engines.js',
+  'src/use/bin-links.js',
   'src/use/resolvers.js',
   'src/use/coordination.js',
   'src/use/runtime.js',
