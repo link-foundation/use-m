@@ -77,6 +77,10 @@ function looksLikeUseModule(source) {
  * `TimeoutError` for `totalTimeoutMs`). The loader stops waiting even when a
  * custom `fetch` ignores the signal it is given.
  *
+ * The error message never carries URL credentials or query parameter values
+ * (they read `***`), nor the text of a long body that is not the module; the
+ * original errors stay available, unchanged, in `errors`.
+ *
  * @param {object} [options]
  * @param {typeof fetch} [options.fetch] - fetch implementation (defaults to globalThis.fetch)
  * @param {string[]} [options.sources] - ordered list of CDN URLs to try
@@ -124,8 +128,7 @@ async function loadUseM(options = {}) {
       async (url) => {
         const source = await fetchSource(fetchImpl, url, timeoutMs, deadline.signal);
         if (!looksLikeUseModule(source)) {
-          const preview = source.slice(0, 80).replace(/\s+/g, ' ').trim();
-          throw new Error(`response was not the use-m module (got: "${preview}")`);
+          throw new Error(`response was not the use-m module (${describeRejectedBody(source)})`);
         }
         const exported = await evaluate(source);
         if (!exported || typeof exported.use !== 'function') {
@@ -138,6 +141,7 @@ async function loadUseM(options = {}) {
         retryDelayMs,
         signal: deadline.signal,
         describeSource: redactUrl,
+        redact: redactUrls,
         label: 'load use-m from every CDN mirror',
         hint: 'This is usually a transient network or CDN outage — please check your connection and try again.',
       }
@@ -302,6 +306,30 @@ function isAbortSignal(value) {
     && typeof value.aborted === 'boolean'
     && typeof value.addEventListener === 'function'
     && typeof value.removeEventListener === 'function';
+}
+
+// What a rejected body was, for the error message. Short bodies (CDN error
+// text such as "Internal Server Error") and HTML page titles are quoted; a long
+// body of anything else is described only by its size, so the message never
+// repeats arbitrary content a mirror served.
+function describeRejectedBody(source) {
+  const text = typeof source === 'string' ? source.trim() : '';
+  if (text.length === 0) return 'got an empty body';
+  if (text.startsWith('<')) {
+    const title = /<title[^>]*>([^<]*)<\/title>/i.exec(text);
+    return title && title[1].trim() ? `got an HTML page titled "${clip(title[1])}"` : 'got an HTML page';
+  }
+  if (text.length < 256 || ERROR_BODY_PATTERN.test(text)) return `got: "${clip(text)}"`;
+  return `got ${text.length} characters that do not look like the module`;
+}
+
+function clip(text) {
+  return text.replace(/\s+/g, ' ').trim().slice(0, 80);
+}
+
+// Every URL in `text`, passed through `redactUrl`.
+function redactUrls(text) {
+  return String(text).replace(/\b[a-z][a-z0-9+.-]*:\/\/[^\s"'<>()]+/gi, (url) => redactUrl(url));
 }
 
 // Source label for error messages, without credentials: URL user info and

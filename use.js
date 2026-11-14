@@ -3351,6 +3351,8 @@ const toResolverFunction = (resolver) =>
 // @param {string} [options.label] - what we were trying to do (used in the error message)
 // @param {string} [options.hint] - extra guidance appended to the aggregated error
 // @param {AbortSignal} [options.signal] - stops further attempts and retry delays once aborted
+// @param {(text: string) => string} [options.redact] - rewrites each attempt's line and the stop
+//   reason before they join the message, e.g. to mask credentials; `errors` stays unchanged
 //
 // Once `options.signal` aborts, no further attempt starts and a pending retry
 // delay ends at once. The engine does not interrupt an attempt already in
@@ -3366,6 +3368,7 @@ const loadWithFallback = async (sources, load, options = {}) => {
     label = 'load from any source',
     hint = '',
     signal,
+    redact = (text) => text,
   } = options
   if (!Array.isArray(sources) || sources.length === 0) {
     throw new Error(`Failed to ${label}: no sources were provided.`)
@@ -3383,7 +3386,7 @@ const loadWithFallback = async (sources, load, options = {}) => {
         return await load(source, attempt)
       } catch (error) {
         errors.push(error)
-        failures.push(`${describeSource(source)} (attempt ${attempt}/${maxAttemptsPerSource}): ${describeFailure(error)}`)
+        failures.push(redact(`${describeSource(source)} (attempt ${attempt}/${maxAttemptsPerSource}): ${describeFailure(error)}`))
         if (attempt < maxAttemptsPerSource && retryDelayMs > 0 && !isStopped()) {
           await abortableDelay(retryDelayMs * attempt, signal)
         }
@@ -3396,7 +3399,7 @@ const loadWithFallback = async (sources, load, options = {}) => {
     const planned = sources.length * maxAttemptsPerSource
     throw aggregateErrors(
       errors,
-      `Failed to ${label}: stopped after ${failures.length} of ${planned} planned attempts because ${describeError(reason)}\n${attemptList}`,
+      `Failed to ${label}: stopped after ${failures.length} of ${planned} planned attempts because ${redact(describeError(reason))}\n${attemptList}`,
       reason
     )
   }

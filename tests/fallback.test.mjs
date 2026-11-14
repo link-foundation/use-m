@@ -279,3 +279,74 @@ describe(`${moduleName} makeUse per-package CDN fallback`, () => {
     expect(denoResolverChain).toEqual(['deno', 'jspm', 'skypack', 'denoNpm']);
   });
 });
+
+describe(`${moduleName} loadWithFallback signal and redact (issue #80)`, () => {
+  test(`${moduleName} starts no attempt once the signal has aborted`, async () => {
+    const controller = new AbortController();
+    const reason = new Error('cancelled by the caller');
+    controller.abort(reason);
+    let calls = 0;
+    let thrown;
+    try {
+      await loadWithFallback(['a', 'b'], async () => { calls += 1; }, { signal: controller.signal, maxAttemptsPerSource: 2 });
+    } catch (error) {
+      thrown = error;
+    }
+    expect(calls).toBe(0);
+    expect(thrown.cause).toBe(reason);
+    expect(thrown.errors).toEqual([]);
+    expect(thrown.message).toBe(
+      'Failed to load from any source: stopped after 0 of 4 planned attempts because Error: cancelled by the caller\nAttempts: none'
+    );
+  });
+
+  test(`${moduleName} stops retrying when the signal aborts during an attempt`, async () => {
+    const controller = new AbortController();
+    const calls = [];
+    let thrown;
+    try {
+      await loadWithFallback(['a', 'b'], async (source, attempt) => {
+        calls.push(`${source}${attempt}`);
+        controller.abort(new Error('deadline'));
+        throw new Error('aborted mid-request');
+      }, { signal: controller.signal, maxAttemptsPerSource: 3 });
+    } catch (error) {
+      thrown = error;
+    }
+    expect(calls).toEqual(['a1']);
+    expect(thrown.errors.length).toBe(1);
+    expect(thrown.message).toContain('stopped after 1 of 6 planned attempts because Error: deadline');
+    expect(thrown.message).toContain('  - a (attempt 1/3): aborted mid-request');
+  });
+
+  test(`${moduleName} ends a pending retry delay as soon as the signal aborts`, async () => {
+    const controller = new AbortController();
+    const started = Date.now();
+    const aborter = setTimeout(() => controller.abort(), 50);
+    let thrown;
+    try {
+      await loadWithFallback(['a'], async () => { throw new Error('down'); }, {
+        signal: controller.signal, maxAttemptsPerSource: 2, retryDelayMs: 60000,
+      });
+    } catch (error) {
+      thrown = error;
+    }
+    clearTimeout(aborter);
+    expect(Date.now() - started).toBeLessThan(2000);
+    expect(thrown.message).toContain('stopped after 1 of 2 planned attempts because AbortError');
+  });
+
+  test(`${moduleName} passes each attempt line through redact`, async () => {
+    let thrown;
+    try {
+      await loadWithFallback(['https://secret@host/x'], async () => { throw new Error('no https://secret@host/x'); }, {
+        redact: (text) => text.split('secret@').join('***@'),
+      });
+    } catch (error) {
+      thrown = error;
+    }
+    expect(thrown.message).toContain('  - https://***@host/x (attempt 1/1): no https://***@host/x');
+    expect(thrown.message).not.toContain('secret');
+    expect(thrown.errors[0].message).toBe('no https://secret@host/x');
+  });
+});
