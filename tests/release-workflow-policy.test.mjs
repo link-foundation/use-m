@@ -77,6 +77,15 @@ describe('release workflow policy', () => {
     expect(workflowText.includes('uses: ./.github/workflows/test.yml')).toBe(false)
   })
 
+  test('checks the single-package policy before release and on direct npm publish', () => {
+    const publishJob = jobBlocks(readText(releaseWorkflowPath)).get('publish') || ''
+    const manifest = JSON.parse(readText(path.join(rootDir, 'package.json')))
+    expect(manifest.scripts['check:packages']).toBe('node scripts/check-publishable-packages.mjs')
+    expect(manifest.scripts.prepublishOnly).toBe(manifest.scripts['check:packages'])
+    expect(publishJob.indexOf('run: npm run check:packages')).toBeGreaterThan(0)
+    expect(publishJob.indexOf('run: npm run check:packages')).toBeLessThan(publishJob.indexOf('run: npm publish'))
+  })
+
   test('runs tests before publishing and preserves main-branch release runs', () => {
     const workflowText = readText(releaseWorkflowPath)
     const jobs = jobBlocks(workflowText)

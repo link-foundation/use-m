@@ -1,4 +1,5 @@
 {
+  "private": true,
   "name": "multiple-versions",
   "scripts": {
     "start:use": "node use.js",
