@@ -198,6 +198,9 @@ jobs:
       - name: Install dependencies
         run: npm ci --no-audit --no-fund
 
+      - name: Verify only use-m is publishable
+        run: npm run check:packages
+
       # An unreachable registry fails this step instead of being read as "not
       # published" and walking into a publish conflict.
       - name: Check npm version

@@ -1,6 +1,6 @@
 {
   "name": "use-m",
-  "version": "8.17.1",
+  "version": "8.17.2",
   "description": "use-m: dynamically import any JavaScript module",
   "type": "module",
   "main": "use.cjs",
@@ -33,6 +33,8 @@
   "scripts": {
     "build": "node scripts/build-use-bundles.mjs",
     "prepack": "npm run build",
+    "prepublishOnly": "node scripts/check-publishable-packages.mjs",
+    "check:packages": "node scripts/check-publishable-packages.mjs",
     "test": "node --experimental-vm-modules --disable-warning=ExperimentalWarning --disable-warning=DEP0025 --disable-warning=DEP0040 --disable-warning=DEP0125 ./node_modules/jest/bin/jest.js",
     "test:examples": "./examples/test-examples.mjs",
     "sync:entries": "npm run build"
