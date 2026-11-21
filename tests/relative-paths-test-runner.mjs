@@ -1,4 +1,4 @@
-import { use } from '../use.mjs';
+import { use } from '../src/use.mjs';
 
 console.log('Testing relative paths from tests directory...\n');
 
@@ -15,8 +15,8 @@ try {
   console.log('   ✓ Test:', testData.test);
   
   // Test 3: Import from parent directory
-  console.log('\n3. Testing ../use.mjs');
-  const parentModule = await use('../use.mjs');
+  console.log('\n3. Testing ../src/use.mjs');
+  const parentModule = await use('../src/use.mjs');
   console.log('   ✓ use function exists:', typeof parentModule.use === 'function');
   
   // Test 4: Import from subdirectory

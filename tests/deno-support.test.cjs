@@ -1,4 +1,4 @@
-const { describe, test, expect } = require('../test-adapter.cjs');
+const { describe, test, expect } = require('../src/test-adapter.cjs');
 const { makeUse, resolvers } = require('use-m/use.cjs');
 
 const moduleName = `[cjs module]`;

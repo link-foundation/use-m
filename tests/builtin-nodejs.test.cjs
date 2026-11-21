@@ -1,5 +1,5 @@
-const { describe, test, expect } = require('../test-adapter.cjs');
-const { use } = require('../use.cjs');
+const { describe, test, expect } = require('../src/test-adapter.cjs');
+const { use } = require('../src/use.cjs');
 const moduleName = `[${__filename.split('.').pop()} module]`;
 
 describe(`${moduleName} Node.js/Bun-only built-in modules`, () => {
@@ -26,7 +26,7 @@ describe(`${moduleName} Node.js/Bun-only built-in modules`, () => {
     expect(typeof path.extname).toBe('function');
     
     // Test path operations
-    expect(path.join('a', 'b', 'c')).toBe('a/b/c');
+    expect(path.join('a', 'b', 'c')).toBe(['a', 'b', 'c'].join(path.sep));
     expect(path.basename('/path/to/file.txt')).toBe('file.txt');
     expect(path.extname('file.txt')).toBe('.txt');
     expect(path.dirname('/path/to/file.txt')).toBe('/path/to');

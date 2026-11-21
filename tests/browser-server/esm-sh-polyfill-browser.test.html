@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>use-m esm.sh Browser Polyfill Regression</title>
+</head>
+<body>
+  <div id="status">Running</div>
+  <script type="module">
+    const complete = (result) => {
+      window.testResults = result;
+      document.getElementById('status').textContent = result.success ? 'Passed' : 'Failed';
+    };
+
+    try {
+      // esm.sh exposes Node-like globals when bundling use-m. Before issue #62,
+      // these globals made use-m choose the npm resolver inside a browser.
+      globalThis.global = {
+        __filename: '/use-m@8.14.1/es2022/use-m.mjs'
+      };
+      globalThis.process = {
+        versions: { node: '22.0.0' },
+        env: {}
+      };
+
+      const { makeUse } = await import('../../src/use.mjs?issue62-polyfill');
+      const imports = [];
+      const use = await makeUse({
+        import: async (modulePath) => {
+          imports.push(modulePath);
+          return { modulePath };
+        }
+      });
+      const d3 = await use('d3');
+
+      complete({
+        success: d3.modulePath === 'https://esm.sh/d3',
+        imports,
+        modulePath: d3.modulePath,
+        error: null
+      });
+    } catch (error) {
+      complete({
+        success: false,
+        imports: [],
+        modulePath: null,
+        error: error && error.stack ? error.stack : String(error)
+      });
+    }
+  </script>
+</body>
+</html>

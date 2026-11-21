@@ -1,0 +1,327 @@
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	﻿2026-09-24T19:48:03.9750246Z ##[group]Run npm test -- --runInBand
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:03.9750640Z ^[[36;1mnpm test -- --runInBand^[[0m
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:03.9823125Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:03.9823490Z env:
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:03.9823672Z   GIT_CONFIG_COUNT: 1
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:03.9823901Z   GIT_CONFIG_KEY_0: init.defaultBranch
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:03.9824179Z   GIT_CONFIG_VALUE_0: main
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:03.9824400Z ##[endgroup]
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:04.7062367Z 
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:04.7063000Z > use-m@8.16.4 test
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:04.7067862Z > node --experimental-vm-modules --disable-warning=ExperimentalWarning --disable-warning=DEP0025 --disable-warning=DEP0040 --disable-warning=DEP0125 ./node_modules/jest/bin/jest.js --runInBand
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:04.7068855Z 
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:13.1407434Z PASS tests/npm-global-prefix.test.cjs (7.823 s)
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:22.3141254Z PASS tests/npm-global-prefix.test.mjs (9.169 s)
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:22.7541959Z PASS tests/pre-change-contract.test.mjs
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:28.1995460Z PASS tests/npm-registry-resilience.test.mjs (5.439 s)
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:30.4419069Z PASS tests/fetch-polyfill.test.mjs
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:30.5810291Z PASS tests/release-workflow-policy.test.mjs
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:30.8134501Z PASS tests/load.test.mjs
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:31.0245909Z PASS tests/load.test.cjs
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:31.2272751Z PASS tests/builtin-nodejs.test.cjs
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:31.3801575Z PASS tests/builtin-nodejs.test.mjs
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:31.5390618Z PASS tests/fs-promises.test.mjs
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:31.7622851Z PASS tests/builtin-backward-compatibility.test.cjs
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:31.8902662Z PASS tests/npm-release.test.mjs
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:32.1048220Z PASS tests/builtin-backward-compatibility.test.mjs
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:32.2614694Z PASS tests/fallback.test.cjs
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:32.3902220Z PASS tests/fallback.test.mjs
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:55.1644764Z FAIL tests/resolvers.test.mjs (22.771 s)
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:55.1646717Z   ● [mjs module] resolvers tests › [mjs module] npm resolver resolves package path
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:55.1647530Z 
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:55.1647918Z     thrown: "Exceeded timeout of 10000 ms for a test.
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:55.1649455Z     Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:55.1650630Z 
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:55.1650886Z     ^[[0m ^[[90m 12 |^[[39m
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:55.1651620Z      ^[[90m 13 |^[[39m describe(^[[32m`${moduleName} resolvers tests`^[[39m^[[33m,^[[39m () ^[[33m=>^[[39m {
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:55.1653834Z     ^[[31m^[[1m>^[[22m^[[39m^[[90m 14 |^[[39m   test(^[[32m`${moduleName} npm resolver resolves package path`^[[39m^[[33m,^[[39m ^[[36masync^[[39m () ^[[33m=>^[[39m {
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:55.1655325Z      ^[[90m    |^[[39m   ^[[31m^[[1m^^[[22m^[[39m
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:55.1655912Z      ^[[90m 15 |^[[39m     ^[[36mconst^[[39m { npm } ^[[33m=^[[39m resolvers^[[33m;^[[39m
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:55.1656749Z      ^[[90m 16 |^[[39m     ^[[36mconst^[[39m packagePath ^[[33m=^[[39m ^[[36mawait^[[39m npm(^[[32m'lodash@4.17.21'^[[39m^[[33m,^[[39m resolve)^[[33m;^[[39m
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:55.1657775Z      ^[[90m 17 |^[[39m     expect(packagePath)^[[33m.^[[39mtoMatch(^[[35m/node_modules[\\/]lodash-v-4\.17\.21/^[[39m)^[[33m;^[[39m^[[0m
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:55.1658229Z 
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:55.1658370Z       at tests/resolvers.test.mjs:14:3
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:55.1658684Z       at tests/resolvers.test.mjs:13:1
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:55.1658874Z 
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:59.8132976Z PASS tests/builtin-browser.test.mjs
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:59.9630421Z PASS tests/filename.test.mjs
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:03.6534419Z PASS tests/relative-paths-browser.test.mjs
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:07.8111362Z PASS tests/resolvers.test.cjs
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:07.9867514Z PASS tests/dynamic-builtins.test.cjs
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:08.1517099Z PASS tests/dynamic-builtins.test.mjs
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:19.6958217Z PASS tests/use.test.cjs (11.539 s)
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:22.0146142Z PASS tests/use.test.mjs
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:22.1566835Z PASS tests/filename.test.cjs
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:22.4362077Z PASS tests/root-entries.test.mjs
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:27.3680625Z PASS tests/esm-sh-polyfill-browser.test.mjs
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:28.9650931Z PASS tests/builtin-errors.test.mjs
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:30.4915650Z PASS tests/builtin-errors.test.cjs
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:31.4431856Z PASS tests/relative-paths.test.cjs
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:31.9307289Z PASS tests/relative-paths.test.mjs
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:32.0590220Z PASS tests/module-specifier.test.cjs
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:32.1946001Z PASS tests/module-specifier.test.mjs
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:32.3212843Z PASS tests/deno-support.test.cjs
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:32.4530586Z PASS tests/test-runner-config.test.mjs
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:32.5740132Z PASS tests/deno-support.test.mjs
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:33.7200402Z PASS tests/relative-paths.integration.test.mjs
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:33.7351623Z   ● Console
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:33.7351867Z 
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:33.7352013Z     console.log
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:33.7352431Z       D:\a\use-m\use-m\tests
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:33.7352708Z 
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:33.7353245Z       at Object.<anonymous> (tests/relative-paths.integration.test.mjs:29:15)
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:33.7353828Z 
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:33.7353970Z     console.log
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:33.7354422Z       Testing relative paths from tests directory...
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:33.7354915Z       
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:33.7355305Z       1. Testing ./browser-server/test-helper.js
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:33.7355960Z          ✓ Message: Helper module loaded
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:33.7356371Z       
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:33.7357973Z       2. Testing ./browser-server/test-data.json
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:33.7358742Z          ✓ Value: 123
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:33.7359176Z          ✓ Test: data
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:33.7359497Z       
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:33.7359828Z       3. Testing ../src/use.mjs
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:33.7363243Z          ✓ use function exists: true
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:33.7363686Z       
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:33.7364162Z       4. Testing ./browser-server/subfolder/nested.js
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:33.7368816Z          ✓ Nested: true Level: subfolder
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:33.7369281Z       
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:33.7369794Z       5. Testing ./browser-server/subfolder/nested-data.json
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:33.7371050Z          ✓ Level: nested Depth: 1
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:33.7371756Z       
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:33.7372123Z       6. Testing ../package.json
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:33.7372703Z          ✓ Package name: use-m
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:33.7373074Z       
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:33.7373478Z       ✅ All direct tests passed!
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:33.7373760Z 
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:33.7374213Z       at Object.<anonymous> (tests/relative-paths.integration.test.mjs:39:15)
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:33.7374755Z 
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:33.8679149Z PASS tests/builtin-universal.test.cjs
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:33.9901851Z PASS tests/builtin-universal.test.mjs
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:37.7560232Z PASS tests/exports-field.test.mjs
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:37.9309594Z PASS tests/source-build.test.mjs
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:40.8241925Z PASS tests/loader.test.mjs
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:41.0852158Z PASS tests/commonjs-default.test.mjs
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:41.2679277Z PASS tests/network-imports.test.mjs
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:41.4472490Z PASS tests/network-imports.test.cjs
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:41.5660699Z PASS tests/get-script-url.test.cjs
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:41.7542754Z PASS tests/commonjs-default.test.cjs
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:41.8783086Z PASS tests/script-sync.test.mjs
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:42.0021043Z PASS tests/get-script-url.test.mjs
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:54.4159401Z PASS tests/lodash.test.mjs (12.411 s)
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:57.6216578Z PASS tests/lodash.test.cjs
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:59.4503888Z PASS tests/command-stream.test.cjs
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:00.5193402Z PASS tests/command-stream.test.mjs
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:00.6425569Z PASS tests/import.test.mjs
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:00.7630362Z PASS tests/import.test.cjs
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:09.3131702Z PASS tests/typescript.test.cjs (8.547 s)
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:10.0103466Z PASS tests/typescript.test.mjs
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:10.0120274Z 
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:10.0123131Z Summary of all failing tests
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:10.0129164Z FAIL tests/resolvers.test.mjs (22.771 s)
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:10.0137671Z   ● [mjs module] resolvers tests › [mjs module] npm resolver resolves package path
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:10.0139140Z 
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:10.0141935Z     thrown: "Exceeded timeout of 10000 ms for a test.
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:10.0151879Z     Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:10.0152685Z 
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:10.0152998Z     ^[[0m ^[[90m 12 |^[[39m
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:10.0160336Z      ^[[90m 13 |^[[39m describe(^[[32m`${moduleName} resolvers tests`^[[39m^[[33m,^[[39m () ^[[33m=>^[[39m {
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:10.0170299Z     ^[[31m^[[1m>^[[22m^[[39m^[[90m 14 |^[[39m   test(^[[32m`${moduleName} npm resolver resolves package path`^[[39m^[[33m,^[[39m ^[[36masync^[[39m () ^[[33m=>^[[39m {
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:10.0173185Z      ^[[90m    |^[[39m   ^[[31m^[[1m^^[[22m^[[39m
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:10.0178384Z      ^[[90m 15 |^[[39m     ^[[36mconst^[[39m { npm } ^[[33m=^[[39m resolvers^[[33m;^[[39m
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:10.0188176Z      ^[[90m 16 |^[[39m     ^[[36mconst^[[39m packagePath ^[[33m=^[[39m ^[[36mawait^[[39m npm(^[[32m'lodash@4.17.21'^[[39m^[[33m,^[[39m resolve)^[[33m;^[[39m
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:10.0196700Z      ^[[90m 17 |^[[39m     expect(packagePath)^[[33m.^[[39mtoMatch(^[[35m/node_modules[\\/]lodash-v-4\.17\.21/^[[39m)^[[33m;^[[39m^[[0m
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:10.0197178Z 
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:10.0199250Z       at tests/resolvers.test.mjs:14:3
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:10.0201755Z       at tests/resolvers.test.mjs:13:1
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:10.0204832Z 
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:10.0205412Z 
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:10.0215922Z Test Suites: 1 failed, 57 passed, 58 total
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:10.0216441Z Tests:       1 failed, 559 passed, 560 total
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:10.0216753Z Snapshots:   0 total
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:10.0216978Z Time:        124.764 s
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:10.0217218Z Ran all test suites.
+Test on Node.js 22.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:10.2030850Z ##[error]Process completed with exit code 1.
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	﻿2026-09-24T19:48:39.3050220Z ##[group]Run npm test -- --runInBand
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:39.3050685Z ^[[36;1mnpm test -- --runInBand^[[0m
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:39.3113728Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:39.3114310Z env:
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:39.3114654Z   GIT_CONFIG_COUNT: 1
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:39.3115020Z   GIT_CONFIG_KEY_0: init.defaultBranch
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:39.3115521Z   GIT_CONFIG_VALUE_0: main
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:39.3115898Z ##[endgroup]
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:40.1031958Z 
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:40.1032917Z > use-m@8.16.4 test
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:40.1034606Z > node --experimental-vm-modules --disable-warning=ExperimentalWarning --disable-warning=DEP0025 --disable-warning=DEP0040 --disable-warning=DEP0125 ./node_modules/jest/bin/jest.js --runInBand
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:40.1035710Z 
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:48.5004649Z PASS tests/npm-global-prefix.test.cjs (7.946 s)
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:55.3712715Z PASS tests/npm-global-prefix.test.mjs (6.867 s)
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:55.6106965Z PASS tests/pre-change-contract.test.mjs
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:48:59.3905511Z PASS tests/npm-registry-resilience.test.mjs
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:00.5704508Z PASS tests/fetch-polyfill.test.mjs
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:00.6581098Z PASS tests/release-workflow-policy.test.mjs
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:00.7995325Z PASS tests/load.test.mjs
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:00.9596404Z PASS tests/load.test.cjs
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:01.0746680Z PASS tests/builtin-nodejs.test.cjs
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:01.1721891Z PASS tests/builtin-nodejs.test.mjs
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:01.2701871Z PASS tests/fs-promises.test.mjs
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:01.4030058Z PASS tests/builtin-backward-compatibility.test.cjs
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:01.4927711Z PASS tests/npm-release.test.mjs
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:01.6218349Z PASS tests/builtin-backward-compatibility.test.mjs
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:01.7094540Z PASS tests/fallback.test.cjs
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:01.7942650Z PASS tests/fallback.test.mjs
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:28.4527122Z FAIL tests/resolvers.test.mjs (26.655 s)
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:28.4528138Z   ● [mjs module] resolvers tests › [mjs module] npm resolver resolves package path
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:28.4528443Z 
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:28.4528632Z     thrown: "Exceeded timeout of 10000 ms for a test.
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:28.4529463Z     Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:28.4530022Z 
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:28.4530285Z     ^[[0m ^[[90m 12 |^[[39m
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:28.4530972Z      ^[[90m 13 |^[[39m describe(^[[32m`${moduleName} resolvers tests`^[[39m^[[33m,^[[39m () ^[[33m=>^[[39m {
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:28.4533076Z     ^[[31m^[[1m>^[[22m^[[39m^[[90m 14 |^[[39m   test(^[[32m`${moduleName} npm resolver resolves package path`^[[39m^[[33m,^[[39m ^[[36masync^[[39m () ^[[33m=>^[[39m {
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:28.4534067Z      ^[[90m    |^[[39m   ^[[31m^[[1m^^[[22m^[[39m
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:28.4534651Z      ^[[90m 15 |^[[39m     ^[[36mconst^[[39m { npm } ^[[33m=^[[39m resolvers^[[33m;^[[39m
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:28.4535541Z      ^[[90m 16 |^[[39m     ^[[36mconst^[[39m packagePath ^[[33m=^[[39m ^[[36mawait^[[39m npm(^[[32m'lodash@4.17.21'^[[39m^[[33m,^[[39m resolve)^[[33m;^[[39m
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:28.4536650Z      ^[[90m 17 |^[[39m     expect(packagePath)^[[33m.^[[39mtoMatch(^[[35m/node_modules[\\/]lodash-v-4\.17\.21/^[[39m)^[[33m;^[[39m^[[0m
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:28.4537144Z 
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:28.4537361Z       at tests/resolvers.test.mjs:14:3
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:28.4537789Z       at tests/resolvers.test.mjs:13:1
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:28.4538035Z 
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:36.9714487Z PASS tests/builtin-browser.test.mjs (8.515 s)
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:37.0935550Z PASS tests/filename.test.mjs
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:42.6943296Z PASS tests/relative-paths-browser.test.mjs (5.613 s)
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:46.0038849Z PASS tests/resolvers.test.cjs
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:46.1146756Z PASS tests/dynamic-builtins.test.cjs
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:49:46.2103190Z PASS tests/dynamic-builtins.test.mjs
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:03.4031134Z PASS tests/use.test.cjs (17.19 s)
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:05.1406616Z PASS tests/use.test.mjs
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:05.2826602Z PASS tests/filename.test.cjs
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:05.4678727Z PASS tests/root-entries.test.mjs
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:11.8452527Z PASS tests/esm-sh-polyfill-browser.test.mjs (6.374 s)
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:13.2588165Z PASS tests/builtin-errors.test.mjs
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:14.3694617Z PASS tests/builtin-errors.test.cjs
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:15.0997404Z PASS tests/relative-paths.test.cjs
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:15.4219481Z PASS tests/relative-paths.test.mjs
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:15.6747845Z PASS tests/module-specifier.test.cjs
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:15.7683351Z PASS tests/module-specifier.test.mjs
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:15.8589433Z PASS tests/deno-support.test.cjs
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:15.9558243Z PASS tests/test-runner-config.test.mjs
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:16.0592722Z PASS tests/deno-support.test.mjs
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:16.9748387Z PASS tests/relative-paths.integration.test.mjs
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:16.9778577Z   ● Console
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:16.9778785Z 
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:16.9778941Z     console.log
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:16.9779261Z       D:\a\use-m\use-m\tests
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:16.9779457Z 
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:16.9779748Z       at Object.<anonymous> (tests/relative-paths.integration.test.mjs:29:15)
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:16.9780114Z 
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:16.9780231Z     console.log
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:16.9780559Z       Testing relative paths from tests directory...
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:16.9780869Z       
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:16.9781201Z       1. Testing ./browser-server/test-helper.js
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:16.9781598Z          ✓ Message: Helper module loaded
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:16.9781884Z       
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:16.9783809Z       2. Testing ./browser-server/test-data.json
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:16.9784551Z          ✓ Value: 123
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:16.9784995Z          ✓ Test: data
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:16.9785366Z       
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:16.9785732Z       3. Testing ../src/use.mjs
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:16.9786238Z          ✓ use function exists: true
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:16.9786623Z       
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:16.9787102Z       4. Testing ./browser-server/subfolder/nested.js
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:16.9787631Z          ✓ Nested: true Level: subfolder
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:16.9788027Z       
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:16.9788498Z       5. Testing ./browser-server/subfolder/nested-data.json
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:16.9788998Z          ✓ Level: nested Depth: 1
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:16.9789365Z       
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:16.9789691Z       6. Testing ../package.json
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:16.9790194Z          ✓ Package name: use-m
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:16.9790568Z       
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:16.9790962Z       ✅ All direct tests passed!
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:16.9791235Z 
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:16.9791628Z       at Object.<anonymous> (tests/relative-paths.integration.test.mjs:39:15)
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:16.9792048Z 
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:17.0748664Z PASS tests/builtin-universal.test.cjs
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:17.1669902Z PASS tests/builtin-universal.test.mjs
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:19.5921384Z PASS tests/exports-field.test.mjs
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:19.7304248Z PASS tests/source-build.test.mjs
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:21.2412700Z PASS tests/loader.test.mjs
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:21.4430725Z PASS tests/commonjs-default.test.mjs
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:21.5885567Z PASS tests/network-imports.test.mjs
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:21.7293793Z PASS tests/network-imports.test.cjs
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:21.8245353Z PASS tests/get-script-url.test.cjs
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:21.9763292Z PASS tests/commonjs-default.test.cjs
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:22.0874195Z PASS tests/script-sync.test.mjs
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:22.1796437Z PASS tests/get-script-url.test.mjs
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:34.1680687Z PASS tests/lodash.test.mjs (11.986 s)
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:36.8356443Z PASS tests/lodash.test.cjs
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:38.5605475Z PASS tests/command-stream.test.cjs
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:39.3823732Z PASS tests/command-stream.test.mjs
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:39.4911233Z PASS tests/import.test.mjs
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:39.6266047Z PASS tests/import.test.cjs
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:51.6149349Z PASS tests/typescript.test.cjs (12.012 s)
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:52.1841721Z PASS tests/typescript.test.mjs
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:52.1855703Z 
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:52.1857154Z Summary of all failing tests
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:52.1860495Z FAIL tests/resolvers.test.mjs (26.655 s)
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:52.1864066Z   ● [mjs module] resolvers tests › [mjs module] npm resolver resolves package path
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:52.1864586Z 
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:52.1865783Z     thrown: "Exceeded timeout of 10000 ms for a test.
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:52.1873616Z     Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:52.1874358Z 
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:52.1875127Z     ^[[0m ^[[90m 12 |^[[39m
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:52.1879580Z      ^[[90m 13 |^[[39m describe(^[[32m`${moduleName} resolvers tests`^[[39m^[[33m,^[[39m () ^[[33m=>^[[39m {
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:52.1886399Z     ^[[31m^[[1m>^[[22m^[[39m^[[90m 14 |^[[39m   test(^[[32m`${moduleName} npm resolver resolves package path`^[[39m^[[33m,^[[39m ^[[36masync^[[39m () ^[[33m=>^[[39m {
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:52.1887813Z      ^[[90m    |^[[39m   ^[[31m^[[1m^^[[22m^[[39m
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:52.1891157Z      ^[[90m 15 |^[[39m     ^[[36mconst^[[39m { npm } ^[[33m=^[[39m resolvers^[[33m;^[[39m
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:52.1898813Z      ^[[90m 16 |^[[39m     ^[[36mconst^[[39m packagePath ^[[33m=^[[39m ^[[36mawait^[[39m npm(^[[32m'lodash@4.17.21'^[[39m^[[33m,^[[39m resolve)^[[33m;^[[39m
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:52.1900930Z      ^[[90m 17 |^[[39m     expect(packagePath)^[[33m.^[[39mtoMatch(^[[35m/node_modules[\\/]lodash-v-4\.17\.21/^[[39m)^[[33m;^[[39m^[[0m
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:52.1901466Z 
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:52.1901629Z       at tests/resolvers.test.mjs:14:3
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:52.1902198Z       at tests/resolvers.test.mjs:13:1
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:52.1902479Z 
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:52.1904439Z 
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:52.1912274Z Test Suites: 1 failed, 57 passed, 58 total
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:52.1912798Z Tests:       1 failed, 559 passed, 560 total
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:52.1913193Z Snapshots:   0 total
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:52.1913480Z Time:        131.687 s
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:52.1913775Z Ran all test suites.
+Test on Node.js 24.x (windows-latest)	Run Node.js tests	2026-09-24T19:50:52.3838102Z ##[error]Process completed with exit code 1.
+Pipeline status	Fail when a required job failed or was cancelled	﻿2026-09-24T19:50:59.7400063Z ##[group]Run echo "$NEEDS_JSON" | jq -r 'to_entries[] | "\(.key): \(.value.result)"'
+Pipeline status	Fail when a required job failed or was cancelled	2026-09-24T19:50:59.7401282Z ^[[36;1mecho "$NEEDS_JSON" | jq -r 'to_entries[] | "\(.key): \(.value.result)"'^[[0m
+Pipeline status	Fail when a required job failed or was cancelled	2026-09-24T19:50:59.7402472Z ^[[36;1mfailed=$(echo "$NEEDS_JSON" | jq -r 'to_entries[] | select(.value.result == "failure" or .value.result == "cancelled") | .key')^[[0m
+Pipeline status	Fail when a required job failed or was cancelled	2026-09-24T19:50:59.7403547Z ^[[36;1mif [ -n "$failed" ]; then^[[0m
+Pipeline status	Fail when a required job failed or was cancelled	2026-09-24T19:50:59.7404598Z ^[[36;1m  echo "::error::Jobs that failed or were cancelled: $(echo "$failed" | paste -sd, -)"^[[0m
+Pipeline status	Fail when a required job failed or was cancelled	2026-09-24T19:50:59.7405411Z ^[[36;1m  exit 1^[[0m
+Pipeline status	Fail when a required job failed or was cancelled	2026-09-24T19:50:59.7405916Z ^[[36;1mfi^[[0m
+Pipeline status	Fail when a required job failed or was cancelled	2026-09-24T19:50:59.8166352Z shell: /usr/bin/bash -e {0}
+Pipeline status	Fail when a required job failed or was cancelled	2026-09-24T19:50:59.8167983Z env:
+Pipeline status	Fail when a required job failed or was cancelled	2026-09-24T19:50:59.8168967Z   GIT_CONFIG_COUNT: 1
+Pipeline status	Fail when a required job failed or was cancelled	2026-09-24T19:50:59.8170018Z   GIT_CONFIG_KEY_0: init.defaultBranch
+Pipeline status	Fail when a required job failed or was cancelled	2026-09-24T19:50:59.8171116Z   GIT_CONFIG_VALUE_0: main
+Pipeline status	Fail when a required job failed or was cancelled	2026-09-24T19:50:59.8173663Z   NEEDS_JSON: {
+Pipeline status	Fail when a required job failed or was cancelled	  "workflow-lint": {
+Pipeline status	Fail when a required job failed or was cancelled	    "result": "success",
+Pipeline status	Fail when a required job failed or was cancelled	    "outputs": {}
+Pipeline status	Fail when a required job failed or was cancelled	  },
+Pipeline status	Fail when a required job failed or was cancelled	  "version-check": {
+Pipeline status	Fail when a required job failed or was cancelled	    "result": "success",
+Pipeline status	Fail when a required job failed or was cancelled	    "outputs": {}
+Pipeline status	Fail when a required job failed or was cancelled	  },
+Pipeline status	Fail when a required job failed or was cancelled	  "test": {
+Pipeline status	Fail when a required job failed or was cancelled	    "result": "failure",
+Pipeline status	Fail when a required job failed or was cancelled	    "outputs": {}
+Pipeline status	Fail when a required job failed or was cancelled	  },
+Pipeline status	Fail when a required job failed or was cancelled	  "publish": {
+Pipeline status	Fail when a required job failed or was cancelled	    "result": "skipped",
+Pipeline status	Fail when a required job failed or was cancelled	    "outputs": {}
+Pipeline status	Fail when a required job failed or was cancelled	  }
+Pipeline status	Fail when a required job failed or was cancelled	}
+Pipeline status	Fail when a required job failed or was cancelled	2026-09-24T19:50:59.8176532Z ##[endgroup]
+Pipeline status	Fail when a required job failed or was cancelled	2026-09-24T19:50:59.8509871Z workflow-lint: success
+Pipeline status	Fail when a required job failed or was cancelled	2026-09-24T19:50:59.8510986Z version-check: success
+Pipeline status	Fail when a required job failed or was cancelled	2026-09-24T19:50:59.8512829Z test: failure
+Pipeline status	Fail when a required job failed or was cancelled	2026-09-24T19:50:59.8513733Z publish: skipped
+Pipeline status	Fail when a required job failed or was cancelled	2026-09-24T19:50:59.8772287Z ##[error]Jobs that failed or were cancelled: test
+Pipeline status	Fail when a required job failed or was cancelled	2026-09-24T19:50:59.8797561Z ##[error]Process completed with exit code 1.

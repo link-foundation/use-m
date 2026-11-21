@@ -1,0 +1,177 @@
+# node v22.23.2, jest, branch @ 867de3c
+(node:61199) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+PASS tests/resolvers.test.cjs (15.66 s)
+PASS tests/resolvers.test.mjs (6.89 s)
+FAIL tests/use.test.cjs (10.993 s)
+  ● [cjs module] 'use' import strategies › [cjs module] use.all
+
+    thrown: "Exceeded timeout of 5000 ms for a test.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+      60 |     });
+      61 |
+    > 62 |     test(`${moduleName} use.all`, async () => {
+         |     ^
+      63 |       const { use } = require('use-m');
+      64 |       const [
+      65 |         lodash3, 
+
+      at tests/use.test.cjs:62:5
+      at Object.<anonymous> (tests/use.test.cjs:5:3)
+
+PASS tests/npm-global-prefix.test.cjs (10.654 s)
+FAIL tests/lodash.test.mjs (10.061 s)
+  ● [mjs module] 'lodash' imports tests › [mjs module] npm: lodash
+
+    thrown: "Exceeded timeout of 5000 ms for a test.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+      4 |
+      5 | describe(`${moduleName} 'lodash' imports tests`, () => {
+    > 6 |   test(`${moduleName} npm: lodash`, async () => {
+        |   ^
+      7 |     const _ = await use("lodash");
+      8 |     expect(_.add(2, 3)).toBe(5);
+      9 |   });
+
+      at tests/lodash.test.mjs:6:3
+      at tests/lodash.test.mjs:5:1
+
+PASS tests/npm-global-prefix.test.mjs (9.173 s)
+PASS tests/lodash.test.cjs
+PASS tests/builtin-browser.test.mjs (5.088 s)
+PASS tests/typescript.test.cjs (6.248 s)
+PASS tests/relative-paths-browser.test.mjs (5.243 s)
+PASS tests/esm-sh-polyfill-browser.test.mjs
+PASS tests/use.test.mjs
+PASS tests/loader.test.mjs
+PASS tests/command-stream.test.mjs
+PASS tests/network-imports.test.cjs
+PASS tests/typescript.test.mjs
+PASS tests/network-imports.test.mjs
+PASS tests/builtin-errors.test.mjs
+PASS tests/command-stream.test.cjs
+PASS tests/builtin-errors.test.cjs
+PASS tests/relative-paths.test.mjs
+PASS tests/relative-paths.test.cjs
+PASS tests/builtin-backward-compatibility.test.mjs
+PASS tests/get-script-url.test.mjs
+PASS tests/builtin-backward-compatibility.test.cjs
+PASS tests/relative-paths.integration.test.mjs
+  ● Console
+
+    console.log
+      /tmp/gh-issue-solver-1789545086651/tests
+
+      at Object.<anonymous> (tests/relative-paths.integration.test.mjs:29:15)
+
+    console.log
+      Testing relative paths from tests directory...
+      
+      1. Testing ./browser-server/test-helper.js
+         ✓ Message: Helper module loaded
+      
+      2. Testing ./browser-server/test-data.json
+         ✓ Value: 123
+         ✓ Test: data
+      
+      3. Testing ../src/use.mjs
+         ✓ use function exists: true
+      
+      4. Testing ./browser-server/subfolder/nested.js
+         ✓ Nested: true Level: subfolder
+      
+      5. Testing ./browser-server/subfolder/nested-data.json
+         ✓ Level: nested Depth: 1
+      
+      6. Testing ../package.json
+         ✓ Package name: use-m
+      
+      ✅ All direct tests passed!
+
+      at Object.<anonymous> (tests/relative-paths.integration.test.mjs:39:15)
+
+PASS tests/fallback.test.mjs
+PASS tests/load.test.mjs
+(node:61199) [DEP0125] DeprecationWarning: The _stream_wrap module is deprecated.
+(node:61199) [DEP0025] DeprecationWarning: sys is deprecated. Use util instead.
+(node:61199) ExperimentalWarning: WASI is an experimental feature and might change at any time
+PASS tests/dynamic-builtins.test.mjs
+PASS tests/builtin-nodejs.test.mjs
+PASS tests/builtin-universal.test.mjs
+PASS tests/fs-promises.test.mjs
+PASS tests/load.test.cjs
+PASS tests/dynamic-builtins.test.cjs
+PASS tests/builtin-nodejs.test.cjs
+PASS tests/root-entries.test.mjs
+PASS tests/fallback.test.cjs
+PASS tests/release-workflow-policy.test.mjs
+PASS tests/filename.test.cjs
+PASS tests/builtin-universal.test.cjs
+PASS tests/deno-support.test.cjs
+PASS tests/filename.test.mjs
+PASS tests/script-sync.test.mjs
+PASS tests/get-script-url.test.cjs
+PASS tests/module-specifier.test.cjs
+PASS tests/import.test.mjs
+PASS tests/deno-support.test.mjs
+PASS tests/module-specifier.test.mjs
+PASS tests/import.test.cjs
+
+Summary of all failing tests
+FAIL tests/use.test.cjs (10.993 s)
+  ● [cjs module] 'use' import strategies › [cjs module] use.all
+
+    thrown: "Exceeded timeout of 5000 ms for a test.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+      60 |     });
+      61 |
+    > 62 |     test(`${moduleName} use.all`, async () => {
+         |     ^
+      63 |       const { use } = require('use-m');
+      64 |       const [
+      65 |         lodash3, 
+
+      at tests/use.test.cjs:62:5
+      at Object.<anonymous> (tests/use.test.cjs:5:3)
+
+FAIL tests/lodash.test.mjs (10.061 s)
+  ● [mjs module] 'lodash' imports tests › [mjs module] npm: lodash
+
+    thrown: "Exceeded timeout of 5000 ms for a test.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+      4 |
+      5 | describe(`${moduleName} 'lodash' imports tests`, () => {
+    > 6 |   test(`${moduleName} npm: lodash`, async () => {
+        |   ^
+      7 |     const _ = await use("lodash");
+      8 |     expect(_.add(2, 3)).toBe(5);
+      9 |   });
+
+      at tests/lodash.test.mjs:6:3
+      at tests/lodash.test.mjs:5:1
+
+
+Test Suites: 2 failed, 47 passed, 49 total
+Tests:       2 failed, 456 passed, 458 total
+Snapshots:   0 total
+Time:        110.988 s
+Ran all test suites.
+exit=1
+
+## re-run of the two suites that hit npm-registry timeouts
+# node v22.23.2 re-run of the two npm-registry tests that timed out
+(node:68093) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+PASS tests/use.test.cjs
+PASS tests/lodash.test.mjs
+
+Test Suites: 2 passed, 2 total
+Tests:       21 passed, 21 total
+Snapshots:   0 total
+Time:        7.336 s, estimated 22 s
+Ran all test suites matching /tests\/lodash.test.mjs|tests\/use.test.cjs/i.
+exit=0

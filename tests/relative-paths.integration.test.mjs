@@ -1,4 +1,4 @@
-import { describe, test } from '../test-adapter.mjs';
+import { describe, test } from '../src/test-adapter.mjs';
 import assert from 'node:assert';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
