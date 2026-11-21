@@ -137,6 +137,24 @@ describe('release workflow policy', () => {
     expect(workflowText.includes('deno-version: v2.x')).toBe(true)
   })
 
+  test('documents the runtime versions used in CI', () => {
+    const testJob = jobBlocks(readText(releaseWorkflowPath)).get('test')
+    const nodeVersions = testJob.match(/^\s+node-version: \[([^\]]+)\]/m)[1]
+    const bunVersion = testJob.match(/^\s+bun-version: (\S+)/m)[1]
+    const denoVersion = testJob.match(/^\s+deno-version: v?(\S+)/m)[1]
+    const readme = readText(path.join(rootDir, 'README.md'))
+    const compatibility = readme.split('\n## Compatibility\n')[1].split('\n## ')[0]
+    const tableVersions = new Map(
+      Array.from(compatibility.matchAll(/^\| ([^|]+?) \| ([^|]+?) \|/gm),
+        ([, environment, versions]) => [environment, versions])
+    )
+
+    expect(readme).toContain('[Compatibility](#compatibility)')
+    expect(tableVersions.get('Node.js')).toBe(nodeVersions)
+    expect(tableVersions.get('Bun')).toBe(bunVersion === 'latest' ? 'Latest stable' : bunVersion)
+    expect(tableVersions.get('Deno')).toBe(denoVersion)
+  })
+
   test('covers every supported operating system and the missing-fetch shebang path', () => {
     const workflowText = readText(releaseWorkflowPath)
     const jobs = jobBlocks(workflowText)

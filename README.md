@@ -23,6 +23,8 @@ On the first call, use-m installs the requested lodash version through npm if it
 
   - [When to use it](#when-to-use-it)
   - [Key features](#key-features)
+  - [Compatibility](#compatibility)
+    - [Compatibility limits](#compatibility-limits)
   - [How it works](#how-it-works)
     - [How a specifier is resolved](#how-a-specifier-is-resolved)
     - [Where packages come from](#where-packages-come-from)
@@ -74,6 +76,26 @@ For dependencies used by every run, a project manifest and lockfile let your pac
 - **Built-ins and relative files.** Load host modules such as `node:fs/promises` on the server and resolve `./` and `../` JavaScript or JSON files from the calling script.
 - **Configurable loading.** Build a reusable loader with `makeUse()`, customize package resolvers, or use the packaged CDN bootstrap and its retry settings.
 
+## Compatibility
+
+The server tests run on Linux (`ubuntu-24.04`), macOS and Windows. The table lists the versions tested in CI. [CI workflow](.github/workflows/release.yml)
+
+| Environment | Tested versions | How to load `use-m` | Default `use()` package source |
+| --- | --- | --- | --- |
+| Node.js | 20.x, 22.x, 24.x | Installed package via ESM or CommonJS. Fetch and evaluate `use.js` for standalone scripts and the REPL. | `npm install -g` with versioned aliases. A use-m cache prefix is used if the npm global root is unwritable. |
+| Bun | Latest stable | Installed package via ESM or CommonJS, or fetch and evaluate `use.js`. | `bun add -g` with versioned aliases. The `bun` executable must be on `PATH` and its install directory must be writable. |
+| Deno | 2.x | ESM via `npm:use-m`, a local `use.mjs`, or an HTTPS import. | From a local or npm entry, `esm.sh` → `jspm.dev` → `cdn.skypack.dev` → Deno's native `npm:` import. An HTTPS `use.mjs` entry uses the CDN chain only. |
+| Browser page | Headless Chrome | ESM via HTTPS, or fetch and evaluate `use.js` where the page policy permits it. | `esm.sh` → `jspm.dev` → `cdn.skypack.dev`. Packages must work in a browser. |
+
+All four environments support package specifiers such as `lodash@4.17.21`, package subpaths when the resolver can serve them, and caller-relative JavaScript and JSON imports (`./` or `../`). A browser loads relative files over HTTP(S). JSON imports require runtime support for import attributes, and browsers require the server to send a JSON MIME type. [Node.js import attributes](https://nodejs.org/api/esm.html#import-attributes)
+
+### Compatibility limits
+
+- **Built-ins**. Node.js, Bun and Deno expose the built-ins reported by their respective runtimes. Their APIs can differ. Browser adapters expose web APIs only. For example, browser `crypto` exposes Web Crypto and `subtle` requires a secure context. Browser pages have no native Node.js filesystem, child process, or socket modules. Packages that depend on those APIs require a browser-compatible build.
+- **Browser loading**. Use the ESM build in a page. Native CommonJS `require()` is unavailable there. Cross-origin module imports need CORS and must be allowed by the page's Content Security Policy. The universal `use.js` bootstrap requires `fetch` and permission to evaluate JavaScript strings.
+- **Deno permissions**. Allow remote module hosts with `--allow-import` as needed. Computed local imports outside `node_modules` can require `--allow-read`. To use the native `npm:` fallback for undeclared packages in a project with `package.json`, set `"nodeModulesDir": "none"` or `"auto"`. [Deno permissions](https://docs.deno.com/runtime/reference/permissions/) [Deno npm compatibility](https://docs.deno.com/runtime/fundamentals/node/)
+- **Other environments**. The default browser detection targets pages with `window` and `document`. Dedicated/shared workers, edge runtimes such as Cloudflare Workers, Electron, and React Native have no dedicated compatibility coverage. Service workers and worklets cannot use the dynamic `import()` that `use()` needs. Other runtime versions, operating systems and browser engines are outside the automated matrix. [HTML module loading rules](https://html.spec.whatwg.org/multipage/webappapis.html#hostloadimportedmodule)
+
 ## How it works
 
 The root `use.mjs` and `use.cjs` bundles are the installed package's ESM and CommonJS entry points. The root `use.js` bundle is a self-contained file for the fetch-and-evaluate bootstrap. All three are generated from the same implementation. See the [bundle layout in the contributor guide](CONTRIBUTING.md#project-structure).
@@ -88,12 +110,7 @@ The root `use.mjs` and `use.cjs` bundles are the installed package's ESM and Com
 
 ### Where packages come from
 
-| Loader context | Default package resolution |
-| --- | --- |
-| Local Node.js | Find or install an npm alias with `npm install -g`, then import its entry file. |
-| Local Bun | Find or install a Bun alias with `bun add -g`, then import its entry file. |
-| Local Deno | Import from esm.sh, then try JSPM, Skypack, and finally Deno's native `npm:` resolver. |
-| Browser or loader with an HTTP(S) script URL | Import from esm.sh, then try JSPM and Skypack. The host must support those URL imports. |
+The default package source depends on the runtime and the loader entry point. Browsers and loaders running from an HTTP(S) script URL use the CDN chain. The host must support URL imports. See the [compatibility table](#compatibility) for each runtime.
 
 Node.js checks `npm root -g`. When the default global root is unwritable, use-m can install under its own user cache prefix (`$XDG_CACHE_HOME/use-m/npm-global` or `~/.cache/use-m/npm-global`). An explicit `npm_config_prefix` or `NPM_CONFIG_PREFIX` must be writable for new installs. An exact pin such as `lodash@4.17.21` uses an alias like `lodash-v-4.17.21`, so another version can live beside it and later scripts can reuse the installed copy. On Node.js, concurrent requests for the same alias can share an install. An install lock coordinates processes, and use-m can retry failed installs and repair a damaged alias. Unpinned and range requests have their own reuse and version-selection rules. See [npm version resolution](#resilient-npm-latest-version-resolution).
 
@@ -233,13 +250,7 @@ This is fixed in **`use-m@8.14.1`**: the bare URLs (`https://unpkg.com/use-m/use
 
 ### Resilient package loading (shared fallback engine)
 
-The resilience above is not limited to bootstrapping `use-m` itself — once you have a `use` function, the **packages you load are resilient too**. When `use()` fetches a package over the network (in the browser, in Deno, or from an `http(s)` entry point) it now tries a chain of independent CDN hosts and falls back automatically, so a single CDN outage no longer breaks `use()`:
-
-| Runtime / entry point | Mirror chain tried in order |
-| --- | --- |
-| Browser / `http(s)` script | `esm.sh` → `jspm.dev` → `cdn.skypack.dev` |
-| Deno with a local or npm entry point | `esm.sh` → `jspm.dev` → `cdn.skypack.dev` → native `npm:` import |
-| Node.js (`npm i -g`), Bun | single local resolver (Node's npm metadata lookup has its own retry/cache/fallback path) |
+When a CDN import fails, `use()` tries the next source in its resolver chain. The order depends on the runtime and entry point. See the [compatibility table](#compatibility).
 
 When no CDN can build a package for Deno (for example because its `engines.node` excludes the CDN's Node.js), `use-m` finally tries Deno's native `npm:` import. Packages that loaded from a CDN before keep loading from the same CDN. In a project with `package.json`, this last fallback needs Deno-managed npm resolution (`"nodeModulesDir": "none"` for its global cache, or `"auto"` for local modules) to load packages that are absent from the manifest.
 
@@ -465,14 +476,14 @@ const [lodash3, lodash4] = await use.all('lodash@3.10.1', 'lodash@4.17.21');
 
 Run with Deno:
 ```bash
-deno run --allow-net example.mjs
+deno run --allow-import=esm.sh,raw.esm.sh,jspm.dev,cdn.skypack.dev example.mjs
 ```
 
-An HTTPS import of use-m, such as `https://esm.sh/use-m`, selects the HTTP(S) resolver chain. To include the native `npm:` fallback, use the npm entry point above or a local bundle. In a project with a manifest, configure `nodeModulesDir` as `"none"` or `"auto"` to let Deno resolve packages missing from the manifest.
+An HTTPS import of use-m selects the HTTP(S) resolver chain. See the [Deno CDN example](examples/deno/example.mjs). To include the native `npm:` fallback, use the npm entry point above or a local bundle. In a project with a manifest, configure `nodeModulesDir` as `"none"` or `"auto"` to let Deno resolve packages missing from the manifest.
 
 ### Bun
 
-Install the loader with `bun add use-m`. A local entry point uses Bun's global package installer for the packages you request.
+Install the loader with `bun add use-m`. A local entry point uses Bun's global package installer for the packages you request. The fetch-and-evaluate bootstrap also works in Bun. [Bun module loading](https://bun.com/docs/runtime/auto-install)
 
 ```javascript
 import { use } from 'use-m';
@@ -491,7 +502,7 @@ bun run example.mjs
 
 ### Network imports
 
-Older Node.js releases such as Node.js 20 can run the [network import example](examples/network-imports/index.mjs) with `--experimental-network-imports`. Node.js 22 removed that flag. On current Node.js, use the installed package or fetch the standalone bootstrap. See [standard imports](#standard-import) and [CDN bootstrap](#robust-loading-resilient-cdn-bootstrap).
+Older Node.js releases such as Node.js 20 can run the [network import example](examples/network-imports/index.mjs) with `--experimental-network-imports`. Node.js 22.6.0 removed that flag. On current Node.js, use the [installed package](#standard-import) or fetch the [standalone bootstrap](#robust-loading-resilient-cdn-bootstrap). [Node.js 22.6.0 release notes](https://nodejs.org/en/blog/release/v22.6.0)
 
 1. Create file named `example.mjs`:
    ```javascript

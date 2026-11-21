@@ -6,7 +6,7 @@ Start with the [README quickstart](README.md) for installation or the [resolutio
 | --- | --- |
 | Run a standalone Node.js script | [Fetch and load the standalone bundle](examples/readme/main-example.mjs) |
 | Use an installed package | [Node.js ESM](examples/mjs/index.js) or [CommonJS](examples/cjs/index.js) |
-| Load dependencies in Deno or Bun | [Deno example](examples/deno/example.mjs) or [Bun quickstart](README.md#bun) |
+| Load dependencies in Deno or Bun | [Deno npm quickstart](README.md#deno), [Deno CDN example](examples/deno/example.mjs), or [Bun quickstart](README.md#bun) |
 | Compare two releases in one process | [Multiple versions](#load-two-versions-in-one-script) |
 | Compare a first import with a cached call | [In-memory cache demo](examples/cache-demo.mjs) |
 | Load JavaScript and JSON relative to the caller | [Relative path examples](examples/relative-paths/) |

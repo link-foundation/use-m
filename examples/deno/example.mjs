@@ -1,8 +1,9 @@
 // Deno example showing use-m working with Deno runtime
-// From the repository root: deno run --allow-net examples/deno/example.mjs
+// From the repository root:
+// deno run --allow-import=esm.sh,raw.esm.sh,jspm.dev,cdn.skypack.dev examples/deno/example.mjs
 
-// Load use-m through Deno's npm compatibility layer so the native npm fallback is available.
-import { use } from 'npm:use-m';
+// An HTTPS entry point uses the CDN resolver chain.
+const { use } = await import('https://esm.sh/use-m');
 
 console.log('🦕 Testing use-m with Deno...');
 

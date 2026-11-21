@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Documentation
 
+- Add a README compatibility table covering runtime versions, module entry points, package sources and platform limits. Fixes [#13](https://github.com/link-foundation/use-m/issues/13).
 - Explain when to use runtime module loading and document how use-m chooses resolvers, installs or reuses versioned aliases, falls back across sources, and returns module exports. Refresh the runtime examples and contributor guide. See the [README](README.md#how-it-works) and [examples guide](EXAMPLES.md).
 
 ### Added
