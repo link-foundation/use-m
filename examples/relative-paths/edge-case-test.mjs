@@ -1,11 +1,11 @@
-import { use } from '../../use.mjs';
+import { use } from '../../src/use.mjs';
 
 console.log('🔍 Edge case relative path test...\n');
 
 const tests = [
   {
     name: 'Three levels up (../../../)',
-    specifier: '../../../use.mjs',  // Should fail - goes above the repo
+    specifier: '../../../src/use.mjs',  // Should fail - goes above the repo
     shouldFail: true
   },
   {

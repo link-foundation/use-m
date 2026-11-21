@@ -1,5 +1,5 @@
-import { use } from '../use.mjs';
-import { describe, test, expect } from '../test-adapter.mjs';
+import { use } from '../src/use.mjs';
+import { describe, test, expect } from '../src/test-adapter.mjs';
 const moduleName = `[${import.meta.url.split('.').pop()} module]`;
 
 describe(`${moduleName} Node.js/Bun-only built-in modules`, () => {
@@ -26,7 +26,7 @@ describe(`${moduleName} Node.js/Bun-only built-in modules`, () => {
     expect(typeof path.extname).toBe('function');
     
     // Test path operations
-    expect(path.join('a', 'b', 'c')).toBe('a/b/c');
+    expect(path.join('a', 'b', 'c')).toBe(['a', 'b', 'c'].join(path.sep));
     expect(path.basename('/path/to/file.txt')).toBe('file.txt');
     expect(path.extname('file.txt')).toBe('.txt');
     expect(path.dirname('/path/to/file.txt')).toBe('/path/to');
