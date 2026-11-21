@@ -3450,14 +3450,19 @@ const withDefaultAlias = (value) => {
   return value;
 };
 
-const baseUse = async (modulePath) => {
+const importFromHere = (specifier, options) => import(specifier, options);
+
+const baseUse = async (modulePath, nativeImport) => {
   // Dynamically import the module
   try {
+    // A host can perform the import in its own module context while keeping
+    // use-m's module shape and error handling.
+    const loadModule = typeof nativeImport === 'function' ? nativeImport : importFromHere;
     const importSpecifier = nativeWindowsPathToFileUrl(modulePath);
     const isJsonModule = /\.json(?:[?#].*)?$/i.test(modulePath);
     const module = isJsonModule
-      ? await import(importSpecifier, { with: { type: 'json' } })
-      : await import(importSpecifier);
+      ? await loadModule(importSpecifier, { with: { type: 'json' } })
+      : await loadModule(importSpecifier);
 
     // More robust default export handling for cross-environment compatibility
     const keys = Object.keys(module);
@@ -3497,7 +3502,7 @@ const baseUse = async (modulePath) => {
         error.code === 'ERR_MODULE_NOT_FOUND' &&
         error.message.includes('Did you mean to import with the ".js" extension?') &&
         parseModuleSpecifier(modulePath.slice(4)).modulePath) {
-      return baseUse(`${modulePath}.js`);
+      return baseUse(`${modulePath}.js`, nativeImport);
     }
     throw new Error(`Failed to import module from '${modulePath}'.`, { cause: error });
   }

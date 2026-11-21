@@ -420,7 +420,7 @@ bun run example.mjs
 
 ### Network imports
 
-It is possible to use `--experimental-network-imports` to enable the same style of imports as in browser version. See [the example](https://github.com/link-foundation/use-m/blob/main/examples/network-imports/index.mjs).
+On Node.js 20, `--experimental-network-imports` enables URL imports and selects the CDN resolvers for packages. Node.js removed the flag in 22.6.0. For current Node.js versions, see [Independent Scripts](#independent-scripts) for a standalone script that uses the native npm resolver. [Node.js 22.6.0 release notes](https://nodejs.org/en/blog/release/v22.6.0)
 
 1. Create file named `example.mjs`:
    ```javascript
@@ -433,6 +433,23 @@ It is possible to use `--experimental-network-imports` to enable the same style 
    ```bash
    node --experimental-network-imports example.mjs
    ```
+
+#### Native npm packages with a Node.js 20 policy
+
+To use the npm resolver from an HTTPS-imported `use.mjs`, generate a policy that pins the bundle's SHA-384 digest and allows the Node built-ins used by the resolver. The policy matches dependencies by specifier, so the example supplies an import callback from the local entry point for the package paths npm resolves at runtime. The local callback also lets Node load each package's dependencies and native add-ons. [Node.js policy documentation](https://nodejs.org/download/release/latest-v20.x/docs/api/permissions.html#dependency-redirection)
+
+Run the example from the repository root, using a trusted local copy of the **same** published bundle served at the exact URL. The policy grants that bundle filesystem and process access, and npm packages run with the application's normal privileges.
+
+```bash
+npm pack use-m@8.17.3
+tar -xOf use-m-8.17.3.tgz package/use.mjs > trusted-use.mjs
+bundle_url=https://unpkg.com/use-m@8.17.3/use.mjs
+node examples/network-imports/create-policy.mjs "$bundle_url" trusted-use.mjs > policy.json
+node --experimental-network-imports --experimental-policy=policy.json \
+  examples/network-imports/native-npm.mjs "$bundle_url" @node-rs/crc32@1.10.8
+```
+
+In the example, `makeUse({ specifierResolver: 'npm', ... })` selects the same resolver used by local Node.js installs. Its `import` callback calls `baseUse(modulePath, importFromHost)` so use-m still handles export shapes and import errors. See [the example code](examples/network-imports/native-npm.mjs).
 
 ### Independent Scripts
 

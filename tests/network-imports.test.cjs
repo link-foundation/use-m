@@ -16,6 +16,12 @@ const networkImportsFlagRemoved = async (execAsync) => {
 };
 
 describe(`${moduleName} imports using --experimental-network-imports`, () => {
+  test('loads native npm packages through an integrity-pinned network import', async () => {
+    const { execFile } = await import('node:child_process');
+    const { promisify } = await import('node:util');
+    await promisify(execFile)('node', ['experiments/issue-8/verify-policy.mjs'], { timeout: 25000 });
+  });
+
   test(`${moduleName} Import using --experimental-network-imports for CJS file`, async () => {
     const { exec } = await import('node:child_process');
     const { promisify } = await import('util');
