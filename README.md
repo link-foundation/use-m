@@ -25,6 +25,7 @@ On the first call, use-m installs the requested lodash version through npm if it
   - [Key features](#key-features)
   - [Compatibility](#compatibility)
     - [Compatibility limits](#compatibility-limits)
+  - [Supported syntax](#supported-syntax)
   - [How it works](#how-it-works)
     - [How a specifier is resolved](#how-a-specifier-is-resolved)
     - [Where packages come from](#where-packages-come-from)
@@ -87,7 +88,7 @@ The server tests run on Linux (`ubuntu-24.04`), macOS and Windows. The table lis
 | Deno | 2.x | ESM via `npm:use-m`, a local `use.mjs`, or an HTTPS import. | From a local or npm entry, `esm.sh` → `jspm.dev` → `cdn.skypack.dev` → Deno's native `npm:` import. An HTTPS `use.mjs` entry uses the CDN chain only. |
 | Browser page | Headless Chrome | ESM via HTTPS, or fetch and evaluate `use.js` where the page policy permits it. | `esm.sh` → `jspm.dev` → `cdn.skypack.dev`. Packages must work in a browser. |
 
-All four environments support package specifiers such as `lodash@4.17.21`, package subpaths when the resolver can serve them, and caller-relative JavaScript and JSON imports (`./` or `../`). A browser loads relative files over HTTP(S). JSON imports require runtime support for import attributes, and browsers require the server to send a JSON MIME type. [Node.js import attributes](https://nodejs.org/api/esm.html#import-attributes)
+See [supported syntax](#supported-syntax) for package specifiers, built-ins, and relative files.
 
 ### Compatibility limits
 
@@ -95,6 +96,27 @@ All four environments support package specifiers such as `lodash@4.17.21`, packa
 - **Browser loading**. Use the ESM build in a page. Native CommonJS `require()` is unavailable there. Cross-origin module imports need CORS and must be allowed by the page's Content Security Policy. The universal `use.js` bootstrap requires `fetch` and permission to evaluate JavaScript strings.
 - **Deno permissions**. Allow remote module hosts with `--allow-import` as needed. Computed local imports outside `node_modules` can require `--allow-read`. To use the native `npm:` fallback for undeclared packages in a project with `package.json`, set `"nodeModulesDir": "none"` or `"auto"`. [Deno permissions](https://docs.deno.com/runtime/reference/permissions/) [Deno npm compatibility](https://docs.deno.com/runtime/fundamentals/node/)
 - **Other environments**. The default browser detection targets pages with `window` and `document`. Dedicated/shared workers, edge runtimes such as Cloudflare Workers, Electron, and React Native have no dedicated compatibility coverage. Service workers and worklets cannot use the dynamic `import()` that `use()` needs. Other runtime versions, operating systems and browser engines are outside the automated matrix. [HTML module loading rules](https://html.spec.whatwg.org/multipage/webappapis.html#hostloadimportedmodule)
+
+## Supported syntax
+
+Pass a module specifier string to `use()` in Node.js, Bun, Deno, or a browser. You can pass the same strings to `use.all()` to load multiple modules in parallel.
+
+| Load | Syntax | Resolution |
+| --- | --- | --- |
+| Package by name | `await use('lodash')` | Requests `latest` unless a version or tag is specified. |
+| Exact package version | `await use('lodash@4.17.21')` | Requests that release. You can load multiple releases in one process. |
+| Version range | `await use('lodash@4.x')` | Requests a release in the range. Supported range forms depend on the package resolver. |
+| Distribution tag | `await use('lodash@latest')` | Requests the release selected by the tag. Other tags, such as `next`, depend on the package and resolver. |
+| Scoped package | `await use('@octokit/core@6.1.5')` | Keep the leading `@scope/` and put the version after the package name. |
+| Package subpath | `await use('lodash@4.17.21/add')` | Put the subpath after the optional version. The package and resolver must make that entry available. |
+| Host built-in | `await use('node:fs/promises')` or `await use('fs/promises')` | Uses the runtime's built-in on Node.js, Bun, and Deno. Keep `node:` for names that require it in the host runtime. |
+| Browser built-in adapter | `await use('crypto')` | In a browser, `console`, `crypto`, `url`, and `performance` expose web APIs. `node:` is optional for these adapters. |
+| Relative JavaScript file | `await use('./helper.mjs')` | Use `./` or `../` and include the file extension. Paths resolve from the calling script. Browsers load these files over HTTP(S). |
+| Relative JSON file | `await use('../settings.json')` | Requires runtime support for [JSON import attributes](https://nodejs.org/api/esm.html#import-attributes). Browsers also require a JSON MIME type. |
+
+For direct `https:`, `file:`, `npm:`, or `jsr:` specifiers, use the host's `import` or `import()` where it supports the scheme. For example, Deno uses `import('npm:lodash@4.17.21')` for a direct npm import and `use('lodash@4.17.21')` to go through use-m's resolver chain. [Deno import examples](https://docs.deno.com/examples/import_export/)
+
+To write `import _ from 'lodash@4.17.21'` on Node.js, enable the [optional loader hook](#nodejs-loader-hook). For settings that affect these forms, see [how a specifier is resolved](#how-a-specifier-is-resolved).
 
 ## How it works
 
