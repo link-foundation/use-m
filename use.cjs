@@ -1655,18 +1655,22 @@ const toAsyncFunction = (call, arity, name) => {
 // whose built-in differs from Node's. Anything left out uses the generic loader.
 const builtinOverrides = {
   'console': {
-    browser: () => ({ default: console, log: console.log, error: console.error, warn: console.warn, info: console.info })
+    browserInputs: () => [console, console.log, console.error, console.warn, console.info],
+    browser: (hostConsole, log, error, warn, info) => ({ default: hostConsole, log, error, warn, info })
   },
   'crypto': {
-    browser: () => ({ default: crypto, subtle: crypto.subtle })
+    browserInputs: () => [crypto, crypto.subtle],
+    browser: (hostCrypto, subtle) => ({ default: hostCrypto, subtle })
   },
   'url': {
-    browser: () => ({ default: URL, URL, URLSearchParams })
+    browserInputs: () => [URL, URLSearchParams],
+    browser: (URL, URLSearchParams) => ({ default: URL, URL, URLSearchParams })
   },
   // 'performance' is not a built-in module name: use-m maps it onto the
   // performance object, which lives in node:perf_hooks on the Node.js side.
   'performance': {
-    browser: () => ({ default: performance, now: performance.now.bind(performance) }),
+    browserInputs: () => [performance, performance.now],
+    browser: (hostPerformance, now) => ({ default: hostPerformance, now: now.bind(hostPerformance) }),
     node: () => import('node:perf_hooks').then(m => ({ default: m.performance, performance: m.performance, now: m.performance.now.bind(m.performance), ...m }))
   },
   // Bun and Deno expose `node:fs/promises` functions whose arity and
@@ -1848,12 +1852,19 @@ const resolvers = {
     // Determine environment
     const isBrowser = typeof window !== 'undefined';
     const environment = isBrowser ? 'browser' : 'node';
+    const cacheKey = `builtin\0${environment}\0${moduleName}`;
 
-    const moduleFactory = builtinOverrides[moduleName]?.[environment];
+    const override = builtinOverrides[moduleName];
+    const moduleFactory = override?.[environment];
     if (moduleFactory) {
       try {
-        // Execute the factory function to get the module
-        return await moduleFactory();
+        if (isBrowser) {
+          // These wrappers capture host globals and methods, which a polyfill
+          // or test may replace after an earlier call.
+          const inputs = override.browserInputs();
+          return await reuseModuleLoad(cacheKey, () => moduleFactory(...inputs), inputs);
+        }
+        return await reuseModuleLoad(cacheKey, moduleFactory);
       } catch (error) {
         throw new Error(`Failed to load built-in module '${moduleName}' in ${environment} environment.`, { cause: error });
       }
@@ -1878,7 +1889,7 @@ const resolvers = {
     }
 
     try {
-      return await loadBuiltinModule(moduleName);
+      return await reuseModuleLoad(cacheKey, () => loadBuiltinModule(moduleName));
     } catch (error) {
       throw new Error(`Failed to load built-in module '${moduleName}' in ${environment} environment.`, { cause: error });
     }
@@ -1929,7 +1940,7 @@ const resolvers = {
     if (resolvedPath.endsWith('.json')) {
       try {
         // For JSON files, we need to use import assertions
-        const module = await import(resolvedPath, { with: { type: 'json' } });
+        const module = await importModuleNamespace(resolvedPath, true);
         return module.default || module;
       } catch (error) {
         // Fallback to baseUse if import assertions fail
@@ -3235,6 +3246,93 @@ const networkResolverChain = ['esm', 'jspm', 'skypack']
 // Node.js), so packages that loaded before keep loading from the same place.
 const denoResolverChain = ['deno', 'jspm', 'skypack', 'denoNpm']
 
+// Share one size limit and one expiry timer across all loaders in this bundle.
+// Insertion order lets the timer remove expired entries without scanning hits.
+const moduleCache = new Map()
+const moduleCacheLimit = 256
+const moduleCacheTtlMs = 60_000
+let moduleCacheTimer
+const moduleCacheNow = typeof performance !== 'undefined' && typeof performance?.now === 'function'
+  ? performance.now.bind(performance)
+  : Date.now
+
+const scheduleModuleCacheExpiry = (delay) => {
+  moduleCacheTimer = setTimeout(() => {
+    moduleCacheTimer = undefined
+    const now = moduleCacheNow()
+    for (const [key, entry] of moduleCache) {
+      if (entry.expiresAt > now) {
+        scheduleModuleCacheExpiry(entry.expiresAt - now)
+        break
+      }
+      moduleCache.delete(key)
+    }
+  }, delay)
+  moduleCacheTimer?.unref?.()
+  if (typeof Deno !== 'undefined' && typeof moduleCacheTimer === 'number') {
+    Deno.unrefTimer?.(moduleCacheTimer)
+  }
+}
+
+const getModuleCacheEntry = (key) => {
+  const entry = moduleCache.get(key)
+  return entry && entry.expiresAt > moduleCacheNow() ? entry : undefined
+}
+
+const cacheModule = (key, value, inputs) => {
+  const entry = { value, inputs, expiresAt: moduleCacheNow() + moduleCacheTtlMs }
+  moduleCache.delete(key)
+  moduleCache.set(key, entry)
+  if (moduleCache.size > moduleCacheLimit) {
+    moduleCache.delete(moduleCache.keys().next().value)
+  }
+  if (moduleCacheTimer === undefined) {
+    scheduleModuleCacheExpiry(moduleCacheTtlMs)
+  }
+  return entry
+}
+
+const reuseModuleLoad = (key, load, inputs) => {
+  const cached = getModuleCacheEntry(key)
+  if (cached && (!inputs || (cached.inputs?.length === inputs.length &&
+      inputs.every((value, index) => Object.is(value, cached.inputs[index]))))) {
+    return cached.value
+  }
+
+  const pending = Promise.resolve().then(load)
+  const entry = cacheModule(key, pending, inputs)
+  pending.catch(() => {
+    if (moduleCache.get(key) === entry) moduleCache.delete(key)
+  })
+  return pending
+}
+
+let moduleLoaderId = 0
+const packageCacheOptions = new Set(['scriptPath', 'meta', 'specifierResolver', 'specifierResolvers'])
+let localPackageContext
+let localPackageContextId = 0
+
+const getPackageCacheKey = (loaderId, moduleSpecifier, resolverChain) => {
+  let contextId = 0
+  if ((resolverChain.includes('npm') || resolverChain.includes('bun')) &&
+      typeof process !== 'undefined' && typeof process.cwd === 'function' && process.env) {
+    // npm and Bun can resolve a different install root after a cwd or env
+    // change. Calls with explicit resolver options bypass this cache entirely.
+    const { env } = process
+    const context = JSON.stringify([process.cwd(), env.PATH, env.HOME, env.USERPROFILE, env.XDG_CACHE_HOME,
+      env.BUN_INSTALL, env.npm_config_prefix, env.NPM_CONFIG_PREFIX,
+      env.npm_config_registry, env.NPM_CONFIG_REGISTRY, env.USE_M_ENGINE_STRICT,
+      env.npm_config_userconfig, env.NPM_CONFIG_USERCONFIG,
+      env.npm_config_globalconfig, env.NPM_CONFIG_GLOBALCONFIG])
+    if (context !== localPackageContext) {
+      localPackageContext = context
+      localPackageContextId++
+    }
+    contextId = localPackageContextId
+  }
+  return JSON.stringify(['package', loaderId, moduleSpecifier, resolverChain, contextId])
+}
+
 // npm installs for the same alias must not overlap. `npm install -g` takes no
 // lock on the global prefix, so two runs writing the same alias directory delete
 // and re-extract each other's trees — the loser fails with ENOTEMPTY, and, worse,
@@ -3450,6 +3548,21 @@ const withDefaultAlias = (value) => {
   return value;
 };
 
+const importFromHere = (specifier, options) => import(specifier, options);
+
+const importModuleNamespace = (modulePath, isJsonModule, nativeImport) => {
+  const loadModule = typeof nativeImport === 'function' ? nativeImport : importFromHere;
+  const load = () => isJsonModule
+    ? loadModule(modulePath, { with: { type: 'json' } })
+    : loadModule(modulePath);
+  // A host importer resolves in its own module context.
+  if (loadModule !== importFromHere || typeof modulePath !== 'string') return load();
+
+  // Cache the namespace so subsequent reads still see live ESM bindings.
+  const key = `${isJsonModule ? 'json' : 'import'}\0${modulePath}`;
+  return reuseModuleLoad(key, load);
+};
+
 const callableNamespaces = new WeakMap()
 
 const withCallableDefault = (namespace) => {
@@ -3489,19 +3602,12 @@ const withCallableDefault = (namespace) => {
   return callable
 }
 
-const importFromHere = (specifier, options) => import(specifier, options);
-
 const baseUse = async (modulePath, nativeImport) => {
   // Dynamically import the module
   try {
-    // A host can perform the import in its own module context while keeping
-    // use-m's module shape and error handling.
-    const loadModule = typeof nativeImport === 'function' ? nativeImport : importFromHere;
     const importSpecifier = nativeWindowsPathToFileUrl(modulePath);
     const isJsonModule = /\.json(?:[?#].*)?$/i.test(modulePath);
-    const module = isJsonModule
-      ? await loadModule(importSpecifier, { with: { type: 'json' } })
-      : await loadModule(importSpecifier);
+    const module = await importModuleNamespace(importSpecifier, isJsonModule, nativeImport);
 
     const value = module.default
     if (value === undefined) return module
@@ -3609,9 +3715,11 @@ const makeUse = async (options) => {
       pathResolver = (path) => path;
     }
   }
+  const loaderId = ++moduleLoaderId;
   return async (moduleSpecifier, providedCallerContext) => {
     const stack = new Error().stack;
-    const resolverOptions = providedCallerContext && typeof providedCallerContext === 'object'
+    const hasCallOptions = providedCallerContext && typeof providedCallerContext === 'object';
+    const resolverOptions = hasCallOptions
       ? { ...(options || {}), ...providedCallerContext } : options;
 
     // Use provided caller context or try to capture it from stack trace
@@ -3629,6 +3737,31 @@ const makeUse = async (options) => {
       return relativeModule;
     }
 
+    // Reuse a previously imported package's path before checking the install
+    // tree or retrying failed mirrors. Custom hooks and resolver settings can
+    // change results per call, so let those requests resolve directly.
+    const cacheKey = !hasCallOptions && importModule === baseUse &&
+      (!options || (Object.getPrototypeOf(options) === Object.prototype &&
+        Object.getOwnPropertyNames(options).every(key => packageCacheOptions.has(key)))) &&
+      resolverChain.every(resolver => typeof resolver === 'string')
+      ? getPackageCacheKey(loaderId, moduleSpecifier, resolverChain)
+      : undefined;
+    if (cacheKey !== undefined) {
+      const entry = getModuleCacheEntry(cacheKey);
+      if (entry) {
+        try {
+          return await baseUse(entry.value);
+        } catch {
+          if (moduleCache.get(cacheKey) === entry) moduleCache.delete(cacheKey);
+        }
+      }
+    }
+    const loadResolvedModule = async (modulePath) => {
+      const loaded = await importModule(modulePath);
+      if (cacheKey !== undefined) cacheModule(cacheKey, modulePath);
+      return loaded;
+    };
+
     // If not a built-in or relative module, resolve + import via the configured
     // resolver chain. A single-entry chain imports directly (preserving the
     // original behavior and error); a multi-entry chain falls back across CDN
@@ -3638,7 +3771,7 @@ const makeUse = async (options) => {
       const resolverFunction = toResolverFunction(resolver);
       const modulePath = await resolverFunction(moduleSpecifier, pathResolver, resolverOptions);
       try {
-        return await importModule(modulePath);
+        return await loadResolvedModule(modulePath);
       } catch (error) {
         if (resolver !== 'npm' || !isRecoverableNpmImportError(error, modulePath)) {
           throw error;
@@ -3648,14 +3781,14 @@ const makeUse = async (options) => {
           pathResolver,
           { ...(resolverOptions || {}), repair: true }
         );
-        return importModule(await cacheBustNpmModulePath(repairedModulePath));
+        return loadResolvedModule(await cacheBustNpmModulePath(repairedModulePath));
       }
     }
     return loadWithFallback(
       resolverChain,
       async (resolver) => {
         const modulePath = await toResolverFunction(resolver)(moduleSpecifier, pathResolver);
-        return importModule(modulePath);
+        return loadResolvedModule(modulePath);
       },
       {
         label: `import '${moduleSpecifier}' from any CDN mirror`,

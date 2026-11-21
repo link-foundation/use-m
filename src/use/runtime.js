@@ -126,6 +126,21 @@ const withDefaultAlias = (value) => {
   return value;
 };
 
+const importFromHere = (specifier, options) => import(specifier, options);
+
+const importModuleNamespace = (modulePath, isJsonModule, nativeImport) => {
+  const loadModule = typeof nativeImport === 'function' ? nativeImport : importFromHere;
+  const load = () => isJsonModule
+    ? loadModule(modulePath, { with: { type: 'json' } })
+    : loadModule(modulePath);
+  // A host importer resolves in its own module context.
+  if (loadModule !== importFromHere || typeof modulePath !== 'string') return load();
+
+  // Cache the namespace so subsequent reads still see live ESM bindings.
+  const key = `${isJsonModule ? 'json' : 'import'}\0${modulePath}`;
+  return reuseModuleLoad(key, load);
+};
+
 const callableNamespaces = new WeakMap()
 
 const withCallableDefault = (namespace) => {
@@ -165,19 +180,12 @@ const withCallableDefault = (namespace) => {
   return callable
 }
 
-const importFromHere = (specifier, options) => import(specifier, options);
-
 const baseUse = async (modulePath, nativeImport) => {
   // Dynamically import the module
   try {
-    // A host can perform the import in its own module context while keeping
-    // use-m's module shape and error handling.
-    const loadModule = typeof nativeImport === 'function' ? nativeImport : importFromHere;
     const importSpecifier = nativeWindowsPathToFileUrl(modulePath);
     const isJsonModule = /\.json(?:[?#].*)?$/i.test(modulePath);
-    const module = isJsonModule
-      ? await loadModule(importSpecifier, { with: { type: 'json' } })
-      : await loadModule(importSpecifier);
+    const module = await importModuleNamespace(importSpecifier, isJsonModule, nativeImport);
 
     const value = module.default
     if (value === undefined) return module
@@ -285,9 +293,11 @@ const makeUse = async (options) => {
       pathResolver = (path) => path;
     }
   }
+  const loaderId = ++moduleLoaderId;
   return async (moduleSpecifier, providedCallerContext) => {
     const stack = new Error().stack;
-    const resolverOptions = providedCallerContext && typeof providedCallerContext === 'object'
+    const hasCallOptions = providedCallerContext && typeof providedCallerContext === 'object';
+    const resolverOptions = hasCallOptions
       ? { ...(options || {}), ...providedCallerContext } : options;
 
     // Use provided caller context or try to capture it from stack trace
@@ -305,6 +315,31 @@ const makeUse = async (options) => {
       return relativeModule;
     }
 
+    // Reuse a previously imported package's path before checking the install
+    // tree or retrying failed mirrors. Custom hooks and resolver settings can
+    // change results per call, so let those requests resolve directly.
+    const cacheKey = !hasCallOptions && importModule === baseUse &&
+      (!options || (Object.getPrototypeOf(options) === Object.prototype &&
+        Object.getOwnPropertyNames(options).every(key => packageCacheOptions.has(key)))) &&
+      resolverChain.every(resolver => typeof resolver === 'string')
+      ? getPackageCacheKey(loaderId, moduleSpecifier, resolverChain)
+      : undefined;
+    if (cacheKey !== undefined) {
+      const entry = getModuleCacheEntry(cacheKey);
+      if (entry) {
+        try {
+          return await baseUse(entry.value);
+        } catch {
+          if (moduleCache.get(cacheKey) === entry) moduleCache.delete(cacheKey);
+        }
+      }
+    }
+    const loadResolvedModule = async (modulePath) => {
+      const loaded = await importModule(modulePath);
+      if (cacheKey !== undefined) cacheModule(cacheKey, modulePath);
+      return loaded;
+    };
+
     // If not a built-in or relative module, resolve + import via the configured
     // resolver chain. A single-entry chain imports directly (preserving the
     // original behavior and error); a multi-entry chain falls back across CDN
@@ -314,7 +349,7 @@ const makeUse = async (options) => {
       const resolverFunction = toResolverFunction(resolver);
       const modulePath = await resolverFunction(moduleSpecifier, pathResolver, resolverOptions);
       try {
-        return await importModule(modulePath);
+        return await loadResolvedModule(modulePath);
       } catch (error) {
         if (resolver !== 'npm' || !isRecoverableNpmImportError(error, modulePath)) {
           throw error;
@@ -324,14 +359,14 @@ const makeUse = async (options) => {
           pathResolver,
           { ...(resolverOptions || {}), repair: true }
         );
-        return importModule(await cacheBustNpmModulePath(repairedModulePath));
+        return loadResolvedModule(await cacheBustNpmModulePath(repairedModulePath));
       }
     }
     return loadWithFallback(
       resolverChain,
       async (resolver) => {
         const modulePath = await toResolverFunction(resolver)(moduleSpecifier, pathResolver);
-        return importModule(modulePath);
+        return loadResolvedModule(modulePath);
       },
       {
         label: `import '${moduleSpecifier}' from any CDN mirror`,

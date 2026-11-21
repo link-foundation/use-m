@@ -7,7 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Documentation
+- Add a README compatibility table covering runtime versions, module entry points, package sources and platform limits. Fixes [#13](https://github.com/link-foundation/use-m/issues/13).
+
 ### Added
+- Cache built-ins, imports, and successful package resolutions in memory for one minute, with a shared 256-entry limit and idle expiration. Repeated `use()` calls skip redundant package filesystem checks and CDN mirror selection. Resolves [#27](https://github.com/link-foundation/use-m/issues/27).
 - Call a package's default function directly from `use()` while retaining `.default` and all named exports on the same result. This supports packages such as Axios across the package and CDN entry points. Resolves [#15](https://github.com/link-foundation/use-m/issues/15).
 - An integrity-pinned Node.js 20 network import example that uses the native npm resolver. `baseUse(modulePath, nativeImport)` accepts an importer from the local application while preserving use-m's export and error handling. Resolves [#8](https://github.com/link-foundation/use-m/issues/8).
 - When the `latest` release of an npm package (or npm's pick for a semver range) declares `engines.node` that excludes the running Node.js, install the newest compatible release instead, under its exact-version alias, and explain the fallback with debug logging. Imports whose release already supports the running Node.js resolve exactly as before. When no release is compatible, npm's choice is kept unless `engineStrict: true` (or `USE_M_ENGINE_STRICT=true`) asks to fail before installation; `engineStrict: false` (or `USE_M_ENGINE_STRICT=false`) disables the check. `use()` and `makeUse()`-created functions accept per-call options. Bundle npm's semver parser in every standalone distribution. Resolves [#79](https://github.com/link-foundation/use-m/issues/79).
