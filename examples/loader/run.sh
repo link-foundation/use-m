@@ -1,5 +1,5 @@
-set -e
+#!/bin/sh
+set -eu
 
-npm remove -g use-m
-npm i -g use-m@8.10.15
-node --loader "$(use --lp)" loader.mjs
+cd "$(dirname "$0")/../.."
+exec node --loader ./src/loader.js ./examples/loader/loader.mjs

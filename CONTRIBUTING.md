@@ -1,6 +1,6 @@
 # Contributing to use-m
 
-Thank you for your interest in contributing to use-m! This document provides guidelines and instructions for contributing to the project.
+For user-facing behavior and API examples, see the [README](README.md#how-it-works) and [examples guide](EXAMPLES.md).
 
 ## Table of Contents
 
@@ -42,7 +42,7 @@ This project follows a simple code of conduct: be respectful, collaborative, and
 ### Install Dependencies
 
 ```bash
-npm install
+npm ci
 ```
 
 ### Verify Installation
@@ -71,12 +71,13 @@ deno test --allow-net --allow-env --allow-run --allow-read --allow-write --allow
 ```
 /home/user/use-m/
 ├── src/                    # Shipped source and compact compatibility builds
-│   ├── use/                # Canonical implementation fragments (<1500 lines each)
+│   ├── use/                # Canonical implementation fragments
 │   ├── use.mjs             # AUTO-GENERATED compact ES Module compatibility build
 │   ├── use.cjs             # AUTO-GENERATED compact CommonJS compatibility build
 │   ├── use.js              # AUTO-GENERATED compact universal compatibility build
-│   ├── load.mjs            # Robust CDN bootstrap (loadUseM + loadWithFallback)
+│   ├── load.mjs            # ESM CDN bootstrap (loadUseM)
 │   ├── load.cjs            # CommonJS variant of load.mjs
+│   ├── fetch-polyfill.*    # Fetch globals for Node.js hosts that lack them
 │   ├── cli.mjs             # CLI tool
 │   ├── loader.js           # Node.js module loader hooks
 │   ├── test-adapter.mjs    # Cross-runtime test framework adapter
@@ -91,20 +92,16 @@ deno test --allow-net --allow-env --allow-run --allow-read --allow-write --allow
 ├── examples/               # Usage examples
 ├── experiments/            # Throwaway scripts for verifying assumptions
 ├── .github/workflows/      # CI/CD configuration
-└── docs/                   # Documentation files
+└── docs/case-studies/      # Historical issue investigations and evidence
 ```
 
 ### Key Files
 
-- **src/use/**: Canonical implementation split into focused fragments. Every source file stays below 1,500 lines
-- **src/use.mjs / src/use.cjs / src/use.js**: AUTO-GENERATED compact compatibility bundles retained for consumers of historical `/src/` CDN URLs
-- **src/load.mjs / src/load.cjs**: Robust bootstrap loader and shared `loadWithFallback` engine reused by `src/loader.js` and per-package CDN fallback chains in `src/use.{mjs,cjs}`
-- **use.js / use.cjs / use.mjs** (repo root): AUTO-GENERATED readable, standalone distributions used by package exports and historical CDN bootstrap URLs. They intentionally remain unminified single files. **Never edit them by hand**
-- **scripts/build-use-bundles.mjs**: Embeds the pinned `semver` dev dependency and its ISC license so distributions remain standalone, then deterministically generates both the readable root bundles and compact `/src/` compatibility bundles from `src/use/` (`npm run build`)
-- **scripts/sync-root-entries.mjs**: Backward-compatible wrapper around the same build for existing contributor workflows
-- **deno.json**: Uses Deno's global npm cache (`nodeModulesDir: "none"`) so the native `npm:` fallback can load dynamic packages without changing npm's local installation, and disables the lockfile (`"lock": false`) because CDN-generated modules such as esm.sh builds can change content under the same URL.
-- **tests/**: Each test file has both `.mjs` and `.cjs` versions
-- **examples/**: Real-world usage examples
+- **Source fragments.** `core.js` handles specifiers, caller paths, package exports, and built-ins. `resolvers.js` handles package managers, CDNs, and relative files. `coordination.js` holds shared resolver chains, the in-memory module cache, and install coordination. `engines.js` implements Node.js version selection. `runtime.js` wires those pieces into `use()` and `makeUse()` and defines `loadWithFallback()`.
+- **Generated bundles.** `npm run build` embeds the pinned semver implementation and its ISC license, then generates readable root entries and compact compatibility bundles in `src/`. Package exports and canonical CDN URLs use the root entries. Historical `/src/` URLs use the compact entries. The `sync:entries` script invokes the same build.
+- **Bootstrap and loader hook.** `src/load.mjs` and `src/load.cjs` fetch and validate the bootstrap bundle. `src/loader.js` is the Node.js resolver hook. Both call the shared fallback engine defined in `src/use/runtime.js`.
+- **Deno configuration.** The repository uses Deno's global npm cache (`nodeModulesDir: "none"`) for native `npm:` fallbacks. It disables the lockfile (`"lock": false`) because a CDN can change generated module contents at the same URL.
+- **Tests.** The adapter lets the test suite run under Jest, Bun, and Deno. Public entry-point behavior often has both `.mjs` and `.cjs` tests. Some targeted tests cover one format, and Deno runs the `.mjs` suite.
 
 ## Making Changes
 
@@ -139,7 +136,7 @@ deno test --allow-net --allow-env --allow-run --allow-read --allow-write --allow
 - **Regenerate distribution bundles**: Run `npm run build` after editing `src/use/`, then commit all six generated root and compatibility bundles. Deterministic build tests fail if any artifact drifts
 - **Source size**: Keep every file in `src/` below 1,500 lines; split a focused source fragment before it reaches that limit
 - **Cross-runtime compatibility**: Ensure changes work on Node.js, Bun, and Deno
-- **Examples**: Update examples if you change public APIs
+- **Examples**: Update the [examples guide](EXAMPLES.md) and affected scripts when public APIs, supported runtimes, or recommended setup change
 
 ## Testing
 
@@ -149,8 +146,8 @@ deno test --allow-net --allow-env --allow-run --allow-read --allow-write --allow
 # Run all tests (Node.js with Jest)
 npm test
 
-# Run specific test file
-npm test -- use.test.mjs
+# Run a specific test file
+npm test -- --runInBand --runTestsByPath tests/use.test.mjs
 
 # Run tests in watch mode
 npm test -- --watch
@@ -162,7 +159,7 @@ npm test -- --coverage
 ### Writing Tests
 
 - Use the cross-runtime test adapter: `import { describe, test, expect } from '../src/test-adapter.mjs'`
-- Create both `.mjs` and `.cjs` versions of new tests
+- Cover both entry points when behavior could differ between ESM and CommonJS
 - Test both success and error paths
 - Include edge cases
 
@@ -190,7 +187,7 @@ describe('Feature name', () => {
 
 - Test all supported runtimes (Node.js, Bun, Deno) when possible
 - Test both ESM and CommonJS module formats
-- Verify built-in module emulation
+- Verify built-in module loading and any browser mappings
 - Test relative path resolution
 - Test error conditions and edge cases
 
@@ -220,11 +217,13 @@ describe('Feature name', () => {
 ### Documentation
 
 - Add JSDoc comments for exported functions
-- Update README.md if adding new features
+- Update the README's usage and resolution guidance when behavior changes
 - Create or update examples for significant changes
 - Document breaking changes clearly
 
 ## Submitting Changes
+
+The release workflow checks that the root package version is unpublished and publishes it after the PR merges into `main`. Update `package.json` and `package-lock.json` to an unpublished version and record the user-facing change in [CHANGELOG.md](CHANGELOG.md). Run `node scripts/npm-release.mjs check-unpublished` to check the version and `npm run check:packages` to verify that the root package is the only publishable manifest.
 
 ### Before Submitting
 

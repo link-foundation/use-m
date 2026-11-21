@@ -1,7 +1,8 @@
 // Deno example showing use-m working with Deno runtime
-// Run with: deno run --allow-import=esm.sh,raw.esm.sh,jspm.dev,cdn.skypack.dev example.mjs
+// From the repository root:
+// deno run --allow-import=esm.sh,raw.esm.sh,jspm.dev,cdn.skypack.dev examples/deno/example.mjs
 
-// Import use-m from CDN (typical Deno pattern)
+// An HTTPS entry point uses the CDN resolver chain.
 const { use } = await import('https://esm.sh/use-m');
 
 console.log('🦕 Testing use-m with Deno...');
@@ -21,7 +22,7 @@ try {
   
   // Test use.all for multiple packages
   console.log('📦 Importing multiple packages...');
-  const [lodash3, lodash4] = await use.all('lodash@3', 'lodash@4');
+  const [lodash3, lodash4] = await use.all('lodash@3.10.1', 'lodash@4.17.21');
   console.log(`✅ Multiple versions: lodash3.add(1,2)=${lodash3.add(1,2)}, lodash4.add(1,2)=${lodash4.add(1,2)}`);
   
   console.log('🎉 All tests passed! Deno support is working correctly.');
