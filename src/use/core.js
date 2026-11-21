@@ -383,18 +383,22 @@ const toAsyncFunction = (call, arity, name) => {
 // whose built-in differs from Node's. Anything left out uses the generic loader.
 const builtinOverrides = {
   'console': {
-    browser: () => ({ default: console, log: console.log, error: console.error, warn: console.warn, info: console.info })
+    browserInputs: () => [console, console.log, console.error, console.warn, console.info],
+    browser: (hostConsole, log, error, warn, info) => ({ default: hostConsole, log, error, warn, info })
   },
   'crypto': {
-    browser: () => ({ default: crypto, subtle: crypto.subtle })
+    browserInputs: () => [crypto, crypto.subtle],
+    browser: (hostCrypto, subtle) => ({ default: hostCrypto, subtle })
   },
   'url': {
-    browser: () => ({ default: URL, URL, URLSearchParams })
+    browserInputs: () => [URL, URLSearchParams],
+    browser: (URL, URLSearchParams) => ({ default: URL, URL, URLSearchParams })
   },
   // 'performance' is not a built-in module name: use-m maps it onto the
   // performance object, which lives in node:perf_hooks on the Node.js side.
   'performance': {
-    browser: () => ({ default: performance, now: performance.now.bind(performance) }),
+    browserInputs: () => [performance, performance.now],
+    browser: (hostPerformance, now) => ({ default: hostPerformance, now: now.bind(hostPerformance) }),
     node: () => import('node:perf_hooks').then(m => ({ default: m.performance, performance: m.performance, now: m.performance.now.bind(m.performance), ...m }))
   },
   // Bun and Deno expose `node:fs/promises` functions whose arity and
