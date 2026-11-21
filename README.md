@@ -317,7 +317,7 @@ npm installs whatever the `latest` dist-tag points to, even when that release de
 
 - If `latest` supports the running Node.js, or declares no `engines.node`, nothing changes: the same requests, cache entries and `<package>-v-latest` alias are used as before.
 - Otherwise `use-m` fetches the version list once (`<registry>/<package>`, falling back to `npm view`) and installs the newest release not newer than `latest` that supports the running Node.js, preferring releases that are not deprecated, under its exact-version alias (shared with an explicit pin of that version). Prereleases are never selected for `latest`. The selection is cached per Node.js version, so upgrading Node picks up the newer release again.
-- For semver ranges (`^1`, `~1.2`, `>=1 <3`, `1.x`, …) the same check happens just before the first installation of the range; an already installed range alias is reused without registry lookups, as before.
+- For semver ranges (`^1`, `~1.2`, `>=1 <3`, `1.x`, …), use-m checks for a compatible release on first install and saves it under the range alias. Later loads can reuse that alias without a registry lookup.
 - If no release is compatible, `use-m` keeps npm's previous choice and logs why. Pass `engineStrict: true` (or set `USE_M_ENGINE_STRICT=true`/`1`) to fail **before npm install** instead, with an error (`code: 'USE_M_UNSUPPORTED_NODE'`) naming the package, the required engine and the running Node version, with a hint to pin a version or upgrade Node.
 
 Releases without `engines.node` are compatible; invalid engine ranges are treated as incompatible. Only the requested package's Node engine is checked; dependency engines and native build requirements remain npm's responsibility.
