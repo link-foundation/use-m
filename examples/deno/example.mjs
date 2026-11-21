@@ -1,5 +1,5 @@
 // Deno example showing use-m working with Deno runtime
-// Run with: deno run --allow-net example.mjs
+// Run with: deno run --allow-import=esm.sh,raw.esm.sh,jspm.dev,cdn.skypack.dev example.mjs
 
 // Import use-m from CDN (typical Deno pattern)
 const { use } = await import('https://esm.sh/use-m');

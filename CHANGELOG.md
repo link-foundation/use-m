@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Documentation
+- Add a README compatibility table covering runtime versions, module entry points, package sources and platform limits. Fixes [#13](https://github.com/link-foundation/use-m/issues/13).
+
 ### Added
 - When the `latest` release of an npm package (or npm's pick for a semver range) declares `engines.node` that excludes the running Node.js, install the newest compatible release instead, under its exact-version alias, and explain the fallback with debug logging. Imports whose release already supports the running Node.js resolve exactly as before. When no release is compatible, npm's choice is kept unless `engineStrict: true` (or `USE_M_ENGINE_STRICT=true`) asks to fail before installation; `engineStrict: false` (or `USE_M_ENGINE_STRICT=false`) disables the check. `use()` and `makeUse()`-created functions accept per-call options. Bundle npm's semver parser in every standalone distribution. Resolves [#79](https://github.com/link-foundation/use-m/issues/79).
 - Deno tries its native `npm:` import after every CDN mirror failed, so packages no CDN can build still load. Update Undici to 6.29.1 for the production audit.
