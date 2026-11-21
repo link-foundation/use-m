@@ -100,7 +100,7 @@ Node.js checks `npm root -g`. When the default global root is unwritable, use-m 
 
 ### What an import returns
 
-The package resolver returns a file path or URL for dynamic `import()`. Local npm and Bun imports try the package's normal directory entry first for package roots and consult `exports` first for subpaths. The import step usually unwraps a default-only namespace and returns the namespace when it has meaningful named exports. CommonJS interop can expose different named exports in different runtimes. Built-ins have their own wrappers, and a relative JSON import normally returns the parsed value. See [module shapes and package subpaths](#module-shapes-and-package-subpaths).
+The package resolver returns a file path or URL for dynamic `import()`. Local npm and Bun imports try the package's normal directory entry first for package roots and consult `exports` first for subpaths. The import step usually unwraps a default-only namespace. A callable default with named exports stays callable and exposes those exports on the same result. Other imports with meaningful named exports return the namespace. CommonJS interop can expose different named exports in different runtimes. A relative JSON import normally returns the parsed value. See [module shapes and package subpaths](#module-shapes-and-package-subpaths).
 
 ## Usage
 
@@ -363,7 +363,18 @@ Advanced tests and embedded runtimes may inject `fetch` and `debugLogger`. Setti
 
 ### Module shapes and package subpaths
 
-When `use()` unwraps a default-only namespace, it returns the default value itself. For an extensible object or function without a `default` property, it adds a non-enumerable `default` reference to that value. Primitives, frozen values, and existing `default` properties are preserved. A package with meaningful named exports returns a namespace. For example, use the named `Octokit` export or the public `yargs/helpers` subpath.
+When a package exports a function or class as its default alongside named exports, `use()` returns a callable view of the module. `.default` gives the original export, and named bindings stay available on the same result. Named exports take precedence when the default function has a property with the same name. `typeof` reports `'function'`, and object spread includes the module's enumerable exports. Here is a Node.js example.
+
+```javascript
+import { use } from 'use-m';
+
+const axios = await use('axios@1.21.1');
+const { default: originalAxios, AxiosError } = axios;
+const { status } = await axios('https://example.com');
+console.log(status, typeof originalAxios, typeof AxiosError); // 200 function function
+```
+
+When `use()` unwraps a default-only namespace, it returns the default value itself. For an extensible object or function without a `default` property, it adds a non-enumerable `default` reference to that value. Primitives, frozen values, and existing `default` properties are preserved. Modules with meaningful named exports and no callable default generally return their namespace. For example, use the named `Octokit` export or the public `yargs/helpers` subpath.
 
 ```javascript
 const { Octokit } = await use('@octokit/rest@21.1.1');
@@ -372,7 +383,7 @@ const { hideBin } = await use('yargs@17.7.2/helpers');
 
 The local npm and Bun resolvers try the package directory's `main` or index entry before falling back to the root `exports` entry. Subpaths go through the `exports` map first. An unlisted or explicitly blocked subpath such as `ink@5.2.1/build/index.js` can still resolve to its physical file and emit a `USE_M_UNEXPORTED_SUBPATH` warning once per subpath. Prefer public subpaths because package updates can move internal files. Node.js can filter this warning with `--disable-warning=USE_M_UNEXPORTED_SUBPATH`.
 
-For local CommonJS packages, the same import can be callable in Node.js and a namespace with a callable `default` in Bun. `simple-git@3` is one example. Check the receiving runtime and package when choosing an access pattern. See the [module shape contract tests](tests/module-shape-contract.test.mjs).
+See the [module shape contract tests](tests/module-shape-contract.test.mjs) for tested examples on Node.js and Bun.
 
 ### Interactive shell in Node.js environment
 

@@ -16,3 +16,8 @@ const packageJson = await use('../../package.json');
 const lodash = await use('lodash@4.17.21');
 
 console.log(`${packageJson.name} on ${os.platform()}: lodash.add(1, 2) = ${lodash.add(1, 2)}`);
+
+// Access a package's default export and named exports on the same result.
+const axios = await use('axios@1.21.1');
+const { default: originalAxios, AxiosError } = axios;
+console.log(`Axios exports: default is a ${typeof originalAxios}, AxiosError is a ${typeof AxiosError}`);

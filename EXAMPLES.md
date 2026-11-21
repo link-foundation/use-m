@@ -9,6 +9,7 @@ Start with the [README quickstart](README.md) for installation or the [resolutio
 | Load dependencies in Deno or Bun | [Deno example](examples/deno/example.mjs) or [Bun quickstart](README.md#bun) |
 | Compare two releases in one process | [Multiple versions](#load-two-versions-in-one-script) |
 | Load JavaScript and JSON relative to the caller | [Relative path examples](examples/relative-paths/) |
+| Call a package's default function and use its named exports | [Axios example](README.md#module-shapes-and-package-subpaths) |
 | Retry a failed source and fall back to a mirror | [CDN bootstrap and fallback examples](examples/load/) |
 | Select packages compatible with the running Node.js | [Node.js engine selection example](examples/npm-engines/example.mjs) |
 | Resolve versioned static imports through Node.js's loader hook | [Loader hook example](README.md#nodejs-loader-hook) |
