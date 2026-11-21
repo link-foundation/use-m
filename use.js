@@ -1379,19 +1379,19 @@ const extractCallerContext = (stack) => {
 
     // Native Windows stack frames use drive-letter or UNC paths. Passing a
     // drive-letter path directly to import() is interpreted as a URL scheme.
-    match = line.match(/(?:\(|\s)((?:[A-Za-z]:[\\/]|\\\\)[^)\n]+?\.(?:m?js|json)):\d+:\d+\)?/);
+    match = line.match(/(?:\(|\s)((?:[A-Za-z]:[\\/]|\\\\)[^)\n]+?\.(?:[cm]?[jt]s|[jt]sx|json)):\d+:\d+\)?/);
     if (match && !isUseMFile(match[1]) && !match[1].includes('node_modules')) {
       return absolutePathToFileUrl(match[1]);
     }
 
-    // For Node/Deno, try to match absolute paths (improved to handle more cases)
-    match = line.match(/at\s+(?:Object\.<anonymous>\s+)?(?:async\s+)?[(]?(\/[^\s:)]+\.(?:m?js|json))(?::\d+:\d+)?\)?/);
+    // Unnamed stack frames can contain native absolute paths.
+    match = line.match(/at\s+(?:async\s+)?\(?(\/[^)\n]+\.(?:[cm]?[jt]s|[jt]sx|json)):\d+:\d+\)?$/);
     if (match && !isUseMFile(match[1]) && !match[1].includes('node_modules')) {
       return absolutePathToFileUrl(match[1]);
     }
 
     // Alternative pattern for Jest and other environments
-    match = line.match(/at\s+[^(]*\(([^)]+\.(?:m?js|json)):\d+:\d+\)/);
+    match = line.match(/at\s+[^(]*\(([^)]+\.(?:[cm]?[jt]s|[jt]sx|json)):\d+:\d+\)/);
     if (match && !isUseMFile(match[1]) && !match[1].includes('node_modules')) {
       return absolutePathToFileUrl(match[1]);
     }
@@ -3811,11 +3811,11 @@ const use = async (moduleSpecifier, options) => {
   if (typeof Bun !== 'undefined') {
     if (stack) {
       const lines = stack.split('\n');
-      // Look for any .mjs file that's not use.mjs. Bun stack traces can use
+      // Look for the calling JavaScript or TypeScript file. Bun stack traces can use
       // either POSIX paths or native Windows drive-letter/UNC paths.
       for (const line of lines) {
-        const match = line.match(/[(]?((?:\/|[A-Za-z]:[\\/]|\\\\)[^)\n]+?\.m?js)(?::\d+:\d+)?\)?/);
-        if (match && !match[1].replaceAll('\\', '/').endsWith('/use.mjs')) {
+        const match = line.match(/[(]?((?:\/|[A-Za-z]:[\\/]|\\\\)[^)\n]+?\.(?:[cm]?[jt]s|[jt]sx)):\d+:\d+\)?/);
+        if (match && !/\/use\.[cm]?js$/.test(match[1].replaceAll('\\', '/'))) {
           bunCallerContext = absolutePathToFileUrl(match[1]);
           break;
         }
@@ -3837,11 +3837,12 @@ const use = async (moduleSpecifier, options) => {
   return useInstance(moduleSpecifier, callerContext);
 }
 use.all = async (...moduleSpecifiers) => {
+  const callerContext = extractCallerContext(new Error().stack);
   if (!__usePromise) {
     __usePromise = makeUse();
   }
   const useInstance = await __usePromise;
-  return Promise.all(moduleSpecifiers.map(useInstance));
+  return Promise.all(moduleSpecifiers.map(specifier => useInstance(specifier, callerContext)));
 }
 
 makeUse.parseModuleSpecifier = parseModuleSpecifier;

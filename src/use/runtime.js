@@ -381,11 +381,11 @@ const use = async (moduleSpecifier, options) => {
   if (typeof Bun !== 'undefined') {
     if (stack) {
       const lines = stack.split('\n');
-      // Look for any .mjs file that's not use.mjs. Bun stack traces can use
+      // Look for the calling JavaScript or TypeScript file. Bun stack traces can use
       // either POSIX paths or native Windows drive-letter/UNC paths.
       for (const line of lines) {
-        const match = line.match(/[(]?((?:\/|[A-Za-z]:[\\/]|\\\\)[^)\n]+?\.m?js)(?::\d+:\d+)?\)?/);
-        if (match && !match[1].replaceAll('\\', '/').endsWith('/use.mjs')) {
+        const match = line.match(/[(]?((?:\/|[A-Za-z]:[\\/]|\\\\)[^)\n]+?\.(?:[cm]?[jt]s|[jt]sx)):\d+:\d+\)?/);
+        if (match && !/\/use\.[cm]?js$/.test(match[1].replaceAll('\\', '/'))) {
           bunCallerContext = absolutePathToFileUrl(match[1]);
           break;
         }
@@ -407,9 +407,10 @@ const use = async (moduleSpecifier, options) => {
   return useInstance(moduleSpecifier, callerContext);
 }
 use.all = async (...moduleSpecifiers) => {
+  const callerContext = extractCallerContext(new Error().stack);
   if (!__usePromise) {
     __usePromise = makeUse();
   }
   const useInstance = await __usePromise;
-  return Promise.all(moduleSpecifiers.map(useInstance));
+  return Promise.all(moduleSpecifiers.map(specifier => useInstance(specifier, callerContext)));
 }
