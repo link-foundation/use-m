@@ -8,6 +8,7 @@ Start with the [README quickstart](README.md) for installation or the [resolutio
 | Use an installed package | [Node.js ESM](examples/mjs/index.js) or [CommonJS](examples/cjs/index.js) |
 | Load dependencies in Deno or Bun | [Deno example](examples/deno/example.mjs) or [Bun quickstart](README.md#bun) |
 | Compare two releases in one process | [Multiple versions](#load-two-versions-in-one-script) |
+| Compare a first import with a cached call | [In-memory cache demo](examples/cache-demo.mjs) |
 | Load JavaScript and JSON relative to the caller | [Relative path examples](examples/relative-paths/) |
 | Call a package's default function and use its named exports | [Axios example](README.md#module-shapes-and-package-subpaths) |
 | Retry a failed source and fall back to a mirror | [CDN bootstrap and fallback examples](examples/load/) |

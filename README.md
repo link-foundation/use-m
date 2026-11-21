@@ -35,6 +35,7 @@ On the first call, use-m installs the requested lodash version through npm if it
     - [Resilient package loading (shared fallback engine)](#resilient-package-loading-shared-fallback-engine)
     - [Resilient npm latest-version resolution](#resilient-npm-latest-version-resolution)
       - [Node.js engine compatibility](#nodejs-engine-compatibility)
+    - [In-memory module cache](#in-memory-module-cache)
     - [Module shapes and package subpaths](#module-shapes-and-package-subpaths)
     - [Interactive shell in Node.js environment](#interactive-shell-in-nodejs-environment)
     - [Browser](#browser)
@@ -97,6 +98,8 @@ The root `use.mjs` and `use.cjs` bundles are the installed package's ESM and Com
 Node.js checks `npm root -g`. When the default global root is unwritable, use-m can install under its own user cache prefix (`$XDG_CACHE_HOME/use-m/npm-global` or `~/.cache/use-m/npm-global`). An explicit `npm_config_prefix` or `NPM_CONFIG_PREFIX` must be writable for new installs. An exact pin such as `lodash@4.17.21` uses an alias like `lodash-v-4.17.21`, so another version can live beside it and later scripts can reuse the installed copy. On Node.js, concurrent requests for the same alias can share an install. An install lock coordinates processes, and use-m can retry failed installs and repair a damaged alias. Unpinned and range requests have their own reuse and version-selection rules. See [npm version resolution](#resilient-npm-latest-version-resolution).
 
 `makeUse({ specifierResolver })` selects one package resolver, and `makeUse({ specifierResolvers })` supplies an ordered list. These options apply after the built-in and relative-file checks. The same fallback engine powers package mirror selection, the `use-m/load` bootstrap, and the optional Node.js loader hook. Each has its own sources and retry settings. See [package fallback and errors](#resilient-package-loading-shared-fallback-engine) and [CDN bootstrap](#robust-loading-resilient-cdn-bootstrap).
+
+Repeated calls can skip package entry checks or CDN mirror selection by reusing a successful resolution from the [in-memory cache](#in-memory-module-cache).
 
 ### What an import returns
 
@@ -360,6 +363,14 @@ const lodash = await use('lodash');
 ```
 
 Advanced tests and embedded runtimes may inject `fetch` and `debugLogger`. Setting `registryRequestTimeoutMs` to `0` disables the request timeout; setting `latestVersionCache` or `registryCliFallback` to `false` disables that layer. Existing npm-install controls (`installMaxAttempts`, `installRetryDelayMs`, and the `installLock*` options) remain unchanged.
+
+### In-memory module cache
+
+Repeated calls to `use()` reuse loaded modules in the same process. Package cache hits skip install and entry-point checks for npm and Bun, or repeated mirror selection for network imports. Relative imports are keyed by their resolved location, so two scripts can each use `./config.mjs` and load their own file.
+
+Each loaded copy of use-m tracks up to 256 entries for built-ins, import namespaces, and package paths. A package path is cached for a specific loader, specifier, and resolver chain. Local package cache entries account for the working directory and relevant environment variables. Entries expire one minute after insertion, even when the cache is idle. A later call resolves the package again, and the runtime can still reuse the module through its native import cache.
+
+Named resolver chains can use the package path cache. Custom resolver functions, injected importers, and per-call options bypass it. Run `node examples/cache-demo.mjs` from the repository root to compare the first and repeated calls for the same package.
 
 ### Module shapes and package subpaths
 

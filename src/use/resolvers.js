@@ -12,12 +12,19 @@ const resolvers = {
     // Determine environment
     const isBrowser = typeof window !== 'undefined';
     const environment = isBrowser ? 'browser' : 'node';
+    const cacheKey = `builtin\0${environment}\0${moduleName}`;
 
-    const moduleFactory = builtinOverrides[moduleName]?.[environment];
+    const override = builtinOverrides[moduleName];
+    const moduleFactory = override?.[environment];
     if (moduleFactory) {
       try {
-        // Execute the factory function to get the module
-        return await moduleFactory();
+        if (isBrowser) {
+          // These wrappers capture host globals and methods, which a polyfill
+          // or test may replace after an earlier call.
+          const inputs = override.browserInputs();
+          return await reuseModuleLoad(cacheKey, () => moduleFactory(...inputs), inputs);
+        }
+        return await reuseModuleLoad(cacheKey, moduleFactory);
       } catch (error) {
         throw new Error(`Failed to load built-in module '${moduleName}' in ${environment} environment.`, { cause: error });
       }
@@ -42,7 +49,7 @@ const resolvers = {
     }
 
     try {
-      return await loadBuiltinModule(moduleName);
+      return await reuseModuleLoad(cacheKey, () => loadBuiltinModule(moduleName));
     } catch (error) {
       throw new Error(`Failed to load built-in module '${moduleName}' in ${environment} environment.`, { cause: error });
     }
@@ -93,7 +100,7 @@ const resolvers = {
     if (resolvedPath.endsWith('.json')) {
       try {
         // For JSON files, we need to use import assertions
-        const module = await import(resolvedPath, { with: { type: 'json' } });
+        const module = await importModuleNamespace(resolvedPath, true);
         return module.default || module;
       } catch (error) {
         // Fallback to baseUse if import assertions fail

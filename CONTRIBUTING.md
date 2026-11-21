@@ -97,7 +97,7 @@ deno test --allow-net --allow-env --allow-run --allow-read --allow-write --allow
 
 ### Key Files
 
-- **Source fragments.** `core.js` handles specifiers, caller paths, package exports, and built-ins. `resolvers.js` handles package managers, CDNs, and relative files. `coordination.js` holds shared resolver chains and install coordination. `engines.js` implements Node.js version selection. `runtime.js` wires those pieces into `use()` and `makeUse()` and defines `loadWithFallback()`.
+- **Source fragments.** `core.js` handles specifiers, caller paths, package exports, and built-ins. `resolvers.js` handles package managers, CDNs, and relative files. `coordination.js` holds shared resolver chains, the in-memory module cache, and install coordination. `engines.js` implements Node.js version selection. `runtime.js` wires those pieces into `use()` and `makeUse()` and defines `loadWithFallback()`.
 - **Generated bundles.** `npm run build` embeds the pinned semver implementation and its ISC license, then generates readable root entries and compact compatibility bundles in `src/`. Package exports and canonical CDN URLs use the root entries. Historical `/src/` URLs use the compact entries. The `sync:entries` script invokes the same build.
 - **Bootstrap and loader hook.** `src/load.mjs` and `src/load.cjs` fetch and validate the bootstrap bundle. `src/loader.js` is the Node.js resolver hook. Both call the shared fallback engine defined in `src/use/runtime.js`.
 - **Deno configuration.** The repository uses Deno's global npm cache (`nodeModulesDir: "none"`) for native `npm:` fallbacks. It disables the lockfile (`"lock": false`) because a CDN can change generated module contents at the same URL.
