@@ -1,6 +1,6 @@
 # Examples
 
-Start with the [README quickstart](README.md) for installation or the [resolution guide](README.md#how-it-works) for runtime requirements.
+Start with the [README quickstart](README.md) for installation, the [syntax table](README.md#supported-syntax) for module specifiers, or the [resolution guide](README.md#how-it-works) for runtime requirements.
 
 | If you want to | Try |
 | --- | --- |
