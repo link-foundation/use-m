@@ -329,7 +329,15 @@ Advanced tests and embedded runtimes may inject `fetch` and `debugLogger`. Setti
 
 ### Module shapes and package subpaths
 
-When a package exports only a default value, `use()` returns that value itself. It also carries a non-enumerable `default` reference to itself, so the direct form and the destructured form both work:
+When a package exports a function or class as its default alongside named exports, `use()` returns a callable view of the module. `.default` gives the original export and named bindings stay available on the same result. Named exports take precedence when the default function has a property with the same name. `typeof` reports `'function'`, and spreading the result still gives the module's enumerable exports.
+
+```javascript
+const axios = await use('axios@1');
+const { default: originalAxios, AxiosError } = axios;
+const { data } = await axios('https://example.com/data.json');
+```
+
+When a package exports only a default value, `use()` returns that value itself. Extensible functions and objects without a `default` property get a non-enumerable `default` reference to themselves.
 
 ```javascript
 const yargs = await use('yargs@17.7.2');
@@ -337,7 +345,9 @@ const { default: sameYargs } = await use('yargs@17.7.2');
 const { hideBin } = await use('yargs@17.7.2/helpers');
 ```
 
-Packages with named exports are returned as their module namespace, for example `const { Octokit } = await use('@octokit/rest@21.1.1')`. With the local npm and Bun resolvers, the package root resolves through `main` first, as Node.js `require()` does. Subpaths go through the package's `exports` map first. A subpath that `exports` does not list, such as `use('ink@5.2.1/build/index.js')`, still loads its file when that file exists. use-m then emits one `USE_M_UNEXPORTED_SUBPATH` process warning per subpath, which `--no-warnings` or `--disable-warning=USE_M_UNEXPORTED_SUBPATH` silences. These shapes are pinned by `tests/module-shape-contract.test.mjs`. On Bun, CommonJS packages such as `yargs@17` and `simple-git@3` come back as a namespace, so `const { default: yargs } = await use(...)` is the form that works on every runtime.
+Packages with named exports and no callable default generally return the module namespace. For example, `const { Octokit } = await use('@octokit/rest@21.1.1')` gives the named `Octokit` export.
+
+With the local npm and Bun resolvers, the package root resolves through `main` first, as Node.js `require()` does. Subpaths go through the package's `exports` map first. A subpath that `exports` does not list, such as `use('ink@5.2.1/build/index.js')`, still loads its file when that file exists. use-m then emits one `USE_M_UNEXPORTED_SUBPATH` process warning per subpath, which `--no-warnings` or `--disable-warning=USE_M_UNEXPORTED_SUBPATH` silences.
 
 ### Interactive shell in Node.js environment
 

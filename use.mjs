@@ -3450,6 +3450,45 @@ const withDefaultAlias = (value) => {
   return value;
 };
 
+const callableNamespaces = new WeakMap()
+
+const withCallableDefault = (namespace) => {
+  if (callableNamespaces.has(namespace)) return callableNamespaces.get(namespace)
+
+  // A bound function can be called and constructed without introducing its own
+  // `prototype` property. Mirror the namespace's own properties so the proxy
+  // can report their original descriptors and export order, even when sealed.
+  const target = (function () {}).bind(null)
+  delete target.name
+  delete target.length
+  Object.setPrototypeOf(target, Object.getPrototypeOf(namespace))
+  Object.defineProperties(target, Object.getOwnPropertyDescriptors(namespace))
+  Object.preventExtensions(target)
+
+  const forwardsToDefault = (key) => key !== 'then' && typeof namespace.default === 'function'
+  const callable = new Proxy(target, {
+    apply: (_, receiver, args) => Reflect.apply(namespace.default, receiver, args),
+    construct: (_, args, newTarget) => {
+      const value = namespace.default
+      return Reflect.construct(value, args, newTarget === callable ? value : newTarget)
+    },
+    // Read named exports live, giving them precedence over properties on the
+    // function. An attached `then` is available through `.default` only, so
+    // returning the view from an async loader cannot introduce a new thenable.
+    get: (_, key) => {
+      if (key in namespace) return namespace[key]
+      return forwardsToDefault(key) ? namespace.default[key] : undefined
+    },
+    has: (_, key) => key in namespace || (forwardsToDefault(key) && key in namespace.default),
+    ownKeys: () => Reflect.ownKeys(namespace),
+    getOwnPropertyDescriptor: (_, key) => Reflect.getOwnPropertyDescriptor(namespace, key),
+    defineProperty: (_, key, descriptor) => Reflect.defineProperty(namespace, key, descriptor),
+    set: () => false,
+  })
+  callableNamespaces.set(namespace, callable)
+  return callable
+}
+
 const baseUse = async (modulePath) => {
   // Dynamically import the module
   try {
@@ -3459,36 +3498,25 @@ const baseUse = async (modulePath) => {
       ? await import(importSpecifier, { with: { type: 'json' } })
       : await import(importSpecifier);
 
-    // More robust default export handling for cross-environment compatibility
-    const keys = Object.keys(module);
+    const value = module.default
+    if (value === undefined) return module
 
-    // If it's a Module object with a default property, unwrap it
-    if (module.default !== undefined) {
-      // Check if this is likely a CommonJS module with only default export
-      if (keys.length === 1 && keys[0] === 'default') {
-        return withDefaultAlias(module.default);
-      }
+    const metadataKeys = new Set(['default', '__esModule'])
+    if (value === module['module.exports']) metadataKeys.add('module.exports')
+    const keys = Object.keys(module)
 
-      // Check if default is the main export and other keys are just function/module metadata
-      const metadataKeys = new Set([
-        'default', '__esModule', 'Symbol(Symbol.toStringTag)',
-        'length', 'name', 'prototype', 'constructor',
-        'toString', 'valueOf', 'hasOwnProperty', 'isPrototypeOf', 'propertyIsEnumerable'
-      ]);
-      if (module.default === module['module.exports']) {
-        metadataKeys.add('module.exports');
-      }
-
-      const nonMetadataKeys = keys.filter(key => !metadataKeys.has(key));
-
-      // If there are no significant non-metadata keys, return the default
-      if (nonMetadataKeys.length === 0) {
-        return withDefaultAlias(module.default);
-      }
+    if (typeof value === 'function') {
+      return keys.some(key => !metadataKeys.has(key))
+        ? withCallableDefault(module)
+        : withDefaultAlias(value)
     }
 
-    // Return the whole module if it has multiple meaningful exports or no default
-    return module;
+    // Preserve the legacy unwrapping rules for non-callable defaults.
+    for (const key of [
+      'Symbol(Symbol.toStringTag)', 'length', 'name', 'prototype', 'constructor',
+      'toString', 'valueOf', 'hasOwnProperty', 'isPrototypeOf', 'propertyIsEnumerable',
+    ]) metadataKeys.add(key)
+    return keys.some(key => !metadataKeys.has(key)) ? module : withDefaultAlias(value)
   } catch (error) {
     // Deno's npm ESM imports require file extensions for legacy subpaths that
     // Node resolves automatically. Honor its explicit .js suggestion while

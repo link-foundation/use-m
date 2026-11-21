@@ -155,6 +155,18 @@ describe(`${moduleName} Relative path resolution in browser`, () => {
     expect(result).toBe(true);
   });
 
+  test(`${moduleName} the universal bundle supports callable defaults with named exports`, async () => {
+    const result = await page.evaluate(async () => {
+      const { use } = eval(await fetch('/use.js').then(response => response.text()))
+      const fixture = new URL('/tests/fixtures/module-shape/callable-namespace.mjs', location.href).href
+      const loaded = await use('callable-namespace-fixture', { specifierResolver: () => fixture })
+      const { default: original, $, name } = loaded
+      return [loaded('browser'), original('default'), $(), name]
+    })
+
+    expect(result).toEqual(['hello browser', 'hello default', 'named helper', 'named export'])
+  })
+
   test(`${moduleName} all relative path browser tests should pass`, async () => {
     const testResults = await page.evaluate(() => window.testResults);
     

@@ -16,13 +16,16 @@ import { describe, test, expect } from '../src/test-adapter.mjs'
 const moduleName = `[${import.meta.url.split('.').pop()} module]`
 const probePath = fileURLToPath(new URL('./fixtures/module-shape/probe.mjs', import.meta.url))
 const isDeno = typeof Deno !== 'undefined'
-const isBun = typeof Bun !== 'undefined'
 
 // Real npm installs on a cold cache can take minutes on Windows runners.
 const timeout = 300000
 
 const functions = ['function', 'function']
 const expected = {
+  'axios@1.21.1': { direct: 'from adapter', destructuredDefault: 'function', named: 'function' },
+  'lodash@4.17.21': { direct: [2, 4], destructuredDefault: 3 },
+  'faker@5.5.3': { direct: 'function' },
+  'command-stream@0.0.5': { named: functions },
   'yargs@17.7.2': {
     direct: 1,
     // yargs@17's `.default` is yargs' own chainable `default()` method, as it
@@ -38,15 +41,6 @@ const expected = {
   '@octokit/rest@21.1.1': { named: 'function' },
   'ink@5.2.1': { named: ['function', 'object'] },
   'ink@5.2.1/build/index.js': { named: ['function', 'object'] },
-}
-
-// Bun exposes every CommonJS property as a named export, so use-m returns the
-// namespace for yargs@17 and simple-git@3 there, exactly as 8.16.2 did. On Bun
-// the portable form is `const { default: x } = await use(...)`.
-const expectedOnBun = {
-  ...expected,
-  'yargs@17.7.2': { ...expected['yargs@17.7.2'], direct: 'throws' },
-  'simple-git@3.28.0': { ...expected['simple-git@3.28.0'], direct: 'throws' },
 }
 
 // The probe reports a failing pattern as `{ error: message }`. Messages differ
@@ -76,7 +70,7 @@ const runProbe = (implementation) => {
 
 const expectShapeContract = (implementation) => {
   const { results, stderr } = runProbe(implementation)
-  expect(withoutMessages(results)).toEqual(isBun ? expectedOnBun : expected)
+  expect(withoutMessages(results)).toEqual(expected)
   const warnings = stderr.split('[USE_M_UNEXPORTED_SUBPATH]').length - 1
   expect(warnings).toBe(1)
   expect(stderr).toContain("Package subpath './build/index.js' is not exported")
