@@ -37,6 +37,14 @@ exports.testModuleCache = ({ describe, test, expect }, { baseUse, makeUse, resol
       }
     })
 
+    test('lets a host importer resolve a specifier independently of the default cache', async () => {
+      const specifier = virtualModule('export default "standard"')
+      expect(await baseUse(specifier)).toBe('standard')
+      expect(await baseUse(specifier, async () => ({ default: 'host' }))).toBe('host')
+      expect(await baseUse(specifier, async () => ({ default: 'another host' }))).toBe('another host')
+      expect(await baseUse(specifier)).toBe('standard')
+    })
+
     test('evicts older entries once the shared cache is full', async () => {
       const first = await use('performance')
       for (let index = 0; index < 256; index++) {

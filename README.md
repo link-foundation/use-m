@@ -44,6 +44,7 @@ On the first call, use-m installs the requested lodash version through npm if it
     - [Deno](#deno)
     - [Bun](#bun)
     - [Network imports](#network-imports)
+      - [Native npm packages with a Node.js 20 policy](#native-npm-packages-with-a-nodejs-20-policy)
     - [Node.js loader hook](#nodejs-loader-hook)
     - [Independent Scripts](#independent-scripts)
       - [`use-m` and `command-stream`](#use-m-and-command-stream)
@@ -502,7 +503,7 @@ bun run example.mjs
 
 ### Network imports
 
-Older Node.js releases such as Node.js 20 can run the [network import example](examples/network-imports/index.mjs) with `--experimental-network-imports`. Node.js 22.6.0 removed that flag. On current Node.js, use the [installed package](#standard-import) or fetch the [standalone bootstrap](#robust-loading-resilient-cdn-bootstrap). [Node.js 22.6.0 release notes](https://nodejs.org/en/blog/release/v22.6.0)
+Node.js 20 can run the [network import example](examples/network-imports/index.mjs) with `--experimental-network-imports`. A URL-loaded `use.mjs` uses CDN package resolvers by default. Node.js 22.6.0 removed the flag. On newer releases, use the [installed package](#standard-import) or fetch the [standalone bootstrap](#robust-loading-resilient-cdn-bootstrap). [Node.js 22.6.0 release notes](https://nodejs.org/en/blog/release/v22.6.0)
 
 1. Create file named `example.mjs`:
    ```javascript
@@ -515,6 +516,24 @@ Older Node.js releases such as Node.js 20 can run the [network import example](e
    ```bash
    node --experimental-network-imports example.mjs
    ```
+
+#### Native npm packages with a Node.js 20 policy
+
+To use the npm resolver from an HTTPS-imported `use.mjs`, generate a policy that pins the bundle's SHA-384 digest and allows the Node built-ins used by the resolver. The policy matches dependencies by specifier, so the example supplies an import callback from the local entry point for the package paths npm resolves at runtime. The local callback also lets Node load each package's dependencies and native add-ons. [Node.js policy documentation](https://nodejs.org/download/release/latest-v20.x/docs/api/permissions.html#dependency-redirection)
+
+Run the example from the repository root, using a trusted local copy of the **same** published bundle served at the exact URL. The policy grants that bundle filesystem and process access, and npm packages run with the application's normal privileges.
+
+```bash
+version=$(node -p 'require("./package.json").version')
+npm pack "use-m@$version"
+tar -xOf "use-m-$version.tgz" package/use.mjs > trusted-use.mjs
+bundle_url="https://unpkg.com/use-m@$version/use.mjs"
+node examples/network-imports/create-policy.mjs "$bundle_url" trusted-use.mjs > policy.json
+node --experimental-network-imports --experimental-policy=policy.json \
+  examples/network-imports/native-npm.mjs "$bundle_url" @node-rs/crc32@1.10.8
+```
+
+In the example, `makeUse({ specifierResolver: 'npm', ... })` selects the same resolver used by local Node.js installs. Its `import` callback calls `baseUse(modulePath, importFromHost)` so use-m still handles export shapes and import errors. To verify the policy against the bundle in your checkout, run `node experiments/issue-8/verify-policy.mjs`. See [the example code](examples/network-imports/native-npm.mjs).
 
 ### Node.js loader hook
 

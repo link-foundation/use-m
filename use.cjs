@@ -3548,12 +3548,17 @@ const withDefaultAlias = (value) => {
   return value;
 };
 
-const importModuleNamespace = (modulePath, isJsonModule) => {
-  const load = () => isJsonModule
-    ? import(modulePath, { with: { type: 'json' } })
-    : import(modulePath);
-  if (typeof modulePath !== 'string') return load();
+const importFromHere = (specifier, options) => import(specifier, options);
 
+const importModuleNamespace = (modulePath, isJsonModule, nativeImport) => {
+  const loadModule = typeof nativeImport === 'function' ? nativeImport : importFromHere;
+  const load = () => isJsonModule
+    ? loadModule(modulePath, { with: { type: 'json' } })
+    : loadModule(modulePath);
+  // A host importer resolves in its own module context.
+  if (loadModule !== importFromHere || typeof modulePath !== 'string') return load();
+
+  // Cache the namespace so subsequent reads still see live ESM bindings.
   const key = `${isJsonModule ? 'json' : 'import'}\0${modulePath}`;
   return reuseModuleLoad(key, load);
 };
@@ -3597,13 +3602,12 @@ const withCallableDefault = (namespace) => {
   return callable
 }
 
-const baseUse = async (modulePath) => {
+const baseUse = async (modulePath, nativeImport) => {
   // Dynamically import the module
   try {
     const importSpecifier = nativeWindowsPathToFileUrl(modulePath);
     const isJsonModule = /\.json(?:[?#].*)?$/i.test(modulePath);
-    // Cache the namespace so subsequent reads still see live ESM bindings.
-    const module = await importModuleNamespace(importSpecifier, isJsonModule);
+    const module = await importModuleNamespace(importSpecifier, isJsonModule, nativeImport);
 
     const value = module.default
     if (value === undefined) return module
@@ -3632,7 +3636,7 @@ const baseUse = async (modulePath) => {
         error.code === 'ERR_MODULE_NOT_FOUND' &&
         error.message.includes('Did you mean to import with the ".js" extension?') &&
         parseModuleSpecifier(modulePath.slice(4)).modulePath) {
-      return baseUse(`${modulePath}.js`);
+      return baseUse(`${modulePath}.js`, nativeImport);
     }
     throw new Error(`Failed to import module from '${modulePath}'.`, { cause: error });
   }
