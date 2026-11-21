@@ -1,9 +1,10 @@
 {
   "name": "use-m",
-  "version": "8.18.2",
+  "version": "8.19.0",
   "description": "use-m: dynamically import any JavaScript module",
   "type": "module",
   "main": "use.cjs",
+  "types": "./use.d.cts",
   "exports": {
     ".": {
       "import": "./use.mjs",
@@ -37,7 +38,8 @@
     "check:packages": "node scripts/check-publishable-packages.mjs",
     "test": "node --experimental-vm-modules --disable-warning=ExperimentalWarning --disable-warning=DEP0025 --disable-warning=DEP0040 --disable-warning=DEP0125 ./node_modules/jest/bin/jest.js",
     "test:examples": "./examples/test-examples.mjs",
-    "sync:entries": "npm run build"
+    "sync:entries": "npm run build",
+    "test:types": "node tests/typescript/verify.mjs"
   },
   "repository": {
     "type": "git",
@@ -75,9 +77,13 @@
   "files": [
     "use.mjs",
     "use.cjs",
+    "use.d.mts",
+    "use.d.cts",
     "use.js",
     "fetch-polyfill.js",
     "fetch-polyfill.cjs",
+    "fetch-polyfill.d.ts",
+    "fetch-polyfill.d.cts",
     "src/use.mjs",
     "src/use.cjs",
     "src/use.js",
@@ -88,6 +94,8 @@
     "src/loader.js",
     "src/load.mjs",
     "src/load.cjs",
+    "src/load.d.mts",
+    "src/load.d.cts",
     "src/test-adapter.mjs",
     "src/test-adapter.cjs",
     "README.md",
@@ -102,7 +110,8 @@
     "express": "^5.1.0",
     "jest": "^29.7.0",
     "puppeteer": "^24.16.2",
-    "semver": "7.8.5"
+    "semver": "7.8.5",
+    "typescript": "5.9.3"
   },
   "dependencies": {
     "undici": "^6.29.1"

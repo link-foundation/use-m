@@ -137,6 +137,10 @@ jobs:
         if: matrix.runtime == 'node' && matrix.os == 'ubuntu-24.04' && matrix.node-version == '24.x'
         run: npm audit --omit=dev
 
+      - name: Verify the published TypeScript declarations
+        if: matrix.runtime == 'node' && matrix.os == 'ubuntu-24.04' && matrix.node-version == '24.x'
+        run: npm run test:types
+
       - name: Verify missing fetch through the shebang
         if: matrix.runtime == 'node'
         shell: bash

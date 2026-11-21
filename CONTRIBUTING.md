@@ -102,6 +102,7 @@ deno test --allow-net --allow-env --allow-run --allow-read --allow-write --allow
 - **Bootstrap and loader hook.** `src/load.mjs` and `src/load.cjs` fetch and validate the bootstrap bundle. `src/loader.js` is the Node.js resolver hook. Both call the shared fallback engine defined in `src/use/runtime.js`.
 - **Deno configuration.** The repository uses Deno's global npm cache (`nodeModulesDir: "none"`) for native `npm:` fallbacks. It disables the lockfile (`"lock": false`) because a CDN can change generated module contents at the same URL.
 - **Tests.** The adapter lets the test suite run under Jest, Bun, and Deno. Public entry-point behavior often has both `.mjs` and `.cjs` tests. Some targeted tests cover one format, and Deno runs the `.mjs` suite.
+- **Type declarations.** Update the adjacent `.d.cts`, `.d.mts`, or `.d.ts` files when changing the public API. Run `npm run test:types` on Node.js 24 to type-check and run consumer fixtures against the packed npm package.
 
 ## Making Changes
 
