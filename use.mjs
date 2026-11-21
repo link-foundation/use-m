@@ -1655,18 +1655,22 @@ const toAsyncFunction = (call, arity, name) => {
 // whose built-in differs from Node's. Anything left out uses the generic loader.
 const builtinOverrides = {
   'console': {
-    browser: () => ({ default: console, log: console.log, error: console.error, warn: console.warn, info: console.info })
+    browserInputs: () => [console, console.log, console.error, console.warn, console.info],
+    browser: (hostConsole, log, error, warn, info) => ({ default: hostConsole, log, error, warn, info })
   },
   'crypto': {
-    browser: () => ({ default: crypto, subtle: crypto.subtle })
+    browserInputs: () => [crypto, crypto.subtle],
+    browser: (hostCrypto, subtle) => ({ default: hostCrypto, subtle })
   },
   'url': {
-    browser: () => ({ default: URL, URL, URLSearchParams })
+    browserInputs: () => [URL, URLSearchParams],
+    browser: (URL, URLSearchParams) => ({ default: URL, URL, URLSearchParams })
   },
   // 'performance' is not a built-in module name: use-m maps it onto the
   // performance object, which lives in node:perf_hooks on the Node.js side.
   'performance': {
-    browser: () => ({ default: performance, now: performance.now.bind(performance) }),
+    browserInputs: () => [performance, performance.now],
+    browser: (hostPerformance, now) => ({ default: hostPerformance, now: now.bind(hostPerformance) }),
     node: () => import('node:perf_hooks').then(m => ({ default: m.performance, performance: m.performance, now: m.performance.now.bind(m.performance), ...m }))
   },
   // Bun and Deno expose `node:fs/promises` functions whose arity and
@@ -1850,9 +1854,16 @@ const resolvers = {
     const environment = isBrowser ? 'browser' : 'node';
     const cacheKey = `builtin\0${environment}\0${moduleName}`;
 
-    const moduleFactory = builtinOverrides[moduleName]?.[environment];
+    const override = builtinOverrides[moduleName];
+    const moduleFactory = override?.[environment];
     if (moduleFactory) {
       try {
+        if (isBrowser) {
+          // These wrappers capture host globals and methods, which a polyfill
+          // or test may replace after an earlier call.
+          const inputs = override.browserInputs();
+          return await reuseModuleLoad(cacheKey, () => moduleFactory(...inputs), inputs);
+        }
         return await reuseModuleLoad(cacheKey, moduleFactory);
       } catch (error) {
         throw new Error(`Failed to load built-in module '${moduleName}' in ${environment} environment.`, { cause: error });
@@ -3241,7 +3252,9 @@ const moduleCache = new Map()
 const moduleCacheLimit = 256
 const moduleCacheTtlMs = 60_000
 let moduleCacheTimer
-const moduleCacheNow = () => typeof performance === 'undefined' ? Date.now() : performance.now()
+const moduleCacheNow = typeof performance !== 'undefined' && typeof performance?.now === 'function'
+  ? performance.now.bind(performance)
+  : Date.now
 
 const scheduleModuleCacheExpiry = (delay) => {
   moduleCacheTimer = setTimeout(() => {
@@ -3266,8 +3279,8 @@ const getModuleCacheEntry = (key) => {
   return entry && entry.expiresAt > moduleCacheNow() ? entry : undefined
 }
 
-const cacheModule = (key, value) => {
-  const entry = { value, expiresAt: moduleCacheNow() + moduleCacheTtlMs }
+const cacheModule = (key, value, inputs) => {
+  const entry = { value, inputs, expiresAt: moduleCacheNow() + moduleCacheTtlMs }
   moduleCache.delete(key)
   moduleCache.set(key, entry)
   if (moduleCache.size > moduleCacheLimit) {
@@ -3279,12 +3292,15 @@ const cacheModule = (key, value) => {
   return entry
 }
 
-const reuseModuleLoad = (key, load) => {
+const reuseModuleLoad = (key, load, inputs) => {
   const cached = getModuleCacheEntry(key)
-  if (cached) return cached.value
+  if (cached && (!inputs || (cached.inputs?.length === inputs.length &&
+      inputs.every((value, index) => Object.is(value, cached.inputs[index]))))) {
+    return cached.value
+  }
 
   const pending = Promise.resolve().then(load)
-  const entry = cacheModule(key, pending)
+  const entry = cacheModule(key, pending, inputs)
   pending.catch(() => {
     if (moduleCache.get(key) === entry) moduleCache.delete(key)
   })

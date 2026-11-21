@@ -89,6 +89,9 @@ exports.testModuleCache = ({ describe, test, expect }, { baseUse, makeUse, resol
           import { mkdir, writeFile } from 'node:fs/promises'
           import path from 'node:path'
 
+          const actualNow = performance.now.bind(performance)
+          let offset = 0
+          Object.defineProperty(performance, 'now', { value: () => actualNow() + offset })
           const api = await import(process.argv[1])
           const { use } = api.default || api
           const selector = 'fixture-pkg@1.2.0/item'
@@ -105,8 +108,7 @@ exports.testModuleCache = ({ describe, test, expect }, { baseUse, makeUse, resol
           await writeManifest('./replacement.js')
           const warm = await use(selector)
           const other = await use('fixture-pkg@1.10.0')
-          const actualNow = performance.now.bind(performance)
-          Object.defineProperty(performance, 'now', { value: () => actualNow() + 60_001 })
+          offset = 60_001
           const expired = await use(selector)
           console.log(JSON.stringify([original.version, warm === original, other.version, expired.version]))
         `, entryUrl], { env: fixture.options.env })

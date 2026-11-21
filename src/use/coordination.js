@@ -17,7 +17,9 @@ const moduleCache = new Map()
 const moduleCacheLimit = 256
 const moduleCacheTtlMs = 60_000
 let moduleCacheTimer
-const moduleCacheNow = () => typeof performance === 'undefined' ? Date.now() : performance.now()
+const moduleCacheNow = typeof performance !== 'undefined' && typeof performance?.now === 'function'
+  ? performance.now.bind(performance)
+  : Date.now
 
 const scheduleModuleCacheExpiry = (delay) => {
   moduleCacheTimer = setTimeout(() => {
@@ -42,8 +44,8 @@ const getModuleCacheEntry = (key) => {
   return entry && entry.expiresAt > moduleCacheNow() ? entry : undefined
 }
 
-const cacheModule = (key, value) => {
-  const entry = { value, expiresAt: moduleCacheNow() + moduleCacheTtlMs }
+const cacheModule = (key, value, inputs) => {
+  const entry = { value, inputs, expiresAt: moduleCacheNow() + moduleCacheTtlMs }
   moduleCache.delete(key)
   moduleCache.set(key, entry)
   if (moduleCache.size > moduleCacheLimit) {
@@ -55,12 +57,15 @@ const cacheModule = (key, value) => {
   return entry
 }
 
-const reuseModuleLoad = (key, load) => {
+const reuseModuleLoad = (key, load, inputs) => {
   const cached = getModuleCacheEntry(key)
-  if (cached) return cached.value
+  if (cached && (!inputs || (cached.inputs?.length === inputs.length &&
+      inputs.every((value, index) => Object.is(value, cached.inputs[index]))))) {
+    return cached.value
+  }
 
   const pending = Promise.resolve().then(load)
-  const entry = cacheModule(key, pending)
+  const entry = cacheModule(key, pending, inputs)
   pending.catch(() => {
     if (moduleCache.get(key) === entry) moduleCache.delete(key)
   })

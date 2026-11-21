@@ -14,9 +14,16 @@ const resolvers = {
     const environment = isBrowser ? 'browser' : 'node';
     const cacheKey = `builtin\0${environment}\0${moduleName}`;
 
-    const moduleFactory = builtinOverrides[moduleName]?.[environment];
+    const override = builtinOverrides[moduleName];
+    const moduleFactory = override?.[environment];
     if (moduleFactory) {
       try {
+        if (isBrowser) {
+          // These wrappers capture host globals and methods, which a polyfill
+          // or test may replace after an earlier call.
+          const inputs = override.browserInputs();
+          return await reuseModuleLoad(cacheKey, () => moduleFactory(...inputs), inputs);
+        }
         return await reuseModuleLoad(cacheKey, moduleFactory);
       } catch (error) {
         throw new Error(`Failed to load built-in module '${moduleName}' in ${environment} environment.`, { cause: error });
