@@ -32,6 +32,24 @@ const chainsToYargs = yargs => typeof yargs(['--count', '2']).parse
 // pattern runs on its own, and results are plain JSON, so the test shows
 // exactly which pattern changed.
 export const patterns = {
+  'axios@1.21.1': {
+    direct: async axios => (await axios({
+      url: '/example',
+      adapter: async () => ({ data: 'from adapter', status: 200 }),
+    })).data,
+    destructuredDefault: ({ default: axios }) => typeof axios.get,
+    named: ({ AxiosError }) => typeof AxiosError,
+  },
+  'lodash@4.17.21': {
+    direct: lodash => lodash.map([1, 2], value => value * 2),
+    destructuredDefault: ({ default: lodash }) => lodash.add(1, 2),
+  },
+  'faker@5.5.3': {
+    direct: faker => typeof faker.name.findName,
+  },
+  'command-stream@0.0.5': {
+    named: ({ $, sh }) => [typeof $, typeof sh],
+  },
   'yargs@17.7.2': {
     direct: mod => parseCount(mod, 1),
     destructuredDefault: ({ default: yargs }) => chainsToYargs(yargs),
@@ -85,7 +103,7 @@ for (const specifier of specifiers) {
   results[specifier] = {}
   for (const [name, check] of Object.entries(patterns[specifier])) {
     try {
-      results[specifier][name] = check(mod)
+      results[specifier][name] = await check(mod)
     } catch (error) {
       results[specifier][name] = { error: firstLine(error) }
     }

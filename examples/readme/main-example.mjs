@@ -20,6 +20,7 @@ const packageJson = await use('./package.json');
 
 // NPM registry support (latest version)
 const axios = await use('axios');
+const { default: originalAxios, AxiosError } = axios;
 const _ = await use('lodash@latest');
 
 // Fixed NPM package version support
