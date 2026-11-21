@@ -1,0 +1,9 @@
+Unable to find image 'rhysd/actionlint@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667' locally
+.github/workflows/release.yml:131:9: shellcheck reported issue in this script: SC2129:style:3:1: Consider using { cmd1; cmd2; } >> file instead of individual redirects [shellcheck]
+    |
+131 |         run: |
+    |         ^~~~
+.github/workflows/release.yml:146:9: shellcheck reported issue in this script: SC2129:style:26:3: Consider using { cmd1; cmd2; } >> file instead of individual redirects [shellcheck]
+    |
+146 |         run: |
+    |         ^~~~

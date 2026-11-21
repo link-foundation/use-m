@@ -1,10 +1,10 @@
-import { describe, test, expect } from '../test-adapter.mjs';
-import { use } from '../use.mjs';
+import { describe, test, expect } from '../src/test-adapter.mjs';
+import { use } from '../src/use.mjs';
 const moduleName = `[${import.meta.url.split('.').pop()} module]`;
 
 describe(`${moduleName} Built-in module error handling`, () => {
   test(`${moduleName} should return null for non-builtin modules from builtin resolver`, async () => {
-    const { resolvers } = await import('../use.mjs');
+    const { resolvers } = await import('../src/use.mjs');
 
     // Test that builtin resolver returns null for non-builtin modules
     const result = await resolvers.builtin('lodash');
@@ -14,7 +14,7 @@ describe(`${moduleName} Built-in module error handling`, () => {
   test(`${moduleName} should throw error for unsupported builtin modules`, async () => {
     // Create a module name that looks like a builtin but isn't
     const testFn = async () => {
-      const { resolvers: { builtin } } = await import('../use.mjs');
+      const { resolvers: { builtin } } = await import('../src/use.mjs');
       return await builtin('unsupported_builtin_module');
     };
     await expect(await testFn()).toEqual(null);
@@ -61,12 +61,12 @@ describe(`${moduleName} Built-in module error handling`, () => {
 
   test(`${moduleName} should throw meaningful errors for import failures`, async () => {
     // We can't easily test import failures without mocking, but we can test error message structure
-    const { resolvers: { builtin } } = await import('../use.mjs');
+    const { resolvers: { builtin } } = await import('../src/use.mjs');
     await expect(await builtin('builtin:nonexistent')).toEqual(null);
   });
 
   test(`${moduleName} builtin resolver should handle empty/invalid module specifiers gracefully`, async () => {
-    const { resolvers, parseModuleSpecifier } = await import('../use.mjs');
+    const { resolvers, parseModuleSpecifier } = await import('../src/use.mjs');
 
     // parseModuleSpecifier should throw for invalid specifiers
     expect(() => parseModuleSpecifier('')).toThrow();
@@ -75,7 +75,7 @@ describe(`${moduleName} Built-in module error handling`, () => {
   });
 
   test(`${moduleName} should handle modules with special characters in names`, async () => {
-    const { resolvers } = await import('../use.mjs');
+    const { resolvers } = await import('../src/use.mjs');
 
     // Test with module that looks like a scoped package
     const result = await resolvers.builtin('@org/package');

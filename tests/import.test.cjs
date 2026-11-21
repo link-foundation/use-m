@@ -1,4 +1,4 @@
-const { describe, test, expect } = require('../test-adapter.cjs');
+const { describe, test, expect } = require('../src/test-adapter.cjs');
 
 const moduleName = `[${__filename.split('.').pop()} module]`;
 

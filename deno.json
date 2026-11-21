@@ -1,4 +1,6 @@
 {
+  "nodeModulesDir": "none",
+  "lock": false,
   "tasks": {
     "test": "deno test --allow-all tests/*.test.mjs"
   },

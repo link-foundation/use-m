@@ -1,7 +1,7 @@
-import { makeUse } from '../use.mjs';
+import { makeUse } from '../src/use.mjs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { describe, test, expect, beforeAll, afterAll } from '../test-adapter.mjs';
+import { describe, test, expect, beforeAll, afterAll } from '../src/test-adapter.mjs';
 
 // Mock jest object for Deno compatibility
 const jest = typeof Deno !== 'undefined' ? { setTimeout: () => { } } : (await import('@jest/globals')).jest;
@@ -9,7 +9,7 @@ const jest = typeof Deno !== 'undefined' ? { setTimeout: () => { } } : (await im
 const moduleName = `[${import.meta.url.split('.').pop()} module]`;
 
 // URL of use.mjs to test default scriptPath resolution
-const useMjsUrl = new URL('../use.mjs', import.meta.url).href;
+const useMjsUrl = new URL('../src/use.mjs', import.meta.url).href;
 
 const currentFileUrl = import.meta.url;
 const currentFilePath = fileURLToPath(currentFileUrl);
@@ -24,9 +24,9 @@ describe(`${moduleName} scriptPath detection in ESM (functional)`, () => {
     };
     const useFn = await makeUse({ specifierResolver: stubSpecifierResolver });
     await useFn('anything');
-    // resolver should resolve './package.json' relative to use.mjs
-    const resolved = capturedResolver('./package.json');
-    const expected = fileURLToPath(new URL('./package.json', useMjsUrl));
+    // resolver should resolve '../package.json' relative to use.mjs (which lives in src/)
+    const resolved = capturedResolver('../package.json');
+    const expected = fileURLToPath(new URL('../package.json', useMjsUrl));
     expect(resolved).toBe(expected);
   });
 
@@ -43,6 +43,31 @@ describe(`${moduleName} scriptPath detection in ESM (functional)`, () => {
     const expected = join(dirname(explicitPath), '..', 'package.json');
     expect(resolved).toBe(expected);
   });
+
+  test(`${moduleName} treats a native Windows scriptPath as a local file`, async () => {
+    let capturedResolver;
+    const windowsScriptPath = typeof process !== 'undefined' && process.platform === 'win32'
+      ? currentFilePath
+      : 'C:\\project folder\\tests\\caller.mjs';
+    const useFn = await makeUse({
+      scriptPath: windowsScriptPath,
+      specifierResolver: (specifier, pathResolver) => {
+        capturedResolver = pathResolver;
+        return currentFileUrl;
+      },
+    });
+    await useFn('anything');
+
+    if (typeof process !== 'undefined' && process.platform === 'win32') {
+      expect(capturedResolver('../package.json')).toBe(
+        join(dirname(windowsScriptPath), '..', 'package.json')
+      );
+    } else {
+      // On a non-Windows host the synthetic drive does not exist, but reaching
+      // createRequire() proves it was recognized as a file rather than a c: URL.
+      expect(() => capturedResolver('../package.json')).toThrow();
+    }
+  });
 });
 
 // Tests when global require is undefined (force createRequire fallback)
@@ -56,8 +81,8 @@ describe(`${moduleName} scriptPath detection in ESM (createRequire fallback)`, (
     };
     const useFn = await makeUse({ specifierResolver: stubSpecifierResolver });
     await useFn('anything');
-    const resolved = capturedResolver('./package.json');
-    const expected = fileURLToPath(new URL('./package.json', useMjsUrl));
+    const resolved = capturedResolver('../package.json');
+    const expected = fileURLToPath(new URL('../package.json', useMjsUrl));
     expect(resolved).toBe(expected);
   });
 
@@ -82,11 +107,11 @@ describe(`${moduleName} scriptPath detection in ESM (createRequire fallback)`, (
     };
     // In ESM, providing a meta.url affects pathResolver
     // We need to use a valid path that exists to avoid errors
-    const metaUrl = new URL('../use.mjs', import.meta.url).href;
+    const metaUrl = new URL('../src/use.mjs', import.meta.url).href;
     const useFn = await makeUse({ specifierResolver: stubSpecifierResolver, meta: { url: metaUrl } });
     await useFn('anything');
-    const resolved = capturedResolver('./package.json');
-    const expected = fileURLToPath(new URL('./package.json', metaUrl));
+    const resolved = capturedResolver('../package.json');
+    const expected = fileURLToPath(new URL('../package.json', metaUrl));
     expect(resolved).toBe(expected);
   });
 });
@@ -99,11 +124,11 @@ describe(`${moduleName} scriptPath detection in ESM (meta URL)`, () => {
       capturedResolver = pathResolver;
       return currentFileUrl;
     };
-    const metaUrl = new URL('../use.js', import.meta.url).href;
+    const metaUrl = new URL('../src/use.js', import.meta.url).href;
     const useFn = await makeUse({ specifierResolver: stubSpecifierResolver, meta: { url: metaUrl } });
     await useFn('anything');
     const resolved = capturedResolver('./use.js');
     const expected = fileURLToPath(metaUrl);
     expect(resolved).toBe(expected);
   });
-}); 
+});

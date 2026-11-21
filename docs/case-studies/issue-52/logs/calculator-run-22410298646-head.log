@@ -1,0 +1,500 @@
+Detect Changes	UNKNOWN STEP	﻿2026-02-25T18:27:48.9500890Z Current runner version: '2.331.0'
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:48.9523376Z ##[group]Runner Image Provisioner
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:48.9524288Z Hosted Compute Agent
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:48.9524909Z Version: 20260213.493
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:48.9525493Z Commit: 5c115507f6dd24b8de37d8bbe0bb4509d0cc0fa3
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:48.9526265Z Build Date: 2026-02-13T00:28:41Z
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:48.9526951Z Worker ID: {0b6fcab0-dada-42a8-bbdd-960ea1584bbb}
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:48.9527636Z Azure Region: westcentralus
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:48.9528278Z ##[endgroup]
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:48.9529593Z ##[group]Operating System
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:48.9530378Z Ubuntu
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:48.9531041Z 24.04.3
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:48.9531475Z LTS
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:48.9531954Z ##[endgroup]
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:48.9532463Z ##[group]Runner Image
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:48.9533079Z Image: ubuntu-24.04
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:48.9533616Z Version: 20260224.36.1
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:48.9534830Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260224.36/images/ubuntu/Ubuntu2404-Readme.md
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:48.9536639Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260224.36
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:48.9537662Z ##[endgroup]
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:48.9540449Z ##[group]GITHUB_TOKEN Permissions
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:48.9542682Z Actions: write
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:48.9543217Z ArtifactMetadata: write
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:48.9543785Z Attestations: write
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:48.9544463Z Checks: write
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:48.9544948Z Contents: write
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:48.9545452Z Deployments: write
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:48.9546104Z Discussions: write
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:48.9546588Z Issues: write
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:48.9547080Z Metadata: read
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:48.9547646Z Models: read
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:48.9548154Z Packages: write
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:48.9548654Z Pages: write
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:48.9549284Z PullRequests: write
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:48.9549852Z RepositoryProjects: write
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:48.9550605Z SecurityEvents: write
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:48.9551229Z Statuses: write
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:48.9551760Z ##[endgroup]
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:48.9553729Z Secret source: Actions
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:48.9554524Z Prepare workflow directory
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:49.0122567Z Prepare all required actions
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:49.0159021Z Getting action download info
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:49.3995224Z Download action repository 'actions/checkout@v4' (SHA:34e114876b0b11c390a56381ad16ebd13914f8d5)
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:49.5227900Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:49.9547496Z Complete job name: Detect Changes
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.0271213Z ##[group]Run actions/checkout@v4
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.0272232Z with:
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.0272666Z   fetch-depth: 0
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.0273210Z   repository: link-assistant/calculator
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.0274207Z   token: ***
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.0274661Z   ssh-strict: true
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.0275138Z   ssh-user: git
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.0275633Z   persist-credentials: true
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.0276269Z   clean: true
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.0276763Z   sparse-checkout-cone-mode: true
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.0277442Z   fetch-tags: false
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.0277931Z   show-progress: true
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.0278442Z   lfs: false
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.0278889Z   submodules: false
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.0279407Z   set-safe-directory: true
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.0280409Z env:
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.0280858Z   CARGO_TERM_COLOR: always
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.0281467Z   RUSTFLAGS: -Dwarnings
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.0282225Z   CARGO_TOKEN: ***
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.0282692Z ##[endgroup]
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.1364868Z Syncing repository: link-assistant/calculator
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.1367293Z ##[group]Getting Git version info
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.1368322Z Working directory is '/home/runner/work/calculator/calculator'
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.1369903Z [command]/usr/bin/git version
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.1415775Z git version 2.53.0
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.1442633Z ##[endgroup]
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.1463837Z Temporarily overriding HOME='/home/runner/work/_temp/e7e2051b-e3f8-4d45-9faa-eeb02b82da3c' before making global git config changes
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.1466546Z Adding repository directory to the temporary git global config as a safe directory
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.1468924Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/calculator/calculator
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.1508578Z Deleting the contents of '/home/runner/work/calculator/calculator'
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.1512263Z ##[group]Initializing the repository
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.1516631Z [command]/usr/bin/git init /home/runner/work/calculator/calculator
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.1606479Z hint: Using 'master' as the name for the initial branch. This default branch name
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.1608647Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.1611076Z hint: to use in all of your new repositories, which will suppress this warning,
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.1613112Z hint: call:
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.1613879Z hint:
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.1614912Z hint: 	git config --global init.defaultBranch <name>
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.1616477Z hint:
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.1617840Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.1620673Z hint: 'development'. The just-created branch can be renamed via this command:
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.1622711Z hint:
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.1623580Z hint: 	git branch -m <name>
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.1624592Z hint:
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.1626102Z hint: Disable this message with "git config set advice.defaultBranchName false"
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.1628968Z Initialized empty Git repository in /home/runner/work/calculator/calculator/.git/
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.1632577Z [command]/usr/bin/git remote add origin https://github.com/link-assistant/calculator
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.1660051Z ##[endgroup]
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.1661910Z ##[group]Disabling automatic garbage collection
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.1664764Z [command]/usr/bin/git config --local gc.auto 0
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.1695788Z ##[endgroup]
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.1697353Z ##[group]Setting up auth
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.1703983Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.1739381Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.2070012Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.2100501Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.2333940Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.2366899Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.2605877Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.2641529Z ##[endgroup]
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.2642463Z ##[group]Fetching the repository
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:50.2651196Z [command]/usr/bin/git -c protocol.version=2 fetch --prune --no-recurse-submodules origin +refs/heads/*:refs/remotes/origin/* +refs/tags/*:refs/tags/*
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.2427413Z From https://github.com/link-assistant/calculator
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.2429628Z  * [new branch]        issue-1-177867357bb4  -> origin/issue-1-177867357bb4
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.2436819Z  * [new branch]        issue-10-29cd40fd44ec -> origin/issue-10-29cd40fd44ec
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.2439209Z  * [new branch]        issue-10-906c06b24318 -> origin/issue-10-906c06b24318
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.2441806Z  * [new branch]        issue-12-521d7de0ce5c -> origin/issue-12-521d7de0ce5c
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.2444116Z  * [new branch]        issue-15-c165278b653a -> origin/issue-15-c165278b653a
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.2446506Z  * [new branch]        issue-18-0e402e025bcb -> origin/issue-18-0e402e025bcb
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.2449126Z  * [new branch]        issue-18-4e281bffdafb -> origin/issue-18-4e281bffdafb
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.2451671Z  * [new branch]        issue-18-c7fb805e332d -> origin/issue-18-c7fb805e332d
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.2454021Z  * [new branch]        issue-20-f4641fe3fa73 -> origin/issue-20-f4641fe3fa73
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.2456445Z  * [new branch]        issue-21-00d9b62d1dd9 -> origin/issue-21-00d9b62d1dd9
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.2458837Z  * [new branch]        issue-24-424bfe1d9448 -> origin/issue-24-424bfe1d9448
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.2461595Z  * [new branch]        issue-26-137239214899 -> origin/issue-26-137239214899
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.2463989Z  * [new branch]        issue-28-843686596f99 -> origin/issue-28-843686596f99
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.2466517Z  * [new branch]        issue-3-a121916457d1  -> origin/issue-3-a121916457d1
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.2468999Z  * [new branch]        issue-3-a2b225e34f02  -> origin/issue-3-a2b225e34f02
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.2471730Z  * [new branch]        issue-30-8f4ab5105fd4 -> origin/issue-30-8f4ab5105fd4
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.2474328Z  * [new branch]        issue-32-48aaa5aac83f -> origin/issue-32-48aaa5aac83f
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.2476824Z  * [new branch]        issue-39-e2e327ba7d66 -> origin/issue-39-e2e327ba7d66
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.2479314Z  * [new branch]        issue-4-85a9c6b38859  -> origin/issue-4-85a9c6b38859
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.2482392Z  * [new branch]        issue-4-indented-lino-format -> origin/issue-4-indented-lino-format
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.2485353Z  * [new branch]        issue-43-f90f667367d8 -> origin/issue-43-f90f667367d8
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.2488239Z  * [new branch]        issue-44-2e8fe384578e -> origin/issue-44-2e8fe384578e
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.2491301Z  * [new branch]        issue-49-3b507ada7087 -> origin/issue-49-3b507ada7087
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.2494097Z  * [new branch]        issue-54-80601a34362f -> origin/issue-54-80601a34362f
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.2497070Z  * [new branch]        issue-55-710a161c6d1a -> origin/issue-55-710a161c6d1a
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.2499018Z  * [new branch]        issue-57-d25d8a2289c6 -> origin/issue-57-d25d8a2289c6
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.2501187Z  * [new branch]        issue-59-665164f1aeab -> origin/issue-59-665164f1aeab
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.2503272Z  * [new branch]        issue-65-dc8bbe41ad79 -> origin/issue-65-dc8bbe41ad79
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.2505176Z  * [new branch]        issue-70-26a7925868fd -> origin/issue-70-26a7925868fd
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.2506989Z  * [new branch]        issue-73-4fcf091646b3 -> origin/issue-73-4fcf091646b3
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.2508982Z  * [new branch]        issue-8-5702e04d5c57  -> origin/issue-8-5702e04d5c57
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.2510846Z  * [new branch]        main                  -> origin/main
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.2512283Z  * [new tag]           v0.1.0                -> v0.1.0
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.2513655Z  * [new tag]           v0.2.0                -> v0.2.0
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.2540776Z [command]/usr/bin/git branch --list --remote origin/main
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.2569179Z   origin/main
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.2578866Z [command]/usr/bin/git rev-parse refs/remotes/origin/main
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.2604475Z 3dd9d248cc08e13147636608698954be14912d1f
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.2611188Z ##[endgroup]
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.2613517Z ##[group]Determining the checkout info
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.2615943Z ##[endgroup]
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.2617463Z [command]/usr/bin/git sparse-checkout disable
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.2655279Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.2683074Z ##[group]Checking out the ref
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.2686094Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.3168914Z Switched to a new branch 'main'
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.3172405Z branch 'main' set up to track 'origin/main'.
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.3182826Z ##[endgroup]
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.3219281Z [command]/usr/bin/git log -1 --format=%H
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.3243317Z 3dd9d248cc08e13147636608698954be14912d1f
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.3536080Z ##[group]Run actions/setup-node@v4
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.3537204Z with:
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.3537903Z   node-version: 20.x
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.3538698Z   always-auth: false
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.3539484Z   check-latest: false
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.3540977Z   token: ***
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.3541710Z env:
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.3542389Z   CARGO_TERM_COLOR: always
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.3543253Z   RUSTFLAGS: -Dwarnings
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.3544252Z   CARGO_TOKEN: ***
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.3544992Z ##[endgroup]
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.5320884Z Found in cache @ /opt/hostedtoolcache/node/20.20.0/x64
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:51.5327526Z ##[group]Environment details
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:53.8447435Z node: v20.20.0
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:53.8448018Z npm: 10.8.2
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:53.8448311Z yarn: 1.22.22
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:53.8449177Z ##[endgroup]
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:53.8566231Z ##[group]Run node scripts/detect-code-changes.mjs
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:53.8566637Z [36;1mnode scripts/detect-code-changes.mjs[0m
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:53.8627638Z shell: /usr/bin/bash -e {0}
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:53.8627889Z env:
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:53.8628079Z   CARGO_TERM_COLOR: always
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:53.8628290Z   RUSTFLAGS: -Dwarnings
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:53.8628715Z   CARGO_TOKEN: ***
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:53.8628914Z   GITHUB_EVENT_NAME: push
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:53.8629112Z   GITHUB_BASE_SHA: 
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:53.8629294Z   GITHUB_HEAD_SHA: 
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:53.8629464Z ##[endgroup]
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:53.9004729Z Detecting file changes for CI/CD...
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:53.9005085Z 
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:53.9005322Z Comparing HEAD^ to HEAD
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:53.9048795Z Changed files:
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:53.9049297Z   .github/workflows/release.yml
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:53.9049947Z   changelog.d/20260225_180000_fix_cbr_cors_and_serve_data_files.md
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:53.9050817Z   docs/case-studies/issue-73/README.md
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:53.9051465Z   docs/case-studies/issue-73/ci-runs.json
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:53.9052000Z   scripts/download_historical_rates.py
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:53.9052570Z   tests/issue_73_cbr_rates_in_browser_tests.rs
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:53.9053050Z   web/src/types/wasm.d.ts
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:53.9053445Z   web/src/worker.ts
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:53.9053682Z 
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:53.9057018Z rs-changed=true
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:53.9057954Z toml-changed=false
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:53.9059026Z mjs-changed=false
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:53.9059858Z docs-changed=true
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:53.9062427Z workflow-changed=true
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:53.9063229Z 
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:53.9063471Z Files considered as code changes:
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:53.9065137Z   .github/workflows/release.yml
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:53.9065683Z   scripts/download_historical_rates.py
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:53.9066271Z   tests/issue_73_cbr_rates_in_browser_tests.rs
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:53.9066945Z   web/src/types/wasm.d.ts
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:53.9067605Z   web/src/worker.ts
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:53.9067833Z 
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:53.9069813Z any-code-changed=true
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:53.9070262Z 
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:53.9070486Z Change detection completed.
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:53.9267190Z Post job cleanup.
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:54.0910651Z Post job cleanup.
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:54.1859302Z [command]/usr/bin/git version
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:54.1895312Z git version 2.53.0
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:54.1939848Z Temporarily overriding HOME='/home/runner/work/_temp/62763a6a-11b0-487d-9b2b-7f71e6754fa0' before making global git config changes
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:54.1941667Z Adding repository directory to the temporary git global config as a safe directory
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:54.1953682Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/calculator/calculator
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:54.1989207Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:54.2023729Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:54.2263117Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:54.2285191Z http.https://github.com/.extraheader
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:54.2299082Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:54.2333112Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:54.2579295Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:54.2616757Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:54.2990801Z Evaluate and set job outputs
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:54.2996803Z Set output 'rs-changed'
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:54.2998348Z Set output 'toml-changed'
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:54.2998998Z Set output 'mjs-changed'
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:54.2999286Z Set output 'docs-changed'
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:54.2999573Z Set output 'workflow-changed'
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:54.2999852Z Set output 'any-code-changed'
+Detect Changes	UNKNOWN STEP	2026-02-25T18:27:54.3000803Z Cleaning up orphan processes
+Lint and Format Check	UNKNOWN STEP	﻿2026-02-25T18:28:00.1563094Z Current runner version: '2.331.0'
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:00.1587736Z ##[group]Runner Image Provisioner
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:00.1588571Z Hosted Compute Agent
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:00.1589235Z Version: 20260213.493
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:00.1589834Z Commit: 5c115507f6dd24b8de37d8bbe0bb4509d0cc0fa3
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:00.1590594Z Build Date: 2026-02-13T00:28:41Z
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:00.1591286Z Worker ID: {31e061df-6d86-4d26-a50f-de612983d2d7}
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:00.1592374Z Azure Region: northcentralus
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:00.1592972Z ##[endgroup]
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:00.1594545Z ##[group]Operating System
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:00.1595152Z Ubuntu
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:00.1595662Z 24.04.3
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:00.1596195Z LTS
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:00.1596671Z ##[endgroup]
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:00.1597140Z ##[group]Runner Image
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:00.1597767Z Image: ubuntu-24.04
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:00.1598331Z Version: 20260224.36.1
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:00.1599552Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260224.36/images/ubuntu/Ubuntu2404-Readme.md
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:00.1601032Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260224.36
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:00.1602756Z ##[endgroup]
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:00.1605504Z ##[group]GITHUB_TOKEN Permissions
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:00.1607788Z Actions: write
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:00.1608481Z ArtifactMetadata: write
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:00.1609069Z Attestations: write
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:00.1609550Z Checks: write
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:00.1610136Z Contents: write
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:00.1610661Z Deployments: write
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:00.1611184Z Discussions: write
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:00.1612185Z Issues: write
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:00.1612681Z Metadata: read
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:00.1613177Z Models: read
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:00.1613743Z Packages: write
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:00.1614311Z Pages: write
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:00.1614917Z PullRequests: write
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:00.1615514Z RepositoryProjects: write
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:00.1616100Z SecurityEvents: write
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:00.1616641Z Statuses: write
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:00.1617198Z ##[endgroup]
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:00.1619328Z Secret source: Actions
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:00.1620268Z Prepare workflow directory
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:00.2150897Z Prepare all required actions
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:00.2189262Z Getting action download info
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:00.6234933Z Download action repository 'actions/checkout@v4' (SHA:34e114876b0b11c390a56381ad16ebd13914f8d5)
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:00.7692136Z Download action repository 'dtolnay/rust-toolchain@stable' (SHA:631a55b12751854ce901bb631d5902ceb48146f7)
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.0488971Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.1438899Z Download action repository 'actions/cache@v4' (SHA:0057852bfaa89a56745cba8c7296529d2fc39830)
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.3817583Z Complete job name: Lint and Format Check
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.4503338Z ##[group]Run actions/checkout@v4
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.4504234Z with:
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.4504684Z   repository: link-assistant/calculator
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.4505418Z   token: ***
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.4505864Z   ssh-strict: true
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.4506306Z   ssh-user: git
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.4506745Z   persist-credentials: true
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.4507238Z   clean: true
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.4507669Z   sparse-checkout-cone-mode: true
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.4508196Z   fetch-depth: 1
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.4508612Z   fetch-tags: false
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.4509045Z   show-progress: true
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.4509476Z   lfs: false
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.4509869Z   submodules: false
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.4510300Z   set-safe-directory: true
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.4510980Z env:
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.4511642Z   CARGO_TERM_COLOR: always
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.4512158Z   RUSTFLAGS: -Dwarnings
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.4512754Z   CARGO_TOKEN: ***
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.4513178Z ##[endgroup]
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.5632198Z Syncing repository: link-assistant/calculator
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.5635217Z ##[group]Getting Git version info
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.5636564Z Working directory is '/home/runner/work/calculator/calculator'
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.5638548Z [command]/usr/bin/git version
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.5734967Z git version 2.53.0
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.5762121Z ##[endgroup]
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.5777976Z Temporarily overriding HOME='/home/runner/work/_temp/d8770c4f-87d0-4086-bcaa-cb07f837500b' before making global git config changes
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.5780670Z Adding repository directory to the temporary git global config as a safe directory
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.5784461Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/calculator/calculator
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.5828059Z Deleting the contents of '/home/runner/work/calculator/calculator'
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.5832205Z ##[group]Initializing the repository
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.5837249Z [command]/usr/bin/git init /home/runner/work/calculator/calculator
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.5983901Z hint: Using 'master' as the name for the initial branch. This default branch name
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.5985451Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.5986581Z hint: to use in all of your new repositories, which will suppress this warning,
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.5987567Z hint: call:
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.5988446Z hint:
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.5989368Z hint: 	git config --global init.defaultBranch <name>
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.5990383Z hint:
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.5991832Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.5993990Z hint: 'development'. The just-created branch can be renamed via this command:
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.5995664Z hint:
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.5996535Z hint: 	git branch -m <name>
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.5997442Z hint:
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.5998585Z hint: Disable this message with "git config set advice.defaultBranchName false"
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.6000668Z Initialized empty Git repository in /home/runner/work/calculator/calculator/.git/
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.6004289Z [command]/usr/bin/git remote add origin https://github.com/link-assistant/calculator
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.6041246Z ##[endgroup]
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.6042880Z ##[group]Disabling automatic garbage collection
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.6046428Z [command]/usr/bin/git config --local gc.auto 0
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.6077172Z ##[endgroup]
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.6078638Z ##[group]Setting up auth
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.6085266Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.6118406Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.6500897Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.6534756Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.6769448Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.6810202Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.7050915Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.7127685Z ##[endgroup]
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.7128563Z ##[group]Fetching the repository
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:01.7130765Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +3dd9d248cc08e13147636608698954be14912d1f:refs/remotes/origin/main
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.2507280Z From https://github.com/link-assistant/calculator
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.2509345Z  * [new ref]         3dd9d248cc08e13147636608698954be14912d1f -> origin/main
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.2545314Z ##[endgroup]
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.2547440Z ##[group]Determining the checkout info
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.2549870Z ##[endgroup]
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.2553832Z [command]/usr/bin/git sparse-checkout disable
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.2599250Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.2627669Z ##[group]Checking out the ref
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.2630981Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.3139987Z Switched to a new branch 'main'
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.3142968Z branch 'main' set up to track 'origin/main'.
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.3154720Z ##[endgroup]
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.3191465Z [command]/usr/bin/git log -1 --format=%H
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.3217432Z 3dd9d248cc08e13147636608698954be14912d1f
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.3802262Z ##[group]Run dtolnay/rust-toolchain@stable
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.3868210Z with:
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.3869631Z   components: rustfmt, clippy
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.3871295Z   toolchain: stable
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.3872982Z env:
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.3874300Z   CARGO_TERM_COLOR: always
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.3875914Z   RUSTFLAGS: -Dwarnings
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.3878321Z   CARGO_TOKEN: ***
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.3879799Z ##[endgroup]
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4029233Z ##[group]Run : parse toolchain version
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4030423Z [36;1m: parse toolchain version[0m
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4031636Z [36;1mif [[ -z $toolchain ]]; then[0m
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4033520Z [36;1m  # GitHub does not enforce `required: true` inputs itself. https://github.com/actions/runner/issues/1070[0m
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4035567Z [36;1m  echo "'toolchain' is a required input" >&2[0m
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4036716Z [36;1m  exit 1[0m
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4038023Z [36;1melif [[ $toolchain =~ ^stable' '[0-9]+' '(year|month|week|day)s?' 'ago$ ]]; then[0m
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4039575Z [36;1m  if [[ Linux == macOS ]]; then[0m
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4041623Z [36;1m    echo "toolchain=1.$((($(date -v-$(sed 's/stable \([0-9]*\) \(.\).*/\1\2/' <<< $toolchain) +%s)/60/60/24-16569)/7/6))" >> $GITHUB_OUTPUT[0m
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4043555Z [36;1m  else[0m
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4045046Z [36;1m    echo "toolchain=1.$((($(date --date "${toolchain#stable }" +%s)/60/60/24-16569)/7/6))" >> $GITHUB_OUTPUT[0m
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4046810Z [36;1m  fi[0m
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4047933Z [36;1melif [[ $toolchain =~ ^stable' 'minus' '[0-9]+' 'releases?$ ]]; then[0m
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4049934Z [36;1m  echo "toolchain=1.$((($(date +%s)/60/60/24-16569)/7/6-${toolchain//[^0-9]/}))" >> $GITHUB_OUTPUT[0m
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4051794Z [36;1melif [[ $toolchain =~ ^1\.[0-9]+$ ]]; then[0m
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4053773Z [36;1m  echo "toolchain=1.$((i=${toolchain#1.}, c=($(date +%s)/60/60/24-16569)/7/6, i+9*i*(10*i<=c)+90*i*(100*i<=c)))" >> $GITHUB_OUTPUT[0m
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4055666Z [36;1melse[0m
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4056619Z [36;1m  echo "toolchain=$toolchain" >> $GITHUB_OUTPUT[0m
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4057776Z [36;1mfi[0m
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4118986Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4120225Z env:
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4120952Z   CARGO_TERM_COLOR: always
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4122033Z   RUSTFLAGS: -Dwarnings
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4123170Z   CARGO_TOKEN: ***
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4123999Z   toolchain: stable
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4124780Z ##[endgroup]
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4314367Z ##[group]Run : construct rustup command line
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4315512Z [36;1m: construct rustup command line[0m
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4317151Z [36;1mecho "targets=$(for t in ${targets//,/ }; do echo -n ' --target' $t; done)" >> $GITHUB_OUTPUT[0m
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4319463Z [36;1mecho "components=$(for c in ${components//,/ }; do echo -n ' --component' $c; done)" >> $GITHUB_OUTPUT[0m
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4321284Z [36;1mecho "downgrade=" >> $GITHUB_OUTPUT[0m
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4370323Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4371813Z env:
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4372520Z   CARGO_TERM_COLOR: always
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4373390Z   RUSTFLAGS: -Dwarnings
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4374495Z   CARGO_TOKEN: ***
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4375243Z   targets: 
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4375983Z   components: rustfmt, clippy
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4376856Z ##[endgroup]
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4511936Z ##[group]Run : set $CARGO_HOME
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4512902Z [36;1m: set $CARGO_HOME[0m
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4514122Z [36;1mecho CARGO_HOME=${CARGO_HOME:-"$HOME/.cargo"} >> $GITHUB_ENV[0m
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4564315Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4565516Z env:
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4566231Z   CARGO_TERM_COLOR: always
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4567131Z   RUSTFLAGS: -Dwarnings
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4568201Z   CARGO_TOKEN: ***
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4568981Z ##[endgroup]
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4706082Z ##[group]Run : install rustup if needed
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4707178Z [36;1m: install rustup if needed[0m
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4708272Z [36;1mif ! command -v rustup &>/dev/null; then[0m
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4710890Z [36;1m  curl --proto '=https' --tlsv1.2 --retry 10 --retry-connrefused --location --silent --show-error --fail https://sh.rustup.rs | sh -s -- --default-toolchain none -y[0m
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4713762Z [36;1m  echo "$CARGO_HOME/bin" >> $GITHUB_PATH[0m
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4714850Z [36;1mfi[0m
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4765651Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4766852Z env:
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4767559Z   CARGO_TERM_COLOR: always
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4768441Z   RUSTFLAGS: -Dwarnings
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4769511Z   CARGO_TOKEN: ***
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4770329Z   CARGO_HOME: /home/runner/.cargo
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4771277Z ##[endgroup]
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4918431Z ##[group]Run rustup toolchain install stable --component rustfmt --component clippy --profile minimal --no-self-update
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4921669Z [36;1mrustup toolchain install stable --component rustfmt --component clippy --profile minimal --no-self-update[0m
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4973903Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4975095Z env:
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4975807Z   CARGO_TERM_COLOR: always
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4976699Z   RUSTFLAGS: -Dwarnings
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4977751Z   CARGO_TOKEN: ***
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4978584Z   CARGO_HOME: /home/runner/.cargo
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4979561Z   RUSTUP_PERMIT_COPY_RENAME: 1
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.4980468Z ##[endgroup]
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.7459411Z info: syncing channel updates for 'stable-x86_64-unknown-linux-gnu'
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.8018516Z info: latest update on 2026-02-12, rust version 1.93.1 (01f6ddf75 2026-02-11)
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.8471270Z info: component 'clippy' for target 'x86_64-unknown-linux-gnu' is up to date
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.8474656Z info: component 'rustfmt' for target 'x86_64-unknown-linux-gnu' is up to date
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.8486432Z 
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.8589431Z   stable-x86_64-unknown-linux-gnu unchanged - rustc 1.93.1 (01f6ddf75 2026-02-11)
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.8591635Z 
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.8693364Z ##[group]Run rustup default stable
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.8695100Z [36;1mrustup default stable[0m
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.8778315Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.8780364Z env:
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.8781714Z   CARGO_TERM_COLOR: always
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.8783230Z   RUSTFLAGS: -Dwarnings
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.8785046Z   CARGO_TOKEN: ***
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.8786383Z   CARGO_HOME: /home/runner/.cargo
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.8787959Z ##[endgroup]
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.8933568Z info: using existing install for 'stable-x86_64-unknown-linux-gnu'
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.9236205Z info: default toolchain set to 'stable-x86_64-unknown-linux-gnu'
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.9237358Z 
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.9324941Z   stable-x86_64-unknown-linux-gnu unchanged - rustc 1.93.1 (01f6ddf75 2026-02-11)
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.9345740Z 
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.9454334Z ##[group]Run : create cachekey
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.9455302Z [36;1m: create cachekey[0m
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.9457089Z [36;1mDATE=$(rustc +stable --version --verbose | sed -ne 's/^commit-date: \(20[0-9][0-9]\)-\([01][0-9]\)-\([0-3][0-9]\)$/\1\2\3/p')[0m
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.9459410Z [36;1mHASH=$(rustc +stable --version --verbose | sed -ne 's/^commit-hash: //p')[0m
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.9461173Z [36;1mecho "cachekey=$(echo $DATE$HASH | head -c12)" >> $GITHUB_OUTPUT[0m
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.9518780Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.9519964Z env:
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.9520652Z   CARGO_TERM_COLOR: always
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.9521770Z   RUSTFLAGS: -Dwarnings
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.9522898Z   CARGO_TOKEN: ***
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.9523705Z   CARGO_HOME: /home/runner/.cargo
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:02.9524605Z ##[endgroup]
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:03.0178356Z ##[group]Run : disable incremental compilation
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:03.0179745Z [36;1m: disable incremental compilation[0m
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:03.0180924Z [36;1mif [ -z "${CARGO_INCREMENTAL+set}" ]; then[0m
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:03.0182481Z [36;1m  echo CARGO_INCREMENTAL=0 >> $GITHUB_ENV[0m
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:03.0183546Z [36;1mfi[0m
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:03.0240868Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:03.0242394Z env:
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:03.0243095Z   CARGO_TERM_COLOR: always
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:03.0243961Z   RUSTFLAGS: -Dwarnings
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:03.0245067Z   CARGO_TOKEN: ***
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:03.0245866Z   CARGO_HOME: /home/runner/.cargo
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:03.0246771Z ##[endgroup]
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:03.0400626Z ##[group]Run : enable colors in Cargo output
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:03.0402760Z [36;1m: enable colors in Cargo output[0m
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:03.0404695Z [36;1mif [ -z "${CARGO_TERM_COLOR+set}" ]; then[0m
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:03.0406834Z [36;1m  echo CARGO_TERM_COLOR=always >> $GITHUB_ENV[0m
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:03.0408709Z [36;1mfi[0m
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:03.0484394Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:03.0485700Z env:
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:03.0486474Z   CARGO_TERM_COLOR: always
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:03.0487453Z   RUSTFLAGS: -Dwarnings
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:03.0488699Z   CARGO_TOKEN: ***
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:03.0489599Z   CARGO_HOME: /home/runner/.cargo
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:03.0490650Z   CARGO_INCREMENTAL: 0
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:03.0491848Z ##[endgroup]
+Lint and Format Check	UNKNOWN STEP	2026-02-25T18:28:03.0626829Z ##[group]Run : enable Cargo sparse registry

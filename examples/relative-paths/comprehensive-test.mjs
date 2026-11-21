@@ -1,4 +1,4 @@
-import { use } from '../../use.mjs';
+import { use } from '../../src/use.mjs';
 
 console.log('🧪 Comprehensive relative path test...\n');
 
@@ -19,8 +19,8 @@ const tests = [
     expected: 'Hello from helper module!'
   },
   {
-    name: 'Two levels up (../../) - ../../use.mjs',
-    specifier: '../../use.mjs',
+    name: 'Two levels up (../../) - ../../src/use.mjs',
+    specifier: '../../src/use.mjs',
     expected: 'use function found'
   }
 ];

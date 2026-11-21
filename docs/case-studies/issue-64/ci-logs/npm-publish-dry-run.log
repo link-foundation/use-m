@@ -1,0 +1,31 @@
+npm notice
+npm notice 📦  use-m@8.14.2
+npm notice Tarball Contents
+npm notice 1.2kB LICENSE
+npm notice 25.1kB README.md
+npm notice 1.9kB package.json
+npm notice 1.6kB src/cli.mjs
+npm notice 7.4kB src/load.cjs
+npm notice 7.3kB src/load.mjs
+npm notice 2.3kB src/loader.js
+npm notice 1.7kB src/test-adapter.cjs
+npm notice 1.8kB src/test-adapter.mjs
+npm notice 43.1kB src/use.cjs
+npm notice 43.0kB src/use.js
+npm notice 43.0kB src/use.mjs
+npm notice 43.4kB use.cjs
+npm notice 43.4kB use.js
+npm notice 43.4kB use.mjs
+npm notice Tarball Details
+npm notice name: use-m
+npm notice version: 8.14.2
+npm notice filename: use-m-8.14.2.tgz
+npm notice package size: 74.3 kB
+npm notice unpacked size: 309.5 kB
+npm notice shasum: f505e4bac0d9934d5a9bacab2efbf1cba4360bc8
+npm notice integrity: sha512-mQsSO7FzyqPS5[...]i/7mWe9d6X6/A==
+npm notice total files: 15
+npm notice
+npm warn publish This command requires you to be logged in to https://registry.npmjs.org/ (dry-run)
+npm notice Publishing to https://registry.npmjs.org/ with tag latest and public access (dry-run)
++ use-m@8.14.2

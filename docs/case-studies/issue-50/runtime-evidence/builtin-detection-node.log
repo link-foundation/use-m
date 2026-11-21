@@ -1,0 +1,12 @@
+node v24.21.0
+builtinModules count: 72
+isBuiltin available: function
+  fs -> true
+  node:fs -> true
+  sqlite -> false
+  node:sqlite -> true
+  test -> false
+  node:test -> true
+  sea -> false
+  node:sea -> true
+  lodash -> false
