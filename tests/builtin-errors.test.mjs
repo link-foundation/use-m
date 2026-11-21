@@ -43,8 +43,11 @@ describe(`${moduleName} Built-in module error handling`, () => {
     expect(url).toBeDefined();
     expect(typeof url.URL).toBe('function');
 
-    // Uppercase should not be recognized as builtin and fall back to npm resolver
-    await expect(use('URL')).rejects.toThrow(); // Should fail to install from npm
+    const fallback = await use('URL', {
+      specifierResolver: specifier => `test:${specifier}`,
+      import: async url => url,
+    });
+    expect(fallback).toBe('test:URL');
   });
 
   test(`${moduleName} should handle node: prefix removal correctly`, async () => {
