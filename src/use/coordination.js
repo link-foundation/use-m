@@ -182,5 +182,12 @@ const cacheBustNpmModulePath = async (modulePath) => {
 
 // Normalize a resolver reference (a resolver function, or a key into `resolvers`)
 // into a resolver function.
-const toResolverFunction = (resolver) =>
-  typeof resolver === 'function' ? resolver : resolvers[resolver]
+const toResolverFunction = (resolver) => {
+  if (typeof resolver === 'function') return resolver
+  if (typeof resolver === 'string' &&
+      Object.prototype.hasOwnProperty.call(resolvers, resolver) &&
+      typeof resolvers[resolver] === 'function') {
+    return resolvers[resolver]
+  }
+  throw new TypeError(`Unknown resolver '${String(resolver)}'.`)
+}

@@ -35,6 +35,7 @@ On the first call, use-m installs the requested lodash version through npm if it
     - [Robust loading (resilient CDN bootstrap)](#robust-loading-resilient-cdn-bootstrap)
       - [Troubleshooting: `SyntaxError: Unexpected identifier 'found'`](#troubleshooting-syntaxerror-unexpected-identifier-found)
     - [Resilient package loading (shared fallback engine)](#resilient-package-loading-shared-fallback-engine)
+    - [Custom resolver priority](#custom-resolver-priority)
     - [Resilient npm latest-version resolution](#resilient-npm-latest-version-resolution)
       - [Node.js engine compatibility](#nodejs-engine-compatibility)
     - [In-memory module cache](#in-memory-module-cache)
@@ -114,7 +115,7 @@ The default package source depends on the runtime and the loader entry point. Br
 
 Node.js checks `npm root -g`. When the default global root is unwritable, use-m can install under its own user cache prefix (`$XDG_CACHE_HOME/use-m/npm-global` or `~/.cache/use-m/npm-global`). An explicit `npm_config_prefix` or `NPM_CONFIG_PREFIX` must be writable for new installs. An exact pin such as `lodash@4.17.21` uses an alias like `lodash-v-4.17.21`, so another version can live beside it and later scripts can reuse the installed copy. On Node.js, concurrent requests for the same alias can share an install. An install lock coordinates processes, and use-m can retry failed installs and repair a damaged alias. Unpinned and range requests have their own reuse and version-selection rules. See [npm version resolution](#resilient-npm-latest-version-resolution).
 
-`makeUse({ specifierResolver })` selects one package resolver, and `makeUse({ specifierResolvers })` supplies an ordered list. These options apply after the built-in and relative-file checks. The same fallback engine powers package mirror selection, the `use-m/load` bootstrap, and the optional Node.js loader hook. Each has its own sources and retry settings. See [package fallback and errors](#resilient-package-loading-shared-fallback-engine) and [CDN bootstrap](#robust-loading-resilient-cdn-bootstrap).
+`makeUse({ specifierResolver })` selects one package resolver, and `makeUse({ specifierResolvers })` supplies an ordered list. These options apply after the built-in and relative-file checks. Use [`resolverChain`](#custom-resolver-priority) to control the whole sequence. The same fallback engine powers package mirror selection, the `use-m/load` bootstrap, and the optional Node.js loader hook. Each has its own sources and retry settings. See [package fallback and errors](#resilient-package-loading-shared-fallback-engine) and [CDN bootstrap](#robust-loading-resilient-cdn-bootstrap).
 
 Repeated calls can skip package entry checks or CDN mirror selection by reusing a successful resolution from the [in-memory cache](#in-memory-module-cache).
 
@@ -285,7 +286,7 @@ import { makeUse } from 'use-m';        // ES Modules
 // const { makeUse } = require('use-m'); // CommonJS
 
 const use = await makeUse({
-  // Entries are resolver names or custom `(specifier, pathResolver) => url` functions.
+  // Entries are resolver names or custom resolver functions.
   specifierResolvers: ['esm', 'jspm', 'skypack'],
 });
 ```
@@ -312,6 +313,32 @@ const data = await loadWithFallback(
 ```
 
 A runnable, dependency-free demonstration lives in [`examples/load/shared-fallback-engine.mjs`](https://github.com/link-foundation/use-m/blob/main/examples/load/shared-fallback-engine.mjs).
+
+### Custom resolver priority
+
+Set `resolverChain` on `makeUse(options)` for a reusable loader or on `use(specifier, options)` for one call. The array lists every enabled resolver in priority order and takes precedence over `specifierResolver` and `specifierResolvers`. Use names from the exported `resolvers` table, including `'builtin'` and `'relative'`, or supply your own synchronous or asynchronous functions. Include each built-in, local, or network resolver you want the loader to try.
+
+```javascript
+import { makeUse } from 'use-m';
+
+const load = await makeUse({
+  resolverChain: [
+    (specifier, resolvePath, options, { parentURL }) => {
+      if (specifier === 'app:settings') return new URL('./settings.json', parentURL);
+      return undefined;
+    },
+    'builtin',
+    'relative',
+    'npm',
+  ],
+});
+
+const settings = await load('app:settings', import.meta.url);
+```
+
+A custom resolver receives `(specifier, pathResolver, options, { parentURL })`. Return a path string or a URL to import, or return `null` or `undefined` to decline. A thrown resolution error or a failed import advances to the next resolver. The first successful load wins, and an exhausted multi-entry chain throws an `AggregateError` with one explanation per attempt. A single-entry chain reports its own failure directly.
+
+The loader infers `parentURL` from the caller when possible. Supply it as the configured loader's second argument (a URL string or an object with `parentURL`) or as `use(specifier, { parentURL, ...options })` when the base must be explicit. A Node.js resolver can use `createRequire(parentURL).resolve(specifier)` to select the caller's installed dependencies, for example when React and Ink must share the same project copy of React.
 
 ### Resilient npm latest-version resolution
 

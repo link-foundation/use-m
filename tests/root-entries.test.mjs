@@ -53,6 +53,12 @@ describe(`${moduleName} root entry bundles`, () => {
     expect(typeof exported.use).toBe('function');
     expect(typeof exported.use.all).toBe('function');
     expect(typeof exported.makeUse).toBe('function');
+
+    const load = await exported.makeUse({
+      scriptPath: import.meta.url,
+      resolverChain: [() => null, 'builtin'],
+    });
+    expect(typeof (await load('node:path')).join).toBe('function');
   });
 
   // The eval'd 404 body that broke consumers must NOT look like the module, so

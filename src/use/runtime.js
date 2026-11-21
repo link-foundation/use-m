@@ -216,6 +216,12 @@ const baseUse = async (modulePath) => {
   }
 }
 
+/**
+ * Creates a reusable module loader. Set `resolverChain` to an ordered list of
+ * resolver names or functions to control every attempt, including built-ins
+ * and relative files. A custom function receives (specifier, pathResolver,
+ * options, { parentURL }) and returns a path or URL, or null/undefined to pass.
+ */
 const makeUse = async (options) => {
   let scriptPath = options?.scriptPath;
   const hasBrowserGlobals = typeof window !== 'undefined' && typeof document !== 'undefined';
@@ -239,15 +245,17 @@ const makeUse = async (options) => {
       }
     }
   }
-  // Build the ordered chain of specifier resolvers to try. A single-entry chain
-  // means "no fallback": an explicit user choice (function or name) and the local
-  // npm/bun runtimes import exactly as before. The browser/HTTP and Deno network
-  // defaults use a multi-host chain so a CDN outage falls back instead of failing.
-  // `import` is an injectable low-level importer (defaults to baseUse) used for
-  // dependency injection in tests and advanced setups.
+  // A full chain takes the place of the built-in and relative checks and the
+  // package chain. The older options still select just the package resolvers.
   const importModule = typeof options?.import === 'function' ? options.import : baseUse;
+  const hasExplicitChain = options?.resolverChain !== undefined;
   let resolverChain;
-  if (Array.isArray(options?.specifierResolvers) && options.specifierResolvers.length > 0) {
+  if (hasExplicitChain) {
+    if (!Array.isArray(options.resolverChain)) {
+      throw new TypeError('resolverChain must be an array of resolver names or functions.');
+    }
+    resolverChain = [...options.resolverChain];
+  } else if (Array.isArray(options?.specifierResolvers) && options.specifierResolvers.length > 0) {
     resolverChain = options.specifierResolvers;
   } else if (typeof options?.specifierResolver === 'function' || options?.specifierResolver) {
     resolverChain = [options.specifierResolver];
@@ -255,7 +263,6 @@ const makeUse = async (options) => {
     const isDenoRuntime = typeof Deno !== 'undefined';
     const isBunRuntime = typeof Bun !== 'undefined';
     const isBrowserRuntime = !isDenoRuntime && !isBunRuntime && hasBrowserGlobals;
-    const isNodeRuntime = !isDenoRuntime && !isBunRuntime && !isBrowserRuntime && typeof process !== 'undefined' && Boolean(process.versions?.node);
     if (isBrowserRuntime || (protocol && (protocol === 'http:' || protocol === 'https:'))) {
       resolverChain = networkResolverChain;
     } else if (isDenoRuntime) {
@@ -296,25 +303,21 @@ const makeUse = async (options) => {
     const resolverOptions = hasCallOptions
       ? { ...(options || {}), ...providedCallerContext } : options;
 
-    // Use provided caller context or try to capture it from stack trace
-    const callerContext = (typeof providedCallerContext === 'string' ? providedCallerContext : null) || extractCallerContext(stack);
-
-    // Always try built-in resolver first
-    const builtinModule = await resolvers.builtin(moduleSpecifier, pathResolver);
-    if (builtinModule) {
-      return builtinModule;
-    }
-
-    // Try relative path resolver second (for ./, ../, ../../, etc.)
-    const relativeModule = await resolvers.relative(moduleSpecifier, pathResolver, callerContext);
-    if (relativeModule) {
-      return relativeModule;
+    const explicitParent = typeof providedCallerContext === 'string'
+      ? providedCallerContext : resolverOptions?.parentURL;
+    const callerURL = absolutePathToFileUrl(explicitParent || extractCallerContext(stack));
+    const parentURL = callerURL || absolutePathToFileUrl(scriptPath);
+    if (!hasExplicitChain) {
+      const builtinModule = await resolvers.builtin(moduleSpecifier, pathResolver);
+      if (builtinModule) return builtinModule;
+      const relativeModule = await resolvers.relative(moduleSpecifier, pathResolver, callerURL);
+      if (relativeModule) return relativeModule;
     }
 
     // Reuse a previously imported package's path before checking the install
     // tree or retrying failed mirrors. Custom hooks and resolver settings can
     // change results per call, so let those requests resolve directly.
-    const cacheKey = !hasCallOptions && importModule === baseUse &&
+    const cacheKey = !hasExplicitChain && !hasCallOptions && importModule === baseUse &&
       (!options || (Object.getPrototypeOf(options) === Object.prototype &&
         Object.getOwnPropertyNames(options).every(key => packageCacheOptions.has(key)))) &&
       resolverChain.every(resolver => typeof resolver === 'string')
@@ -336,39 +339,49 @@ const makeUse = async (options) => {
       return loaded;
     };
 
-    // If not a built-in or relative module, resolve + import via the configured
-    // resolver chain. A single-entry chain imports directly (preserving the
-    // original behavior and error); a multi-entry chain falls back across CDN
-    // mirrors via the shared loadWithFallback engine.
-    if (resolverChain.length === 1) {
-      const resolver = resolverChain[0];
+    const describeResolver = (resolver) => typeof resolver === 'function'
+      ? (resolver.name ? `custom resolver '${resolver.name}'` : 'custom resolver')
+      : String(resolver);
+    const noMatch = (resolver) =>
+      new Error(`Resolver ${describeResolver(resolver)} did not match '${moduleSpecifier}'.`);
+    const loadFromResolver = async (resolver) => {
       const resolverFunction = toResolverFunction(resolver);
-      const modulePath = await resolverFunction(moduleSpecifier, pathResolver, resolverOptions);
+      if (resolver === 'relative' || resolverFunction === resolvers.relative) {
+        if (!isRelativeSpecifier(moduleSpecifier)) throw noMatch(resolver);
+        return resolverFunction(moduleSpecifier, pathResolver, parentURL);
+      }
+      if (resolver === 'builtin' || resolverFunction === resolvers.builtin) {
+        const loaded = await resolverFunction(moduleSpecifier, pathResolver);
+        if (loaded == null) throw noMatch(resolver);
+        return loaded;
+      }
+      const context = { parentURL };
+      const resolution = await resolverFunction(moduleSpecifier, pathResolver, resolverOptions, context);
+      if (resolution == null) throw noMatch(resolver);
+      const modulePath = resolution instanceof URL ? resolution.href : resolution;
       try {
         return await loadResolvedModule(modulePath);
       } catch (error) {
-        if (resolver !== 'npm' || !isRecoverableNpmImportError(error, modulePath)) {
+        if ((resolver !== 'npm' && resolverFunction !== resolvers.npm) ||
+            !isRecoverableNpmImportError(error, modulePath)) {
           throw error;
         }
         const repairedModulePath = await resolverFunction(
           moduleSpecifier,
           pathResolver,
-          { ...(resolverOptions || {}), repair: true }
+          { ...resolverOptions, repair: true },
+          context
         );
         return loadResolvedModule(await cacheBustNpmModulePath(repairedModulePath));
       }
-    }
-    return loadWithFallback(
-      resolverChain,
-      async (resolver) => {
-        const modulePath = await toResolverFunction(resolver)(moduleSpecifier, pathResolver);
-        return loadResolvedModule(modulePath);
-      },
-      {
-        label: `import '${moduleSpecifier}' from any CDN mirror`,
-        describeSource: (resolver) => (typeof resolver === 'function' ? 'custom resolver' : String(resolver)),
-      }
-    );
+    };
+    if (resolverChain.length === 1) return loadFromResolver(resolverChain[0]);
+    return loadWithFallback(resolverChain, loadFromResolver, {
+      label: hasExplicitChain
+        ? `import '${moduleSpecifier}' with the configured resolvers`
+        : `import '${moduleSpecifier}' from any CDN mirror`,
+      describeSource: describeResolver,
+    });
   };
 }
 
@@ -381,11 +394,11 @@ const use = async (moduleSpecifier, options) => {
   if (typeof Bun !== 'undefined') {
     if (stack) {
       const lines = stack.split('\n');
-      // Look for any .mjs file that's not use.mjs. Bun stack traces can use
+      // Skip bundled use-m frames. Bun stack traces can use
       // either POSIX paths or native Windows drive-letter/UNC paths.
       for (const line of lines) {
-        const match = line.match(/[(]?((?:\/|[A-Za-z]:[\\/]|\\\\)[^)\n]+?\.m?js)(?::\d+:\d+)?\)?/);
-        if (match && !match[1].replaceAll('\\', '/').endsWith('/use.mjs')) {
+        const match = line.match(/[(]?((?:\/|[A-Za-z]:[\\/]|\\\\)[^)\n]+?\.[cm]?js)(?::\d+:\d+)?\)?/);
+        if (match && !/\/use\.[cm]?js$/.test(match[1].replaceAll('\\', '/'))) {
           bunCallerContext = absolutePathToFileUrl(match[1]);
           break;
         }
@@ -398,7 +411,7 @@ const use = async (moduleSpecifier, options) => {
 
   if (options && typeof options === 'object') {
     const useInstance = await makeUse(options);
-    return useInstance(moduleSpecifier, callerContext);
+    return useInstance(moduleSpecifier, options.parentURL || callerContext);
   }
   if (!__usePromise) {
     __usePromise = makeUse();
