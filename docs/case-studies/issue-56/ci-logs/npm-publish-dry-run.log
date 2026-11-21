@@ -1,0 +1,26 @@
+npm notice
+npm notice 📦  use-m@8.13.8
+npm notice Tarball Contents
+npm notice 1.2kB LICENSE
+npm notice 16.1kB README.md
+npm notice 1.6kB cli.mjs
+npm notice 2.4kB loader.js
+npm notice 1.5kB package.json
+npm notice 1.7kB test-adapter.cjs
+npm notice 1.8kB test-adapter.mjs
+npm notice 38.4kB use.cjs
+npm notice 38.9kB use.js
+npm notice 38.4kB use.mjs
+npm notice Tarball Details
+npm notice name: use-m
+npm notice version: 8.13.8
+npm notice filename: use-m-8.13.8.tgz
+npm notice package size: 32.7 kB
+npm notice unpacked size: 141.9 kB
+npm notice shasum: b0ecfc5dcc38dee638d0419a9df4270d824b87c6
+npm notice integrity: sha512-0JSAbuyKGDFKX[...]DEjcnLCR6EQpQ==
+npm notice total files: 10
+npm notice
+npm warn publish This command requires you to be logged in to https://registry.npmjs.org/ (dry-run)
+npm notice Publishing to https://registry.npmjs.org/ with tag latest and public access (dry-run)
++ use-m@8.13.8

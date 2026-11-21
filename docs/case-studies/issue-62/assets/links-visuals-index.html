@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>D3 Link with Uniform Padding & Thinner Stroke</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+    }
+    svg {
+      display: block;
+    }
+    #fullscreen-btn {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      z-index: 1000;
+      padding: 10px 15px;
+      background: rgba(255, 255, 255, 0.8);
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    /* Coordinates panel */
+    #coordinates {
+      position: fixed;
+      bottom: 10px;
+      left: 10px;
+      z-index: 1000;
+      background: rgba(255, 255, 255, 0.8);
+      padding: 10px;
+      font-family: monospace;
+      font-size: 12px;
+      white-space: pre; /* preserve newlines */
+    }
+  </style>
+</head>
+<body>
+  <button id="fullscreen-btn">Full Screen</button>
+  <div id="coordinates"></div>
+  <script type="module">
+    const { use } = await import("https://esm.sh/use-m");
+    (async () => {
+      // Import D3.js using use‑m
+      const d3 = await use('d3');
+
+      // golden ratio
+      const phi = (1 + Math.sqrt(5)) / 2;
+
+      // ----------------------------
+      // Adjustable parameters
+      // ----------------------------
+      const basePadding = 155;   // Margin from each edge
+      // con = 80;   // Extra offset so large markers don't overlap edges
+      const strokeWidth = 12;     // Thickness for the main diagonal line
+
+      let width = window.innerWidth;
+      let height = window.innerHeight;
+
+      // Create an SVG covering the page
+      const svg = d3.select("body")
+        .append("svg")
+        .attr("width", width)
+        .attr("height", height);
+
+      // ------------------------------------------------
+      // Calculate where the line starts/ends initially
+      // ------------------------------------------------
+      let start = {
+        x: basePadding,
+        y: height - basePadding
+      };
+      let end = {
+        x: width - basePadding,
+        y: basePadding
+      };
+
+      // Flags to check if the endpoints have been moved manually
+      let startMoved = false, endMoved = false;
+
+      // Function to update coordinates display
+      function updateCoordinates() {
+        const coordsDiv = document.getElementById("coordinates");
+        coordsDiv.innerText = `Start: (${
+  Math.round(start.x) - basePadding
+}, ${
+  Math.round(start.y) - height + basePadding
+})
+End:   (${
+  Math.round(end.x) - width + basePadding
+}, ${
+  Math.round(end.y) - basePadding
+})`;
+      }
+      updateCoordinates();
+
+      // ------------------------------------------------
+      // Define markers (cross on the left, arrow on the right)
+      // ------------------------------------------------
+      const defs = svg.append("defs");
+
+      // CROSS MARKER (Note: no extra stroke-width for inner lines)
+      defs.append("marker")
+          .attr("id", "cross-marker")
+          .attr("viewBox", "0 0 100 100")
+          .attr("markerWidth", 100)
+          .attr("markerHeight", 100)
+          .attr("refX", 50)
+          .attr("refY", 50)
+          .attr("orient", "auto")
+        .append("g")
+          .call(g => {
+            // Perpendicular line segment
+            g.append("line")
+             .attr("x1", 62.5 - (12.5 - 12.5 / phi)).attr("y1", 25 + 14.5 - 0.23)
+             .attr("x2", 62.5 - (12.5 - 12.5 / phi)).attr("y2", 75 - 14.5 + 0.23)
+             .attr("stroke", "black");
+          });
+
+      // ARROW MARKER (Note: no extra stroke-width for inner lines)
+      defs.append("marker")
+          .attr("id", "arrow-marker")
+          .attr("viewBox", "0 0 100 100")
+          .attr("markerWidth", 100)
+          .attr("markerHeight", 100)
+          .attr("refX", 10)
+          .attr("refY", 50)
+          .attr("orient", "auto")
+        .append("g")
+          .call(g => {
+            // Arrow shaft
+            // g.append("line")
+            //  .attr("x1", 10).attr("y1", 50)
+            //  .attr("x2", 90).attr("y2", 50)
+            //  .attr("stroke", "black");
+            // Upper arrow line
+            g.append("line")
+            //  .attr("x1", 9.65).attr("y1", 50 - 0.30)
+            //  .attr("x2", -0.5 - 0.30).attr("y2", 40 - 0.30 - 0.5)
+              .attr("x1", 10 + 0.35).attr("y1", 50 + 0.35)
+              .attr("x2", 0 - 0.35).attr("y2", 40 - 0.35)
+             .attr("stroke", "black");
+            // Lower arrow line
+            g.append("line")
+            //  .attr("x1", 10.35).attr("y1", 50 - 0.30)
+            //  .attr("x2", -0.5 + 0.30).attr("y2", 60 - 0.30 + 0.5)
+
+              .attr("x1", 10 + 0.35).attr("y1", 50 - 0.35)
+              .attr("x2", 0 - 0.35).attr("y2", 60 + 0.35)
+             .attr("stroke", "black");
+          });
+
+      // ------------------------------------------------
+      // Draw the main diagonal line with markers
+      // ------------------------------------------------
+      const mainLine = svg.append("line")
+         .attr("x1", start.x).attr("y1", start.y)
+         .attr("x2", end.x).attr("y2", end.y)
+         .attr("stroke", "black")
+         .attr("stroke-width", strokeWidth)
+         .attr("marker-start", "url(#cross-marker)")
+         .attr("marker-end", "url(#arrow-marker)");
+
+      // ------------------------------------------------
+      // Add draggable circles for endpoints
+      // ------------------------------------------------
+      const dragStart = d3.drag()
+        .on("drag", (event) => {
+          startMoved = true;
+          start.x = event.x;
+          start.y = event.y;
+          d3.select(".start")
+            .attr("cx", start.x)
+            .attr("cy", start.y);
+          mainLine.attr("x1", start.x).attr("y1", start.y);
+          updateCoordinates();
+        });
+
+      const dragEnd = d3.drag()
+        .on("drag", (event) => {
+          endMoved = true;
+          end.x = event.x;
+          end.y = event.y;
+          d3.select(".end")
+            .attr("cx", end.x)
+            .attr("cy", end.y);
+          mainLine.attr("x2", end.x).attr("y2", end.y);
+          updateCoordinates();
+        });
+
+      // Append circles at the start and end positions
+      svg.append("circle")
+         .attr("class", "start")
+         .attr("cx", start.x)
+         .attr("cy", start.y)
+         .attr("r", 10)
+        //  .attr("fill", "green")
+          .attr("fill", "transparent")
+          .attr("stroke", "green")
+          // dashed stroke for the start marker
+          .attr("stroke-dasharray", "2,2")
+          .attr("stroke-opacity", 0.5)
+         .style("cursor", "pointer")
+         .call(dragStart);
+
+      svg.append("circle")
+         .attr("class", "end")
+         .attr("cx", end.x)
+         .attr("cy", end.y)
+         .attr("r", 10)
+         .attr("fill", "transparent")
+         .attr("stroke", "red")
+         // dashed stroke for the end marker
+        .attr("stroke-dasharray", "2,2")
+
+        // opacity 0.5
+        .attr("stroke-opacity", 0.5)
+
+         .style("cursor", "pointer")
+         .call(dragEnd);
+
+      // ------------------------------------------------
+      // Handle window resizing
+      // ------------------------------------------------
+      window.addEventListener("resize", () => {
+        width = window.innerWidth;
+        height = window.innerHeight;
+        svg.attr("width", width).attr("height", height);
+
+        // Only recalc endpoints if they haven't been moved manually
+        if (!startMoved) {
+          start.x = basePadding;
+          start.y = height - basePadding;
+          svg.select("circle.start")
+             .attr("cx", start.x)
+             .attr("cy", start.y);
+          mainLine.attr("x1", start.x).attr("y1", start.y);
+        }
+        if (!endMoved) {
+          end.x = width - basePadding;
+          end.y = basePadding;
+          svg.select("circle.end")
+             .attr("cx", end.x)
+             .attr("cy", end.y);
+          mainLine.attr("x2", end.x).attr("y2", end.y);
+        }
+        updateCoordinates();
+      });
+
+      // ------------------------------------------------
+      // Full Screen toggle
+      // ------------------------------------------------
+      document.getElementById("fullscreen-btn").addEventListener("click", () => {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen();
+        } else {
+          document.exitFullscreen();
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

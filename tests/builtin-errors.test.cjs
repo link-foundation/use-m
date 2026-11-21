@@ -1,10 +1,10 @@
-const { describe, test, expect } = require('../test-adapter.cjs');
-const { use } = require('../use.cjs');
+const { describe, test, expect } = require('../src/test-adapter.cjs');
+const { use } = require('../src/use.cjs');
 const moduleName = `[${__filename.split('.').pop()} module]`;
 
 describe(`${moduleName} Built-in module error handling`, () => {
   test(`${moduleName} should return null for non-builtin modules from builtin resolver`, async () => {
-    const { resolvers } = require('../use.cjs');
+    const { resolvers } = require('../src/use.cjs');
 
     // Test that builtin resolver returns null for non-builtin modules
     const result = await resolvers.builtin('lodash');
@@ -13,7 +13,7 @@ describe(`${moduleName} Built-in module error handling`, () => {
 
   test(`${moduleName} should throw error for unsupported builtin modules`, async () => {
     // Create a module name that looks like a builtin but isn't
-    const { resolvers: { builtin } } = require('../use.cjs');
+    const { resolvers: { builtin } } = require('../src/use.cjs');
     await expect(await builtin('unsupported_builtin_module')).toEqual(null);
   });
 
@@ -58,12 +58,12 @@ describe(`${moduleName} Built-in module error handling`, () => {
 
   test(`${moduleName} should throw meaningful errors for import failures`, async () => {
     // We can't easily test import failures without mocking, but we can test error message structure
-    const { resolvers: { builtin } } = require('../use.cjs');
+    const { resolvers: { builtin } } = require('../src/use.cjs');
     await expect(await builtin('nonexistent')).toEqual(null);
   });
 
   test(`${moduleName} builtin resolver should handle empty/invalid module specifiers gracefully`, async () => {
-    const { resolvers, parseModuleSpecifier } = require('../use.cjs');
+    const { resolvers, parseModuleSpecifier } = require('../src/use.cjs');
 
     // parseModuleSpecifier should throw for invalid specifiers
     expect(() => parseModuleSpecifier('')).toThrow();
@@ -72,7 +72,7 @@ describe(`${moduleName} Built-in module error handling`, () => {
   });
 
   test(`${moduleName} should handle modules with special characters in names`, async () => {
-    const { resolvers } = require('../use.cjs');
+    const { resolvers } = require('../src/use.cjs');
 
     // Test with module that looks like a scoped package
     const result = await resolvers.builtin('@org/package');

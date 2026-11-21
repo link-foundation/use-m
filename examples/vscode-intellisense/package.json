@@ -1,4 +1,5 @@
 {
+  "private": true,
   "name": "vscode-intellisense",
   "main": "index.js",
   "type": "module",

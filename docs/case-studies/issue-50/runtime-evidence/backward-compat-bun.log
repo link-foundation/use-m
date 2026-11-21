@@ -1,0 +1,7 @@
+# Bun 1.4.2, branch HEAD (after the arity clamp), baseline = main:src/use.mjs
+DIFF  fs/promises: 'lchmod' changed: undefined -> function:lchmod/2
+DIFF  fs/promises: 'watch' changed: function:bound watch/3 -> function:watch/1
+DIFF  node:fs/promises: 'lchmod' changed: undefined -> function:lchmod/2
+DIFF  node:fs/promises: 'watch' changed: function:bound watch/3 -> function:watch/1
+
+Bun 1.4.2: 25 previously hardcoded built-ins compared (bare + node: prefixed), 4 difference(s).
