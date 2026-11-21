@@ -11,6 +11,88 @@ const networkResolverChain = ['esm', 'jspm', 'skypack']
 // Node.js), so packages that loaded before keep loading from the same place.
 const denoResolverChain = ['deno', 'jspm', 'skypack', 'denoNpm']
 
+// Share one size limit and one expiry timer across all loaders in this bundle.
+// Insertion order lets the timer remove expired entries without scanning hits.
+const moduleCache = new Map()
+const moduleCacheLimit = 256
+const moduleCacheTtlMs = 60_000
+let moduleCacheTimer
+const moduleCacheNow = () => typeof performance === 'undefined' ? Date.now() : performance.now()
+
+const scheduleModuleCacheExpiry = (delay) => {
+  moduleCacheTimer = setTimeout(() => {
+    moduleCacheTimer = undefined
+    const now = moduleCacheNow()
+    for (const [key, entry] of moduleCache) {
+      if (entry.expiresAt > now) {
+        scheduleModuleCacheExpiry(entry.expiresAt - now)
+        break
+      }
+      moduleCache.delete(key)
+    }
+  }, delay)
+  moduleCacheTimer?.unref?.()
+  if (typeof Deno !== 'undefined' && typeof moduleCacheTimer === 'number') {
+    Deno.unrefTimer?.(moduleCacheTimer)
+  }
+}
+
+const getModuleCacheEntry = (key) => {
+  const entry = moduleCache.get(key)
+  return entry && entry.expiresAt > moduleCacheNow() ? entry : undefined
+}
+
+const cacheModule = (key, value) => {
+  const entry = { value, expiresAt: moduleCacheNow() + moduleCacheTtlMs }
+  moduleCache.delete(key)
+  moduleCache.set(key, entry)
+  if (moduleCache.size > moduleCacheLimit) {
+    moduleCache.delete(moduleCache.keys().next().value)
+  }
+  if (moduleCacheTimer === undefined) {
+    scheduleModuleCacheExpiry(moduleCacheTtlMs)
+  }
+  return entry
+}
+
+const reuseModuleLoad = (key, load) => {
+  const cached = getModuleCacheEntry(key)
+  if (cached) return cached.value
+
+  const pending = Promise.resolve().then(load)
+  const entry = cacheModule(key, pending)
+  pending.catch(() => {
+    if (moduleCache.get(key) === entry) moduleCache.delete(key)
+  })
+  return pending
+}
+
+let moduleLoaderId = 0
+const packageCacheOptions = new Set(['scriptPath', 'meta', 'specifierResolver', 'specifierResolvers'])
+let localPackageContext
+let localPackageContextId = 0
+
+const getPackageCacheKey = (loaderId, moduleSpecifier, resolverChain) => {
+  let contextId = 0
+  if ((resolverChain.includes('npm') || resolverChain.includes('bun')) &&
+      typeof process !== 'undefined' && typeof process.cwd === 'function' && process.env) {
+    // npm and Bun can resolve a different install root after a cwd or env
+    // change. Calls with explicit resolver options bypass this cache entirely.
+    const { env } = process
+    const context = JSON.stringify([process.cwd(), env.PATH, env.HOME, env.USERPROFILE, env.XDG_CACHE_HOME,
+      env.BUN_INSTALL, env.npm_config_prefix, env.NPM_CONFIG_PREFIX,
+      env.npm_config_registry, env.NPM_CONFIG_REGISTRY, env.USE_M_ENGINE_STRICT,
+      env.npm_config_userconfig, env.NPM_CONFIG_USERCONFIG,
+      env.npm_config_globalconfig, env.NPM_CONFIG_GLOBALCONFIG])
+    if (context !== localPackageContext) {
+      localPackageContext = context
+      localPackageContextId++
+    }
+    contextId = localPackageContextId
+  }
+  return JSON.stringify(['package', loaderId, moduleSpecifier, resolverChain, contextId])
+}
+
 // npm installs for the same alias must not overlap. `npm install -g` takes no
 // lock on the global prefix, so two runs writing the same alias directory delete
 // and re-extract each other's trees — the loser fails with ENOTEMPTY, and, worse,

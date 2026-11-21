@@ -23,6 +23,7 @@ It may be useful for standalone scripts that do not require a `package.json`. Al
       - [Troubleshooting: `SyntaxError: Unexpected identifier 'found'`](#troubleshooting-syntaxerror-unexpected-identifier-found)
     - [Resilient package loading (shared fallback engine)](#resilient-package-loading-shared-fallback-engine)
     - [Resilient npm latest-version resolution](#resilient-npm-latest-version-resolution)
+    - [In-memory module cache](#in-memory-module-cache)
     - [Module shapes and package subpaths](#module-shapes-and-package-subpaths)
     - [Interactive shell in Node.js environment](#interactive-shell-in-nodejs-environment)
     - [Browser](#browser)
@@ -310,6 +311,12 @@ const lodash = await use('lodash');
 ```
 
 Advanced tests and embedded runtimes may inject `fetch` and `debugLogger`. Setting `registryRequestTimeoutMs` to `0` disables the request timeout; setting `latestVersionCache` or `registryCliFallback` to `false` disables that layer. Existing npm-install controls (`installMaxAttempts`, `installRetryDelayMs`, and the `installLock*` options) remain unchanged.
+
+### In-memory module cache
+
+Repeated calls to `use()` reuse loaded modules in the same process. Package cache hits skip install and entry-point checks for npm and Bun, or repeated mirror selection for network imports. Relative imports are keyed by their resolved location, so two scripts can each use `./config.mjs` and load their own file.
+
+Each loaded copy of use-m tracks up to 256 entries for built-ins, imports, and package paths. Entries expire after one minute, even when the cache is idle. After expiration, use-m resolves the package again. JavaScript runtimes retain imported files according to their native module caches. Explicit resolver settings and custom hooks run on each call, while native imports can still reuse a cached namespace.
 
 ### Module shapes and package subpaths
 
