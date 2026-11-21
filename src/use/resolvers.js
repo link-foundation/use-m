@@ -1,6 +1,8 @@
 // Source fragment: built-in, npm, Bun, Deno, and CDN resolvers.
 // Generated bundles concatenate this file; do not import it directly.
 
+const isRelativeSpecifier = (specifier) => specifier.startsWith('./') || specifier.startsWith('../');
+
 const resolvers = {
   builtin: async (moduleSpecifier, pathResolver) => {
     const { packageName, modulePath } = parseModuleSpecifier(moduleSpecifier);
@@ -56,7 +58,7 @@ const resolvers = {
   },
   relative: async (moduleSpecifier, pathResolver, callerContext) => {
     // Check if this is a relative path (supports any depth: ./, ../, ../../, etc.)
-    if (!moduleSpecifier.startsWith('./') && !moduleSpecifier.startsWith('../')) {
+    if (!isRelativeSpecifier(moduleSpecifier)) {
       return null;
     }
 

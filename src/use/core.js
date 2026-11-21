@@ -107,19 +107,19 @@ const extractCallerContext = (stack) => {
 
     // Native Windows stack frames use drive-letter or UNC paths. Passing a
     // drive-letter path directly to import() is interpreted as a URL scheme.
-    match = line.match(/(?:\(|\s)((?:[A-Za-z]:[\\/]|\\\\)[^)\n]+?\.(?:m?js|json)):\d+:\d+\)?/);
+    match = line.match(/(?:\(|\s)((?:[A-Za-z]:[\\/]|\\\\)[^)\n]+?\.(?:[cm]?js|json)):\d+:\d+\)?/);
     if (match && !isUseMFile(match[1]) && !match[1].includes('node_modules')) {
       return absolutePathToFileUrl(match[1]);
     }
 
     // For Node/Deno, try to match absolute paths (improved to handle more cases)
-    match = line.match(/at\s+(?:Object\.<anonymous>\s+)?(?:async\s+)?[(]?(\/[^\s:)]+\.(?:m?js|json))(?::\d+:\d+)?\)?/);
+    match = line.match(/at\s+(?:Object\.<anonymous>\s+)?(?:async\s+)?[(]?(\/[^\s:)]+\.(?:[cm]?js|json))(?::\d+:\d+)?\)?/);
     if (match && !isUseMFile(match[1]) && !match[1].includes('node_modules')) {
       return absolutePathToFileUrl(match[1]);
     }
 
     // Alternative pattern for Jest and other environments
-    match = line.match(/at\s+[^(]*\(([^)]+\.(?:m?js|json)):\d+:\d+\)/);
+    match = line.match(/at\s+[^(]*\(([^)]+\.(?:[cm]?js|json)):\d+:\d+\)/);
     if (match && !isUseMFile(match[1]) && !match[1].includes('node_modules')) {
       return absolutePathToFileUrl(match[1]);
     }
