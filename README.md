@@ -54,6 +54,7 @@ On the first call, use-m installs the requested lodash version through npm if it
       - [Installation](#installation)
       - [CommonJS](#commonjs)
       - [ES Modules](#es-modules)
+    - [TypeScript](#typescript)
   - [Security Considerations](#security-considerations)
   - [Examples](#examples)
   - [Questions and issues](#questions-and-issues)
@@ -703,6 +704,27 @@ const { use } = await import('use-m');
 const _ = await use('lodash@4.17.21');
 console.log(`_.add(1, 2) = ${_.add(1, 2)}`);
 ```
+
+### TypeScript
+
+`use-m` ships declarations for ESM and CommonJS, including the `use-m/load` and `use-m/fetch-polyfill` subpaths. Use TypeScript's `NodeNext` module resolution for Node.js projects or `Bundler` for bundler-based projects. For Node.js built-in types and the fetch polyfill, install `@types/node` as a dev dependency.
+
+```typescript
+import { makeUse, use } from 'use-m'
+
+const path = await use<typeof import('node:path')>('node:path')
+console.log(path.join('reports', 'today.txt'))
+
+const localUse = await makeUse({ engineStrict: false })
+const settings = await localUse<{ output: string }>('./settings.json')
+console.log(settings.output)
+```
+
+The loader selects and imports each module at runtime. A call without an explicit result type or contextual type has an `unknown` result. Use a type guard to verify its shape, or supply the type for the exact version and export shape you load, such as `use<typeof import('lodash')>('lodash@4.17.21')` with `@types/lodash` available. The generic type guides the compiler and editor. Runtime validation is the caller's responsibility.
+
+`use.all<[FirstModule, SecondModule]>('first@1.0.0', 'second@2.0.0')` associates each result type with its specifier in order. CommonJS TypeScript files can use `import useM = require('use-m')` when compiling to JavaScript.
+
+Caller-relative TypeScript files use the host runtime's TypeScript support. For example, Bun, Deno and Node.js 24 can load local `.mts` files with erasable types. If you compile ahead of time, use the emitted JavaScript extension in dynamic specifier strings. See the [runnable TypeScript example](examples/typescript/example.mts).
 
 ## Security Considerations
 
