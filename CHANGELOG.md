@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Documentation
+- Add a README compatibility table covering runtime versions, module entry points, package sources and platform limits. Fixes [#13](https://github.com/link-foundation/use-m/issues/13).
+
 ### Added
 - Cache built-ins, imports, and successful package resolutions in memory for one minute, with a shared 256-entry limit and idle expiration. Repeated `use()` calls skip redundant package filesystem checks and CDN mirror selection. Resolves [#27](https://github.com/link-foundation/use-m/issues/27).
 - Call a package's default function directly from `use()` while retaining `.default` and all named exports on the same result. This supports packages such as Axios across the package and CDN entry points. Resolves [#15](https://github.com/link-foundation/use-m/issues/15).
