@@ -1,5 +1,7 @@
 # Bun Import Resolution Issues Investigation - Final Report
 
+This August 2025 report records native Node.js and Bun resolution on the versions listed below. Current use-m releases can load existing files for unexported package subpaths through their local npm and Bun resolvers, with a warning. See [module shapes and package subpaths](../README.md#module-shapes-and-package-subpaths).
+
 ## Summary
 This document contains the results of a comprehensive investigation into import resolution differences between Bun and Node.js, including minimal reproducible test cases.
 
@@ -103,8 +105,9 @@ Both errors correctly prevent unauthorized access, but Node.js provides more det
 ## Running the Test Suite
 
 ```bash
-# Navigate to test directory
-cd /Users/konard/Code/Archive/link-foundation/use-m/bun-issues
+# From the repository root, install the private fixtures for these probes.
+cd bun-issues
+npm install --prefix "$PWD" --no-save --no-package-lock ./library-with-exports ./library-limited-exports ./library-without-exports
 
 # Run comprehensive tests in both environments
 echo "=== MJS Environment ===" && node test-imports.mjs && echo "=== Bun MJS ===" && bun test-imports.mjs
@@ -113,8 +116,11 @@ echo "=== CJS Environment ===" && node test-imports.cjs && echo "=== Bun CJS ===
 # Test main vs subpath access patterns
 echo "=== Main vs Subpath ===" && node test-main-vs-subpath.mjs && echo "=== Bun ===" && bun test-main-vs-subpath.mjs
 
-# Original project tests (all passing now)
-cd .. && bun test && yarn test
+# Run the current project tests from the repository root.
+cd ..
+npm ci
+bun test --timeout 30000
+npm test -- --runInBand
 ```
 
 ## Investigation Conclusion

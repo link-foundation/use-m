@@ -4,17 +4,24 @@
 [![Open in Gitpod](https://img.shields.io/badge/Gitpod-ready--to--code-f29718?logo=gitpod)](https://gitpod.io/#https://github.com/link-foundation/use-m)
 [![Open in GitHub Codespaces](https://img.shields.io/badge/GitHub%20Codespaces-Open-181717?logo=github)](https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=link-foundation/use-m)
 
-# [use-m](https://github.com/link-foundation/use-m): dynamically import any JavaScript module anywhere
+# use-m
 
-`use-m` (`m` stands for `module`) is a utility for dynamically importing any JavaScript module (npm package) at runtime anywhere (browser or server). 
+`use-m` loads npm packages, runtime built-ins, and relative JavaScript or JSON files on demand. Use the same `await use(...)` API in Node.js, Bun, Deno, and browsers. Each package still needs to support the runtime in which you load it.
 
-It may be useful for standalone scripts that do not require a `package.json`. Also it may make your code portable across environments (for example it may require no changes in your code when executed in CommonJS, ES Modules and browser). You can ensure predictable behavior of your code over time by specifying the exact version to import directly in your script, similar to how versions are specified in package.json. You even can import multiple versions of the same library at the same time. You can use `use-m` when you don't want your `package.json` to be poluted with optional packages. You may keep your `package.json` with as little dependencies as needed thanks to `use-m`.
+Install the loader with `npm install use-m`, then save this in an `.mjs` file and run it with Node.js.
 
-<img width="2680" height="2928" alt="ray-so-export-2" src="https://github.com/user-attachments/assets/97909db5-b253-4493-81b8-ee6b6d68b00f" />
+```javascript
+import { use } from 'use-m';
+
+const lodash = await use('lodash@4.17.21');
+console.log(lodash.add(1, 2)); // 3
+```
+
+On the first call, use-m installs the requested lodash version through npm if it is missing from its versioned aliases. Later runs can reuse that installation.
 
 ## Table of Contents
-- [use-m: dynamically import any JavaScript module anywhere](#use-m-dynamically-import-any-javascript-module-anywhere)
-  - [Table of Contents](#table-of-contents)
+
+  - [When to use it](#when-to-use-it)
   - [Key features](#key-features)
   - [How it works](#how-it-works)
     - [How a specifier is resolved](#how-a-specifier-is-resolved)
@@ -27,12 +34,14 @@ It may be useful for standalone scripts that do not require a `package.json`. Al
       - [Troubleshooting: `SyntaxError: Unexpected identifier 'found'`](#troubleshooting-syntaxerror-unexpected-identifier-found)
     - [Resilient package loading (shared fallback engine)](#resilient-package-loading-shared-fallback-engine)
     - [Resilient npm latest-version resolution](#resilient-npm-latest-version-resolution)
+      - [Node.js engine compatibility](#nodejs-engine-compatibility)
     - [Module shapes and package subpaths](#module-shapes-and-package-subpaths)
     - [Interactive shell in Node.js environment](#interactive-shell-in-nodejs-environment)
     - [Browser](#browser)
     - [Deno](#deno)
     - [Bun](#bun)
     - [Network imports](#network-imports)
+    - [Node.js loader hook](#nodejs-loader-hook)
     - [Independent Scripts](#independent-scripts)
       - [`use-m` and `command-stream`](#use-m-and-command-stream)
       - [`use-m` and Bun.$](#use-m-and-bun)
@@ -48,13 +57,21 @@ It may be useful for standalone scripts that do not require a `package.json`. Al
   - [Contributing](#contributing)
   - [License](#license)
 
+## When to use it
+
+- **Standalone scripts and REPL sessions.** Put a package and its version in the line that uses it. A CDN bootstrap can run a standalone script without a project manifest.
+- **Optional tools.** Load a package only when the user selects the command or feature that needs it.
+- **Version comparisons and migrations.** Load two pinned releases in one process to compare their output or migrate callers gradually.
+- **Browser prototypes.** Try a browser-compatible npm package on a page or in the developer console without running a package manager.
+
+For dependencies used by every run, a project manifest and lockfile let your package manager install and verify the dependency tree before execution. Runtime installation needs network access on a cold cache and can run dependency code with your process's permissions. See [security considerations](#security-considerations).
+
 ## Key features
 
-- **Dynamic package loading**: In `node.js`, `use-m` loads and imports npm packages on-demand with **global installation** (using `npm i -g` with separate alias for each version), making them available across projects and reusable without needing to reinstall each time. When the `latest` release (or the release npm would pick for a semver range) declares an `engines.node` range that excludes the running Node.js, the newest compatible release is installed instead; everything else resolves exactly as before. Metadata is resolved directly from the configured npm registry with transient-error retries and a five-minute memory/disk cache; npm CLI, stale-cache, and installed-package fallbacks keep CI usable during registry outages. Failed npm installs are retried three times with 1s/2s backoff and include captured npm output in the final error. If versioned aliases expose the same executable, `use-m` verifies that the conflicting symlink belongs to another alias of that package, then installs the new alias without replacing the existing executable. Unrelated global executables are never force-overwritten. If an interrupted install leaves a corrupt alias, `use-m` removes and reinstalls that alias once, then imports it through a cache-busted file URL so recovery works in the same process. Recursive alias cleanup has its own retry budget so transient filesystem races do not abort recovery. In case of a browser `use-m` loads npm packages directly from CDNs (by default `esm.sh` is used).
-- **Version-safe imports**: Allows multiple versions of the same library to coexist without conflicts, so you can specify any version for each import (usage) without affecting other scripts or other usages (imports) in the same script.
-- **No more `require`, `import`, or `package.json`**: With `use-m`, traditional module loading approaches like `require()`, `import` statements, and `package.json` dependencies become effectively obsolete. You can dynamically load any module at runtime without pre-declaring dependencies in separate file. This enables truly self-contained `.mjs` files that can effectively replace shell scripts.
-- **Built-in modules emulation**: Every built-in module the host runtime reports is loadable, in every environment (browser, Node.js, Bun, Deno). The supported set is read from the runtime through `node:module` rather than kept as a list inside `use-m`, so modules added by future Node.js, Bun or Deno releases work immediately; browser polyfills are provided for `console`, `crypto`, `url` and `performance`.
-- **Relative path resolution**: Supports `./ ` and `../` paths for loading local JavaScript and JSON files relative to the executing file, working seamlessly even in browser environments.
+- **On-demand packages.** Choose an exact release, a range, or a tag supported by the selected resolver. Load several specifiers in parallel with `use.all()`.
+- **Runtime-specific resolution.** Node.js and Bun use versioned global aliases. Browsers and Deno can load packages over the network, with fallbacks for failed sources.
+- **Built-ins and relative files.** Load host modules such as `node:fs/promises` on the server and resolve `./` and `../` JavaScript or JSON files from the calling script.
+- **Configurable loading.** Build a reusable loader with `makeUse()`, customize package resolvers, or use the packaged CDN bootstrap and its retry settings.
 
 ## How it works
 
@@ -89,18 +106,19 @@ The package resolver returns a file path or URL for dynamic `import()`. Local np
 
 ### Universal
 
-Works in CommonJS, ES Modules and browser, and interactive environments.
+Use a fetch-and-evaluate bootstrap in a standalone script, a browser, or a REPL that provides `fetch`.
 
 ```javascript
 fetch('https://unpkg.com/use-m/use.js')
-  .then(async useJs => {
-    const { use } = eval(await useJs.text());
+  .then(async response => {
+    if (!response.ok) throw new Error(`Failed to load use-m: HTTP ${response.status}`);
+    const { use } = eval(await response.text());
     const _ = await use('lodash@4.17.21');
     console.log(`_.add(1, 2) = ${_.add(1, 2)}`);
   });
 ```
 
-Universal execution comes at cost of `eval` usage, that is considered potential security threat. In case of this library only single file is evaled, it short, unminified and has no dependencies, so you can check [the contents](https://unpkg.com/use-m/use.js) yourself. Once you have `use` function instance no more `eval` function will be executed by this library. If you don't want to use `eval` you can use `await import()` in browser or in `node.js`. In `node.js` you can also just install the package from `npm` as usual.
+This bootstrap executes the downloaded JavaScript with `eval()`. After initialization, `use()` loads modules through the runtime's importer. Use an installed package or the browser ESM entry point in environments where `eval()` is disabled. The standalone bundle is readable and includes its semver implementation. [Inspect the bundle on unpkg](https://unpkg.com/use-m/use.js).
 
 ### Missing `fetch` in Node.js or Windows Git Bash
 
@@ -147,11 +165,11 @@ const { use } = await loadUseM({
   sources: ['https://unpkg.com/use-m/use.js', 'https://cdn.jsdelivr.net/npm/use-m/use.js'],
   maxAttemptsPerSource: 3,  // attempts per mirror before moving on
   retryDelayMs: 250,        // linear backoff between attempts
-  timeoutMs: 10000,         // per-attempt timeout (0 disables)
+  timeoutMs: 10000,         // time to receive response headers (0 disables)
 });
 ```
 
-**Option 2 — self-contained snippet (no install).** For standalone scripts that fetch `use-m` directly, drop in this dependency-free loader. It does the same validation and mirror fallback inline:
+**Option 2. Self-contained snippet.** This loader checks each mirror's response and tries each mirror once. You can paste it into a standalone script.
 
 ```javascript
 async function loadUse(sources = [
@@ -192,7 +210,7 @@ Runnable versions of both options live in [`examples/load`](https://github.com/l
 
 #### Troubleshooting: `SyntaxError: Unexpected identifier 'found'`
 
-If a project that bootstraps `use-m` from a CDN suddenly started failing with:
+Projects pinned to `use-m@8.14.0` may encounter this error when bootstrapping from a CDN.
 
 ```
 SyntaxError: Unexpected identifier 'found'
@@ -217,7 +235,7 @@ The resilience above is not limited to bootstrapping `use-m` itself — once you
 | Runtime / entry point | Mirror chain tried in order |
 | --- | --- |
 | Browser / `http(s)` script | `esm.sh` → `jspm.dev` → `cdn.skypack.dev` |
-| Deno | `esm.sh` (deno target) → `jspm.dev` → `cdn.skypack.dev` → native `npm:` import |
+| Deno with a local or npm entry point | `esm.sh` → `jspm.dev` → `cdn.skypack.dev` → native `npm:` import |
 | Node.js (`npm i -g`), Bun | single local resolver (Node's npm metadata lookup has its own retry/cache/fallback path) |
 
 When no CDN can build a package for Deno (for example because its `engines.node` excludes the CDN's Node.js), `use-m` finally tries Deno's native `npm:` import. Packages that loaded from a CDN before keep loading from the same CDN. In a project with `package.json`, this last fallback needs Deno-managed npm resolution (`"nodeModulesDir": "none"` for its global cache, or `"auto"` for local modules) to load packages that are absent from the manifest.
@@ -235,13 +253,14 @@ Attempts:
       caused by: <its cause>
 ```
 
-Each attempt lists its whole `cause` chain, so the message says why every source failed. The thrown value is an `AggregateError`: `error.errors` holds the original error of every attempt, in the order they were tried, with their `cause` intact:
+The message includes up to eight levels of each attempt's `cause` chain. The thrown `AggregateError` exposes the original errors in attempt order, with their causes intact.
 
 ```javascript
 try {
   await use('left-pad@1.3.0');
 } catch (error) {
-  for (const attempt of error.errors) console.error(attempt.cause ?? attempt);
+  const attempts = error.errors ?? [error];
+  for (const attempt of attempts) console.error(attempt.cause ?? attempt);
 }
 ```
 
@@ -252,14 +271,12 @@ import { makeUse } from 'use-m';        // ES Modules
 // const { makeUse } = require('use-m'); // CommonJS
 
 const use = await makeUse({
-  // Try these resolvers in order, falling back on failure. Entries are resolver
-  // names (built-ins: 'esm', 'jspm', 'skypack', 'jsdelivr', 'unpkg', 'deno', …)
-  // or your own `(specifier, pathResolver) => url` functions.
+  // Entries are resolver names or custom `(specifier, pathResolver) => url` functions.
   specifierResolvers: ['esm', 'jspm', 'skypack'],
 });
 ```
 
-**One mechanism, reused everywhere.** Both the `use-m/load` bootstrap and per-package loading are powered by the same generic `loadWithFallback` engine — "try each source in order, optionally retry, and fail with one aggregated error." It is exported so you can reuse it for your own resilient loading:
+The exported `loadWithFallback` function also works with your own sources. It tries them in order, allows per-source retries, and aggregates errors if every attempt fails.
 
 ```javascript
 import { loadWithFallback } from 'use-m';
@@ -346,15 +363,16 @@ Advanced tests and embedded runtimes may inject `fetch` and `debugLogger`. Setti
 
 ### Module shapes and package subpaths
 
-When a package exports only a default value, `use()` returns that value itself. It also carries a non-enumerable `default` reference to itself, so the direct form and the destructured form both work:
+When `use()` unwraps a default-only namespace, it returns the default value itself. For an extensible object or function without a `default` property, it adds a non-enumerable `default` reference to that value. Primitives, frozen values, and existing `default` properties are preserved. A package with meaningful named exports returns a namespace. For example, use the named `Octokit` export or the public `yargs/helpers` subpath.
 
 ```javascript
-const yargs = await use('yargs@17.7.2');
-const { default: sameYargs } = await use('yargs@17.7.2');
+const { Octokit } = await use('@octokit/rest@21.1.1');
 const { hideBin } = await use('yargs@17.7.2/helpers');
 ```
 
-Packages with named exports are returned as their module namespace, for example `const { Octokit } = await use('@octokit/rest@21.1.1')`. With the local npm and Bun resolvers, the package root resolves through `main` first, as Node.js `require()` does. Subpaths go through the package's `exports` map first. A subpath that `exports` does not list, such as `use('ink@5.2.1/build/index.js')`, still loads its file when that file exists. use-m then emits one `USE_M_UNEXPORTED_SUBPATH` process warning per subpath, which `--no-warnings` or `--disable-warning=USE_M_UNEXPORTED_SUBPATH` silences. These shapes are pinned by `tests/module-shape-contract.test.mjs`. On Bun, CommonJS packages such as `yargs@17` and `simple-git@3` come back as a namespace, so `const { default: yargs } = await use(...)` is the form that works on every runtime.
+The local npm and Bun resolvers try the package directory's `main` or index entry before falling back to the root `exports` entry. Subpaths go through the `exports` map first. An unlisted or explicitly blocked subpath such as `ink@5.2.1/build/index.js` can still resolve to its physical file and emit a `USE_M_UNEXPORTED_SUBPATH` warning once per subpath. Prefer public subpaths because package updates can move internal files. Node.js can filter this warning with `--disable-warning=USE_M_UNEXPORTED_SUBPATH`.
+
+For local CommonJS packages, the same import can be callable in Node.js and a namespace with a callable `default` in Bun. `simple-git@3` is one example. Check the receiving runtime and package when choosing an access pattern. See the [module shape contract tests](tests/module-shape-contract.test.mjs).
 
 ### Interactive shell in Node.js environment
 
@@ -399,7 +417,7 @@ Your output should be similar to the next screenshot.
 
 ### Browser
 
-If you don't want to use `eval` in the browser, you can import `use-m` like this:
+Use a browser ESM import in a module script or in the developer console on a page that permits the CDN.
 
 ```javascript
 const { use } = await import("https://esm.sh/use-m");
@@ -407,22 +425,20 @@ const _ = await use('lodash@4.17.21');
 console.log(`_.add(1, 2) = ${_.add(1, 2)}`);
 ```
 
-Only 2 lines and now have an interactive playground for JavaScript and almost any NPM library directly in your browser's console. No more cloud based sandboxes required. Sorry VSCode, you don't have such super powers yet.
+The CDN must serve a browser-compatible build, and the page's Content Security Policy must allow the module and its dependencies. See the [browser playground example](EXAMPLES.md#try-an-npm-package-in-a-browser).
 
 ### Deno
 
-`use-m` works seamlessly with Deno! It automatically detects the Deno runtime and uses `esm.sh` as the default CDN.
+Load use-m through Deno's npm support to use the Deno resolver chain.
 
 ```javascript
-// Import use-m from CDN
-const { use } = await import('https://esm.sh/use-m');
+import { use } from 'npm:use-m';
 
-// Use any npm package
 const _ = await use('lodash@4.17.21');
 console.log(`_.add(1, 2) = ${_.add(1, 2)}`);
 
 // Import multiple packages
-const [lodash3, lodash4] = await use.all('lodash@3', 'lodash@4');
+const [lodash3, lodash4] = await use.all('lodash@3.10.1', 'lodash@4.17.21');
 ```
 
 Run with Deno:
@@ -430,20 +446,20 @@ Run with Deno:
 deno run --allow-net example.mjs
 ```
 
+An HTTPS import of use-m, such as `https://esm.sh/use-m`, selects the HTTP(S) resolver chain. To include the native `npm:` fallback, use the npm entry point above or a local bundle. In a project with a manifest, configure `nodeModulesDir` as `"none"` or `"auto"` to let Deno resolve packages missing from the manifest.
+
 ### Bun
 
-`use-m` works seamlessly with Bun! It automatically detects the Bun runtime and provides optimized module loading.
+Install the loader with `bun add use-m`. A local entry point uses Bun's global package installer for the packages you request.
 
 ```javascript
-// Import use-m from CDN
-const { use } = await import('https://esm.sh/use-m');
+import { use } from 'use-m';
 
-// Use any npm package
 const _ = await use('lodash@4.17.21');
 console.log(`_.add(1, 2) = ${_.add(1, 2)}`);
 
 // Import multiple packages
-const [lodash3, lodash4] = await use.all('lodash@3', 'lodash@4');
+const [lodash3, lodash4] = await use.all('lodash@3.10.1', 'lodash@4.17.21');
 ```
 
 Run with Bun:
@@ -453,7 +469,7 @@ bun run example.mjs
 
 ### Network imports
 
-It is possible to use `--experimental-network-imports` to enable the same style of imports as in browser version. See [the example](https://github.com/link-foundation/use-m/blob/main/examples/network-imports/index.mjs).
+Older Node.js releases such as Node.js 20 can run the [network import example](examples/network-imports/index.mjs) with `--experimental-network-imports`. Node.js 22 removed that flag. On current Node.js, use the installed package or fetch the standalone bootstrap. See [standard imports](#standard-import) and [CDN bootstrap](#robust-loading-resilient-cdn-bootstrap).
 
 1. Create file named `example.mjs`:
    ```javascript
@@ -462,36 +478,44 @@ It is possible to use `--experimental-network-imports` to enable the same style 
    console.log(`_.add(1, 2) = ${_.add(1, 2)}`);
    ```
 
-2. Execute the script using `--experimental-network-imports` option:
+2. Run the script on a Node.js release that supports the flag.
    ```bash
    node --experimental-network-imports example.mjs
    ```
 
+### Node.js loader hook
+
+The optional Node.js loader hook supports package specifiers such as `import _ from 'lodash@4.17.21'`. It tries Node.js's default resolver first. If that fails, it tries use-m's npm resolver. Run the [loader example](examples/loader/loader.mjs) from the repository root.
+
+```bash
+node --loader ./src/loader.js ./examples/loader/loader.mjs
+```
+
 ### Independent Scripts
 
-If you need to use `use-m` without adding it to a project locally, you can load it directly from `unpkg` using `fetch`. This is particularly useful for creating self-contained scripts without any `package.json`, `node_modules`, etc.
+These scripts use the [standalone CDN bootstrap](#universal) to load their dependencies at runtime. Each example starts with the same bootstrap.
 
 #### `use-m` and `command-stream`
 
-[command-stream](https://github.com/link-foundation/command-stream) is a modern shell utility library with streaming, async iteration, and EventEmitter support. It provides the most advanced command execution capabilities including virtual commands, built-in cross-platform commands, and real-time streaming.
+Use command-stream to run commands and consume output as it arrives. [command-stream documentation](https://github.com/link-foundation/command-stream).
 
 1. Create a file named `example.mjs`:
 
    ```javascript
-   const { use } = eval(
-     await fetch('https://unpkg.com/use-m/use.js').then(u => u.text())
-   );
+   const response = await fetch('https://unpkg.com/use-m/use.js');
+   if (!response.ok) throw new Error(`Failed to load use-m: HTTP ${response.status}`);
+   const { use } = eval(await response.text());
    
-   const { $ } = await use('command-stream');
-   const _ = await use('lodash');
+   const { $ } = await use('command-stream@1.6.2');
+   const _ = await use('lodash@4.17.21');
    
-   // Use command-stream's advanced features
+   let files = '';
    for await (const chunk of $`ls -la`.stream()) {
      if (chunk.type === 'stdout') {
-       const files = chunk.data.toString();
-       console.log('Files:', _.filter(files.split('\n'), f => f.includes('.js')));
+       files += chunk.data.toString();
      }
    }
+   console.log('JavaScript files:', _.filter(files.split('\n'), line => /\.[cm]?js$/.test(line.trim())));
    
    // Built-in cross-platform commands
    await $`mkdir -p build`;
@@ -506,26 +530,20 @@ If you need to use `use-m` without adding it to a project locally, you can load 
 
 #### `use-m` and Bun.$
 
-Bun provides a built-in `$` shell API that works seamlessly with `use-m`:
+Bun provides a shell API through the `bun` module. Use it alongside packages loaded by use-m.
 
 1. Create a file named `example.mjs`:
 
    ```javascript
-    #!/usr/bin/env bun
+   import { $ } from 'bun';
 
-   const { use } = eval(
-     await fetch('https://unpkg.com/use-m/use.js').then(u => u.text())
-   );
-   
-   const _ = await use('lodash');
-   
-   // Use Bun's built-in $ directly
-   const { stdout } = await $`ls`.pipe($`grep js`);
-   const files = _.filter(
-     _.split(stdout.toString(), '\n'),
-     (item) => !_.isEmpty(item)
-   );
-   console.log(files);
+   const response = await fetch('https://unpkg.com/use-m/use.js');
+   if (!response.ok) throw new Error(`Failed to load use-m: HTTP ${response.status}`);
+   const { use } = eval(await response.text());
+
+   const _ = await use('lodash@4.17.21');
+   const output = await $`echo hello from Bun`.text();
+   console.log(_.upperFirst(output.trim()));
    ```
 
 2. Execute with Bun:
@@ -545,13 +563,11 @@ Bun provides a built-in `$` shell API that works seamlessly with `use-m`:
 2. Create a file named `example.mjs`:
 
    ```javascript
-   #!/usr/bin/env zx --verbose
-   
-   const { use } = eval(
-     await fetch('https://unpkg.com/use-m/use.js').then(u => u.text())
-   );
-    
-   const _ = await use('lodash@latest');
+   const response = await fetch('https://unpkg.com/use-m/use.js');
+   if (!response.ok) throw new Error(`Failed to load use-m: HTTP ${response.status}`);
+   const { use } = eval(await response.text());
+
+   const _ = await use('lodash@4.17.21');
    
    const { stdout } = await $`ls`.pipe`grep js`;
    const files = _.filter(
@@ -561,16 +577,10 @@ Bun provides a built-in `$` shell API that works seamlessly with `use-m`:
    console.log(files);
    ```
 
-3. Give execution permissions
+3. Run with zx from a directory containing a JavaScript file. This example uses `ls` and `grep`.
 
    ```bash
-   chmod +x example.mjs
-   ```
-
-4. Execute:
-
-   ```bash
-   ./example.mjs
+   zx example.mjs
    ```
 
 #### `use-m` and `execa`
@@ -580,12 +590,12 @@ Bun provides a built-in `$` shell API that works seamlessly with `use-m`:
    ```javascript
    #!/usr/bin/env node
 
-   const { use } = eval(
-     await fetch('https://unpkg.com/use-m/use.js').then(u => u.text())
-   ); 
-   
-   const _ = await use('lodash');
-   const { $: $$ } = await use('execa');
+   const response = await fetch('https://unpkg.com/use-m/use.js');
+   if (!response.ok) throw new Error(`Failed to load use-m: HTTP ${response.status}`);
+   const { use } = eval(await response.text());
+
+   const _ = await use('lodash@4.17.21');
+   const { $: $$ } = await use('execa@9.6.0');
    const $ = $$({ verbose: 'full' }); 
    
    const { stdout } = await $`ls`.pipe`grep js`;
@@ -596,9 +606,7 @@ Bun provides a built-in `$` shell API that works seamlessly with `use-m`:
    console.log(files);
    ```
 
-Note: in ES Module environments where `__filename` and `require` are not defined, you may need to add `meta` option into `use` function constructor, as it is not possible to access `import.meta` inside `eval`.
-
-2. Execute:
+2. Run with Node.js from a directory containing a JavaScript file. This example uses `ls` and `grep`.
 
    ```bash
    node example.mjs
@@ -606,7 +614,7 @@ Note: in ES Module environments where `__filename` and `require` are not defined
 
 ### Standard Import
 
-You can still install and import `use-m` in `node.js` as usual. For example if you don't want to use `eval` in `node.js`.
+Install the package to use the loader through normal Node.js module resolution.
 
 #### Installation
 
@@ -665,68 +673,14 @@ console.log(`_.add(1, 2) = ${_.add(1, 2)}`);
 
 ## Security Considerations
 
-### Arbitrary Code Execution
-
-**Important**: When using `use-m` with npm/bun resolvers in Node.js or Bun environments, packages are installed globally using `npm install -g` or `bun add -g`. This means:
-
-- **Install scripts are executed**: npm packages can run arbitrary code during installation via install scripts
-- **Trust required**: Only use packages from trusted sources
-- **Malicious packages**: A compromised or malicious package could execute harmful code on your system
-
-### Best Practices
-
-1. **Pin versions**: Always specify exact versions instead of using `latest`:
-   ```javascript
-   // Good - specific version
-   const _ = await use('lodash@4.17.21');
-
-   // Risky - could download new, potentially compromised version
-   const _ = await use('lodash@latest');
-   ```
-
-2. **Trust your dependencies**: Only import packages from trusted maintainers and npm organizations
-
-3. **Use CDN resolver in untrusted environments**: For browser or Deno environments, packages are loaded from CDNs without running install scripts:
-   ```javascript
-   // Browser - loads from CDN, no install scripts
-   const { use } = await import("https://unpkg.com/use-m/use.mjs");
-   const _ = await use('lodash@4.17.21');
-   ```
-
-4. **Review package contents**: Check package source code before using, especially for critical applications
-
-5. **Use in development/scripts**: `use-m` is ideal for development scripts, exploratory coding, and rapid prototyping where convenience outweighs strict security requirements
-
-### CDN Security
-
-When using CDN resolvers (browser, Deno), be aware that:
-
-- **CDN compromise**: If a CDN is compromised, malicious code could be served
-- **No integrity checking**: By default, there's no Subresource Integrity (SRI) verification
-- **Network dependency**: Your application depends on CDN availability
-
-### Eval Security
-
-Some examples use `eval()` for convenience in interactive shells and browsers. Be aware:
-
-- `eval()` executes arbitrary code
-- Only use with trusted sources
-- The `use-m` library code is short, unminified, and has no dependencies - you can [review it yourself](https://unpkg.com/use-m/use.js)
-- For production code, prefer standard imports without `eval()`
-
-### Recommendations by Use Case
-
-| Use Case | Recommendation | Security Level |
-|----------|---------------|----------------|
-| Development scripts | ✅ Safe to use | Medium |
-| Rapid prototyping | ✅ Safe to use | Medium |
-| Interactive shell/REPL | ✅ Safe to use | Medium |
-| Production applications | ⚠️ Use with caution | Low-Medium |
-| Security-critical apps | ❌ Not recommended | Low |
+- **Local packages.** npm and Bun apply their own install-script policies. Installing and importing a package can execute dependency code with the permissions granted to the process. Load trusted packages and avoid passing untrusted input to `use()`.
+- **Remote modules.** An HTTP(S) import runs the CDN's JavaScript in the host environment. Each configured mirror is a source you trust. The loader applies no extra integrity check to package imports.
+- **Fetch-and-evaluate bootstrap.** Evaluating the response runs the downloaded loader with the caller's permissions. HTTP status and response-body checks catch common server errors. A standard import of the installed package avoids evaluating fetched text.
+- **Reproducible deployments.** A pin such as `lodash@4.17.21` selects a specific direct dependency release. A project lockfile records the full resolved dependency tree and works with build-time installs and integrity checks.
 
 ## Examples
 
-You can check out [usage examples source code](https://github.com/link-foundation/use-m/tree/main/examples). You can also explore our [tests](https://github.com/link-foundation/use-m/tree/main/tests) to get even more examples.
+Choose an example for your runtime, compare two versions, or try a custom fallback. See the [examples guide](EXAMPLES.md), [runnable scripts](examples/), and [tests](tests/).
 
 ## Questions and issues
 

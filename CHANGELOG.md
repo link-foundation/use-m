@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Documentation
+
+- Explain when to use runtime module loading and document how use-m chooses resolvers, installs or reuses versioned aliases, falls back across sources, and returns module exports. Refresh the runtime examples and contributor guide. See the [README](README.md#how-it-works) and [examples guide](EXAMPLES.md).
+
 ### Added
 - When the `latest` release of an npm package (or npm's pick for a semver range) declares `engines.node` that excludes the running Node.js, install the newest compatible release instead, under its exact-version alias, and explain the fallback with debug logging. Imports whose release already supports the running Node.js resolve exactly as before. When no release is compatible, npm's choice is kept unless `engineStrict: true` (or `USE_M_ENGINE_STRICT=true`) asks to fail before installation; `engineStrict: false` (or `USE_M_ENGINE_STRICT=false`) disables the check. `use()` and `makeUse()`-created functions accept per-call options. Bundle npm's semver parser in every standalone distribution. Resolves [#79](https://github.com/link-foundation/use-m/issues/79).
 - Deno tries its native `npm:` import after every CDN mirror failed, so packages no CDN can build still load. Update Undici to 6.29.1 for the production audit.

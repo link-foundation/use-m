@@ -2,25 +2,17 @@
 // import { use } from 'use-m'; // ES Modules
 // const { use } = require('use-m'); // CommonJS Modules
 
-// Deno, Browser
+// Browser
 // const { use } = await import('https://esm.sh/use-m');
 
-// Node, Bun, Deno, Browser (universal script)
-const { use } = eval(
-  await (
-    await fetch('https://unpkg.com/use-m/use.js')
-  ).text()
-);
+// The standalone bundle can be bootstrapped in Node, Bun, Deno, and browsers.
+const response = await fetch('https://unpkg.com/use-m/use.js');
+if (!response.ok) throw new Error(`Failed to load use-m: HTTP ${response.status}`);
+const { use } = eval(await response.text());
 
-// Build-in modules support
-const os = await use('os');
+// Load a server built-in, a file relative to this script, and an exact npm release.
+const os = await use('node:os');
+const packageJson = await use('../../package.json');
+const lodash = await use('lodash@4.17.21');
 
-// Relative paths support
-const packageJson = await use('./package.json');
-
-// NPM registry support (latest version)
-const axios = await use('axios');
-const _ = await use('lodash@latest');
-
-// Fixed NPM package version support
-const { $, sh } = await use('command-stream@0.0.5');
+console.log(`${packageJson.name} on ${os.platform()}: lodash.add(1, 2) = ${lodash.add(1, 2)}`);
