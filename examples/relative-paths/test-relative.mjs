@@ -1,4 +1,4 @@
-import { use } from '../../use.mjs';
+import { use } from '../../src/use.mjs';
 
 console.log('Testing relative path resolver...\n');
 
@@ -19,8 +19,8 @@ try {
   console.log('   ✓ Successfully imported from parent directory:', parentHelper.message);
   
   // Test importing from two levels up
-  console.log('\n4. Testing ../../use.mjs');
-  const useModule = await use('../../use.mjs');
+  console.log('\n4. Testing ../../src/use.mjs');
+  const useModule = await use('../../src/use.mjs');
   console.log('   ✓ Successfully imported use.mjs:', typeof useModule.use === 'function' ? 'use function found' : 'module loaded');
   
   console.log('\n✅ All relative path tests passed!');

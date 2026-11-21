@@ -10,7 +10,7 @@ console.log();
 
 async function debugCommandStream() {
   console.log('--- Importing use-m via eval ---');
-  const { use } = eval(await readFile('../../use.js', 'utf8'));
+  const { use } = eval(await readFile('../../src/use.js', 'utf8'));
   console.log('use function:', typeof use);
   console.log();
 

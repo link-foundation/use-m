@@ -1,0 +1,95 @@
+# node v20.20.2, jest, branch @ 867de3c
+(node:54965) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+PASS tests/resolvers.test.cjs (17.811 s)
+PASS tests/resolvers.test.mjs (9.003 s)
+PASS tests/npm-global-prefix.test.cjs (7.446 s)
+PASS tests/npm-global-prefix.test.mjs (6.923 s)
+PASS tests/lodash.test.mjs (7.044 s)
+PASS tests/builtin-browser.test.mjs (5.058 s)
+PASS tests/lodash.test.cjs (5.194 s)
+PASS tests/relative-paths-browser.test.mjs
+PASS tests/esm-sh-polyfill-browser.test.mjs
+PASS tests/use.test.cjs (8.393 s)
+PASS tests/use.test.mjs
+PASS tests/loader.test.mjs
+PASS tests/typescript.test.cjs (5.009 s)
+PASS tests/builtin-errors.test.mjs
+PASS tests/typescript.test.mjs
+PASS tests/builtin-errors.test.cjs
+PASS tests/command-stream.test.mjs
+PASS tests/command-stream.test.cjs
+PASS tests/builtin-backward-compatibility.test.cjs
+PASS tests/relative-paths.test.mjs
+PASS tests/relative-paths.test.cjs
+PASS tests/relative-paths.integration.test.mjs
+  ● Console
+
+    console.log
+      /tmp/gh-issue-solver-1789545086651/tests
+
+      at Object.<anonymous> (tests/relative-paths.integration.test.mjs:29:15)
+
+    console.log
+      Testing relative paths from tests directory...
+      
+      1. Testing ./browser-server/test-helper.js
+         ✓ Message: Helper module loaded
+      
+      2. Testing ./browser-server/test-data.json
+         ✓ Value: 123
+         ✓ Test: data
+      
+      3. Testing ../src/use.mjs
+         ✓ use function exists: true
+      
+      4. Testing ./browser-server/subfolder/nested.js
+         ✓ Nested: true Level: subfolder
+      
+      5. Testing ./browser-server/subfolder/nested-data.json
+         ✓ Level: nested Depth: 1
+      
+      6. Testing ../package.json
+         ✓ Package name: use-m
+      
+      ✅ All direct tests passed!
+
+      at Object.<anonymous> (tests/relative-paths.integration.test.mjs:39:15)
+
+PASS tests/network-imports.test.cjs
+PASS tests/load.test.cjs
+PASS tests/builtin-backward-compatibility.test.mjs
+PASS tests/load.test.mjs
+PASS tests/root-entries.test.mjs
+(node:54965) [DEP0125] DeprecationWarning: The _stream_wrap module is deprecated.
+(node:54965) [DEP0025] DeprecationWarning: sys is deprecated. Use util instead.
+(node:54965) ExperimentalWarning: WASI is an experimental feature and might change at any time
+PASS tests/dynamic-builtins.test.cjs
+PASS tests/network-imports.test.mjs
+PASS tests/module-specifier.test.cjs
+PASS tests/fs-promises.test.mjs
+PASS tests/fallback.test.cjs
+PASS tests/builtin-nodejs.test.cjs
+PASS tests/filename.test.mjs
+PASS tests/builtin-nodejs.test.mjs
+PASS tests/module-specifier.test.mjs
+PASS tests/import.test.cjs
+PASS tests/import.test.mjs
+PASS tests/builtin-universal.test.mjs
+PASS tests/dynamic-builtins.test.mjs
+PASS tests/deno-support.test.cjs
+PASS tests/release-workflow-policy.test.mjs
+PASS tests/get-script-url.test.mjs
+PASS tests/builtin-universal.test.cjs
+PASS tests/filename.test.cjs
+PASS tests/deno-support.test.mjs
+PASS tests/fallback.test.mjs
+PASS tests/script-sync.test.mjs
+PASS tests/get-script-url.test.cjs
+
+Test Suites: 49 passed, 49 total
+Tests:       458 passed, 458 total
+Snapshots:   0 total
+Time:        103.275 s
+Ran all test suites.
+exit=0

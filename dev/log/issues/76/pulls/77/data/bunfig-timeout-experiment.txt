@@ -1,0 +1,4 @@
+bunfig.toml timeout = "30000ms": failed (timed out after 5000ms)
+bunfig.toml timeout = 30000: failed (timed out after 5000ms)
+bun test --timeout 30000: passed
+bun version: 1.4.2
